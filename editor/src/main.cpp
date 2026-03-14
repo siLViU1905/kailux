@@ -1,14 +1,15 @@
 #include <print>
 #include <core/Window.h>
-#include <core/Context.h>
+#include <core/Engine.h>
 
 int main()
 {
     try
     {
-        auto window = kailux::Window::create(700,400, "Test");
+        auto window = kailux::Window::create(700,400, "Kailux");
         window.updateUserPointer();
-        auto context = kailux::Context::create(window);
+
+        auto engine = kailux::Engine::create(window);
     }
     catch (const std::exception& exception)
     {
