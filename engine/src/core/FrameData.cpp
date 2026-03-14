@@ -4,16 +4,12 @@ namespace kailux
 {
     FrameData::FrameData() : m_CommandPool({}),
                              m_CommandBuffer({}),
-                             m_ImageAvailableSemaphore({}),
-                             m_RenderFinishedSemaphore({}),
                              m_FenceInFlight({})
     {
     }
 
     FrameData::FrameData(FrameData &&other) noexcept : m_CommandPool(std::move(other.m_CommandPool)),
                                                        m_CommandBuffer(std::move(other.m_CommandBuffer)),
-                                                       m_ImageAvailableSemaphore(std::move(other.m_ImageAvailableSemaphore)),
-                                                       m_RenderFinishedSemaphore(std::move(other.m_RenderFinishedSemaphore)),
                                                        m_FenceInFlight(std::move(other.m_FenceInFlight))
     {
     }
@@ -24,8 +20,6 @@ namespace kailux
         {
             m_CommandPool = std::move(other.m_CommandPool);
             m_CommandBuffer = std::move(other.m_CommandBuffer);
-            m_ImageAvailableSemaphore = std::move(other.m_ImageAvailableSemaphore);
-            m_RenderFinishedSemaphore = std::move(other.m_RenderFinishedSemaphore);
             m_FenceInFlight = std::move(other.m_FenceInFlight);
         }
         return *this;
@@ -56,16 +50,6 @@ namespace kailux
         return *m_CommandBuffer;
     }
 
-    vk::Semaphore FrameData::getImageAvailableSemaphore() const
-    {
-        return *m_ImageAvailableSemaphore;
-    }
-
-    vk::Semaphore FrameData::getRenderFinishedSemaphore() const
-    {
-        return *m_RenderFinishedSemaphore;
-    }
-
     vk::Fence FrameData::getFenceInFlight() const
     {
         return *m_FenceInFlight;
@@ -91,10 +75,6 @@ namespace kailux
 
     void FrameData::createSyncObjects(const Context &context)
     {
-        m_ImageAvailableSemaphore = vk::raii::Semaphore(context.m_Device, vk::SemaphoreCreateInfo());
-
-        m_RenderFinishedSemaphore = vk::raii::Semaphore(context.m_Device, vk::SemaphoreCreateInfo());
-
         m_FenceInFlight = vk::raii::Fence(context.m_Device, vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled));
     }
 }

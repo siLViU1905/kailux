@@ -4,7 +4,8 @@
 
 namespace kailux
 {
-    SwapChain::SwapChain() : m_SwapChain(nullptr), m_ImageFormat(), m_Extent({}), m_SurfaceFormat({})
+    SwapChain::SwapChain() : m_SwapChain(nullptr), m_ImageFormat(), m_Extent({}), m_SurfaceFormat({}),
+                             m_SemaphoreIndex(0)
     {
     }
 
@@ -13,7 +14,10 @@ namespace kailux
                                                        m_ImageViews(std::move(other.m_ImageViews)),
                                                        m_ImageFormat(other.m_ImageFormat),
                                                        m_Extent(other.m_Extent),
-                                                       m_SurfaceFormat(other.m_SurfaceFormat)
+                                                       m_SurfaceFormat(other.m_SurfaceFormat),
+                                                       m_AcquireSemaphores(std::move(other.m_AcquireSemaphores)),
+                                                       m_PresentSemaphores(std::move(other.m_PresentSemaphores)),
+                                                       m_SemaphoreIndex(0)
     {
     }
 
@@ -27,6 +31,9 @@ namespace kailux
             m_ImageFormat = other.m_ImageFormat;
             m_Extent = other.m_Extent;
             m_SurfaceFormat = other.m_SurfaceFormat;
+            m_AcquireSemaphores = std::move(other.m_AcquireSemaphores);
+            m_PresentSemaphores = std::move(other.m_PresentSemaphores);
+            m_SemaphoreIndex = other.m_SemaphoreIndex;
         }
         return *this;
     }
@@ -88,6 +95,9 @@ namespace kailux
         swapChain.createImageViews(context);
         KAILUX_LOG_CHILD_CLR_CYAN("Image views created")
 
+        swapChain.createSyncObjects(context);
+        KAILUX_LOG_CHILD_CLR_CYAN("Semaphores created")
+
         return swapChain;
     }
 
@@ -104,9 +114,13 @@ namespace kailux
 
         m_ImageViews.clear();
         m_Images.clear();
+        m_AcquireSemaphores.clear();
+        m_PresentSemaphores.clear();
+        m_SemaphoreIndex = 0;
 
         createSwapChain(window, context);
         createImageViews(context);
+        createSyncObjects(context);
     }
 
     vk::Format SwapChain::getFormat() const
@@ -134,11 +148,12 @@ namespace kailux
         return static_cast<uint32_t>(m_Images.size());
     }
 
-    std::optional<uint32_t> SwapChain::acquire(vk::Semaphore imageAvailableSemaphore) const
+    std::optional<SwapChain::AcquireResult> SwapChain::acquire()
     {
+        vk::Semaphore semaphore = *m_AcquireSemaphores[m_SemaphoreIndex];
         auto [result, imageIndex] = m_SwapChain.acquireNextImage(
             UINT64_MAX,
-            imageAvailableSemaphore,
+            semaphore,
             nullptr
         );
 
@@ -148,7 +163,14 @@ namespace kailux
         if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR)
             throw std::runtime_error("Failed to acquire swap chain image");
 
-        return imageIndex;
+        m_SemaphoreIndex = (m_SemaphoreIndex + 1) % m_AcquireSemaphores.size();
+
+        return AcquireResult(imageIndex, semaphore);
+    }
+
+    vk::Semaphore SwapChain::getPresentSemaphore(uint32_t index) const
+    {
+        return *m_PresentSemaphores[index];
     }
 
     bool SwapChain::present(const Context &context, uint32_t imageIndex, vk::Semaphore renderFinishedSemaphore) const
@@ -198,9 +220,9 @@ namespace kailux
 
     vk::PresentModeKHR SwapChain::choose_swap_present_mode(const std::vector<vk::PresentModeKHR> &availablePresentModes)
     {
-        for (auto presentMode: availablePresentModes)
-            if (presentMode == vk::PresentModeKHR::eMailbox)
-                return presentMode;
+        // for (auto presentMode: availablePresentModes)
+        //     if (presentMode == vk::PresentModeKHR::eMailbox)
+        //         return presentMode;
 
         return vk::PresentModeKHR::eFifo;
     }
@@ -210,22 +232,34 @@ namespace kailux
         m_ImageViews.clear();
         m_ImageViews.reserve(m_Images.size());
 
-        for (auto image : m_Images)
+        for (auto image: m_Images)
         {
             vk::ImageViewCreateInfo viewInfo{
-                    {},
-                    image,
-                    vk::ImageViewType::e2D,
-                    m_ImageFormat,
-                    {},
-                    vk::ImageSubresourceRange{
-                        vk::ImageAspectFlagBits::eColor,
-                        0, 1,
-                        0, 1
-                    }
+                {},
+                image,
+                vk::ImageViewType::e2D,
+                m_ImageFormat,
+                {},
+                vk::ImageSubresourceRange{
+                    vk::ImageAspectFlagBits::eColor,
+                    0, 1,
+                    0, 1
+                }
             };
 
             m_ImageViews.emplace_back(context.m_Device, viewInfo);
+        }
+    }
+
+    void SwapChain::createSyncObjects(const Context &context)
+    {
+        m_AcquireSemaphores.reserve(m_Images.size());
+        m_PresentSemaphores.reserve(m_Images.size());
+
+        for (size_t i = 0; i < m_Images.size(); i++)
+        {
+            m_AcquireSemaphores.emplace_back(context.m_Device, vk::SemaphoreCreateInfo{});
+            m_PresentSemaphores.emplace_back(context.m_Device, vk::SemaphoreCreateInfo{});
         }
     }
 }

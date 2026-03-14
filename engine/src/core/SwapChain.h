@@ -22,7 +22,13 @@ namespace kailux
         vk::ImageView           getImageView(uint32_t index) const;
         uint32_t                getImageCount() const;
 
-        std::optional<uint32_t> acquire(vk::Semaphore imageAvailableSemaphore) const;
+        struct AcquireResult
+        {
+            uint32_t      imageIndex;
+            vk::Semaphore imageAvailableSemaphore;
+        };
+        std::optional<AcquireResult> acquire();
+        vk::Semaphore getPresentSemaphore(uint32_t index) const;
 
         bool present(const Context& context, uint32_t imageIndex, vk::Semaphore renderFinishedSemaphore) const;
 
@@ -33,6 +39,7 @@ namespace kailux
 
         void createSwapChain(Window& window, const Context& context);
         void createImageViews(const Context& context);
+        void createSyncObjects(const Context& context);
 
         vk::raii::SwapchainKHR           m_SwapChain;
         std::vector<vk::Image>           m_Images;
@@ -40,5 +47,8 @@ namespace kailux
         vk::Format                       m_ImageFormat;
         vk::Extent2D                     m_Extent;
         vk::SurfaceFormatKHR             m_SurfaceFormat;
+        std::vector<vk::raii::Semaphore> m_AcquireSemaphores;
+        std::vector<vk::raii::Semaphore> m_PresentSemaphores;
+        uint32_t                         m_SemaphoreIndex;
     };
 }

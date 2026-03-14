@@ -17,8 +17,6 @@ namespace kailux
         void reset(const Context& context) const;
 
         vk::CommandBuffer getCommandBuffer() const;
-        vk::Semaphore     getImageAvailableSemaphore() const;
-        vk::Semaphore     getRenderFinishedSemaphore() const;
         vk::Fence         getFenceInFlight() const;
 
     private:
@@ -28,8 +26,6 @@ namespace kailux
 
         vk::raii::CommandPool   m_CommandPool;
         vk::raii::CommandBuffer m_CommandBuffer;
-        vk::raii::Semaphore     m_ImageAvailableSemaphore;
-        vk::raii::Semaphore     m_RenderFinishedSemaphore;
         vk::raii::Fence         m_FenceInFlight;
     };
 }
