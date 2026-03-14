@@ -31,11 +31,12 @@ namespace kailux
         return *this;
     }
 
-    void SwapChain::createSwapChain(Window &window, Context &context)
+    void SwapChain::createSwapChain(Window &window, const Context &context)
     {
-        auto surfaceCapabilities = context.m_PhysicalDevice.getSurfaceCapabilitiesKHR(context.m_Surface);
+        auto surfaceCapabilities = context.getPhysicalDevice().getSurfaceCapabilitiesKHR(context.getSurface());
 
-        m_SurfaceFormat = choose_swap_surface_format(context.m_PhysicalDevice.getSurfaceFormatsKHR(context.m_Surface));
+        m_SurfaceFormat = choose_swap_surface_format(
+            context.getPhysicalDevice().getSurfaceFormatsKHR(context.getSurface()));
 
         m_Extent = choose_swap_extent(surfaceCapabilities, window);
 
@@ -54,7 +55,7 @@ namespace kailux
 
         vk::SwapchainCreateInfoKHR swapChainCreateInfo{
             vk::SwapchainCreateFlagsKHR(),
-            context.m_Surface,
+            context.getSurface(),
             minImageCount,
             m_SurfaceFormat.format,
             m_SurfaceFormat.colorSpace,
@@ -66,7 +67,8 @@ namespace kailux
 
         swapChainCreateInfo.preTransform = surfaceCapabilities.currentTransform;
         swapChainCreateInfo.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
-        swapChainCreateInfo.presentMode = choose_swap_present_mode(context.m_PhysicalDevice.getSurfacePresentModesKHR(context.m_Surface));
+        swapChainCreateInfo.presentMode = choose_swap_present_mode(
+            context.getPhysicalDevice().getSurfacePresentModesKHR(context.getSurface()));
         swapChainCreateInfo.clipped = true;
         swapChainCreateInfo.oldSwapchain = nullptr;
 
@@ -75,7 +77,7 @@ namespace kailux
         m_Images = m_SwapChain.getImages();
     }
 
-    SwapChain SwapChain::create(Window &window, Context &context)
+    SwapChain SwapChain::create(Window &window, const Context &context)
     {
         KAILUX_LOG_PARENT_CLR_CYAN("[SWAPCHAIN]")
         SwapChain swapChain;
@@ -83,7 +85,89 @@ namespace kailux
         swapChain.createSwapChain(window, context);
         KAILUX_LOG_CHILD_CLR_CYAN("Swap chain created")
 
+        swapChain.createImageViews(context);
+        KAILUX_LOG_CHILD_CLR_CYAN("Image views created")
+
         return swapChain;
+    }
+
+    void SwapChain::recreate(Window &window, const Context &context)
+    {
+        int width = 0, height = 0;
+        while (width == 0 || height == 0)
+        {
+            window.getFramebufferSize(width, height);
+            window.waitForEvents();
+        }
+
+        context.getDevice().waitIdle();
+
+        m_ImageViews.clear();
+        m_Images.clear();
+
+        createSwapChain(window, context);
+        createImageViews(context);
+    }
+
+    vk::Format SwapChain::getFormat() const
+    {
+        return m_ImageFormat;
+    }
+
+    vk::Extent2D SwapChain::getExtent() const
+    {
+        return m_Extent;
+    }
+
+    vk::Image SwapChain::getImage(uint32_t index) const
+    {
+        return m_Images[index];
+    }
+
+    vk::ImageView SwapChain::getImageView(uint32_t index) const
+    {
+        return *m_ImageViews[index];
+    }
+
+    uint32_t SwapChain::getImageCount() const
+    {
+        return static_cast<uint32_t>(m_Images.size());
+    }
+
+    std::optional<uint32_t> SwapChain::acquire(vk::Semaphore imageAvailableSemaphore) const
+    {
+        auto [result, imageIndex] = m_SwapChain.acquireNextImage(
+            UINT64_MAX,
+            imageAvailableSemaphore,
+            nullptr
+        );
+
+        if (result == vk::Result::eErrorOutOfDateKHR)
+            return std::nullopt;
+
+        if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR)
+            throw std::runtime_error("Failed to acquire swap chain image");
+
+        return imageIndex;
+    }
+
+    bool SwapChain::present(const Context &context, uint32_t imageIndex, vk::Semaphore renderFinishedSemaphore) const
+    {
+        vk::PresentInfoKHR presentInfo{
+            renderFinishedSemaphore,
+            *m_SwapChain,
+            imageIndex
+        };
+
+        vk::Result result = context.getGraphicsQueue().presentKHR(presentInfo);
+
+        if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR)
+            return false;
+
+        if (result != vk::Result::eSuccess)
+            throw std::runtime_error("Failed to present swap chain image");
+
+        return true;
     }
 
     vk::SurfaceFormatKHR SwapChain::choose_swap_surface_format(
@@ -119,5 +203,29 @@ namespace kailux
                 return presentMode;
 
         return vk::PresentModeKHR::eFifo;
+    }
+
+    void SwapChain::createImageViews(const Context &context)
+    {
+        m_ImageViews.clear();
+        m_ImageViews.reserve(m_Images.size());
+
+        for (auto image : m_Images)
+        {
+            vk::ImageViewCreateInfo viewInfo{
+                    {},
+                    image,
+                    vk::ImageViewType::e2D,
+                    m_ImageFormat,
+                    {},
+                    vk::ImageSubresourceRange{
+                        vk::ImageAspectFlagBits::eColor,
+                        0, 1,
+                        0, 1
+                    }
+            };
+
+            m_ImageViews.emplace_back(context.m_Device, viewInfo);
+        }
     }
 }

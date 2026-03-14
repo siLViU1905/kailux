@@ -3,6 +3,7 @@ add_library(kailux_engine STATIC
         src/core/Window.cpp
         src/core/SwapChain.cpp
         src/core/Engine.cpp
+        src/core/FrameData.cpp
 )
 
 target_include_directories(kailux_engine PUBLIC src)

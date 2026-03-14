@@ -12,14 +12,27 @@ namespace kailux
         SwapChain(SwapChain&& other) noexcept;
         SwapChain& operator=(SwapChain&& other) noexcept;
 
-        static SwapChain create(Window& window, Context& context);
+        static SwapChain create(Window& window, const Context& context);
+
+        void recreate(Window& window, const Context& context);
+
+        vk::Format              getFormat() const;
+        vk::Extent2D            getExtent() const;
+        vk::Image               getImage(uint32_t index) const;
+        vk::ImageView           getImageView(uint32_t index) const;
+        uint32_t                getImageCount() const;
+
+        std::optional<uint32_t> acquire(vk::Semaphore imageAvailableSemaphore) const;
+
+        bool present(const Context& context, uint32_t imageIndex, vk::Semaphore renderFinishedSemaphore) const;
 
     private:
         static vk::SurfaceFormatKHR choose_swap_surface_format(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
         static vk::Extent2D choose_swap_extent(const vk::SurfaceCapabilitiesKHR &capabilities, Window& window);
         static vk::PresentModeKHR choose_swap_present_mode(const std::vector<vk::PresentModeKHR> &availablePresentModes);
 
-        void createSwapChain(Window& window, Context& context);
+        void createSwapChain(Window& window, const Context& context);
+        void createImageViews(const Context& context);
 
         vk::raii::SwapchainKHR           m_SwapChain;
         std::vector<vk::Image>           m_Images;

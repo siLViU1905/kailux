@@ -63,6 +63,31 @@ namespace kailux
         return context;
     }
 
+    vk::PhysicalDevice Context::getPhysicalDevice() const
+    {
+        return *m_PhysicalDevice;
+    }
+
+    vk::Device Context::getDevice() const
+    {
+        return *m_Device;
+    }
+
+    vk::SurfaceKHR Context::getSurface() const
+    {
+        return *m_Surface;
+    }
+
+    vk::Queue Context::getGraphicsQueue() const
+    {
+        return *m_GraphicsQueue;
+    }
+
+    uint32_t Context::getGraphicsQueueFamilyIndex() const
+    {
+        return m_GraphicsQueueFamilyIndex;
+    }
+
     std::vector<const char *> Context::get_required_extensions()
     {
         uint32_t glfwExtensionCount = 0;

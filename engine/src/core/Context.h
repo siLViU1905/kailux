@@ -16,7 +16,14 @@ namespace kailux
 
         static Context create(Window& window);
 
+        vk::PhysicalDevice getPhysicalDevice() const;
+        vk::Device         getDevice() const;
+        vk::SurfaceKHR     getSurface() const;
+        vk::Queue          getGraphicsQueue() const;
+        uint32_t           getGraphicsQueueFamilyIndex() const;
+
         friend class SwapChain;
+        friend class FrameData;
 
     private:
         static std::vector<const char *> get_required_extensions();
