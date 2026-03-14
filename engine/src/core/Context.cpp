@@ -4,6 +4,8 @@
 #include <GLFW/glfw3.h>
 #include <print>
 
+#include "Logger.h"
+
 namespace kailux
 {
     Context::Context() : m_Context({}), m_Instance({}), m_DebugMessenger({}), m_PhysicalDevice({}), m_Device({}),
@@ -40,13 +42,23 @@ namespace kailux
 
     Context Context::create(Window &window)
     {
+        KAILUX_LOG_PARENT_CLR_YELLOW("[CONTEXT]")
         Context context;
 
         context.createInstance();
+        KAILUX_LOG_CHILD_CLR_YELLOW("Instance created")
+
         context.setupDebugMessenger();
+        KAILUX_LOG_CHILD_CLR_YELLOW("Debug messenger created")
+
         context.createSurface(window);
+        KAILUX_LOG_CHILD_CLR_YELLOW("Surface created")
+
         context.pickPhysicalDevice();
+        KAILUX_LOG_CHILD_CLR_YELLOW("Suitable physical device found")
+
         context.createLogicalDevice();
+        KAILUX_LOG_CHILD_CLR_YELLOW("Logical device created")
 
         return context;
     }
@@ -190,7 +202,6 @@ namespace kailux
                                                           found = found && extensionIter != extensions.end();
                                                       }
                                                       isSuitable = isSuitable && found;
-                                                      std::print("\n");
                                                       if (isSuitable)
                                                           m_PhysicalDevice = device;
 

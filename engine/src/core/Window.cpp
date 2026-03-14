@@ -1,6 +1,7 @@
 #include "Window.h"
 
 #include <stdexcept>
+#include "Logger.h"
 
 namespace kailux
 {
@@ -20,8 +21,10 @@ namespace kailux
 
     Window Window::create(int width, int height, std::string_view title)
     {
+        KAILUX_LOG_PARENT_CLR_BLUE("[WINDOW]")
         if (!glfwInit())
             throw std::runtime_error("Failed to init GLFW");
+        KAILUX_LOG_CHILD_CLR_BLUE("GLFW initialized")
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
@@ -32,6 +35,7 @@ namespace kailux
             glfwTerminate();
             throw std::runtime_error("Failed to create GLFW window");
         }
+        KAILUX_LOG_CHILD_CLR_BLUE("Window created")
 
         Window window(handle, width, height);
 
