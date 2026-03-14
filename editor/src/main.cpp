@@ -10,6 +10,8 @@ int main()
         window.updateUserPointer();
 
         auto engine = kailux::Engine::create(window);
+
+       engine.run(window);
     }
     catch (const std::exception& exception)
     {

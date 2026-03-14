@@ -92,5 +92,9 @@ namespace kailux
     void FrameData::createSyncObjects(const Context &context)
     {
         m_ImageAvailableSemaphore = vk::raii::Semaphore(context.m_Device, vk::SemaphoreCreateInfo());
+
+        m_RenderFinishedSemaphore = vk::raii::Semaphore(context.m_Device, vk::SemaphoreCreateInfo());
+
+        m_FenceInFlight = vk::raii::Fence(context.m_Device, vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled));
     }
 }

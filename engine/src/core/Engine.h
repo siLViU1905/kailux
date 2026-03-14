@@ -1,6 +1,7 @@
 #pragma once
 #include "Context.h"
 #include "SwapChain.h"
+#include "FrameData.h"
 
 namespace kailux
 {
@@ -15,8 +16,18 @@ namespace kailux
 
         static Engine create(Window& window);
 
+        void run(Window& window);
+
     private:
-        Context   m_Context;
-        SwapChain m_SwapChain;
+        void submit(const FrameData& frame) const;
+        void render(Window &window);
+
+        static constexpr uint32_t s_FramesInFlight = 2;
+
+        Context                                 m_Context;
+        SwapChain                               m_SwapChain;
+        std::array<FrameData, s_FramesInFlight> m_Frames;
+        uint32_t                                m_CurrentFrame;
+        uint32_t                                m_ImageIndex;
     };
 }

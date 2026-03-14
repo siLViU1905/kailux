@@ -4,6 +4,7 @@ add_library(kailux_engine STATIC
         src/core/SwapChain.cpp
         src/core/Engine.cpp
         src/core/FrameData.cpp
+        src/core/CommandRecorder.cpp
 )
 
 target_include_directories(kailux_engine PUBLIC src)

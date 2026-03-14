@@ -70,7 +70,7 @@ namespace kailux
         swapChainCreateInfo.presentMode = choose_swap_present_mode(
             context.getPhysicalDevice().getSurfacePresentModesKHR(context.getSurface()));
         swapChainCreateInfo.clipped = true;
-        swapChainCreateInfo.oldSwapchain = nullptr;
+        swapChainCreateInfo.oldSwapchain = *m_SwapChain;
 
         m_SwapChain = vk::raii::SwapchainKHR(context.m_Device, swapChainCreateInfo);
 
