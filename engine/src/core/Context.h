@@ -16,6 +16,8 @@ namespace kailux
 
         static Context create(Window& window);
 
+        friend class SwapChain;
+
     private:
         static std::vector<const char *> get_required_extensions();
         static VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
