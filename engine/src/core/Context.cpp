@@ -88,6 +88,18 @@ namespace kailux
         return m_GraphicsQueueFamilyIndex;
     }
 
+    uint32_t Context::findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const
+    {
+        auto memProperties = m_PhysicalDevice.getMemoryProperties();
+
+        for (uint32_t i = 0; i < memProperties.memoryTypeCount; ++i)
+            if ((typeFilter & (1 << i)) &&
+                (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
+                return i;
+
+        throw std::runtime_error("Failed to find suitable memory type");
+    }
+
     std::vector<const char *> Context::get_required_extensions()
     {
         uint32_t glfwExtensionCount = 0;

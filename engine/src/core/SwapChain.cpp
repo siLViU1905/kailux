@@ -4,15 +4,26 @@
 
 namespace kailux
 {
-    SwapChain::SwapChain() : m_SwapChain(nullptr), m_ImageFormat(), m_Extent({}), m_SurfaceFormat({}),
+    SwapChain::SwapChain() : m_SwapChain(nullptr),
+                             m_DepthImage({}),
+                             m_DepthImageMemory({}),
+                             m_DepthImageView({}),
+                             m_ImageFormat(),
+                             m_DepthFormat(),
+                             m_Extent({}),
+                             m_SurfaceFormat({}),
                              m_SemaphoreIndex(0)
     {
     }
 
     SwapChain::SwapChain(SwapChain &&other) noexcept : m_SwapChain(std::move(other.m_SwapChain)),
                                                        m_Images(std::move(other.m_Images)),
+                                                       m_DepthImage(std::move(other.m_DepthImage)),
+                                                       m_DepthImageMemory(std::move(other.m_DepthImageMemory)),
                                                        m_ImageViews(std::move(other.m_ImageViews)),
+                                                       m_DepthImageView(std::move(other.m_DepthImageView)),
                                                        m_ImageFormat(other.m_ImageFormat),
+                                                       m_DepthFormat(other.m_DepthFormat),
                                                        m_Extent(other.m_Extent),
                                                        m_SurfaceFormat(other.m_SurfaceFormat),
                                                        m_AcquireSemaphores(std::move(other.m_AcquireSemaphores)),
@@ -27,8 +38,12 @@ namespace kailux
         {
             m_SwapChain = std::move(other.m_SwapChain);
             m_Images = std::move(other.m_Images);
+            m_DepthImage = std::move(other.m_DepthImage);
+            m_DepthImageMemory = std::move(other.m_DepthImageMemory);
             m_ImageViews = std::move(other.m_ImageViews);
+            m_DepthImageView = std::move(other.m_DepthImageView);
             m_ImageFormat = other.m_ImageFormat;
+            m_DepthFormat = other.m_DepthFormat;
             m_Extent = other.m_Extent;
             m_SurfaceFormat = other.m_SurfaceFormat;
             m_AcquireSemaphores = std::move(other.m_AcquireSemaphores);
@@ -95,6 +110,9 @@ namespace kailux
         swapChain.createImageViews(context);
         KAILUX_LOG_CHILD_CLR_CYAN("Image views created")
 
+        swapChain.createDepthResources(context);
+        KAILUX_LOG_CHILD_CLR_CYAN("Depth resources created")
+
         swapChain.createSyncObjects(context);
         KAILUX_LOG_CHILD_CLR_CYAN("Semaphores created")
 
@@ -126,6 +144,11 @@ namespace kailux
     vk::Format SwapChain::getFormat() const
     {
         return m_ImageFormat;
+    }
+
+    vk::Format SwapChain::getDepthFormat() const
+    {
+        return m_DepthFormat;
     }
 
     vk::Extent2D SwapChain::getExtent() const
@@ -227,6 +250,24 @@ namespace kailux
         return vk::PresentModeKHR::eFifo;
     }
 
+    vk::Format SwapChain::find_depth_format(const Context &context)
+    {
+        constexpr std::array candidates = {
+            vk::Format::eD32Sfloat,
+            vk::Format::eD32SfloatS8Uint,
+            vk::Format::eD24UnormS8Uint
+        };
+
+        for (vk::Format format: candidates)
+        {
+            auto props = context.getPhysicalDevice().getFormatProperties(format);
+            if (props.optimalTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment)
+                return format;
+        }
+
+        throw std::runtime_error("Couldnt find a supported depth format");
+    }
+
     void SwapChain::createImageViews(const Context &context)
     {
         m_ImageViews.clear();
@@ -249,6 +290,43 @@ namespace kailux
 
             m_ImageViews.emplace_back(context.m_Device, viewInfo);
         }
+    }
+
+    void SwapChain::createDepthResources(const Context &context)
+    {
+        m_DepthFormat = find_depth_format(context);
+
+        vk::ImageCreateInfo imageInfo{
+            {},
+            vk::ImageType::e2D,
+            m_DepthFormat,
+            vk::Extent3D{m_Extent.width, m_Extent.height, 1},
+            1, 1,
+            vk::SampleCountFlagBits::e1,
+            vk::ImageTiling::eOptimal,
+            vk::ImageUsageFlagBits::eDepthStencilAttachment
+        };
+
+        m_DepthImage = vk::raii::Image(context.m_Device, imageInfo);
+
+        vk::MemoryRequirements memReqs = m_DepthImage.getMemoryRequirements();
+        vk::MemoryAllocateInfo allocInfo{
+            memReqs.size,
+            context.findMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)
+        };
+        m_DepthImageMemory = vk::raii::DeviceMemory(context.m_Device, allocInfo);
+        m_DepthImage.bindMemory(*m_DepthImageMemory, 0);
+
+        vk::ImageViewCreateInfo viewInfo{
+            {},
+            *m_DepthImage,
+            vk::ImageViewType::e2D,
+            m_DepthFormat,
+            {},
+            vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1}
+        };
+
+        m_DepthImageView = vk::raii::ImageView(context.m_Device, viewInfo);
     }
 
     void SwapChain::createSyncObjects(const Context &context)

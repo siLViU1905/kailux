@@ -22,6 +22,8 @@ namespace kailux
         vk::Queue          getGraphicsQueue() const;
         uint32_t           getGraphicsQueueFamilyIndex() const;
 
+        uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const;
+
         friend class SwapChain;
         friend class FrameData;
         friend class ImGuiBackend;
