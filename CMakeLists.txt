@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 23)
 
 find_package(Vulkan 1.4 REQUIRED)
 find_package(glfw3 REQUIRED)
+find_package(imgui REQUIRED)
 
 add_subdirectory(engine)
 add_subdirectory(editor)

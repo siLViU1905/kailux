@@ -13,20 +13,20 @@ class SLinkRecipe(ConanFile):
 
     def requirements(self):
         self.requires("glfw/3.4")
-        # self.requires("imgui/1.92.5")
+        self.requires("imgui/1.92.5")
         # self.requires("stb/cci.20240531")
 
-    # def configure(self):
-        # self.options["imgui"].with_glfw = True
-        # self.options["imgui"].with_vulkan = True
+    def configure(self):
+        self.options["imgui"].with_glfw = True
+        self.options["imgui"].with_vulkan = True
 
     def layout(self):
         cmake_layout(self)
 
-    # def generate(self):
-        # imgui = self.dependencies["imgui"]
-        # bindings_dir = os.path.join(imgui.package_folder, "res", "bindings")
-        # dest_dir = os.path.join(self.source_folder, "engine", "src", "core", "imgui_bindings")
-        #
-        # for pattern in ["*imgui_impl_glfw*", "*imgui_impl_vulkan*"]:
-        #     copy(self, pattern, bindings_dir, dest_dir)
+    def generate(self):
+        imgui = self.dependencies["imgui"]
+        bindings_dir = os.path.join(imgui.package_folder, "res", "bindings")
+        dest_dir = os.path.join(self.source_folder, "engine", "src", "core", "imgui_backend", "bindings")
+
+        for pattern in ["*imgui_impl_glfw*", "*imgui_impl_vulkan*"]:
+            copy(self, pattern, bindings_dir, dest_dir)
