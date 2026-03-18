@@ -33,6 +33,7 @@ namespace kailux
     {
     public:
         CommandRecorder(vk::CommandBuffer cmd);
+        CommandRecorder(vk::CommandBuffer cmd, const vk::CommandBufferInheritanceRenderingInfo& inheritance);
         ~CommandRecorder();
 
         CommandRecorder(const CommandRecorder&) = delete;
@@ -40,7 +41,7 @@ namespace kailux
         CommandRecorder(CommandRecorder&&) = delete;
         CommandRecorder& operator=(CommandRecorder&&) = delete;
 
-        void barrier(const ImageBarrier& info);
+        void barrier(const ImageBarrier& info) const;
 
         void beginRendering(const RenderingInfo& info);
         void endRendering();
@@ -53,5 +54,6 @@ namespace kailux
     private:
         vk::CommandBuffer m_Cmd;
         bool              m_InRendering;
+        bool              m_IsSecondary;
     };
 }

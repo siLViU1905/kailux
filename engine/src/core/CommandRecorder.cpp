@@ -2,7 +2,7 @@
 
 namespace kailux
 {
-    CommandRecorder::CommandRecorder(vk::CommandBuffer cmd):m_Cmd(cmd), m_InRendering(false)
+    CommandRecorder::CommandRecorder(vk::CommandBuffer cmd):m_Cmd(cmd), m_InRendering(false), m_IsSecondary(false)
     {
         vk::CommandBufferBeginInfo beginInfo{
             vk::CommandBufferUsageFlagBits::eOneTimeSubmit
@@ -11,15 +11,29 @@ namespace kailux
         m_Cmd.begin(beginInfo);
     }
 
+    CommandRecorder::CommandRecorder(vk::CommandBuffer cmd,
+        const vk::CommandBufferInheritanceRenderingInfo &inheritance): m_Cmd(cmd), m_InRendering(false), m_IsSecondary(true)
+    {
+        vk::CommandBufferInheritanceInfo inheritanceInfo;
+        inheritanceInfo.pNext = &inheritance;
+
+        vk::CommandBufferBeginInfo beginInfo{
+            vk::CommandBufferUsageFlagBits::eOneTimeSubmit | vk::CommandBufferUsageFlagBits::eRenderPassContinue,
+            &inheritanceInfo
+        };
+
+        m_Cmd.begin(beginInfo);
+    }
+
     CommandRecorder::~CommandRecorder()
     {
-        if (m_InRendering)
+        if (m_InRendering && !m_IsSecondary)
             m_Cmd.endRendering();
 
         m_Cmd.end();
     }
 
-    void CommandRecorder::barrier(const ImageBarrier &info)
+    void CommandRecorder::barrier(const ImageBarrier &info) const
     {
         vk::ImageMemoryBarrier2 imageBarrier{
             info.srcStage,
@@ -47,6 +61,9 @@ namespace kailux
 
     void CommandRecorder::beginRendering(const RenderingInfo &info)
     {
+        if (m_IsSecondary)
+            return;
+
         vk::RenderingAttachmentInfo colorAttachment{
             info.colorView,
             info.colorLayout,
