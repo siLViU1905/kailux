@@ -1,5 +1,7 @@
 #include "CommandRecorder.h"
 
+#include "Logger.h"
+
 namespace kailux
 {
     CommandRecorder::CommandRecorder(vk::CommandBuffer cmd):m_Cmd(cmd), m_InRendering(false), m_IsSecondary(false)
@@ -62,7 +64,10 @@ namespace kailux
     void CommandRecorder::beginRendering(const RenderingInfo &info)
     {
         if (m_IsSecondary)
+        {
+            KAILUX_LOG_WARNING("[CommandRecorder]", "beginRendering() was called from a secondary buffer")
             return;
+        }
 
         vk::RenderingAttachmentInfo colorAttachment{
             info.colorView,
@@ -107,7 +112,10 @@ namespace kailux
     void CommandRecorder::endRendering()
     {
         if (!m_InRendering|| m_IsSecondary)
+        {
+            KAILUX_LOG_WARNING("[CommandRecorder]", "endRendering() was called while the command was rendering or from a secondary buffer")
             return;
+        }
 
         m_Cmd.endRendering();
         m_InRendering = false;

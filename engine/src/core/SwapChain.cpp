@@ -140,6 +140,7 @@ namespace kailux
         createImageViews(context);
         createDepthResources(context);
         createSyncObjects(context);
+        KAILUX_LOG_INFO("[Swapchain]", std::format("Recreated with extent: x:{}, y:{}", m_Extent.width, m_Extent.height))
     }
 
     vk::Format SwapChain::getFormat() const
