@@ -1,6 +1,7 @@
 #include "Engine.h"
 
 #include "CommandRecorder.h"
+#include "Logger.h"
 
 namespace kailux
 {
@@ -135,7 +136,7 @@ namespace kailux
         m_CurrentFrame = (m_CurrentFrame + 1) % s_FramesInFlight;
     }
 
-    void Engine::recordImGuiData(const FrameData& frame)
+    void Engine::recordImGuiData(const FrameData &frame)
     {
         auto format = m_Swapchain.getFormat();
         auto inheritanceInfo = vk::CommandBufferInheritanceRenderingInfo(
@@ -156,11 +157,25 @@ namespace kailux
         m_ImGuiBackend.recordDrawData(recorder.getCommandBuffer());
     }
 
+    void Engine::handleEvent(Event event)
+    {
+        std::visit(
+            [](auto e)
+            {
+                KAILUX_LOG_INFO("[Engine]", e.toString())
+            },
+            event
+        );
+    }
+
     void Engine::run(Window &window)
     {
         while (window.isOpen())
         {
             window.pollEvents();
+
+            if (auto event = window.getEvent())
+                handleEvent(*event);
 
             if (window.isMinimized())
                 continue;

@@ -1,5 +1,5 @@
 #include <print>
-#include <core/Window.h>
+#include <core/window/Window.h>
 #include <core/Engine.h>
 
 int main()

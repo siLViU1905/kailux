@@ -3,6 +3,7 @@
 #include "Swapchain.h"
 #include "FrameData.h"
 #include "imgui_backend/ImGuiBackend.h"
+#include "window/Event.h"
 
 namespace kailux
 {
@@ -19,6 +20,8 @@ namespace kailux
         void submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
         void render(Window &window);
         void recordImGuiData(const FrameData& frame);
+
+        void handleEvent(Event event);
 
         static constexpr uint32_t s_FramesInFlight = 2;
 

@@ -1,6 +1,6 @@
 add_library(kailux_engine STATIC
         src/core/Context.cpp
-        src/core/Window.cpp
+        src/core/window/Window.cpp
         src/core/Swapchain.cpp
         src/core/Engine.cpp
         src/core/FrameData.cpp
@@ -8,6 +8,7 @@ add_library(kailux_engine STATIC
         src/core/imgui_backend/ImGuiBackend.cpp
         src/core/imgui_backend/bindings/imgui_impl_glfw.cpp
         src/core/imgui_backend/bindings/imgui_impl_vulkan.cpp
+        src/core/window/Event.cpp
 )
 
 target_include_directories(kailux_engine PUBLIC src)

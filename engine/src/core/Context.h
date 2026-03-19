@@ -1,7 +1,7 @@
 #pragma once
 #include <vulkan/vulkan_raii.hpp>
 
-#include "Window.h"
+#include "window/Window.h"
 
 namespace kailux
 {
