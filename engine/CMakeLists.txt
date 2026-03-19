@@ -9,6 +9,8 @@ add_library(kailux_engine STATIC
         src/core/imgui_backend/bindings/imgui_impl_glfw.cpp
         src/core/imgui_backend/bindings/imgui_impl_vulkan.cpp
         src/core/window/Event.cpp
+        src/core/buffer/Buffer.cpp
+        src/core/buffer/BufferAllocator.cpp
 )
 
 target_include_directories(kailux_engine PUBLIC src)

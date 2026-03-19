@@ -23,6 +23,7 @@ namespace kailux
         friend class Swapchain;
         friend class FrameData;
         friend class ImGuiBackend;
+        friend class BufferAllocator;
 
     private:
         static std::vector<const char *> get_required_extensions();
