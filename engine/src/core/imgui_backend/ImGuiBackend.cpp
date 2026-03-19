@@ -76,6 +76,11 @@ namespace kailux
         ImGui::Render();
     }
 
+    void ImGuiBackend::recordDrawData(vk::CommandBuffer cmd) const
+    {
+        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd);
+    }
+
     void ImGuiBackend::shutdown()
     {
         ImGui_ImplVulkan_Shutdown();

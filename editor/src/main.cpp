@@ -11,7 +11,7 @@ int main()
 
         auto engine = kailux::Engine::create(window);
 
-       engine.run(window);
+        engine.run(window);
     }
     catch (const std::exception& exception)
     {

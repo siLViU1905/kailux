@@ -19,6 +19,7 @@ namespace kailux
 
         void beginFrame();
         void endFrame();
+        void recordDrawData(vk::CommandBuffer cmd) const;
 
         void shutdown();
     private:

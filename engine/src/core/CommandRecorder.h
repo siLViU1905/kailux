@@ -18,15 +18,16 @@ namespace kailux
 
     struct RenderingInfo
     {
-        vk::ImageView   colorView;
-        vk::Extent2D    extent;
-        vk::ImageLayout colorLayout  = vk::ImageLayout::eColorAttachmentOptimal;
-        vk::AttachmentLoadOp  loadOp  = vk::AttachmentLoadOp::eClear;
-        vk::AttachmentStoreOp storeOp = vk::AttachmentStoreOp::eStore;
-        vk::ClearColorValue   clearColor { std::array{ 0.f, 0.f, 0.f, 1.f } };
+        vk::ImageView          colorView;
+        vk::Extent2D           extent;
+        vk::ImageLayout        colorLayout  = vk::ImageLayout::eColorAttachmentOptimal;
+        vk::AttachmentLoadOp   loadOp  = vk::AttachmentLoadOp::eClear;
+        vk::AttachmentStoreOp  storeOp = vk::AttachmentStoreOp::eStore;
+        vk::ClearColorValue    clearColor { std::array{ 0.f, 0.f, 0.f, 1.f } };
 
-        vk::ImageView   depthView   {};
-        vk::ImageLayout depthLayout = vk::ImageLayout::eDepthAttachmentOptimal;
+        vk::ImageView          depthView{};
+        vk::ImageLayout        depthLayout = vk::ImageLayout::eDepthAttachmentOptimal;
+        vk::RenderingFlagBits  renderFlags{};
     };
 
     class CommandRecorder

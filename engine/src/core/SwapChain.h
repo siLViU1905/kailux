@@ -21,6 +21,7 @@ namespace kailux
         vk::Extent2D            getExtent() const;
         vk::Image               getImage(uint32_t index) const;
         vk::ImageView           getImageView(uint32_t index) const;
+        vk::ImageView           getDepthImageView() const;
         uint32_t                getImageCount() const;
 
         struct AcquireResult

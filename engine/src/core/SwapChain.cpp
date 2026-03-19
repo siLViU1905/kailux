@@ -138,6 +138,7 @@ namespace kailux
 
         createSwapChain(window, context);
         createImageViews(context);
+        createDepthResources(context);
         createSyncObjects(context);
     }
 
@@ -164,6 +165,11 @@ namespace kailux
     vk::ImageView SwapChain::getImageView(uint32_t index) const
     {
         return *m_ImageViews[index];
+    }
+
+    vk::ImageView SwapChain::getDepthImageView() const
+    {
+        return *m_DepthImageView;
     }
 
     uint32_t SwapChain::getImageCount() const

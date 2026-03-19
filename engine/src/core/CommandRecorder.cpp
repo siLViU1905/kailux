@@ -76,7 +76,7 @@ namespace kailux
         };
 
         vk::RenderingInfo renderingInfo{
-                {},
+                info.renderFlags,
                 vk::Rect2D{ {0, 0}, info.extent },
                 1,
                 0,
@@ -106,7 +106,7 @@ namespace kailux
 
     void CommandRecorder::endRendering()
     {
-        if (!m_InRendering)
+        if (!m_InRendering|| m_IsSecondary)
             return;
 
         m_Cmd.endRendering();
