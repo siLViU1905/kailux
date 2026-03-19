@@ -15,7 +15,7 @@ namespace kailux
         ImGuiBackend& operator=(ImGuiBackend&& other) noexcept;
         ~ImGuiBackend();
 
-        static ImGuiBackend create(Window& window, const Context& context, const SwapChain& swapchain);
+        static ImGuiBackend create(Window& window, const Context& context, const Swapchain& swapchain);
 
         void beginFrame();
         void endFrame();
@@ -25,7 +25,7 @@ namespace kailux
     private:
         void createImGuiContext();
         void createDescriptorPool(const Context& context);
-        void createImGuiVulkanContext(Window& window, const Context& context, const SwapChain& swapchain);
+        void createImGuiVulkanContext(Window& window, const Context& context, const Swapchain& swapchain);
 
         ImGuiContext*            p_Context;
         ImGuiIO*                 p_IO;

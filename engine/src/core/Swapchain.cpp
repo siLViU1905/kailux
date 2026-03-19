@@ -1,10 +1,10 @@
-#include "SwapChain.h"
+#include "Swapchain.h"
 
 #include "Logger.h"
 
 namespace kailux
 {
-    SwapChain::SwapChain() : m_SwapChain(nullptr),
+    Swapchain::Swapchain() : m_Swapchain(nullptr),
                              m_DepthImage({}),
                              m_DepthImageMemory({}),
                              m_DepthImageView({}),
@@ -16,7 +16,7 @@ namespace kailux
     {
     }
 
-    SwapChain::SwapChain(SwapChain &&other) noexcept : m_SwapChain(std::move(other.m_SwapChain)),
+    Swapchain::Swapchain(Swapchain &&other) noexcept : m_Swapchain(std::move(other.m_Swapchain)),
                                                        m_Images(std::move(other.m_Images)),
                                                        m_DepthImage(std::move(other.m_DepthImage)),
                                                        m_DepthImageMemory(std::move(other.m_DepthImageMemory)),
@@ -32,11 +32,11 @@ namespace kailux
     {
     }
 
-    SwapChain &SwapChain::operator=(SwapChain &&other) noexcept
+    Swapchain &Swapchain::operator=(Swapchain &&other) noexcept
     {
         if (this != &other)
         {
-            m_SwapChain = std::move(other.m_SwapChain);
+            m_Swapchain = std::move(other.m_Swapchain);
             m_Images = std::move(other.m_Images);
             m_DepthImage = std::move(other.m_DepthImage);
             m_DepthImageMemory = std::move(other.m_DepthImageMemory);
@@ -53,7 +53,7 @@ namespace kailux
         return *this;
     }
 
-    void SwapChain::createSwapChain(Window &window, const Context &context)
+    void Swapchain::createSwapchain(Window &window, const Context &context)
     {
         auto surfaceCapabilities = context.getPhysicalDevice().getSurfaceCapabilitiesKHR(context.getSurface());
 
@@ -92,19 +92,19 @@ namespace kailux
         swapChainCreateInfo.presentMode = choose_swap_present_mode(
             context.getPhysicalDevice().getSurfacePresentModesKHR(context.getSurface()));
         swapChainCreateInfo.clipped = true;
-        swapChainCreateInfo.oldSwapchain = *m_SwapChain;
+        swapChainCreateInfo.oldSwapchain = *m_Swapchain;
 
-        m_SwapChain = vk::raii::SwapchainKHR(context.m_Device, swapChainCreateInfo);
+        m_Swapchain = vk::raii::SwapchainKHR(context.m_Device, swapChainCreateInfo);
 
-        m_Images = m_SwapChain.getImages();
+        m_Images = m_Swapchain.getImages();
     }
 
-    SwapChain SwapChain::create(Window &window, const Context &context)
+    Swapchain Swapchain::create(Window &window, const Context &context)
     {
         KAILUX_LOG_PARENT_CLR_CYAN("[SWAPCHAIN]")
-        SwapChain swapChain;
+        Swapchain swapChain;
 
-        swapChain.createSwapChain(window, context);
+        swapChain.createSwapchain(window, context);
         KAILUX_LOG_CHILD_CLR_CYAN("Swap chain created")
 
         swapChain.createImageViews(context);
@@ -119,7 +119,7 @@ namespace kailux
         return swapChain;
     }
 
-    void SwapChain::recreate(Window &window, const Context &context)
+    void Swapchain::recreate(Window &window, const Context &context)
     {
         int width = 0, height = 0;
         while (width == 0 || height == 0)
@@ -136,52 +136,52 @@ namespace kailux
         m_PresentSemaphores.clear();
         m_SemaphoreIndex = 0;
 
-        createSwapChain(window, context);
+        createSwapchain(window, context);
         createImageViews(context);
         createDepthResources(context);
         createSyncObjects(context);
         KAILUX_LOG_INFO("[Swapchain]", std::format("Recreated with extent: x:{}, y:{}", m_Extent.width, m_Extent.height))
     }
 
-    vk::Format SwapChain::getFormat() const
+    vk::Format Swapchain::getFormat() const
     {
         return m_ImageFormat;
     }
 
-    vk::Format SwapChain::getDepthFormat() const
+    vk::Format Swapchain::getDepthFormat() const
     {
         return m_DepthFormat;
     }
 
-    vk::Extent2D SwapChain::getExtent() const
+    vk::Extent2D Swapchain::getExtent() const
     {
         return m_Extent;
     }
 
-    vk::Image SwapChain::getImage(uint32_t index) const
+    vk::Image Swapchain::getImage(uint32_t index) const
     {
         return m_Images[index];
     }
 
-    vk::ImageView SwapChain::getImageView(uint32_t index) const
+    vk::ImageView Swapchain::getImageView(uint32_t index) const
     {
         return *m_ImageViews[index];
     }
 
-    vk::ImageView SwapChain::getDepthImageView() const
+    vk::ImageView Swapchain::getDepthImageView() const
     {
         return *m_DepthImageView;
     }
 
-    uint32_t SwapChain::getImageCount() const
+    uint32_t Swapchain::getImageCount() const
     {
         return static_cast<uint32_t>(m_Images.size());
     }
 
-    std::optional<SwapChain::AcquireResult> SwapChain::acquire()
+    std::optional<Swapchain::AcquireResult> Swapchain::acquire()
     {
         vk::Semaphore semaphore = *m_AcquireSemaphores[m_SemaphoreIndex];
-        auto [result, imageIndex] = m_SwapChain.acquireNextImage(
+        auto [result, imageIndex] = m_Swapchain.acquireNextImage(
             UINT64_MAX,
             semaphore,
             nullptr
@@ -198,16 +198,16 @@ namespace kailux
         return AcquireResult(imageIndex, semaphore);
     }
 
-    vk::Semaphore SwapChain::getPresentSemaphore(uint32_t index) const
+    vk::Semaphore Swapchain::getPresentSemaphore(uint32_t index) const
     {
         return *m_PresentSemaphores[index];
     }
 
-    bool SwapChain::present(const Context &context, uint32_t imageIndex, vk::Semaphore renderFinishedSemaphore) const
+    bool Swapchain::present(const Context &context, uint32_t imageIndex, vk::Semaphore renderFinishedSemaphore) const
     {
         vk::PresentInfoKHR presentInfo{
             renderFinishedSemaphore,
-            *m_SwapChain,
+            *m_Swapchain,
             imageIndex
         };
 
@@ -222,7 +222,7 @@ namespace kailux
         return true;
     }
 
-    vk::SurfaceFormatKHR SwapChain::choose_swap_surface_format(
+    vk::SurfaceFormatKHR Swapchain::choose_swap_surface_format(
         const std::vector<vk::SurfaceFormatKHR> &availableFormats)
     {
         for (auto format: availableFormats)
@@ -233,7 +233,7 @@ namespace kailux
         return availableFormats[0];
     }
 
-    vk::Extent2D SwapChain::choose_swap_extent(const vk::SurfaceCapabilitiesKHR &capabilities, Window &window)
+    vk::Extent2D Swapchain::choose_swap_extent(const vk::SurfaceCapabilitiesKHR &capabilities, Window &window)
     {
         if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
             return capabilities.currentExtent;
@@ -248,7 +248,7 @@ namespace kailux
         };
     }
 
-    vk::PresentModeKHR SwapChain::choose_swap_present_mode(const std::vector<vk::PresentModeKHR> &availablePresentModes)
+    vk::PresentModeKHR Swapchain::choose_swap_present_mode(const std::vector<vk::PresentModeKHR> &availablePresentModes)
     {
         // for (auto presentMode: availablePresentModes)
         //     if (presentMode == vk::PresentModeKHR::eMailbox)
@@ -257,7 +257,7 @@ namespace kailux
         return vk::PresentModeKHR::eFifo;
     }
 
-    vk::Format SwapChain::find_depth_format(const Context &context)
+    vk::Format Swapchain::find_depth_format(const Context &context)
     {
         constexpr std::array candidates = {
             vk::Format::eD32Sfloat,
@@ -275,7 +275,7 @@ namespace kailux
         throw std::runtime_error("Couldnt find a supported depth format");
     }
 
-    void SwapChain::createImageViews(const Context &context)
+    void Swapchain::createImageViews(const Context &context)
     {
         m_ImageViews.clear();
         m_ImageViews.reserve(m_Images.size());
@@ -299,7 +299,7 @@ namespace kailux
         }
     }
 
-    void SwapChain::createDepthResources(const Context &context)
+    void Swapchain::createDepthResources(const Context &context)
     {
         m_DepthFormat = find_depth_format(context);
 
@@ -336,7 +336,7 @@ namespace kailux
         m_DepthImageView = vk::raii::ImageView(context.m_Device, viewInfo);
     }
 
-    void SwapChain::createSyncObjects(const Context &context)
+    void Swapchain::createSyncObjects(const Context &context)
     {
         m_AcquireSemaphores.reserve(m_Images.size());
         m_PresentSemaphores.reserve(m_Images.size());

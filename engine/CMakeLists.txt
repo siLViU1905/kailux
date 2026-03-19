@@ -1,7 +1,7 @@
 add_library(kailux_engine STATIC
         src/core/Context.cpp
         src/core/Window.cpp
-        src/core/SwapChain.cpp
+        src/core/Swapchain.cpp
         src/core/Engine.cpp
         src/core/FrameData.cpp
         src/core/CommandRecorder.cpp

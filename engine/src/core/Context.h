@@ -24,7 +24,7 @@ namespace kailux
 
         uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const;
 
-        friend class SwapChain;
+        friend class Swapchain;
         friend class FrameData;
         friend class ImGuiBackend;
 

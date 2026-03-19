@@ -1,6 +1,6 @@
 #pragma once
 #include "Context.h"
-#include "SwapChain.h"
+#include "Swapchain.h"
 #include "FrameData.h"
 #include "imgui_backend/ImGuiBackend.h"
 
@@ -27,7 +27,7 @@ namespace kailux
         static constexpr uint32_t s_FramesInFlight = 2;
 
         Context                                 m_Context;
-        SwapChain                               m_SwapChain;
+        Swapchain                               m_Swapchain;
         ImGuiBackend                            m_ImGuiBackend;
         std::array<FrameData, s_FramesInFlight> m_Frames;
         uint32_t                                m_CurrentFrame;

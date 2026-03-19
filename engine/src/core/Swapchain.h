@@ -3,16 +3,16 @@
 
 namespace kailux
 {
-    class SwapChain
+    class Swapchain
     {
     public:
-        SwapChain();
-        SwapChain(const SwapChain&) = delete;
-        SwapChain& operator=(const SwapChain&) = delete;
-        SwapChain(SwapChain&& other) noexcept;
-        SwapChain& operator=(SwapChain&& other) noexcept;
+        Swapchain();
+        Swapchain(const Swapchain&) = delete;
+        Swapchain& operator=(const Swapchain&) = delete;
+        Swapchain(Swapchain&& other) noexcept;
+        Swapchain& operator=(Swapchain&& other) noexcept;
 
-        static SwapChain create(Window& window, const Context& context);
+        static Swapchain create(Window& window, const Context& context);
 
         void recreate(Window& window, const Context& context);
 
@@ -40,12 +40,12 @@ namespace kailux
         static vk::PresentModeKHR choose_swap_present_mode(const std::vector<vk::PresentModeKHR> &availablePresentModes);
         static vk::Format find_depth_format(const Context& context);
 
-        void createSwapChain(Window& window, const Context& context);
+        void createSwapchain(Window& window, const Context& context);
         void createImageViews(const Context& context);
         void createDepthResources(const Context& context);
         void createSyncObjects(const Context& context);
 
-        vk::raii::SwapchainKHR           m_SwapChain;
+        vk::raii::SwapchainKHR           m_Swapchain;
         std::vector<vk::Image>           m_Images;
         vk::raii::Image                  m_DepthImage;
         vk::raii::DeviceMemory           m_DepthImageMemory;
