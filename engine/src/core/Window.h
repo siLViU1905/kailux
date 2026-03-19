@@ -1,4 +1,5 @@
 #pragma once
+#include "Core.h"
 #include <string_view>
 #include <GLFW/glfw3.h>
 
@@ -7,11 +8,7 @@ namespace kailux
     class Window
     {
     public:
-        Window();
-        Window(const Window&) = delete;
-        Window& operator=(const Window&) = delete;
-        Window(Window&& other) noexcept;
-        Window& operator=(Window&& other) noexcept;
+        KAILUX_DECLARE_NON_COPYABLE_MOVABLE(Window)
         ~Window();
 
         static Window create(int width, int height, std::string_view title);

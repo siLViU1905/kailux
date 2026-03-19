@@ -9,11 +9,7 @@ namespace kailux
     class Engine
     {
     public:
-        Engine();
-        Engine(const Engine&) = delete;
-        Engine& operator=(const Engine&) = delete;
-        Engine(Engine&& other) noexcept;
-        Engine& operator=(Engine&& other) noexcept;
+        KAILUX_DECLARE_NON_COPYABLE_MOVABLE(Engine)
 
         static Engine create(Window& window);
 

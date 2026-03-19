@@ -6,11 +6,7 @@ namespace kailux
     class Swapchain
     {
     public:
-        Swapchain();
-        Swapchain(const Swapchain&) = delete;
-        Swapchain& operator=(const Swapchain&) = delete;
-        Swapchain(Swapchain&& other) noexcept;
-        Swapchain& operator=(Swapchain&& other) noexcept;
+        KAILUX_DECLARE_NON_COPYABLE_MOVABLE(Swapchain)
 
         static Swapchain create(Window& window, const Context& context);
 

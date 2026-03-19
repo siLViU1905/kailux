@@ -8,11 +8,7 @@ namespace kailux
     class ImGuiBackend
     {
     public:
-        ImGuiBackend();
-        ImGuiBackend(const ImGuiBackend&) = delete;
-        ImGuiBackend& operator=(const ImGuiBackend&) = delete;
-        ImGuiBackend(ImGuiBackend&& other) noexcept;
-        ImGuiBackend& operator=(ImGuiBackend&& other) noexcept;
+        KAILUX_DECLARE_NON_COPYABLE_MOVABLE(ImGuiBackend)
         ~ImGuiBackend();
 
         static ImGuiBackend create(Window& window, const Context& context, const Swapchain& swapchain);

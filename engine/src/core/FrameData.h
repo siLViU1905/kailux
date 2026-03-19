@@ -6,11 +6,7 @@ namespace kailux
     class FrameData
     {
     public:
-        FrameData();
-        FrameData(const FrameData&) = delete;
-        FrameData& operator=(const FrameData&) = delete;
-        FrameData(FrameData&& other) noexcept;
-        FrameData& operator=(FrameData&& other) noexcept;
+        KAILUX_DECLARE_NON_COPYABLE_MOVABLE(FrameData)
 
         static FrameData create(const Context &context);
 

@@ -8,11 +8,7 @@ namespace kailux
     class Context
     {
     public:
-        Context();
-        Context(const Context&) = delete;
-        Context& operator=(const Context&) = delete;
-        Context(Context&& other) noexcept;
-        Context& operator=(Context&& other) noexcept;
+        KAILUX_DECLARE_NON_COPYABLE_MOVABLE(Context)
 
         static Context create(Window& window);
 
