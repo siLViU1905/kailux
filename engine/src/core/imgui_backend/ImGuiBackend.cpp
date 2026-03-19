@@ -2,7 +2,7 @@
 #include "../Logger.h"
 #include "bindings/imgui_impl_glfw.h"
 #include "bindings/imgui_impl_vulkan.h"
-#include "../SwapChain.h"
+#include "../Swapchain.h"
 
 namespace kailux
 {
@@ -45,7 +45,7 @@ namespace kailux
         }
     }
 
-    ImGuiBackend ImGuiBackend::create(Window& window, const Context& context, const SwapChain& swapchain)
+    ImGuiBackend ImGuiBackend::create(Window& window, const Context& context, const Swapchain& swapchain)
     {
         KAILUX_LOG_PARENT_CLR_MAGENTA("[IMGUI BACKEND]")
         ImGuiBackend imguiBackend;
@@ -125,7 +125,7 @@ namespace kailux
         p_IO = &ImGui::GetIO();
     }
 
-    void ImGuiBackend::createImGuiVulkanContext(Window& window, const Context& context, const SwapChain& swapchain)
+    void ImGuiBackend::createImGuiVulkanContext(Window& window, const Context& context, const Swapchain& swapchain)
     {
         ImGui_ImplGlfw_InitForVulkan(window.getGLFWWindow(), true);
 

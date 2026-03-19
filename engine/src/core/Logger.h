@@ -31,3 +31,16 @@
 #define KAILUX_LOG_CHILD_CLR_MAGENTA(text) KAILUX_LOG_CHILD(text, KAILUX_LOG_CL_CLR_MAGENTA)
 #define KAILUX_LOG_CHILD_CLR_RED(text) KAILUX_LOG_CHILD(text, KAILUX_LOG_CL_CLR_RED)
 #define KAILUX_LOG_CHILD_CLR_BLUE(text) KAILUX_LOG_CHILD(text, KAILUX_LOG_CL_CLR_BLUE)
+
+#ifndef NDEBUG
+#define KAILUX_LOG_INFO(prefix, text) \
+    std::println("{}{} -> {}{}", \
+    KAILUX_LOG_CL_CLR_BLUE, prefix, text, KAILUX_LOG_CL_CLR_RESET);
+
+#define KAILUX_LOG_WARNING(prefix, text) \
+    std::println("{}{} -> {}{}", \
+    KAILUX_LOG_CL_CLR_YELLOW, prefix, text, KAILUX_LOG_CL_CLR_RESET);
+#else
+#define KAILUX_LOG_INFO(prefix, text)
+#define KAILUX_LOG_WARNING(prefix, text)
+#endif

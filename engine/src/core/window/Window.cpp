@@ -1,7 +1,7 @@
 #include "Window.h"
 
 #include <stdexcept>
-#include "Logger.h"
+#include "../Logger.h"
 
 namespace kailux
 {
@@ -39,7 +39,8 @@ namespace kailux
 
         Window window(handle, width, height);
 
-        glfwSetFramebufferSizeCallback(handle, glfw_framebufferCallback);
+        glfwSetFramebufferSizeCallback(handle, glfw_framebuffer_callback);
+        glfwSetKeyCallback(handle, glfw_key_callback);
 
         return window;
     }
@@ -122,15 +123,42 @@ namespace kailux
         glfwWaitEvents();
     }
 
-    void Window::glfw_framebufferCallback(GLFWwindow *window, int width, int height)
+    std::optional<Event> Window::getEvent()
+    {
+        if (!m_EventQueue.empty())
+        {
+            auto event = m_EventQueue.front();
+            m_EventQueue.pop();
+            return {event};
+        }
+        return std::nullopt;
+    }
+
+    void Window::glfw_framebuffer_callback(GLFWwindow *window, int width, int height)
+    {
+        auto *self = static_cast<Window *>(glfwGetWindowUserPointer(window));
+        self->m_FramebufferResized = true;
+        self->m_Width = width;
+        self->m_Height = height;
+    }
+
+    void Window::glfw_key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
     {
         auto *self = static_cast<Window *>(glfwGetWindowUserPointer(window));
 
-        self->m_FramebufferResized = true;
-
-        self->m_Width = width;
-
-        self->m_Height = height;
+        switch (action)
+        {
+            case GLFW_RELEASE:
+                self->m_EventQueue.push(KeyReleased(key, scancode, mods));
+                break;
+            case GLFW_PRESS:
+                self->m_EventQueue.push(KeyPressed(key, scancode, mods));
+                break;
+            case GLFW_REPEAT:
+                self->m_EventQueue.push(KeyRepeated(key, scancode, mods));
+                break;
+            default: ;
+        }
     }
 
     Window::~Window()

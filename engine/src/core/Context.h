@@ -1,18 +1,14 @@
 #pragma once
 #include <vulkan/vulkan_raii.hpp>
 
-#include "Window.h"
+#include "window/Window.h"
 
 namespace kailux
 {
     class Context
     {
     public:
-        Context();
-        Context(const Context&) = delete;
-        Context& operator=(const Context&) = delete;
-        Context(Context&& other) noexcept;
-        Context& operator=(Context&& other) noexcept;
+        KAILUX_DECLARE_NON_COPYABLE_MOVABLE(Context)
 
         static Context create(Window& window);
 
@@ -24,7 +20,7 @@ namespace kailux
 
         uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const;
 
-        friend class SwapChain;
+        friend class Swapchain;
         friend class FrameData;
         friend class ImGuiBackend;
 

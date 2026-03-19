@@ -1,17 +1,19 @@
 #pragma once
+#include <optional>
+#include <queue>
+
+#include "../Core.h"
 #include <string_view>
 #include <GLFW/glfw3.h>
+
+#include "Event.h"
 
 namespace kailux
 {
     class Window
     {
     public:
-        Window();
-        Window(const Window&) = delete;
-        Window& operator=(const Window&) = delete;
-        Window(Window&& other) noexcept;
-        Window& operator=(Window&& other) noexcept;
+        KAILUX_DECLARE_NON_COPYABLE_MOVABLE(Window)
         ~Window();
 
         static Window create(int width, int height, std::string_view title);
@@ -21,6 +23,7 @@ namespace kailux
         void close();
         void pollEvents() const;
         void waitForEvents() const;
+        std::optional<Event> getEvent();
 
         bool wasResized();
         void maximize();
@@ -39,11 +42,13 @@ namespace kailux
     private:
         explicit Window(GLFWwindow* handle, int width, int height);
 
-        static void glfw_framebufferCallback(GLFWwindow* window, int width, int height);
+        static void glfw_framebuffer_callback(GLFWwindow* window, int width, int height);
+        static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-        GLFWwindow* m_WindowHandle;
-        int         m_Width;
-        int         m_Height;
-        bool        m_FramebufferResized;
+        GLFWwindow*       m_WindowHandle;
+        int               m_Width;
+        int               m_Height;
+        bool              m_FramebufferResized;
+        std::queue<Event> m_EventQueue;
     };
 }

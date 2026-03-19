@@ -1,6 +1,7 @@
 #include "Engine.h"
 
 #include "CommandRecorder.h"
+#include "Logger.h"
 
 namespace kailux
 {
@@ -9,7 +10,7 @@ namespace kailux
     }
 
     Engine::Engine(Engine &&other) noexcept : m_Context(std::move(other.m_Context)),
-                                              m_SwapChain(std::move(other.m_SwapChain)),
+                                              m_Swapchain(std::move(other.m_Swapchain)),
                                               m_ImGuiBackend(std::move(other.m_ImGuiBackend)),
                                               m_Frames(std::move(other.m_Frames)),
                                               m_CurrentFrame(other.m_CurrentFrame)
@@ -21,7 +22,7 @@ namespace kailux
         if (this != &other)
         {
             m_Context = std::move(other.m_Context);
-            m_SwapChain = std::move(other.m_SwapChain);
+            m_Swapchain = std::move(other.m_Swapchain);
             m_ImGuiBackend = std::move(other.m_ImGuiBackend);
             m_Frames = std::move(other.m_Frames);
             m_CurrentFrame = other.m_CurrentFrame;
@@ -33,8 +34,8 @@ namespace kailux
     {
         Engine engine;
         engine.m_Context = Context::create(window);
-        engine.m_SwapChain = SwapChain::create(window, engine.m_Context);
-        engine.m_ImGuiBackend = ImGuiBackend::create(window, engine.m_Context, engine.m_SwapChain);
+        engine.m_Swapchain = Swapchain::create(window, engine.m_Context);
+        engine.m_ImGuiBackend = ImGuiBackend::create(window, engine.m_Context, engine.m_Swapchain);
 
         for (auto &frame: engine.m_Frames)
             frame = FrameData::create(engine.m_Context);
@@ -74,18 +75,18 @@ namespace kailux
         auto &frame = m_Frames[m_CurrentFrame];
         frame.reset(m_Context);
 
-        auto acquired = m_SwapChain.acquire();
+        auto acquired = m_Swapchain.acquire();
         if (!acquired)
         {
-            m_SwapChain.recreate(window, m_Context);
+            m_Swapchain.recreate(window, m_Context);
             return;
         }
-        vk::Semaphore renderFinishedSemaphore = m_SwapChain.getPresentSemaphore(acquired->imageIndex); {
+        vk::Semaphore renderFinishedSemaphore = m_Swapchain.getPresentSemaphore(acquired->imageIndex); {
             CommandRecorder recorder(frame.getCommandBuffer());
 
             recorder.barrier(
                 {
-                    m_SwapChain.getImage(acquired->imageIndex),
+                    m_Swapchain.getImage(acquired->imageIndex),
                     vk::ImageLayout::eUndefined,
                     vk::ImageLayout::eColorAttachmentOptimal
                 }
@@ -93,20 +94,20 @@ namespace kailux
 
             recorder.beginRendering(
                 {
-                    m_SwapChain.getImageView(acquired->imageIndex),
-                    m_SwapChain.getExtent(),
+                    m_Swapchain.getImageView(acquired->imageIndex),
+                    m_Swapchain.getExtent(),
                     vk::ImageLayout::eColorAttachmentOptimal,
                     vk::AttachmentLoadOp::eClear,
                     vk::AttachmentStoreOp::eStore,
                     {std::array{0.1f, 0.1f, 0.1f, 1.0f}},
-                    m_SwapChain.getDepthImageView(),
+                    m_Swapchain.getDepthImageView(),
                     vk::ImageLayout::eDepthAttachmentOptimal,
                     vk::RenderingFlagBits::eContentsSecondaryCommandBuffers
                 }
             );
 
-            recorder.setViewport(m_SwapChain.getExtent());
-            recorder.setScissor(m_SwapChain.getExtent());
+            recorder.setViewport(m_Swapchain.getExtent());
+            recorder.setScissor(m_Swapchain.getExtent());
 
             recordImGuiData(frame);
 
@@ -116,7 +117,7 @@ namespace kailux
 
             recorder.barrier(
                 {
-                    m_SwapChain.getImage(acquired->imageIndex),
+                    m_Swapchain.getImage(acquired->imageIndex),
                     vk::ImageLayout::eColorAttachmentOptimal,
                     vk::ImageLayout::ePresentSrcKHR,
                     vk::PipelineStageFlagBits2::eColorAttachmentOutput,
@@ -129,21 +130,21 @@ namespace kailux
 
         submit(m_Frames[m_CurrentFrame], acquired->imageAvailableSemaphore, renderFinishedSemaphore);
 
-        if (!m_SwapChain.present(m_Context, acquired->imageIndex, renderFinishedSemaphore))
-            m_SwapChain.recreate(window, m_Context);
+        if (!m_Swapchain.present(m_Context, acquired->imageIndex, renderFinishedSemaphore))
+            m_Swapchain.recreate(window, m_Context);
 
         m_CurrentFrame = (m_CurrentFrame + 1) % s_FramesInFlight;
     }
 
-    void Engine::recordImGuiData(const FrameData& frame)
+    void Engine::recordImGuiData(const FrameData &frame)
     {
-        auto format = m_SwapChain.getFormat();
+        auto format = m_Swapchain.getFormat();
         auto inheritanceInfo = vk::CommandBufferInheritanceRenderingInfo(
             {},
             {},
             1,
             &format,
-            m_SwapChain.getDepthFormat(),
+            m_Swapchain.getDepthFormat(),
             vk::Format::eUndefined,
             vk::SampleCountFlagBits::e1
         );
@@ -156,17 +157,31 @@ namespace kailux
         m_ImGuiBackend.recordDrawData(recorder.getCommandBuffer());
     }
 
+    void Engine::handleEvent(Event event)
+    {
+        std::visit(
+            [](auto e)
+            {
+                KAILUX_LOG_INFO("[Engine]", e.toString())
+            },
+            event
+        );
+    }
+
     void Engine::run(Window &window)
     {
         while (window.isOpen())
         {
             window.pollEvents();
 
+            if (auto event = window.getEvent())
+                handleEvent(*event);
+
             if (window.isMinimized())
                 continue;
 
             if (window.wasResized())
-                m_SwapChain.recreate(window, m_Context);
+                m_Swapchain.recreate(window, m_Context);
 
             render(window);
         }
