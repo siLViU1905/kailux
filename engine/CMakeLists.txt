@@ -11,6 +11,10 @@ add_library(kailux_engine STATIC
         src/core/window/Event.cpp
         src/core/buffer/Buffer.cpp
         src/core/buffer/BufferAllocator.cpp
+        src/core/mesh/MeshRegistry.cpp
+        src/core/Pipeline.cpp
+        src/core/Pipeline.h
+        src/core/DescriptorSetLayout.cpp
 )
 
 target_include_directories(kailux_engine PUBLIC src)
@@ -19,4 +23,5 @@ target_link_libraries(kailux_engine PUBLIC
         Vulkan::Vulkan
         glfw
         imgui::imgui
+        glm::glm
 )

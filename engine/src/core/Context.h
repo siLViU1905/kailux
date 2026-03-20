@@ -18,12 +18,15 @@ namespace kailux
         vk::Queue          getGraphicsQueue() const;
         uint32_t           getGraphicsQueueFamilyIndex() const;
 
-        uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const;
+        uint32_t                findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const;
+        vk::SampleCountFlagBits getMaxUsableSampleCount() const;
 
         friend class Swapchain;
         friend class FrameData;
         friend class ImGuiBackend;
         friend class BufferAllocator;
+        friend class Pipeline;
+        friend class DescriptorSetLayout;
 
     private:
         static std::vector<const char *> get_required_extensions();

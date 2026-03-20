@@ -100,6 +100,23 @@ namespace kailux
         throw std::runtime_error("Failed to find suitable memory type");
     }
 
+    vk::SampleCountFlagBits Context::getMaxUsableSampleCount() const
+    {
+        auto props = m_PhysicalDevice.getProperties();
+
+        vk::SampleCountFlags counts = props.limits.framebufferColorSampleCounts &
+                                      props.limits.framebufferDepthSampleCounts;
+
+        if (counts & vk::SampleCountFlagBits::e64) { return vk::SampleCountFlagBits::e64; }
+        if (counts & vk::SampleCountFlagBits::e32) { return vk::SampleCountFlagBits::e32; }
+        if (counts & vk::SampleCountFlagBits::e16) { return vk::SampleCountFlagBits::e16; }
+        if (counts & vk::SampleCountFlagBits::e8) { return vk::SampleCountFlagBits::e8; }
+        if (counts & vk::SampleCountFlagBits::e4) { return vk::SampleCountFlagBits::e4; }
+        if (counts & vk::SampleCountFlagBits::e2) { return vk::SampleCountFlagBits::e2; }
+
+        return vk::SampleCountFlagBits::e1;
+    }
+
     std::vector<const char *> Context::get_required_extensions()
     {
         uint32_t glfwExtensionCount = 0;

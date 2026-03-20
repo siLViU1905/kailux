@@ -5,11 +5,12 @@
 
 namespace kailux
 {
-    Engine::Engine() : m_CurrentFrame(0)
+    Engine::Engine() : m_SampleCount(vk::SampleCountFlagBits::e1), m_CurrentFrame(0)
     {
     }
 
     Engine::Engine(Engine &&other) noexcept : m_Context(std::move(other.m_Context)),
+                                              m_SampleCount(other.m_SampleCount),
                                               m_Swapchain(std::move(other.m_Swapchain)),
                                               m_ImGuiBackend(std::move(other.m_ImGuiBackend)),
                                               m_Frames(std::move(other.m_Frames)),
@@ -22,6 +23,7 @@ namespace kailux
         if (this != &other)
         {
             m_Context = std::move(other.m_Context);
+            m_SampleCount = other.m_SampleCount;
             m_Swapchain = std::move(other.m_Swapchain);
             m_ImGuiBackend = std::move(other.m_ImGuiBackend);
             m_Frames = std::move(other.m_Frames);
@@ -34,13 +36,65 @@ namespace kailux
     {
         Engine engine;
         engine.m_Context = Context::create(window);
-        engine.m_Swapchain = Swapchain::create(window, engine.m_Context);
-        engine.m_ImGuiBackend = ImGuiBackend::create(window, engine.m_Context, engine.m_Swapchain);
+        engine.m_SampleCount = engine.m_Context.getMaxUsableSampleCount();
+        engine.m_Swapchain = Swapchain::create(window, engine.m_Context, engine.m_SampleCount);
+        engine.m_ImGuiBackend =
+                ImGuiBackend::create(window, engine.m_Context, engine.m_Swapchain, engine.m_SampleCount);
+        engine.m_DescriptorSetLayout = DescriptorSetLayout::create(engine.m_Context, {});
+        engine.m_Pipeline = Pipeline::create(
+            engine.m_Context,
+            engine.m_Swapchain,
+            engine.m_DescriptorSetLayout,
+            {s_VertexShaderPath.data(), s_FragmentShaderPath.data()},
+            make_pipeline_info(engine.m_SampleCount)
+        );
 
         for (auto &frame: engine.m_Frames)
             frame = FrameData::create(engine.m_Context);
 
         return engine;
+    }
+
+    PipelineInfo Engine::make_pipeline_info(vk::SampleCountFlagBits sampleCount)
+    {
+        PipelineInfo info;
+        info.topology = vk::PrimitiveTopology::eTriangleList;
+
+        info.rasterizer = {
+            {},
+            vk::False,
+            vk::False,
+            vk::PolygonMode::eFill,
+            vk::CullModeFlagBits::eBack,
+            vk::FrontFace::eCounterClockwise,
+            vk::False,
+            {},
+            {},
+            1.f,
+            1.f
+        };
+
+        info.colorBlendAttachment.colorWriteMask =
+                vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB |
+                vk::ColorComponentFlagBits::eA;
+        info.colorBlendAttachment.blendEnable = vk::False;
+        info.colorBlendAttachment.blendEnable = vk::True;
+        info.colorBlendAttachment.srcColorBlendFactor = vk::BlendFactor::eSrcAlpha;
+        info.colorBlendAttachment.dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
+        info.colorBlendAttachment.colorBlendOp = vk::BlendOp::eAdd;
+        info.colorBlendAttachment.srcAlphaBlendFactor = vk::BlendFactor::eOne;
+        info.colorBlendAttachment.dstAlphaBlendFactor = vk::BlendFactor::eZero;
+        info.colorBlendAttachment.alphaBlendOp = vk::BlendOp::eAdd;
+
+        info.samples = sampleCount;
+
+        info.depthStencilInfo.depthTestEnable = vk::True;
+        info.depthStencilInfo.depthWriteEnable = vk::True;
+        info.depthStencilInfo.depthCompareOp = vk::CompareOp::eLess;
+        info.depthStencilInfo.depthBoundsTestEnable = vk::False;
+        info.depthStencilInfo.stencilTestEnable = vk::False;
+
+        return info;
     }
 
     void Engine::submit(const FrameData &frame, vk::Semaphore imageAvailableSemaphore,
@@ -78,7 +132,7 @@ namespace kailux
         auto acquired = m_Swapchain.acquire();
         if (!acquired)
         {
-            m_Swapchain.recreate(window, m_Context);
+            m_Swapchain.recreate(window, m_Context, m_SampleCount);
             return;
         }
         vk::Semaphore renderFinishedSemaphore = m_Swapchain.getPresentSemaphore(acquired->imageIndex); {
@@ -86,14 +140,22 @@ namespace kailux
 
             recorder.barrier(
                 {
-                    m_Swapchain.getImage(acquired->imageIndex),
+                    m_Swapchain.getColorImage(),
                     vk::ImageLayout::eUndefined,
                     vk::ImageLayout::eColorAttachmentOptimal
                 }
             );
 
+            recorder.barrier(
+                {
+                    m_Swapchain.getImage(acquired->imageIndex),
+                    vk::ImageLayout::eUndefined,
+                    vk::ImageLayout::eColorAttachmentOptimal
+                });
+
             recorder.beginRendering(
                 {
+                    m_Swapchain.getColorImageView(),
                     m_Swapchain.getImageView(acquired->imageIndex),
                     m_Swapchain.getExtent(),
                     vk::ImageLayout::eColorAttachmentOptimal,
@@ -131,7 +193,7 @@ namespace kailux
         submit(m_Frames[m_CurrentFrame], acquired->imageAvailableSemaphore, renderFinishedSemaphore);
 
         if (!m_Swapchain.present(m_Context, acquired->imageIndex, renderFinishedSemaphore))
-            m_Swapchain.recreate(window, m_Context);
+            m_Swapchain.recreate(window, m_Context, m_SampleCount);
 
         m_CurrentFrame = (m_CurrentFrame + 1) % s_FramesInFlight;
     }
@@ -146,7 +208,7 @@ namespace kailux
             &format,
             m_Swapchain.getDepthFormat(),
             vk::Format::eUndefined,
-            vk::SampleCountFlagBits::e1
+            m_SampleCount
         );
 
         m_ImGuiBackend.beginFrame();
@@ -181,7 +243,7 @@ namespace kailux
                 continue;
 
             if (window.wasResized())
-                m_Swapchain.recreate(window, m_Context);
+                m_Swapchain.recreate(window, m_Context, m_SampleCount);
 
             render(window);
         }

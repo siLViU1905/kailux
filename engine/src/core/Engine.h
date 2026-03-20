@@ -1,7 +1,9 @@
 #pragma once
 #include "Context.h"
+#include "DescriptorSetLayout.h"
 #include "Swapchain.h"
 #include "FrameData.h"
+#include "Pipeline.h"
 #include "imgui_backend/ImGuiBackend.h"
 #include "window/Event.h"
 
@@ -17,6 +19,11 @@ namespace kailux
         void run(Window& window);
 
     private:
+        static constexpr std::string_view s_VertexShaderPath = "shaders/vertex_shader.spv";
+        static constexpr std::string_view s_FragmentShaderPath = "shaders/fragment_shader.spv";
+
+        static PipelineInfo make_pipeline_info(vk::SampleCountFlagBits sampleCount);
+
         void submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
         void render(Window &window);
         void recordImGuiData(const FrameData& frame);
@@ -26,8 +33,11 @@ namespace kailux
         static constexpr uint32_t s_FramesInFlight = 2;
 
         Context                                 m_Context;
+        vk::SampleCountFlagBits                 m_SampleCount;
         Swapchain                               m_Swapchain;
         ImGuiBackend                            m_ImGuiBackend;
+        DescriptorSetLayout                     m_DescriptorSetLayout;
+        Pipeline                                m_Pipeline;
         std::array<FrameData, s_FramesInFlight> m_Frames;
         uint32_t                                m_CurrentFrame;
     };
