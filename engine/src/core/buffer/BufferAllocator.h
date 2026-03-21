@@ -19,6 +19,9 @@ namespace kailux
         //shorthand for index buffer
         static Buffer alloc_index(const Context &context, vk::DeviceSize size);
 
+        //staging buffers
+        static Buffer alloc_staging(const Context &context, vk::DeviceSize size);
+
     private:
         static Buffer alloc(const Context &context, vk::DeviceSize size,
                             vk::BufferUsageFlags usage,
