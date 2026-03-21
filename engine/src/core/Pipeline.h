@@ -28,6 +28,8 @@ namespace kailux
 
         static Pipeline create(const Context &context, const Swapchain& swapchain, const DescriptorSetLayout& descriptorSetLayout, const ShaderInfo& shaderInfo, const PipelineInfo &pipelineInfo);
 
+        void bind(vk::CommandBuffer cmd) const;
+
     private:
         struct ShaderModules
         {

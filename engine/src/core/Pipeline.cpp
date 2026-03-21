@@ -48,6 +48,11 @@ namespace kailux
         return pipeline;
     }
 
+    void Pipeline::bind(vk::CommandBuffer cmd) const
+    {
+        cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, m_Pipeline);
+    }
+
     std::array<vk::PipelineShaderStageCreateInfo, 2> Pipeline::ShaderModules::getStages() const
     {
         return {
