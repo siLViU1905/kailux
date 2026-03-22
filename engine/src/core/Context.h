@@ -27,6 +27,8 @@ namespace kailux
         friend class BufferAllocator;
         friend class Pipeline;
         friend class DescriptorLayout;
+        friend class DescriptorPool;
+        friend class DescriptorSet;
         friend class OneTimeCommand;
 
     private:

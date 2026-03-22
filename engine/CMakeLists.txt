@@ -17,6 +17,8 @@ add_library(kailux_engine STATIC
         src/core/descriptor/DescriptorLayout.cpp
         src/core/command/OneTimeCommand.cpp
         src/core/Camera.cpp
+        src/core/descriptor/DescriptorPool.cpp
+        src/core/descriptor/DescriptorSet.cpp
 )
 
 target_include_directories(kailux_engine PUBLIC src)
