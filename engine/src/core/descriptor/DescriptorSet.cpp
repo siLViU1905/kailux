@@ -24,7 +24,7 @@ namespace kailux
 
     DescriptorSet DescriptorSet::create(const Context &context, const DescriptorLayout &layout,
                                         const DescriptorPool &pool,
-                                        std::span<DescriptorInfo> infos)
+                                        std::span<DescriptorSetInfo> infos)
     {
         KAILUX_LOG_PARENT_CLR_GREEN("[DescriptorSet]")
         DescriptorSet set;
@@ -36,7 +36,7 @@ namespace kailux
     }
 
     void DescriptorSet::createSet(const Context &context, const DescriptorLayout &layout, const DescriptorPool &pool,
-                                  std::span<DescriptorInfo> infos)
+                                  std::span<DescriptorSetInfo> infos)
     {
         auto layoutHandle = layout.getLayout();
         vk::DescriptorSetAllocateInfo allocInfo(
@@ -61,7 +61,7 @@ namespace kailux
             {
                 using T = std::decay_t<decltype(arg)>;
 
-                if constexpr (std::is_same_v<T, DescriptorBufferInfo>)
+                if constexpr (std::is_same_v<T, DescriptorSetBufferInfo>)
                 {
                     bufferInfos.emplace_back(arg.buffer, 0, arg.size);
                     descriptorWrites.emplace_back(
@@ -73,7 +73,7 @@ namespace kailux
                         nullptr,
                         &bufferInfos.back()
                     );
-                } else if constexpr (std::is_same_v<T, DescriptorImageInfo>)
+                } else if constexpr (std::is_same_v<T, DescriptorSetImageInfo>)
                 {
                     imageInfos.emplace_back(arg.sampler, arg.view, arg.layout);
                     descriptorWrites.emplace_back(

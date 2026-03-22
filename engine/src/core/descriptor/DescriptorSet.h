@@ -4,7 +4,7 @@
 
 namespace kailux
 {
-    struct DescriptorBufferInfo
+    struct DescriptorSetBufferInfo
     {
         vk::DescriptorType type{};
         vk::Buffer buffer{};
@@ -12,7 +12,7 @@ namespace kailux
         uint32_t count{};
     };
 
-    struct DescriptorImageInfo
+    struct DescriptorSetImageInfo
     {
         vk::Sampler sampler{};
         vk::ImageView view{};
@@ -20,7 +20,7 @@ namespace kailux
         uint32_t count{};
     };
 
-    using DescriptorInfo = std::variant<DescriptorBufferInfo, DescriptorImageInfo>;
+    using DescriptorSetInfo = std::variant<DescriptorSetBufferInfo, DescriptorSetImageInfo>;
 
     class DescriptorSet
     {
@@ -28,11 +28,11 @@ namespace kailux
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(DescriptorSet)
 
         static DescriptorSet create(const Context &context, const DescriptorLayout &layout, const DescriptorPool &pool,
-                                    std::span<DescriptorInfo> infos);
+                                    std::span<DescriptorSetInfo> infos);
 
     private:
         void createSet(const Context &context, const DescriptorLayout &layout, const DescriptorPool &pool,
-                       std::span<DescriptorInfo> infos);
+                       std::span<DescriptorSetInfo> infos);
 
         vk::raii::DescriptorSet m_Set;
     };
