@@ -5,7 +5,15 @@ layout(location = 1) in vec3 aNormal;
 layout(location = 2) in vec2 aUv;
 layout(location = 3) in vec4 aTangent;
 
+layout(binding = 0) uniform Camera
+{
+    mat4 projection;
+    mat4 view;
+    vec3 position;
+}
+camera;
+
 void main()
 {
-    gl_Position = vec4(aPos, 1.0);
+    gl_Position = camera.projection * camera.view * vec4(aPos, 1.0);
 }

@@ -19,6 +19,7 @@ add_library(kailux_engine STATIC
         src/core/Camera.cpp
         src/core/descriptor/DescriptorPool.cpp
         src/core/descriptor/DescriptorSet.cpp
+        src/core/Clock.cpp
 )
 
 target_include_directories(kailux_engine PUBLIC src)

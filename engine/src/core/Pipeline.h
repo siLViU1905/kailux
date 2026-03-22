@@ -30,6 +30,8 @@ namespace kailux
 
         void bind(vk::CommandBuffer cmd) const;
 
+        vk::PipelineLayout getLayout() const;
+
     private:
         struct ShaderModules
         {

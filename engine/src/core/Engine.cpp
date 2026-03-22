@@ -3,6 +3,7 @@
 #include "command/CommandRecorder.h"
 #include "Logger.h"
 #include "command/OneTimeCommand.h"
+#include "components/CameraComponent.h"
 
 namespace kailux
 {
@@ -15,7 +16,9 @@ namespace kailux
                                               m_Swapchain(std::move(other.m_Swapchain)),
                                               m_ImGuiBackend(std::move(other.m_ImGuiBackend)),
                                               m_Frames(std::move(other.m_Frames)),
-                                              m_CurrentFrame(other.m_CurrentFrame)
+                                              m_CurrentFrame(other.m_CurrentFrame),
+                                              m_Clock(other.m_Clock),
+                                              m_Camera(other.m_Camera)
     {
     }
 
@@ -29,6 +32,8 @@ namespace kailux
             m_ImGuiBackend = std::move(other.m_ImGuiBackend);
             m_Frames = std::move(other.m_Frames);
             m_CurrentFrame = other.m_CurrentFrame;
+            m_Clock = other.m_Clock;
+            m_Camera = other.m_Camera;
         }
         return *this;
     }
@@ -46,17 +51,21 @@ namespace kailux
         engine.m_Swapchain = Swapchain::create(window, engine.m_Context, engine.m_SampleCount);
         engine.m_ImGuiBackend =
                 ImGuiBackend::create(window, engine.m_Context, engine.m_Swapchain, engine.m_SampleCount);
-        engine.m_DescriptorSetLayout = DescriptorLayout::create(engine.m_Context, {});
+
+        auto descLayoutBindings = make_descriptor_layout_bindings(1); //camera uniform buffer
+        engine.m_DescriptorLayout = DescriptorLayout::create(engine.m_Context, descLayoutBindings);
+        auto descPoolSizes = make_descriptor_pool_sizes(1); //camera uniform buffer
+        engine.m_DescriptorPool = DescriptorPool::create(engine.m_Context, s_FramesInFlight, descPoolSizes);
         engine.m_Pipeline = Pipeline::create(
             engine.m_Context,
             engine.m_Swapchain,
-            engine.m_DescriptorSetLayout,
+            engine.m_DescriptorLayout,
             {s_VertexShaderPath.data(), s_FragmentShaderPath.data()},
             make_pipeline_info(engine.m_SampleCount)
         );
 
         for (auto &frame: engine.m_Frames)
-            frame = FrameData::create(engine.m_Context);
+            frame = FrameData::create(engine.m_Context, engine.m_DescriptorLayout, engine.m_DescriptorPool);
 
         OneTimeCommand::create_command_pool(engine.m_Context);
 
@@ -65,7 +74,32 @@ namespace kailux
         engine.m_MeshRegistry = MeshRegistry::create(engine.m_Context, otc.getCommandBuffer(), stagingBuffers);
         otc.submit(engine.m_Context);
 
+        int windowWidth, windowHeight;
+        window.getFramebufferSize(windowWidth, windowHeight);
+        engine.m_Camera = Camera::create(windowWidth, windowHeight, {0.f, 0.f, -2.f});
+
         return engine;
+    }
+
+    std::array<DescriptorLayoutBinding, 1> Engine::make_descriptor_layout_bindings(uint32_t uniformBufferCount)
+    {
+        return {
+            DescriptorLayoutBinding(
+                vk::DescriptorType::eUniformBuffer,
+                uniformBufferCount,
+                vk::ShaderStageFlagBits::eVertex
+            )
+        };
+    }
+
+    std::array<DescriptorPoolSize, 1> Engine::make_descriptor_pool_sizes(uint32_t uniformBufferCount)
+    {
+        return {
+            DescriptorPoolSize(
+                vk::DescriptorType::eUniformBuffer,
+                uniformBufferCount
+            )
+        };
     }
 
     PipelineInfo Engine::make_pipeline_info(vk::SampleCountFlagBits sampleCount)
@@ -78,7 +112,7 @@ namespace kailux
             vk::False,
             vk::False,
             vk::PolygonMode::eFill,
-            vk::CullModeFlagBits::eNone,//TO DO: no rendering with eBack, perspective matrix needs to be added
+            vk::CullModeFlagBits::eNone, //TO DO: no rendering with eBack, perspective matrix needs to be added
             vk::FrontFace::eCounterClockwise,
             vk::False,
             {},
@@ -140,6 +174,7 @@ namespace kailux
     {
         auto &frame = m_Frames[m_CurrentFrame];
         frame.reset(m_Context);
+        updateFrameBuffers(frame);
 
         auto acquired = m_Swapchain.acquire();
         if (!acquired)
@@ -183,7 +218,7 @@ namespace kailux
             recorder.setViewport(m_Swapchain.getExtent());
             recorder.setScissor(m_Swapchain.getExtent());
 
-            recordMeshData(recorder.getCommandBuffer());
+            recordMeshData(frame, recorder.getCommandBuffer());
 
             recorder.endRendering();
 
@@ -228,10 +263,11 @@ namespace kailux
         m_CurrentFrame = (m_CurrentFrame + 1) % s_FramesInFlight;
     }
 
-    void Engine::recordMeshData(vk::CommandBuffer cmd) const
+    void Engine::recordMeshData(const FrameData &frame, vk::CommandBuffer cmd) const
     {
         m_Pipeline.bind(cmd);
         m_MeshRegistry.bind(cmd);
+        frame.getDescriptorSet().bind(m_Pipeline, cmd);
 
         auto mv = m_MeshRegistry.view(m_MeshRegistry.getBuiltins().cube);
 
@@ -266,14 +302,41 @@ namespace kailux
         m_ImGuiBackend.recordDrawData(recorder.getCommandBuffer());
     }
 
+    void Engine::updateFrameBuffers(FrameData &frame) const
+    {
+        CameraComponent cameraComponent(
+            m_Camera.getProjection(),
+            m_Camera.getView(),
+            {m_Camera.getPosition(), 0.f}
+        );
+        frame.getCameraBuffer().upload(&cameraComponent, sizeof(CameraComponent));
+    }
+
     void Engine::handleEvent(Event event)
     {
-        std::visit(
-            [](auto e)
-            {
-                KAILUX_LOG_INFO("[Engine]", e.toString())
-            },
-            event
+        std::visit(EventOverloads{
+                       [](KeyPressed e)
+                       {
+                           KAILUX_LOG_INFO("[Engine]", e.toString())
+                       },
+                       [](KeyReleased e)
+                       {
+                           KAILUX_LOG_INFO("[Engine]", e.toString())
+                       },
+                       [](KeyRepeated e)
+                       {
+                           KAILUX_LOG_INFO("[Engine]", e.toString())
+                       },
+                       [](ButtonPressed e)
+                       {
+                           KAILUX_LOG_INFO("[Engine]", e.toString())
+                       },
+                       [](ButtonReleased e)
+                       {
+                           KAILUX_LOG_INFO("[Engine]", e.toString())
+                       }
+                   },
+                   event
         );
     }
 
@@ -281,10 +344,15 @@ namespace kailux
     {
         while (window.isOpen())
         {
+            m_Clock.tick();
             window.pollEvents();
 
             if (auto event = window.getEvent())
                 handleEvent(*event);
+
+            auto deltaTime = m_Clock.getDeltaTime<float, TimeType::Seconds>();
+            m_Camera.updateMovement(window, deltaTime);
+            m_Camera.updateLookAt(window, deltaTime);
 
             if (window.isMinimized())
                 continue;

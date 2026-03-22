@@ -37,6 +37,11 @@ namespace kailux
         return alloc_host(context, size, vk::BufferUsageFlagBits::eTransferSrc);
     }
 
+    Buffer BufferAllocator::alloc_uniform(const Context &context, vk::DeviceSize size)
+    {
+        return alloc_host(context, size, vk::BufferUsageFlagBits::eUniformBuffer);
+    }
+
     Buffer BufferAllocator::alloc(const Context &context, vk::DeviceSize size, vk::BufferUsageFlags usage,
                                   vk::MemoryPropertyFlags props, bool map)
     {

@@ -33,6 +33,9 @@ namespace kailux
         bool isMaximized() const;
         bool isMinimized() const;
 
+        bool isKeyPressed(int key) const;
+        void getMousePos(double& x, double& y) const;
+
         void getFramebufferSize(int& width, int& height) const;
         constexpr int getWidth()  const { return m_Width;  }
         constexpr int getHeight() const { return m_Height; }
@@ -44,6 +47,7 @@ namespace kailux
 
         static void glfw_framebuffer_callback(GLFWwindow* window, int width, int height);
         static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+        static void glfw_button_callback(GLFWwindow* window, int button, int action, int mods);
 
         GLFWwindow*       m_WindowHandle;
         int               m_Width;

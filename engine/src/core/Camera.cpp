@@ -33,44 +33,35 @@ namespace kailux
         return camera;
     }
 
-    void Camera::updateMovement(int key, float deltaTime)
+    void Camera::updateMovement(const Window& window, float deltaTime)
     {
         m_Right = glm::normalize(glm::cross(m_Forward, m_Up));
 
-        switch (key)
-        {
-            case 87: //W
-                m_Position += m_Forward * deltaTime * m_Speed;
-                break;
-            case 83: //S
-                m_Position -= m_Forward * deltaTime * m_Speed;
-                break;
-            case 65: //A
-                m_Position -= m_Right * deltaTime * m_Speed;
-                break;
-            case 68: //D
-                m_Position += m_Right * deltaTime * m_Speed;
-                break;
-            case 32: //SPACE
-                m_Position += glm::vec3(0.f, deltaTime, 0.f) * m_Speed;
-                break;
-            case 341: //LEFT CTRL
-                m_Position -= glm::vec3(0.f, deltaTime, 0.f) * m_Speed;
-                break;
-            default:
-                break;
-        }
+        if (window.isKeyPressed(GLFW_KEY_W))
+            m_Position += m_Forward * deltaTime * m_Speed;
+        if (window.isKeyPressed(GLFW_KEY_S))
+            m_Position -= m_Forward * deltaTime * m_Speed;
+        if (window.isKeyPressed(GLFW_KEY_A))
+            m_Position -= m_Right * deltaTime * m_Speed;
+        if (window.isKeyPressed(GLFW_KEY_D))
+            m_Position += m_Right * deltaTime * m_Speed;
+        if (window.isKeyPressed(GLFW_KEY_SPACE))
+            m_Position += glm::vec3(0.f, 1.f, 0.f) * deltaTime * m_Speed;
+        if (window.isKeyPressed(GLFW_KEY_LEFT_CONTROL))
+            m_Position -= glm::vec3(0.f, 1.f, 0.f) * deltaTime * m_Speed;
 
         m_View = glm::lookAt(m_Position,
                              m_Position + m_Forward,
                              m_Up);
     }
 
-    void Camera::updateLookAt(double mousePosX, double mousePosY, float deltaTime)
+    void Camera::updateLookAt(const Window& window, float deltaTime)
     {
         if (!m_Focused)
             return;
 
+        double mousePosX, mousePosY;
+        window.getMousePos(mousePosX, mousePosY);
         float xOffset = static_cast<float>(mousePosX - m_LastMousePosX);
         float yOffset = static_cast<float>(m_LastMousePosY - mousePosY);
         m_Yaw += xOffset * deltaTime * m_Sensitivity;

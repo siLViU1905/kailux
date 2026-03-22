@@ -2,6 +2,7 @@
 
 #include "DescriptorPool.h"
 #include "../Logger.h"
+#include "core/Pipeline.h"
 
 namespace kailux
 {
@@ -33,6 +34,16 @@ namespace kailux
         KAILUX_LOG_CHILD_CLR_GREEN(std::format("Created descriptor set with {} bindings", infos.size()))
 
         return set;
+    }
+
+    vk::DescriptorSet DescriptorSet::getDescriptorSet() const
+    {
+        return *m_Set;
+    }
+
+    void DescriptorSet::bind(const Pipeline &pipeline, vk::CommandBuffer cmd) const
+    {
+        cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline.getLayout(), 0, *m_Set, {});
     }
 
     void DescriptorSet::createSet(const Context &context, const DescriptorLayout &layout, const DescriptorPool &pool,

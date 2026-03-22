@@ -30,6 +30,10 @@ namespace kailux
         static DescriptorSet create(const Context &context, const DescriptorLayout &layout, const DescriptorPool &pool,
                                     std::span<DescriptorSetInfo> infos);
 
+        vk::DescriptorSet getDescriptorSet() const;
+
+        void bind(const Pipeline& pipeline, vk::CommandBuffer cmd) const;
+
     private:
         void createSet(const Context &context, const DescriptorLayout &layout, const DescriptorPool &pool,
                        std::span<DescriptorSetInfo> infos);
