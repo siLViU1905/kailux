@@ -1,8 +1,8 @@
 #include "Engine.h"
 
-#include "CommandRecorder.h"
+#include "command/CommandRecorder.h"
 #include "Logger.h"
-#include "OneTimeCommand.h"
+#include "command/OneTimeCommand.h"
 
 namespace kailux
 {

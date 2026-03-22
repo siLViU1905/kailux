@@ -1,8 +1,8 @@
 #pragma once
 #include <vulkan/vulkan_raii.hpp>
 
-#include "Context.h"
-#include "Core.h"
+#include "../Context.h"
+#include "../Core.h"
 
 namespace kailux
 {

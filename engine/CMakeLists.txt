@@ -4,7 +4,7 @@ add_library(kailux_engine STATIC
         src/core/Swapchain.cpp
         src/core/Engine.cpp
         src/core/FrameData.cpp
-        src/core/CommandRecorder.cpp
+        src/core/command/CommandRecorder.cpp
         src/core/imgui_backend/ImGuiBackend.cpp
         src/core/imgui_backend/bindings/imgui_impl_glfw.cpp
         src/core/imgui_backend/bindings/imgui_impl_vulkan.cpp
@@ -15,7 +15,7 @@ add_library(kailux_engine STATIC
         src/core/Pipeline.cpp
         src/core/Pipeline.h
         src/core/DescriptorSetLayout.cpp
-        src/core/OneTimeCommand.cpp
+        src/core/command/OneTimeCommand.cpp
 )
 
 target_include_directories(kailux_engine PUBLIC src)
