@@ -15,6 +15,7 @@ add_library(kailux_engine STATIC
         src/core/Pipeline.cpp
         src/core/Pipeline.h
         src/core/DescriptorSetLayout.cpp
+        src/core/OneTimeCommand.cpp
 )
 
 target_include_directories(kailux_engine PUBLIC src)

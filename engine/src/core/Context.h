@@ -27,6 +27,7 @@ namespace kailux
         friend class BufferAllocator;
         friend class Pipeline;
         friend class DescriptorSetLayout;
+        friend class OneTimeCommand;
 
     private:
         static std::vector<const char *> get_required_extensions();
