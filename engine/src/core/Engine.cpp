@@ -2,6 +2,7 @@
 
 #include "CommandRecorder.h"
 #include "Logger.h"
+#include "OneTimeCommand.h"
 
 namespace kailux
 {
@@ -32,6 +33,11 @@ namespace kailux
         return *this;
     }
 
+    Engine::~Engine()
+    {
+        OneTimeCommand::destroy_command_pool();
+    }
+
     Engine Engine::create(Window &window)
     {
         Engine engine;
@@ -52,6 +58,13 @@ namespace kailux
         for (auto &frame: engine.m_Frames)
             frame = FrameData::create(engine.m_Context);
 
+        OneTimeCommand::create_command_pool(engine.m_Context);
+
+        std::vector<Buffer> stagingBuffers;
+        OneTimeCommand otc = OneTimeCommand::create(engine.m_Context);
+        engine.m_MeshRegistry = MeshRegistry::create(engine.m_Context, otc.getCommandBuffer(), stagingBuffers);
+        otc.submit(engine.m_Context);
+
         return engine;
     }
 
@@ -65,7 +78,7 @@ namespace kailux
             vk::False,
             vk::False,
             vk::PolygonMode::eFill,
-            vk::CullModeFlagBits::eBack,
+            vk::CullModeFlagBits::eNone,//TO DO: no rendering with eBack, perspective matrix needs to be added
             vk::FrontFace::eCounterClockwise,
             vk::False,
             {},
@@ -164,15 +177,44 @@ namespace kailux
                     {std::array{0.1f, 0.1f, 0.1f, 1.0f}},
                     m_Swapchain.getDepthImageView(),
                     vk::ImageLayout::eDepthAttachmentOptimal,
-                    vk::RenderingFlagBits::eContentsSecondaryCommandBuffers
+                    {}
                 }
             );
 
             recorder.setViewport(m_Swapchain.getExtent());
             recorder.setScissor(m_Swapchain.getExtent());
 
-            recordImGuiData(frame);
+            m_Pipeline.bind(recorder.getCommandBuffer());
+            m_MeshRegistry.bind(recorder.getCommandBuffer());
 
+            auto mv = m_MeshRegistry.view(m_MeshRegistry.getBuiltins().cube);
+
+            recorder.getCommandBuffer().drawIndexed(
+                mv.indexCount,
+                1,
+                mv.firstIndex,
+                mv.vertexOffset,
+                0
+            );
+
+            recorder.endRendering();
+
+            recorder.beginRendering(
+                {
+                    m_Swapchain.getColorImageView(),
+                    m_Swapchain.getImageView(acquired->imageIndex),
+                    m_Swapchain.getExtent(),
+                    vk::ImageLayout::eColorAttachmentOptimal,
+                    vk::AttachmentLoadOp::eLoad,
+                    vk::AttachmentStoreOp::eStore,
+                    {std::array{0.1f, 0.1f, 0.1f, 1.0f}},
+                    m_Swapchain.getDepthImageView(),
+                    vk::ImageLayout::eDepthAttachmentOptimal,
+                    vk::RenderingFlagBits::eContentsSecondaryCommandBuffers
+                }
+            );
+
+            recordImGuiData(frame);
             recorder.getCommandBuffer().executeCommands(frame.getImGuiCommandBuffer());
 
             recorder.endRendering();
@@ -212,7 +254,8 @@ namespace kailux
         );
 
         m_ImGuiBackend.beginFrame();
-        //imgui render commands go here
+        ImGui::Begin("Test");
+        ImGui::End();
         m_ImGuiBackend.endFrame();
 
         CommandRecorder recorder(frame.getImGuiCommandBuffer(), inheritanceInfo);
@@ -228,6 +271,32 @@ namespace kailux
             },
             event
         );
+    }
+
+    void Engine::uploadMesh(RecordFunction &&recordFn)
+    {
+        auto &frame = m_Frames[0];
+
+        vk::CommandBufferBeginInfo beginInfo{
+            vk::CommandBufferUsageFlagBits::eOneTimeSubmit
+        };
+        frame.getCommandBuffer().begin(beginInfo);
+
+        recordFn(frame.getCommandBuffer());
+
+        frame.getCommandBuffer().end();
+
+        vk::CommandBuffer cmd = frame.getCommandBuffer();
+        vk::SubmitInfo submitInfo{};
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &cmd;
+
+        m_Context.getGraphicsQueue().submit(submitInfo, frame.getFenceInFlight());
+
+        auto result = m_Context.getDevice().waitForFences(
+            frame.getFenceInFlight(), true, UINT64_MAX
+        );
+        m_Context.getDevice().resetFences(frame.getFenceInFlight());
     }
 
     void Engine::run(Window &window)

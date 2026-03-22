@@ -6,6 +6,9 @@
 #include "Pipeline.h"
 #include "imgui_backend/ImGuiBackend.h"
 #include "window/Event.h"
+#include <functional>
+
+#include "mesh/MeshRegistry.h"
 
 namespace kailux
 {
@@ -13,6 +16,7 @@ namespace kailux
     {
     public:
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(Engine)
+        ~Engine();
 
         static Engine create(Window& window);
 
@@ -30,6 +34,10 @@ namespace kailux
 
         void handleEvent(Event event);
 
+        using RecordFunction = std::move_only_function<void(vk::CommandBuffer)>;
+
+        void uploadMesh(RecordFunction&& recordFn);
+
         static constexpr uint32_t s_FramesInFlight = 2;
 
         Context                                 m_Context;
@@ -38,6 +46,7 @@ namespace kailux
         ImGuiBackend                            m_ImGuiBackend;
         DescriptorSetLayout                     m_DescriptorSetLayout;
         Pipeline                                m_Pipeline;
+        MeshRegistry                            m_MeshRegistry;
         std::array<FrameData, s_FramesInFlight> m_Frames;
         uint32_t                                m_CurrentFrame;
     };
