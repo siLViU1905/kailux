@@ -29,3 +29,15 @@ target_link_libraries(kailux_engine PUBLIC
         imgui::imgui
         glm::glm
 )
+
+target_precompile_headers(kailux_engine PUBLIC
+        <vulkan/vulkan.hpp>
+        <vulkan/vulkan_raii.hpp>
+        <glm/glm.hpp>
+        <glm/gtc/matrix_transform.hpp>
+        <imgui.h>
+        <vector>
+        <array>
+        <memory>
+        <string>
+)
