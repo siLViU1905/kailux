@@ -26,4 +26,7 @@ namespace kailux
             };
         }
     };
+
+    static_assert(sizeof(Vertex) % alignof(Vertex) == 0,
+        "Vertex size must be a multiple of its alignment");
 }
