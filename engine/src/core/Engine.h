@@ -30,13 +30,10 @@ namespace kailux
 
         void submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
         void render(Window &window);
+        void recordMeshData(vk::CommandBuffer cmd) const;
         void recordImGuiData(const FrameData& frame);
 
         void handleEvent(Event event);
-
-        using RecordFunction = std::move_only_function<void(vk::CommandBuffer)>;
-
-        void uploadMesh(RecordFunction&& recordFn);
 
         static constexpr uint32_t s_FramesInFlight = 2;
 

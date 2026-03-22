@@ -90,7 +90,6 @@ namespace kailux
         info.colorBlendAttachment.colorWriteMask =
                 vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB |
                 vk::ColorComponentFlagBits::eA;
-        info.colorBlendAttachment.blendEnable = vk::False;
         info.colorBlendAttachment.blendEnable = vk::True;
         info.colorBlendAttachment.srcColorBlendFactor = vk::BlendFactor::eSrcAlpha;
         info.colorBlendAttachment.dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
@@ -184,18 +183,7 @@ namespace kailux
             recorder.setViewport(m_Swapchain.getExtent());
             recorder.setScissor(m_Swapchain.getExtent());
 
-            m_Pipeline.bind(recorder.getCommandBuffer());
-            m_MeshRegistry.bind(recorder.getCommandBuffer());
-
-            auto mv = m_MeshRegistry.view(m_MeshRegistry.getBuiltins().cube);
-
-            recorder.getCommandBuffer().drawIndexed(
-                mv.indexCount,
-                1,
-                mv.firstIndex,
-                mv.vertexOffset,
-                0
-            );
+            recordMeshData(recorder.getCommandBuffer());
 
             recorder.endRendering();
 
@@ -240,6 +228,22 @@ namespace kailux
         m_CurrentFrame = (m_CurrentFrame + 1) % s_FramesInFlight;
     }
 
+    void Engine::recordMeshData(vk::CommandBuffer cmd) const
+    {
+        m_Pipeline.bind(cmd);
+        m_MeshRegistry.bind(cmd);
+
+        auto mv = m_MeshRegistry.view(m_MeshRegistry.getBuiltins().cube);
+
+        cmd.drawIndexed(
+            mv.indexCount,
+            1,
+            mv.firstIndex,
+            mv.vertexOffset,
+            0
+        );
+    }
+
     void Engine::recordImGuiData(const FrameData &frame)
     {
         auto format = m_Swapchain.getFormat();
@@ -271,32 +275,6 @@ namespace kailux
             },
             event
         );
-    }
-
-    void Engine::uploadMesh(RecordFunction &&recordFn)
-    {
-        auto &frame = m_Frames[0];
-
-        vk::CommandBufferBeginInfo beginInfo{
-            vk::CommandBufferUsageFlagBits::eOneTimeSubmit
-        };
-        frame.getCommandBuffer().begin(beginInfo);
-
-        recordFn(frame.getCommandBuffer());
-
-        frame.getCommandBuffer().end();
-
-        vk::CommandBuffer cmd = frame.getCommandBuffer();
-        vk::SubmitInfo submitInfo{};
-        submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &cmd;
-
-        m_Context.getGraphicsQueue().submit(submitInfo, frame.getFenceInFlight());
-
-        auto result = m_Context.getDevice().waitForFences(
-            frame.getFenceInFlight(), true, UINT64_MAX
-        );
-        m_Context.getDevice().resetFences(frame.getFenceInFlight());
     }
 
     void Engine::run(Window &window)
