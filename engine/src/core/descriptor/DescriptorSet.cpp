@@ -68,7 +68,7 @@ namespace kailux
                         *m_Set,
                         i,
                         0,
-                        1,
+                        arg.count,
                         arg.type,
                         nullptr,
                         &bufferInfos.back()
@@ -80,7 +80,7 @@ namespace kailux
                         *m_Set,
                         i,
                         0,
-                        1,
+                        arg.count,
                         vk::DescriptorType::eCombinedImageSampler,
                         &imageInfos.back(),
                         nullptr

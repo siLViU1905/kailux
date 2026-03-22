@@ -20,10 +20,10 @@ namespace kailux
     }
 
     DescriptorPool DescriptorPool::create(const Context &context, uint32_t sets,
-                                          std::span<DescriptorLayoutBinding> bindings)
+                                          std::span<DescriptorPoolSize> sizes)
     {
         DescriptorPool pool;
-        pool.createPool(context, sets, bindings);
+        pool.createPool(context, sets, sizes);
         return pool;
     }
 
@@ -32,12 +32,12 @@ namespace kailux
         return *m_Pool;
     }
 
-    void DescriptorPool::createPool(const Context &context, uint32_t sets, std::span<DescriptorLayoutBinding> bindings)
+    void DescriptorPool::createPool(const Context &context, uint32_t sets, std::span<DescriptorPoolSize> sizes)
     {
         std::vector<vk::DescriptorPoolSize> poolSizes;
-        poolSizes.reserve(bindings.size());
-        for (auto bind: bindings)
-            poolSizes.emplace_back(bind.type, sets);
+        poolSizes.reserve(sizes.size());
+        for (auto [type, count]: sizes)
+            poolSizes.emplace_back(type, sets * count);
 
         vk::DescriptorPoolCreateInfo createInfo(
             vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,

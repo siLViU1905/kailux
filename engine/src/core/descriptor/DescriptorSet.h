@@ -9,6 +9,7 @@ namespace kailux
         vk::DescriptorType type{};
         vk::Buffer buffer{};
         vk::DeviceSize size{};
+        uint32_t count{};
     };
 
     struct DescriptorImageInfo
@@ -16,6 +17,7 @@ namespace kailux
         vk::Sampler sampler{};
         vk::ImageView view{};
         vk::ImageLayout layout{};
+        uint32_t count{};
     };
 
     using DescriptorInfo = std::variant<DescriptorBufferInfo, DescriptorImageInfo>;
