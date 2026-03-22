@@ -1,18 +1,18 @@
-#include "DescriptorSetLayout.h"
+#include "DescriptorLayout.h"
 
-#include "Logger.h"
+#include "../Logger.h"
 
 namespace kailux
 {
-    DescriptorSetLayout::DescriptorSetLayout() : m_Layout({})
+    DescriptorLayout::DescriptorLayout() : m_Layout({})
     {
     }
 
-    DescriptorSetLayout::DescriptorSetLayout(DescriptorSetLayout &&other) noexcept : m_Layout(std::move(other.m_Layout))
+    DescriptorLayout::DescriptorLayout(DescriptorLayout &&other) noexcept : m_Layout(std::move(other.m_Layout))
     {
     }
 
-    DescriptorSetLayout &DescriptorSetLayout::operator=(DescriptorSetLayout &&other) noexcept
+    DescriptorLayout &DescriptorLayout::operator=(DescriptorLayout &&other) noexcept
     {
         if (this != &other)
         {
@@ -21,24 +21,24 @@ namespace kailux
         return *this;
     }
 
-    DescriptorSetLayout DescriptorSetLayout::create(const Context &context,
-                                                    std::span<DescriptorSetLayoutBinding> bindings)
+    DescriptorLayout DescriptorLayout::create(const Context &context,
+                                                    std::span<DescriptorLayoutBinding> bindings)
     {
         KAILUX_LOG_PARENT_CLR_GREEN("[DescriptorSetLayout]")
-        DescriptorSetLayout layout;
+        DescriptorLayout layout;
 
         layout.createLayout(context, bindings);
-        KAILUX_LOG_CHILD_CLR_GREEN(std::format("Created descriptor set layout with {} bindings", bindings.size()))
+        KAILUX_LOG_CHILD_CLR_GREEN(std::format("Created descriptor layout with {} bindings", bindings.size()))
 
         return layout;
     }
 
-    vk::DescriptorSetLayout DescriptorSetLayout::getLayout() const
+    vk::DescriptorSetLayout DescriptorLayout::getLayout() const
     {
         return *m_Layout;
     }
 
-    void DescriptorSetLayout::createLayout(const Context &context, std::span<DescriptorSetLayoutBinding> bindings)
+    void DescriptorLayout::createLayout(const Context &context, std::span<DescriptorLayoutBinding> bindings)
     {
         std::vector<vk::DescriptorSetLayoutBinding> vkBindings;
         vkBindings.reserve(bindings.size());

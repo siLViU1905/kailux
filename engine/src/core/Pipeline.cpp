@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <fstream>
 
-#include "DescriptorSetLayout.h"
+#include "descriptor/DescriptorLayout.h"
 #include "Logger.h"
 #include "Swapchain.h"
 #include "mesh/Vertex.h"
@@ -30,7 +30,7 @@ namespace kailux
     }
 
     Pipeline Pipeline::create(const Context &context, const Swapchain &swapchain,
-                              const DescriptorSetLayout &descriptorSetLayout, const ShaderInfo &shaderInfo,
+                              const DescriptorLayout &DescriptorLayout, const ShaderInfo &shaderInfo,
                               const PipelineInfo &pipelineInfo)
     {
         KAILUX_LOG_PARENT_CLR_YELLOW("[Pipeline]")
@@ -39,7 +39,7 @@ namespace kailux
         auto shaderModules = create_shader_modules(context, shaderInfo);
         KAILUX_LOG_CHILD_CLR_YELLOW("Created shader modules")
 
-        pipeline.createLayout(context, descriptorSetLayout);
+        pipeline.createLayout(context, DescriptorLayout);
         KAILUX_LOG_CHILD_CLR_YELLOW("Created pipeline layout")
 
         pipeline.createPipeline(context, swapchain, shaderModules, pipelineInfo);
@@ -107,9 +107,9 @@ namespace kailux
         return {std::move(vsModule), std::move(fsModule)};
     }
 
-    void Pipeline::createLayout(const Context &context, const DescriptorSetLayout &descriptorSetLayout)
+    void Pipeline::createLayout(const Context &context, const DescriptorLayout &DescriptorLayout)
     {
-        const auto dsLayout = descriptorSetLayout.getLayout();
+        const auto dsLayout = DescriptorLayout.getLayout();
 
         vk::PipelineLayoutCreateInfo pipelineLayoutInfo(
             {},

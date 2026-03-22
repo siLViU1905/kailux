@@ -26,7 +26,7 @@ namespace kailux
         friend class ImGuiBackend;
         friend class BufferAllocator;
         friend class Pipeline;
-        friend class DescriptorSetLayout;
+        friend class DescriptorLayout;
         friend class OneTimeCommand;
 
     private:

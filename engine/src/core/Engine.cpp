@@ -46,7 +46,7 @@ namespace kailux
         engine.m_Swapchain = Swapchain::create(window, engine.m_Context, engine.m_SampleCount);
         engine.m_ImGuiBackend =
                 ImGuiBackend::create(window, engine.m_Context, engine.m_Swapchain, engine.m_SampleCount);
-        engine.m_DescriptorSetLayout = DescriptorSetLayout::create(engine.m_Context, {});
+        engine.m_DescriptorSetLayout = DescriptorLayout::create(engine.m_Context, {});
         engine.m_Pipeline = Pipeline::create(
             engine.m_Context,
             engine.m_Swapchain,

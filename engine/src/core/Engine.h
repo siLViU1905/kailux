@@ -1,6 +1,6 @@
 #pragma once
 #include "Context.h"
-#include "DescriptorSetLayout.h"
+#include "descriptor/DescriptorLayout.h"
 #include "Swapchain.h"
 #include "FrameData.h"
 #include "Pipeline.h"
@@ -41,7 +41,7 @@ namespace kailux
         vk::SampleCountFlagBits                 m_SampleCount;
         Swapchain                               m_Swapchain;
         ImGuiBackend                            m_ImGuiBackend;
-        DescriptorSetLayout                     m_DescriptorSetLayout;
+        DescriptorLayout                     m_DescriptorSetLayout;
         Pipeline                                m_Pipeline;
         MeshRegistry                            m_MeshRegistry;
         std::array<FrameData, s_FramesInFlight> m_Frames;

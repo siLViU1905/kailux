@@ -14,8 +14,9 @@ add_library(kailux_engine STATIC
         src/core/mesh/MeshRegistry.cpp
         src/core/Pipeline.cpp
         src/core/Pipeline.h
-        src/core/DescriptorSetLayout.cpp
+        src/core/descriptor/DescriptorLayout.cpp
         src/core/command/OneTimeCommand.cpp
+        src/core/Camera.cpp
 )
 
 target_include_directories(kailux_engine PUBLIC src)

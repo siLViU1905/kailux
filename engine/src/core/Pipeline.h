@@ -26,7 +26,7 @@ namespace kailux
     public:
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(Pipeline)
 
-        static Pipeline create(const Context &context, const Swapchain& swapchain, const DescriptorSetLayout& descriptorSetLayout, const ShaderInfo& shaderInfo, const PipelineInfo &pipelineInfo);
+        static Pipeline create(const Context &context, const Swapchain& swapchain, const DescriptorLayout& descriptorSetLayout, const ShaderInfo& shaderInfo, const PipelineInfo &pipelineInfo);
 
         void bind(vk::CommandBuffer cmd) const;
 
@@ -43,7 +43,7 @@ namespace kailux
         static vk::raii::ShaderModule create_shader_module(const Context &context, const std::vector<char> &code);
         static ShaderModules create_shader_modules(const Context &context, const ShaderInfo& info);
 
-        void createLayout(const Context& context, const DescriptorSetLayout& descriptorSetLayout);
+        void createLayout(const Context& context, const DescriptorLayout& descriptorSetLayout);
         void createPipeline(const Context &context, const Swapchain& swapchain, const ShaderModules& shaderModules, const PipelineInfo& info);
 
         vk::raii::PipelineLayout m_Layout;
