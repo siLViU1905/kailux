@@ -5,8 +5,11 @@
 namespace kailux
 {
     Swapchain::Swapchain() : m_Swapchain(nullptr),
+                             m_ColorImage({}),
                              m_DepthImage({}),
+                             m_ColorImageMemory({}),
                              m_DepthImageMemory({}),
+                             m_ColorImageView({}),
                              m_DepthImageView({}),
                              m_ImageFormat(),
                              m_DepthFormat(),
@@ -18,9 +21,12 @@ namespace kailux
 
     Swapchain::Swapchain(Swapchain &&other) noexcept : m_Swapchain(std::move(other.m_Swapchain)),
                                                        m_Images(std::move(other.m_Images)),
+                                                       m_ColorImage(std::move(other.m_ColorImage)),
                                                        m_DepthImage(std::move(other.m_DepthImage)),
+                                                       m_ColorImageMemory(std::move(other.m_ColorImageMemory)),
                                                        m_DepthImageMemory(std::move(other.m_DepthImageMemory)),
                                                        m_ImageViews(std::move(other.m_ImageViews)),
+                                                       m_ColorImageView(std::move(other.m_ColorImageView)),
                                                        m_DepthImageView(std::move(other.m_DepthImageView)),
                                                        m_ImageFormat(other.m_ImageFormat),
                                                        m_DepthFormat(other.m_DepthFormat),
@@ -38,9 +44,12 @@ namespace kailux
         {
             m_Swapchain = std::move(other.m_Swapchain);
             m_Images = std::move(other.m_Images);
+            m_ColorImage = std::move(other.m_ColorImage);
             m_DepthImage = std::move(other.m_DepthImage);
+            m_ColorImageMemory = std::move(other.m_ColorImageMemory);
             m_DepthImageMemory = std::move(other.m_DepthImageMemory);
             m_ImageViews = std::move(other.m_ImageViews);
+            m_ColorImageView = std::move(other.m_ColorImageView);
             m_DepthImageView = std::move(other.m_DepthImageView);
             m_ImageFormat = other.m_ImageFormat;
             m_DepthFormat = other.m_DepthFormat;
@@ -99,7 +108,7 @@ namespace kailux
         m_Images = m_Swapchain.getImages();
     }
 
-    Swapchain Swapchain::create(Window &window, const Context &context)
+    Swapchain Swapchain::create(Window &window, const Context &context, vk::SampleCountFlagBits sampleCount)
     {
         KAILUX_LOG_PARENT_CLR_CYAN("[SWAPCHAIN]")
         Swapchain swapChain;
@@ -110,7 +119,10 @@ namespace kailux
         swapChain.createImageViews(context);
         KAILUX_LOG_CHILD_CLR_CYAN("Image views created")
 
-        swapChain.createDepthResources(context);
+        swapChain.createColorResources(context, sampleCount);
+        KAILUX_LOG_CHILD_CLR_CYAN("Color resources created")
+
+        swapChain.createDepthResources(context, sampleCount);
         KAILUX_LOG_CHILD_CLR_CYAN("Depth resources created")
 
         swapChain.createSyncObjects(context);
@@ -119,7 +131,7 @@ namespace kailux
         return swapChain;
     }
 
-    void Swapchain::recreate(Window &window, const Context &context)
+    void Swapchain::recreate(Window &window, const Context &context, vk::SampleCountFlagBits sampleCount)
     {
         int width = 0, height = 0;
         while (width == 0 || height == 0)
@@ -138,9 +150,11 @@ namespace kailux
 
         createSwapchain(window, context);
         createImageViews(context);
-        createDepthResources(context);
+        createColorResources(context, sampleCount);
+        createDepthResources(context, sampleCount);
         createSyncObjects(context);
-        KAILUX_LOG_INFO("[Swapchain]", std::format("Recreated with extent: x:{}, y:{}", m_Extent.width, m_Extent.height))
+        KAILUX_LOG_INFO("[Swapchain]",
+                        std::format("Recreated with extent: x:{}, y:{}", m_Extent.width, m_Extent.height))
     }
 
     vk::Format Swapchain::getFormat() const
@@ -163,9 +177,19 @@ namespace kailux
         return m_Images[index];
     }
 
+    vk::Image Swapchain::getColorImage() const
+    {
+        return *m_ColorImage;
+    }
+
     vk::ImageView Swapchain::getImageView(uint32_t index) const
     {
         return *m_ImageViews[index];
+    }
+
+    vk::ImageView Swapchain::getColorImageView() const
+    {
+        return *m_ColorImageView;
     }
 
     vk::ImageView Swapchain::getDepthImageView() const
@@ -299,7 +323,53 @@ namespace kailux
         }
     }
 
-    void Swapchain::createDepthResources(const Context &context)
+    void Swapchain::createColorResources(const Context &context, vk::SampleCountFlagBits sampleCount)
+    {
+        if (sampleCount == vk::SampleCountFlagBits::e1)
+            return;
+
+        vk::ImageCreateInfo imageInfo(
+            {},
+            vk::ImageType::e2D,
+            m_ImageFormat,
+            vk::Extent3D(m_Extent.width, m_Extent.height, 1),
+            1,
+            1,
+            sampleCount,
+            vk::ImageTiling::eOptimal,
+            vk::ImageUsageFlagBits::eTransientAttachment | vk::ImageUsageFlagBits::eColorAttachment
+        );
+
+        m_ColorImage = vk::raii::Image(context.m_Device, imageInfo);
+
+        auto memReqs = m_ColorImage.getMemoryRequirements();
+        m_ColorImageMemory = vk::raii::DeviceMemory(context.m_Device,
+                                                    {
+                                                        memReqs.size,
+                                                        context.findMemoryType(
+                                                            memReqs.memoryTypeBits,
+                                                            vk::MemoryPropertyFlagBits::eDeviceLocal)
+                                                    });
+        m_ColorImage.bindMemory(*m_ColorImageMemory, 0);
+
+        m_ColorImageView = vk::raii::ImageView(context.m_Device,
+                                               {
+                                                   {},
+                                                   *m_ColorImage,
+                                                   vk::ImageViewType::e2D,
+                                                   m_ImageFormat,
+                                                   {},
+                                                   {
+                                                       vk::ImageAspectFlagBits::eColor,
+                                                       0,
+                                                       1,
+                                                       0,
+                                                       1
+                                                   }
+                                               });
+    }
+
+    void Swapchain::createDepthResources(const Context &context, vk::SampleCountFlagBits sampleCount)
     {
         m_DepthFormat = find_depth_format(context);
 
@@ -309,7 +379,7 @@ namespace kailux
             m_DepthFormat,
             vk::Extent3D{m_Extent.width, m_Extent.height, 1},
             1, 1,
-            vk::SampleCountFlagBits::e1,
+            sampleCount,
             vk::ImageTiling::eOptimal,
             vk::ImageUsageFlagBits::eDepthStencilAttachment
         };

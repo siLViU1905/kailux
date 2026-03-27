@@ -11,7 +11,7 @@ namespace kailux
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(ImGuiBackend)
         ~ImGuiBackend();
 
-        static ImGuiBackend create(Window& window, const Context& context, const Swapchain& swapchain);
+        static ImGuiBackend create(Window& window, const Context& context, const Swapchain& swapchain, vk::SampleCountFlagBits sampleCount);
 
         void beginFrame();
         void endFrame();
@@ -21,7 +21,7 @@ namespace kailux
     private:
         void createImGuiContext();
         void createDescriptorPool(const Context& context);
-        void createImGuiVulkanContext(Window& window, const Context& context, const Swapchain& swapchain);
+        void createImGuiVulkanContext(Window& window, const Context& context, const Swapchain& swapchain, vk::SampleCountFlagBits sampleCount);
 
         ImGuiContext*            p_Context;
         ImGuiIO*                 p_IO;

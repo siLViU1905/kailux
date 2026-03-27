@@ -45,7 +45,7 @@ namespace kailux
         }
     }
 
-    ImGuiBackend ImGuiBackend::create(Window& window, const Context& context, const Swapchain& swapchain)
+    ImGuiBackend ImGuiBackend::create(Window& window, const Context& context, const Swapchain& swapchain, vk::SampleCountFlagBits sampleCount)
     {
         KAILUX_LOG_PARENT_CLR_MAGENTA("[IMGUI BACKEND]")
         ImGuiBackend imguiBackend;
@@ -56,7 +56,7 @@ namespace kailux
         imguiBackend.createDescriptorPool(context);
         KAILUX_LOG_CHILD_CLR_MAGENTA("Descriptor pool created")
 
-        imguiBackend.createImGuiVulkanContext(window, context, swapchain);
+        imguiBackend.createImGuiVulkanContext(window, context, swapchain, sampleCount);
         KAILUX_LOG_CHILD_CLR_MAGENTA("ImGui Vulkan context created")
 
         return imguiBackend;
@@ -125,7 +125,7 @@ namespace kailux
         p_IO = &ImGui::GetIO();
     }
 
-    void ImGuiBackend::createImGuiVulkanContext(Window& window, const Context& context, const Swapchain& swapchain)
+    void ImGuiBackend::createImGuiVulkanContext(Window& window, const Context& context, const Swapchain& swapchain, vk::SampleCountFlagBits sampleCount)
     {
         ImGui_ImplGlfw_InitForVulkan(window.getGLFWWindow(), true);
 
@@ -139,8 +139,7 @@ namespace kailux
         initInfo.DescriptorPool = *m_DescriptorPool;
         initInfo.MinImageCount = swapchain.getImageCount();
         initInfo.ImageCount = swapchain.getImageCount();
-        //no MSAA for now
-        //initInfo.PipelineInfoMain.MSAASamples;
+        initInfo.PipelineInfoMain.MSAASamples = static_cast<VkSampleCountFlagBits>(sampleCount);
         initInfo.Allocator = nullptr;
         initInfo.CheckVkResultFn = nullptr;
 

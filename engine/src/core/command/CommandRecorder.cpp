@@ -1,10 +1,10 @@
 #include "CommandRecorder.h"
 
-#include "Logger.h"
+#include "../Logger.h"
 
 namespace kailux
 {
-    CommandRecorder::CommandRecorder(vk::CommandBuffer cmd):m_Cmd(cmd), m_InRendering(false), m_IsSecondary(false)
+    CommandRecorder::CommandRecorder(vk::CommandBuffer cmd) : m_Cmd(cmd), m_InRendering(false), m_IsSecondary(false)
     {
         vk::CommandBufferBeginInfo beginInfo{
             vk::CommandBufferUsageFlagBits::eOneTimeSubmit
@@ -14,7 +14,8 @@ namespace kailux
     }
 
     CommandRecorder::CommandRecorder(vk::CommandBuffer cmd,
-        const vk::CommandBufferInheritanceRenderingInfo &inheritance): m_Cmd(cmd), m_InRendering(false), m_IsSecondary(true)
+                                     const vk::CommandBufferInheritanceRenderingInfo &inheritance) : m_Cmd(cmd),
+        m_InRendering(false), m_IsSecondary(true)
     {
         vk::CommandBufferInheritanceInfo inheritanceInfo;
         inheritanceInfo.pNext = &inheritance;
@@ -56,7 +57,7 @@ namespace kailux
 
         vk::DependencyInfo depInfo{};
         depInfo.imageMemoryBarrierCount = 1;
-        depInfo.pImageMemoryBarriers    = &imageBarrier;
+        depInfo.pImageMemoryBarriers = &imageBarrier;
 
         m_Cmd.pipelineBarrier2(depInfo);
     }
@@ -72,21 +73,21 @@ namespace kailux
         vk::RenderingAttachmentInfo colorAttachment{
             info.colorView,
             info.colorLayout,
-            vk::ResolveModeFlagBits::eNone,
-            {},
-            {},
+            (info.resolveView ? vk::ResolveModeFlagBits::eAverage : vk::ResolveModeFlagBits::eNone),
+            info.resolveView,
+            vk::ImageLayout::eColorAttachmentOptimal,
             info.loadOp,
             info.storeOp,
-            vk::ClearValue{ info.clearColor }
+            vk::ClearValue{info.clearColor}
         };
 
         vk::RenderingInfo renderingInfo{
-                info.renderFlags,
-                vk::Rect2D{ {0, 0}, info.extent },
-                1,
-                0,
-                colorAttachment
-            };
+            info.renderFlags,
+            vk::Rect2D{{0, 0}, info.extent},
+            1,
+            0,
+            colorAttachment
+        };
 
         vk::RenderingAttachmentInfo depthAttachment{};
         if (info.depthView)
@@ -99,7 +100,7 @@ namespace kailux
                 {},
                 vk::AttachmentLoadOp::eClear,
                 vk::AttachmentStoreOp::eStore,
-                vk::ClearValue{ vk::ClearDepthStencilValue{ 1.0f, 0 } }
+                vk::ClearValue{vk::ClearDepthStencilValue{1.0f, 0}}
             };
 
             renderingInfo.pDepthAttachment = &depthAttachment;
@@ -111,9 +112,10 @@ namespace kailux
 
     void CommandRecorder::endRendering()
     {
-        if (!m_InRendering|| m_IsSecondary)
+        if (!m_InRendering || m_IsSecondary)
         {
-            KAILUX_LOG_WARNING("[CommandRecorder]", "endRendering() was called while the command was rendering or from a secondary buffer")
+            KAILUX_LOG_WARNING("[CommandRecorder]",
+                               "endRendering() was called while the command was rendering or from a secondary buffer")
             return;
         }
 
@@ -137,7 +139,7 @@ namespace kailux
 
     void CommandRecorder::setScissor(vk::Extent2D extent)
     {
-        vk::Rect2D scissor{ {0, 0}, extent };
+        vk::Rect2D scissor{{0, 0}, extent};
         m_Cmd.setScissor(0, scissor);
     }
 

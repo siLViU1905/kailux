@@ -18,4 +18,14 @@ namespace kailux
     {
         return std::format("KeyRepeated(key:{}, scancode:{}, mods:{})", key, scancode, mods);
     }
+
+    std::string ButtonPressed::toString() const
+    {
+        return std::format("ButtonPressed(button:{}, mods:{})", button, mods);
+    }
+
+    std::string ButtonReleased::toString() const
+    {
+        return std::format("ButtonReleased(button:{}, mods:{})", button, mods);
+    }
 }

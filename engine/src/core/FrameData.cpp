@@ -1,5 +1,9 @@
 #include "FrameData.h"
 
+#include "Pipeline.h"
+#include "buffer/BufferAllocator.h"
+#include "components/CameraComponent.h"
+
 namespace kailux
 {
     FrameData::FrameData() : m_CommandPool({}),
@@ -15,7 +19,9 @@ namespace kailux
                                                        m_ImGuiCommandPool(std::move(other.m_ImGuiCommandPool)),
                                                        m_CommandBuffer(std::move(other.m_CommandBuffer)),
                                                        m_ImGuiCommandBuffer(std::move(other.m_ImGuiCommandBuffer)),
-                                                       m_FenceInFlight(std::move(other.m_FenceInFlight))
+                                                       m_FenceInFlight(std::move(other.m_FenceInFlight)),
+                                                       m_CameraBuffer(std::move(other.m_CameraBuffer)),
+                                                       m_DescriptorSet(std::move(other.m_DescriptorSet))
     {
     }
 
@@ -28,11 +34,14 @@ namespace kailux
             m_CommandBuffer = std::move(other.m_CommandBuffer);
             m_ImGuiCommandBuffer = std::move(other.m_ImGuiCommandBuffer);
             m_FenceInFlight = std::move(other.m_FenceInFlight);
+            m_CameraBuffer = std::move(other.m_CameraBuffer);
+            m_DescriptorSet = std::move(other.m_DescriptorSet);
         }
         return *this;
     }
 
-    FrameData FrameData::create(const Context &context)
+    FrameData FrameData::create(const Context &context, const DescriptorLayout &descriptorLayout,
+                                const DescriptorPool &descriptorPool)
     {
         FrameData frame;
         frame.createCommandPool(context);
@@ -40,6 +49,9 @@ namespace kailux
         frame.createCommandBuffer(context);
         frame.createImGuiCommandBuffer(context);
         frame.createSyncObjects(context);
+        frame.createCameraBuffer(context);
+        auto descSetInfo = frame.makeDescriptorSetInfo();
+        frame.createDescriptorSet(context, descriptorLayout, descriptorPool, descSetInfo);
         return frame;
     }
 
@@ -67,6 +79,16 @@ namespace kailux
     vk::Fence FrameData::getFenceInFlight() const
     {
         return *m_FenceInFlight;
+    }
+
+    const DescriptorSet &FrameData::getDescriptorSet() const
+    {
+        return m_DescriptorSet;
+    }
+
+    Buffer &FrameData::getCameraBuffer()
+    {
+        return m_CameraBuffer;
     }
 
     void FrameData::createCommandPool(const Context &context)
@@ -108,5 +130,30 @@ namespace kailux
     void FrameData::createSyncObjects(const Context &context)
     {
         m_FenceInFlight = vk::raii::Fence(context.m_Device, vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled));
+    }
+
+    void FrameData::createDescriptorSet(const Context &context, const DescriptorLayout &descriptorLayout,
+                                        const DescriptorPool &descriptorPool, std::span<DescriptorSetInfo> infos)
+    {
+        m_DescriptorSet = DescriptorSet::create(context, descriptorLayout, descriptorPool, infos);
+    }
+
+    void FrameData::createCameraBuffer(const Context &context)
+    {
+        m_CameraBuffer = BufferAllocator::alloc_uniform(context, sizeof(CameraComponent));
+    }
+
+    std::array<DescriptorSetInfo, 1> FrameData::makeDescriptorSetInfo() const
+    {
+        return {
+            {
+                DescriptorSetBufferInfo(
+                    vk::DescriptorType::eUniformBuffer,
+                    m_CameraBuffer.getBuffer(),
+                    sizeof(CameraComponent),
+                    1
+                )
+            }
+        };
     }
 }

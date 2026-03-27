@@ -41,6 +41,7 @@ namespace kailux
 
         glfwSetFramebufferSizeCallback(handle, glfw_framebuffer_callback);
         glfwSetKeyCallback(handle, glfw_key_callback);
+        glfwSetMouseButtonCallback(handle, glfw_button_callback);
 
         return window;
     }
@@ -96,6 +97,16 @@ namespace kailux
     bool Window::isMinimized() const
     {
         return !m_Width || !m_Height;
+    }
+
+    bool Window::isKeyPressed(int key) const
+    {
+        return glfwGetKey(m_WindowHandle, key) == GLFW_PRESS;
+    }
+
+    void Window::getMousePos(double &x, double &y) const
+    {
+        glfwGetCursorPos(m_WindowHandle, &x, &y);
     }
 
     void Window::restore()
@@ -156,6 +167,22 @@ namespace kailux
                 break;
             case GLFW_REPEAT:
                 self->m_EventQueue.push(KeyRepeated(key, scancode, mods));
+                break;
+            default: ;
+        }
+    }
+
+    void Window::glfw_button_callback(GLFWwindow *window, int button, int action, int mods)
+    {
+        auto *self = static_cast<Window *>(glfwGetWindowUserPointer(window));
+
+        switch (action)
+        {
+            case GLFW_RELEASE:
+                self->m_EventQueue.push(ButtonReleased(button, mods));
+                break;
+            case GLFW_PRESS:
+                self->m_EventQueue.push(ButtonPressed(button, mods));
                 break;
             default: ;
         }

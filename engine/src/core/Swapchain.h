@@ -8,15 +8,17 @@ namespace kailux
     public:
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(Swapchain)
 
-        static Swapchain create(Window& window, const Context& context);
+        static Swapchain create(Window& window, const Context& context, vk::SampleCountFlagBits sampleCount);
 
-        void recreate(Window& window, const Context& context);
+        void recreate(Window& window, const Context& context, vk::SampleCountFlagBits sampleCount);
 
         vk::Format              getFormat() const;
         vk::Format              getDepthFormat() const;
         vk::Extent2D            getExtent() const;
         vk::Image               getImage(uint32_t index) const;
+        vk::Image               getColorImage() const;
         vk::ImageView           getImageView(uint32_t index) const;
+        vk::ImageView           getColorImageView() const;
         vk::ImageView           getDepthImageView() const;
         uint32_t                getImageCount() const;
 
@@ -38,14 +40,18 @@ namespace kailux
 
         void createSwapchain(Window& window, const Context& context);
         void createImageViews(const Context& context);
-        void createDepthResources(const Context& context);
+        void createColorResources(const Context &context, vk::SampleCountFlagBits sampleCount);
+        void createDepthResources(const Context& context, vk::SampleCountFlagBits sampleCount);
         void createSyncObjects(const Context& context);
 
         vk::raii::SwapchainKHR           m_Swapchain;
         std::vector<vk::Image>           m_Images;
+        vk::raii::Image                  m_ColorImage;
         vk::raii::Image                  m_DepthImage;
+        vk::raii::DeviceMemory           m_ColorImageMemory;
         vk::raii::DeviceMemory           m_DepthImageMemory;
         std::vector<vk::raii::ImageView> m_ImageViews;
+        vk::raii::ImageView              m_ColorImageView;
         vk::raii::ImageView              m_DepthImageView;
         vk::Format                       m_ImageFormat;
         vk::Format                       m_DepthFormat;

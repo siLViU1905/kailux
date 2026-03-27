@@ -19,6 +19,7 @@ namespace kailux
     struct RenderingInfo
     {
         vk::ImageView          colorView;
+        vk::ImageView          resolveView;
         vk::Extent2D           extent;
         vk::ImageLayout        colorLayout  = vk::ImageLayout::eColorAttachmentOptimal;
         vk::AttachmentLoadOp   loadOp  = vk::AttachmentLoadOp::eClear;
