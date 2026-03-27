@@ -303,8 +303,8 @@ namespace kailux
                 );
 
             data.indices.insert(data.indices.end(), {
-                                    base, base + 2, base + 1,
-                                    base, base + 3, base + 2
+                                    base + 0, base + 1, base + 2,
+                                    base + 0, base + 2, base + 3
                                 });
         }
         return data;
@@ -340,7 +340,7 @@ namespace kailux
                 glm::vec2 uv(
                     static_cast<float>(j) / static_cast<float>(sectors),
                     static_cast<float>(i) / static_cast<float>(stacks)
-                    );
+                );
                 glm::vec4 tangent(
                     -radius * std::sin(stackAngle) * std::sin(sectorAngle),
                     radius * std::sin(stackAngle) * std::cos(sectorAngle),
