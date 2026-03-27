@@ -347,9 +347,9 @@ namespace kailux
                     [this, &window](ButtonPressed e)
                     {
                         KAILUX_LOG_INFO("[Engine]", e.toString())
-                        if (e.button == GLFW_MOUSE_BUTTON_3)
+                        if (e.button == MouseButton::Middle)
                         {
-                            window.isCursorEnabled() ? window.disableCursor() : window.enableCursor();
+                            (window.getCursorMode() == CursorMode::Normal) ? window.setCursorMode(CursorMode::Disabled) : window.setCursorMode(CursorMode::Normal);
                             m_Camera.isFocused() ? m_Camera.loseFocus() : m_Camera.gainFocus();
                         }
                     },

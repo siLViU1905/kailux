@@ -99,9 +99,9 @@ namespace kailux
         return !m_Width || !m_Height;
     }
 
-    bool Window::isKeyPressed(int key) const
+    bool Window::isKeyPressed(Key key) const
     {
-        return glfwGetKey(m_WindowHandle, key) == GLFW_PRESS;
+        return glfwGetKey(m_WindowHandle, static_cast<int>(key)) == GLFW_PRESS;
     }
 
     void Window::getMousePos(double &x, double &y) const
@@ -109,19 +109,14 @@ namespace kailux
         glfwGetCursorPos(m_WindowHandle, &x, &y);
     }
 
-    void Window::disableCursor()
+    void Window::setCursorMode(CursorMode mode)
     {
-        glfwSetInputMode(m_WindowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        glfwSetInputMode(m_WindowHandle, GLFW_CURSOR, static_cast<int>(mode));
     }
 
-    void Window::enableCursor()
+    CursorMode Window::getCursorMode() const
     {
-        glfwSetInputMode(m_WindowHandle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    }
-
-    bool Window::isCursorEnabled() const
-    {
-        return glfwGetInputMode(m_WindowHandle, GLFW_CURSOR) == GLFW_CURSOR_NORMAL;
+        return static_cast<CursorMode>(glfwGetInputMode(m_WindowHandle, GLFW_CURSOR));
     }
 
     void Window::restore()
@@ -172,16 +167,20 @@ namespace kailux
     {
         auto *self = static_cast<Window *>(glfwGetWindowUserPointer(window));
 
-        switch (action)
+        Key kKey         = static_cast<Key>(key);
+        KeyAction kAct   = static_cast<KeyAction>(action);
+        KeyMods kMods    = static_cast<KeyMods>(mods);
+
+        switch (kAct)
         {
-            case GLFW_RELEASE:
-                self->m_EventQueue.push(KeyReleased(key, scancode, mods));
+            case KeyAction::Release:
+                self->m_EventQueue.push(KeyReleased(kKey, scancode, kMods));
                 break;
-            case GLFW_PRESS:
-                self->m_EventQueue.push(KeyPressed(key, scancode, mods));
+            case KeyAction::Press:
+                self->m_EventQueue.push(KeyPressed(kKey, scancode, kMods));
                 break;
-            case GLFW_REPEAT:
-                self->m_EventQueue.push(KeyRepeated(key, scancode, mods));
+            case KeyAction::Repeat:
+                self->m_EventQueue.push(KeyRepeated(kKey, scancode, kMods));
                 break;
             default: ;
         }
@@ -191,13 +190,17 @@ namespace kailux
     {
         auto *self = static_cast<Window *>(glfwGetWindowUserPointer(window));
 
-        switch (action)
+        MouseButton mBtn   = static_cast<MouseButton>(button);
+        MouseAction mAct   = static_cast<MouseAction>(action);
+        MouseMods mMods    = static_cast<MouseMods>(mods);
+
+        switch (mAct)
         {
-            case GLFW_RELEASE:
-                self->m_EventQueue.push(ButtonReleased(button, mods));
+            case MouseAction::Release:
+                self->m_EventQueue.push(ButtonReleased(mBtn, mMods));
                 break;
-            case GLFW_PRESS:
-                self->m_EventQueue.push(ButtonPressed(button, mods));
+            case MouseAction::Press:
+                self->m_EventQueue.push(ButtonPressed(mBtn, mMods));
                 break;
             default: ;
         }
