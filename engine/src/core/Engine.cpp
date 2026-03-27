@@ -306,7 +306,7 @@ namespace kailux
             frame.getIndirectBuffer().getBuffer(),
             {},
             indirectCommands.size(),
-            0
+            sizeof(vk::DrawIndexedIndirectCommand)
         );
     }
 
