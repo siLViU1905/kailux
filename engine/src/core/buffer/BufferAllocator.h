@@ -10,7 +10,7 @@ namespace kailux
         //device local -> for vertex, index buffers
         static Buffer alloc_local(const Context &context, vk::DeviceSize size, vk::BufferUsageFlags usage);
 
-        //host visible + coherent -> for uniform, staging, indirect commands buffers
+        //host visible + coherent -> for uniform, staging, indirect buffers
         static Buffer alloc_host(const Context &context, vk::DeviceSize size, vk::BufferUsageFlags usage);
 
         static Buffer alloc_vertex(const Context &context, vk::DeviceSize size);

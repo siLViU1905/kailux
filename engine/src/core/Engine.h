@@ -27,6 +27,7 @@ namespace kailux
     private:
         static constexpr std::string_view s_VertexShaderPath = "shaders/vertex_shader.spv";
         static constexpr std::string_view s_FragmentShaderPath = "shaders/fragment_shader.spv";
+        static constexpr uint32_t         s_MaxMeshCount = 1'000;
 
         void createRenderingContext(Window& window);
         void createDescriptorResources();
@@ -70,10 +71,11 @@ namespace kailux
         }
         static PipelineInfo make_pipeline_info(vk::SampleCountFlagBits sampleCount);
 
-        void submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
-        void render(Window &window);
-        void recordMeshData(const FrameData &frame, vk::CommandBuffer cmd) const;
-        void recordImGuiData(const FrameData& frame);
+        void                                        submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
+        void                                        render(Window &window);
+        std::vector<vk::DrawIndexedIndirectCommand> getMeshIndirectCommands() const;
+        void                                        recordMeshData(FrameData &frame, vk::CommandBuffer cmd, std::span<const vk::DrawIndexedIndirectCommand> indirectCommands) const;
+        void                                        recordImGuiData(const FrameData& frame);
 
         void updateFrameBuffers(FrameData& frame) const;
 

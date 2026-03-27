@@ -82,12 +82,25 @@ namespace kailux
     MeshView MeshRegistry::view(MeshHandle handle) const
     {
         assert(handle.valid());
-        const auto &a = m_Allocs[handle.index];
+        const auto &alloc = m_Allocs[handle.index];
         return {
-            static_cast<uint32_t>(a.indexOffset / sizeof(IndexType)),
-            a.indexCount,
-            static_cast<int32_t>(a.vertexOffset / sizeof(Vertex))
+            static_cast<uint32_t>(alloc.indexOffset / sizeof(IndexType)),
+            alloc.indexCount,
+            static_cast<int32_t>(alloc.vertexOffset / sizeof(Vertex))
         };
+    }
+
+    std::vector<MeshView> MeshRegistry::viewAll() const
+    {
+        std::vector<MeshView> views;
+        views.reserve(m_Allocs.size());
+        for (const auto &alloc: m_Allocs)
+            views.emplace_back(
+                static_cast<uint32_t>(alloc.indexOffset / sizeof(IndexType)),
+                alloc.indexCount,
+                static_cast<int32_t>(alloc.vertexOffset / sizeof(Vertex))
+            );
+        return views;
     }
 
     void MeshRegistry::bind(vk::CommandBuffer cmd) const
