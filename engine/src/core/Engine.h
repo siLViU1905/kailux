@@ -77,7 +77,7 @@ namespace kailux
 
         void updateFrameBuffers(FrameData& frame) const;
 
-        void handleEvent(Event event);
+        void handleEvent(Window &window);
 
         static constexpr uint32_t s_FramesInFlight = 2;
 

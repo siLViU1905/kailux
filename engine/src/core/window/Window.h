@@ -33,8 +33,10 @@ namespace kailux
         bool isMaximized() const;
         bool isMinimized() const;
 
-        bool isKeyPressed(int key) const;
-        void getMousePos(double& x, double& y) const;
+        bool       isKeyPressed(Key key) const;
+        void       getMousePos(double& x, double& y) const;
+        void       setCursorMode(CursorMode mode);
+        CursorMode getCursorMode() const;
 
         void getFramebufferSize(int& width, int& height) const;
         constexpr int getWidth()  const { return m_Width;  }

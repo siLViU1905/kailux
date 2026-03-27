@@ -37,17 +37,17 @@ namespace kailux
     {
         m_Right = glm::normalize(glm::cross(m_Forward, m_Up));
 
-        if (window.isKeyPressed(GLFW_KEY_W))
+        if (window.isKeyPressed(Key::W))
             m_Position += m_Forward * deltaTime * m_Speed;
-        if (window.isKeyPressed(GLFW_KEY_S))
+        if (window.isKeyPressed(Key::S))
             m_Position -= m_Forward * deltaTime * m_Speed;
-        if (window.isKeyPressed(GLFW_KEY_A))
+        if (window.isKeyPressed(Key::A))
             m_Position -= m_Right * deltaTime * m_Speed;
-        if (window.isKeyPressed(GLFW_KEY_D))
+        if (window.isKeyPressed(Key::D))
             m_Position += m_Right * deltaTime * m_Speed;
-        if (window.isKeyPressed(GLFW_KEY_SPACE))
+        if (window.isKeyPressed(Key::Space))
             m_Position += glm::vec3(0.f, 1.f, 0.f) * deltaTime * m_Speed;
-        if (window.isKeyPressed(GLFW_KEY_LEFT_CONTROL))
+        if (window.isKeyPressed(Key::LeftControl))
             m_Position -= glm::vec3(0.f, 1.f, 0.f) * deltaTime * m_Speed;
 
         m_View = glm::lookAt(m_Position,
