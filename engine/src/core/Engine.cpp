@@ -112,7 +112,7 @@ namespace kailux
     {
         int windowWidth, windowHeight;
         window.getFramebufferSize(windowWidth, windowHeight);
-        m_Camera = Camera::create(windowWidth, windowHeight, {0.f, 0.f, -2.f});
+        m_Camera = Camera::create(windowWidth, windowHeight, {0.f, 0.f, 5.f});
     }
 
     PipelineInfo Engine::make_pipeline_info(vk::SampleCountFlagBits sampleCount)
@@ -125,7 +125,7 @@ namespace kailux
             vk::False,
             vk::False,
             vk::PolygonMode::eFill,
-            vk::CullModeFlagBits::eNone, //TO DO: no rendering with eBack, perspective matrix needs to be added
+            vk::CullModeFlagBits::eBack,
             vk::FrontFace::eCounterClockwise,
             vk::False,
             {},
