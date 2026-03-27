@@ -16,12 +16,12 @@ namespace kailux
     public:
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(DescriptorPool)
 
-        static DescriptorPool create(const Context& context, uint32_t sets, std::span<DescriptorPoolSize> sizes);
+        static DescriptorPool create(const Context& context, uint32_t sets, std::span<const DescriptorPoolSize> sizes);
 
         vk::DescriptorPool getPool() const;
 
     private:
-        void createPool(const Context& context, uint32_t sets, std::span<DescriptorPoolSize> sizes);
+        void createPool(const Context& context, uint32_t sets, std::span<const DescriptorPoolSize> sizes);
 
         vk::raii::DescriptorPool m_Pool;
     };

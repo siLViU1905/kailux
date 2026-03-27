@@ -46,60 +46,73 @@ namespace kailux
     Engine Engine::create(Window &window)
     {
         Engine engine;
-        engine.m_Context = Context::create(window);
-        engine.m_SampleCount = engine.m_Context.getMaxUsableSampleCount();
-        engine.m_Swapchain = Swapchain::create(window, engine.m_Context, engine.m_SampleCount);
-        engine.m_ImGuiBackend =
-                ImGuiBackend::create(window, engine.m_Context, engine.m_Swapchain, engine.m_SampleCount);
-
-        auto descLayoutBindings = make_descriptor_layout_bindings(1); //camera uniform buffer
-        engine.m_DescriptorLayout = DescriptorLayout::create(engine.m_Context, descLayoutBindings);
-        auto descPoolSizes = make_descriptor_pool_sizes(1); //camera uniform buffer
-        engine.m_DescriptorPool = DescriptorPool::create(engine.m_Context, s_FramesInFlight, descPoolSizes);
-        engine.m_Pipeline = Pipeline::create(
-            engine.m_Context,
-            engine.m_Swapchain,
-            engine.m_DescriptorLayout,
-            {s_VertexShaderPath.data(), s_FragmentShaderPath.data()},
-            make_pipeline_info(engine.m_SampleCount)
-        );
-
-        for (auto &frame: engine.m_Frames)
-            frame = FrameData::create(engine.m_Context, engine.m_DescriptorLayout, engine.m_DescriptorPool);
-
-        OneTimeCommand::create_command_pool(engine.m_Context);
-
-        std::vector<Buffer> stagingBuffers;
-        OneTimeCommand otc = OneTimeCommand::create(engine.m_Context);
-        engine.m_MeshRegistry = MeshRegistry::create(engine.m_Context, otc.getCommandBuffer(), stagingBuffers);
-        otc.submit(engine.m_Context);
-
-        int windowWidth, windowHeight;
-        window.getFramebufferSize(windowWidth, windowHeight);
-        engine.m_Camera = Camera::create(windowWidth, windowHeight, {0.f, 0.f, -2.f});
-
+        engine.createRenderingContext(window);
+        engine.createDescriptorResources();
+        engine.createPipeline();
+        engine.createFrameResources();
+        engine.createMeshRegistry();
+        engine.createImGui(window);
+        engine.createCamera(window);
         return engine;
     }
 
-    std::array<DescriptorLayoutBinding, 1> Engine::make_descriptor_layout_bindings(uint32_t uniformBufferCount)
+    void Engine::createRenderingContext(Window &window)
     {
-        return {
-            DescriptorLayoutBinding(
-                vk::DescriptorType::eUniformBuffer,
-                uniformBufferCount,
-                vk::ShaderStageFlagBits::eVertex
-            )
-        };
+        m_Context = Context::create(window);
+        m_SampleCount = m_Context.getMaxUsableSampleCount();
+        m_Swapchain = Swapchain::create(window, m_Context, m_SampleCount);
     }
 
-    std::array<DescriptorPoolSize, 1> Engine::make_descriptor_pool_sizes(uint32_t uniformBufferCount)
+    void Engine::createDescriptorResources()
     {
-        return {
-            DescriptorPoolSize(
-                vk::DescriptorType::eUniformBuffer,
-                uniformBufferCount
-            )
-        };
+        constexpr auto descLayoutBindings = make_descriptor_layout_bindings(1); //camera uniform buffer
+        constexpr auto descPoolSizes = make_descriptor_pool_sizes(1); //camera uniform buffer
+        static_assert(check_descriptor_layout_bindings_and_pool_sizes_match(descLayoutBindings, descPoolSizes), "Descriptor layout binding and pool sizes does not match");
+        m_DescriptorLayout = DescriptorLayout::create(m_Context, descLayoutBindings);
+
+        m_DescriptorPool = DescriptorPool::create(m_Context, s_FramesInFlight, descPoolSizes);
+    }
+
+    void Engine::createPipeline()
+    {
+        m_Pipeline = Pipeline::create(
+            m_Context,
+            m_Swapchain,
+            m_DescriptorLayout,
+            {
+                s_VertexShaderPath.data(),
+                s_FragmentShaderPath.data()
+            },
+            make_pipeline_info(m_SampleCount)
+        );
+    }
+
+    void Engine::createFrameResources()
+    {
+        for (auto &frame: m_Frames)
+            frame = FrameData::create(m_Context, m_DescriptorLayout, m_DescriptorPool);
+    }
+
+    void Engine::createMeshRegistry()
+    {
+        OneTimeCommand::create_command_pool(m_Context);
+
+        std::vector<Buffer> stagingBuffers;
+        OneTimeCommand otc = OneTimeCommand::create(m_Context);
+        m_MeshRegistry = MeshRegistry::create(m_Context, otc.getCommandBuffer(), stagingBuffers);
+        otc.submit(m_Context);
+    }
+
+    void Engine::createImGui(Window &window)
+    {
+        m_ImGuiBackend = ImGuiBackend::create(window, m_Context, m_Swapchain, m_SampleCount);
+    }
+
+    void Engine::createCamera(Window &window)
+    {
+        int windowWidth, windowHeight;
+        window.getFramebufferSize(windowWidth, windowHeight);
+        m_Camera = Camera::create(windowWidth, windowHeight, {0.f, 0.f, -2.f});
     }
 
     PipelineInfo Engine::make_pipeline_info(vk::SampleCountFlagBits sampleCount)

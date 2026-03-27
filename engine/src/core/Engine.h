@@ -28,9 +28,46 @@ namespace kailux
         static constexpr std::string_view s_VertexShaderPath = "shaders/vertex_shader.spv";
         static constexpr std::string_view s_FragmentShaderPath = "shaders/fragment_shader.spv";
 
+        void createRenderingContext(Window& window);
+        void createDescriptorResources();
+        void createPipeline();
+        void createFrameResources();
+        void createMeshRegistry();
+        void createImGui(Window& window);
+        void createCamera(Window& window);
+
         //only one binding for now, for the camera uniform buffer
-        static std::array<DescriptorLayoutBinding, 1> make_descriptor_layout_bindings(uint32_t uniformBufferCount);
-        static std::array<DescriptorPoolSize, 1> make_descriptor_pool_sizes(uint32_t uniformBufferCount);
+        static constexpr std::array<DescriptorLayoutBinding, 1> make_descriptor_layout_bindings(uint32_t uniformBufferCount)
+        {
+            return {
+                DescriptorLayoutBinding(
+                    vk::DescriptorType::eUniformBuffer,
+                    uniformBufferCount,
+                    vk::ShaderStageFlagBits::eVertex
+                )
+            };
+        }
+        static constexpr std::array<DescriptorPoolSize, 1> make_descriptor_pool_sizes(uint32_t uniformBufferCount)
+        {
+            return {
+                DescriptorPoolSize(
+                    vk::DescriptorType::eUniformBuffer,
+                    uniformBufferCount
+                )
+            };
+        }
+        static constexpr bool check_descriptor_layout_bindings_and_pool_sizes_match(std::span<const DescriptorLayoutBinding> bindings, std::span<const DescriptorPoolSize> sizes)
+        {
+            if (bindings.size() != sizes.size())
+                return false;
+
+            for (size_t i = 0; i < bindings.size(); i++)
+                if (bindings[i].type != sizes[i].type ||
+                    bindings[i].count != sizes[i].count)
+                    return false;
+
+            return true;
+        }
         static PipelineInfo make_pipeline_info(vk::SampleCountFlagBits sampleCount);
 
         void submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;

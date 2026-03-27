@@ -20,7 +20,7 @@ namespace kailux
     }
 
     DescriptorPool DescriptorPool::create(const Context &context, uint32_t sets,
-                                          std::span<DescriptorPoolSize> sizes)
+                                          std::span<const DescriptorPoolSize> sizes)
     {
         DescriptorPool pool;
         pool.createPool(context, sets, sizes);
@@ -32,7 +32,7 @@ namespace kailux
         return *m_Pool;
     }
 
-    void DescriptorPool::createPool(const Context &context, uint32_t sets, std::span<DescriptorPoolSize> sizes)
+    void DescriptorPool::createPool(const Context &context, uint32_t sets, std::span<const DescriptorPoolSize> sizes)
     {
         std::vector<vk::DescriptorPoolSize> poolSizes;
         poolSizes.reserve(sizes.size());

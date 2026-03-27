@@ -22,7 +22,7 @@ namespace kailux
     }
 
     DescriptorLayout DescriptorLayout::create(const Context &context,
-                                                    std::span<DescriptorLayoutBinding> bindings)
+                                                    std::span<const DescriptorLayoutBinding> bindings)
     {
         KAILUX_LOG_PARENT_CLR_GREEN("[DescriptorSetLayout]")
         DescriptorLayout layout;
@@ -38,7 +38,7 @@ namespace kailux
         return *m_Layout;
     }
 
-    void DescriptorLayout::createLayout(const Context &context, std::span<DescriptorLayoutBinding> bindings)
+    void DescriptorLayout::createLayout(const Context &context, std::span<const DescriptorLayoutBinding> bindings)
     {
         std::vector<vk::DescriptorSetLayoutBinding> vkBindings;
         vkBindings.reserve(bindings.size());

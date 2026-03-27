@@ -18,12 +18,12 @@ namespace kailux
     public:
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(DescriptorLayout)
 
-        static DescriptorLayout create(const Context &context, std::span<DescriptorLayoutBinding> bindings);
+        static DescriptorLayout create(const Context &context, std::span<const DescriptorLayoutBinding> bindings);
 
         vk::DescriptorSetLayout getLayout() const;
 
     private:
-        void createLayout(const Context &context, std::span<DescriptorLayoutBinding> bindings);
+        void createLayout(const Context &context, std::span<const DescriptorLayoutBinding> bindings);
 
         vk::raii::DescriptorSetLayout m_Layout;
     };
