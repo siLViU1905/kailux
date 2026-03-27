@@ -10,7 +10,10 @@ namespace kailux
     public:
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(FrameData)
 
-        static FrameData create(const Context &context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool);
+        static FrameData create(const Context &context,
+                                const DescriptorLayout& descriptorLayout,
+                                const DescriptorPool& descriptorPool,
+                                uint32_t maxMeshCount);
 
         void reset(const Context& context) const;
 
@@ -21,6 +24,7 @@ namespace kailux
         const DescriptorSet& getDescriptorSet() const;
 
         Buffer& getCameraBuffer();
+        Buffer& getIndirectBuffer();
 
     private:
         void createCommandPool(const Context& context);
@@ -31,6 +35,7 @@ namespace kailux
         void createSyncObjects(const Context& context);
         void createDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<DescriptorSetInfo> infos);
         void createCameraBuffer(const Context& context);
+        void createIndirectBuffer(const Context& context, uint32_t count);
 
         std::array<DescriptorSetInfo, 1> makeDescriptorSetInfo() const;
 
@@ -42,5 +47,6 @@ namespace kailux
 
         DescriptorSet           m_DescriptorSet;
         Buffer                  m_CameraBuffer;
+        Buffer                  m_IndirectBuffer;
     };
 }

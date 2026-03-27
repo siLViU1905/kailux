@@ -312,50 +312,42 @@ namespace kailux
         if (queueIndex == ~0)
             throw std::runtime_error("Could not find a queue for graphics and present -> terminating");
 
-        vk::PhysicalDeviceMaintenance7FeaturesKHR maintenance7Features{};
-        maintenance7Features.maintenance7 = VK_TRUE;
+        vk::StructureChain<
+            vk::PhysicalDeviceFeatures2,
+            vk::PhysicalDeviceVulkan11Features,
+            vk::PhysicalDeviceVulkan12Features,
+            vk::PhysicalDeviceVulkan13Features,
+            vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT,
+            vk::PhysicalDeviceMaintenance7FeaturesKHR
+        > featureChain;
 
-        vk::PhysicalDeviceFeatures2 features2{};
+        auto &f2 = featureChain.get<vk::PhysicalDeviceFeatures2>();
+        auto &f11 = featureChain.get<vk::PhysicalDeviceVulkan11Features>();
+        auto &f12 = featureChain.get<vk::PhysicalDeviceVulkan12Features>();
+        auto &f13 = featureChain.get<vk::PhysicalDeviceVulkan13Features>();
+        auto &fExt = featureChain.get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>();
+        auto &fMaint7 = featureChain.get<vk::PhysicalDeviceMaintenance7FeaturesKHR>();
 
-        features2.features.samplerAnisotropy = vk::True;
-        features2.features.sampleRateShading = vk::True;
+        f2.features.samplerAnisotropy = vk::True;
+        f2.features.sampleRateShading = vk::True;
+        f2.features.multiDrawIndirect = vk::True;
 
-        features2.features.multiDrawIndirect = vk::True;
+        f11.shaderDrawParameters = vk::True;
 
-        vk::PhysicalDeviceVulkan12Features features12{};
+        f12.runtimeDescriptorArray = vk::True;
 
-        features12.runtimeDescriptorArray = vk::True;
+        f13.dynamicRendering = vk::True;
+        f13.synchronization2 = vk::True;
 
-        vk::PhysicalDeviceVulkan13Features features13{};
-
-        features13.dynamicRendering = true;
-        features13.synchronization2 = true;
-
-        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT featuresExt{};
-
-        featuresExt.extendedDynamicState = true;
-
-
-        vk::StructureChain featureChain = {
-            features2,
-            features12,
-            features13,
-            featuresExt,
-            maintenance7Features
-        };
+        fExt.extendedDynamicState = vk::True;
+        fMaint7.maintenance7 = vk::True;
 
         float queuePriority = 0.f;
-
-        vk::DeviceQueueCreateInfo deviceQueueCreateInfo{
-            {},
-            queueIndex,
-            1,
-            &queuePriority
-        };
+        vk::DeviceQueueCreateInfo deviceQueueCreateInfo{{}, queueIndex, 1, &queuePriority};
 
         vk::DeviceCreateInfo deviceCreateInfo{};
+        deviceCreateInfo.pNext = &f2;
 
-        deviceCreateInfo.pNext = &featureChain.get<vk::PhysicalDeviceFeatures2>();
         deviceCreateInfo.queueCreateInfoCount = 1;
         deviceCreateInfo.pQueueCreateInfos = &deviceQueueCreateInfo;
         deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(s_DeviceExtensions.size());

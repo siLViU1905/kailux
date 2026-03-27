@@ -1,4 +1,5 @@
 #include "MeshRegistry.h"
+#include <numbers>
 
 namespace kailux
 {
@@ -57,6 +58,7 @@ namespace kailux
         };
 
         uploadShape([]() { return generate_cube(); }, registry.m_Builtins.cube);
+        uploadShape([]() { return generate_sphere(); }, registry.m_Builtins.sphere);
 
         return registry;
     }
@@ -82,12 +84,25 @@ namespace kailux
     MeshView MeshRegistry::view(MeshHandle handle) const
     {
         assert(handle.valid());
-        const auto &a = m_Allocs[handle.index];
+        const auto &alloc = m_Allocs[handle.index];
         return {
-            static_cast<uint32_t>(a.indexOffset / sizeof(IndexType)),
-            a.indexCount,
-            static_cast<int32_t>(a.vertexOffset / sizeof(Vertex))
+            static_cast<uint32_t>(alloc.indexOffset / sizeof(IndexType)),
+            alloc.indexCount,
+            static_cast<int32_t>(alloc.vertexOffset / sizeof(Vertex))
         };
+    }
+
+    std::vector<MeshView> MeshRegistry::viewAll() const
+    {
+        std::vector<MeshView> views;
+        views.reserve(m_Allocs.size());
+        for (const auto &alloc: m_Allocs)
+            views.emplace_back(
+                static_cast<uint32_t>(alloc.indexOffset / sizeof(IndexType)),
+                alloc.indexCount,
+                static_cast<int32_t>(alloc.vertexOffset / sizeof(Vertex))
+            );
+        return views;
     }
 
     void MeshRegistry::bind(vk::CommandBuffer cmd) const
@@ -288,10 +303,82 @@ namespace kailux
                 );
 
             data.indices.insert(data.indices.end(), {
-                                    base, base + 2, base + 1,
-                                    base, base + 3, base + 2
+                                    base + 0, base + 1, base + 2,
+                                    base + 0, base + 2, base + 3
                                 });
         }
+        return data;
+    }
+
+    MeshRegistry::MeshData MeshRegistry::generate_sphere(uint32_t sectors, uint32_t stacks)
+    {
+        MeshData data;
+        data.vertices.reserve((stacks + 1) * (sectors + 1));
+        data.indices.reserve(stacks * sectors * 6);
+
+        constexpr float radius = 1.f;
+
+        const float sectorStep = 2.f * std::numbers::pi_v<float> / static_cast<float>(sectors);
+        const float stackStep = std::numbers::pi_v<float> / static_cast<float>(stacks);
+        constexpr float lengthInv = 1.f / radius;
+
+        for (uint32_t i = 0; i <= stacks; ++i)
+        {
+            float stackAngle = std::numbers::pi_v<float> / 2.f - static_cast<float>(i) * stackStep;
+            float xy = radius * std::cos(stackAngle);
+            float z = radius * std::sin(stackAngle);
+
+            for (uint32_t j = 0; j <= sectors; ++j)
+            {
+                float sectorAngle = static_cast<float>(j) * sectorStep;
+
+                float x = xy * std::cos(sectorAngle);
+                float y = xy * std::sin(sectorAngle);
+
+                glm::vec3 pos(x, y, z);
+                glm::vec3 normal = pos * lengthInv;
+                glm::vec2 uv(
+                    static_cast<float>(j) / static_cast<float>(sectors),
+                    static_cast<float>(i) / static_cast<float>(stacks)
+                );
+                glm::vec4 tangent(
+                    -radius * std::sin(stackAngle) * std::sin(sectorAngle),
+                    radius * std::sin(stackAngle) * std::cos(sectorAngle),
+                    0.f,
+                    1.f
+                );
+                if (glm::length(glm::vec3(tangent)) > 0.0001f)
+                    tangent = glm::vec4(glm::normalize(glm::vec3(tangent)), 1.0f);
+                else
+                    tangent = glm::vec4(1.f, 0.f, 0.f, 1.f);
+
+                data.vertices.emplace_back(pos, normal, uv, tangent);
+            }
+        }
+
+        for (uint32_t i = 0; i < stacks; ++i)
+        {
+            uint32_t k1 = i * (sectors + 1);
+            uint32_t k2 = k1 + sectors + 1;
+
+            for (uint32_t j = 0; j < sectors; ++j, ++k1, ++k2)
+            {
+                if (i != 0)
+                {
+                    data.indices.push_back(k1);
+                    data.indices.push_back(k2);
+                    data.indices.push_back(k1 + 1);
+                }
+
+                if (i != (stacks - 1))
+                {
+                    data.indices.push_back(k1 + 1);
+                    data.indices.push_back(k2);
+                    data.indices.push_back(k2 + 1);
+                }
+            }
+        }
+
         return data;
     }
 }

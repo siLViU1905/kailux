@@ -20,8 +20,9 @@ namespace kailux
                                                        m_CommandBuffer(std::move(other.m_CommandBuffer)),
                                                        m_ImGuiCommandBuffer(std::move(other.m_ImGuiCommandBuffer)),
                                                        m_FenceInFlight(std::move(other.m_FenceInFlight)),
+                                                       m_DescriptorSet(std::move(other.m_DescriptorSet)),
                                                        m_CameraBuffer(std::move(other.m_CameraBuffer)),
-                                                       m_DescriptorSet(std::move(other.m_DescriptorSet))
+                                                       m_IndirectBuffer(std::move(other.m_IndirectBuffer))
     {
     }
 
@@ -34,14 +35,15 @@ namespace kailux
             m_CommandBuffer = std::move(other.m_CommandBuffer);
             m_ImGuiCommandBuffer = std::move(other.m_ImGuiCommandBuffer);
             m_FenceInFlight = std::move(other.m_FenceInFlight);
-            m_CameraBuffer = std::move(other.m_CameraBuffer);
             m_DescriptorSet = std::move(other.m_DescriptorSet);
+            m_CameraBuffer = std::move(other.m_CameraBuffer);
+            m_IndirectBuffer = std::move(other.m_IndirectBuffer);
         }
         return *this;
     }
 
     FrameData FrameData::create(const Context &context, const DescriptorLayout &descriptorLayout,
-                                const DescriptorPool &descriptorPool)
+                                const DescriptorPool &descriptorPool, uint32_t maxMeshCount)
     {
         FrameData frame;
         frame.createCommandPool(context);
@@ -50,6 +52,7 @@ namespace kailux
         frame.createImGuiCommandBuffer(context);
         frame.createSyncObjects(context);
         frame.createCameraBuffer(context);
+        frame.createIndirectBuffer(context, maxMeshCount);
         auto descSetInfo = frame.makeDescriptorSetInfo();
         frame.createDescriptorSet(context, descriptorLayout, descriptorPool, descSetInfo);
         return frame;
@@ -89,6 +92,11 @@ namespace kailux
     Buffer &FrameData::getCameraBuffer()
     {
         return m_CameraBuffer;
+    }
+
+    Buffer & FrameData::getIndirectBuffer()
+    {
+        return m_IndirectBuffer;
     }
 
     void FrameData::createCommandPool(const Context &context)
@@ -141,6 +149,11 @@ namespace kailux
     void FrameData::createCameraBuffer(const Context &context)
     {
         m_CameraBuffer = BufferAllocator::alloc_uniform(context, sizeof(CameraComponent));
+    }
+
+    void FrameData::createIndirectBuffer(const Context &context, uint32_t count)
+    {
+        m_IndirectBuffer = BufferAllocator::alloc_host(context, count * sizeof(vk::DrawIndexedIndirectCommand), vk::BufferUsageFlagBits::eIndirectBuffer);
     }
 
     std::array<DescriptorSetInfo, 1> FrameData::makeDescriptorSetInfo() const

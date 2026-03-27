@@ -29,6 +29,7 @@ namespace kailux
     struct BuiltinMeshes
     {
         MeshHandle cube;
+        MeshHandle sphere;
     };
 
     class MeshRegistry
@@ -47,14 +48,15 @@ namespace kailux
                                    vk::CommandBuffer cmd,
                                    std::vector<Buffer> &stagingBuffers);
 
-        MeshHandle upload(std::span<const Vertex> vertices,
-                          std::span<const IndexType> indices,
-                          const Context &context,
-                          vk::CommandBuffer cmd,
-                          std::vector<Buffer> &stagingBuffer);
-        void       destroy(MeshHandle handle);
-        MeshView   view(MeshHandle handle) const;
-        void       bind(vk::CommandBuffer cmd) const;
+        MeshHandle           upload(std::span<const Vertex> vertices,
+                                    std::span<const IndexType> indices,
+                                    const Context &context,
+                                    vk::CommandBuffer cmd,
+                                    std::vector<Buffer> &stagingBuffer);
+        void                  destroy(MeshHandle handle);
+        MeshView              view(MeshHandle handle) const;
+        std::vector<MeshView> viewAll() const;
+        void                  bind(vk::CommandBuffer cmd) const;
 
         BuiltinMeshes getBuiltins() const;
 
@@ -137,5 +139,6 @@ namespace kailux
         };
 
         static MeshData generate_cube();
+        static MeshData generate_sphere(uint32_t sectors = 32, uint32_t stacks = 32);
     };
 }

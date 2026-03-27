@@ -47,6 +47,7 @@ namespace kailux
     {
         Engine engine;
         engine.createRenderingContext(window);
+        OneTimeCommand::create_command_pool(engine.m_Context);
         engine.createDescriptorResources();
         engine.createPipeline();
         engine.createFrameResources();
@@ -91,13 +92,11 @@ namespace kailux
     void Engine::createFrameResources()
     {
         for (auto &frame: m_Frames)
-            frame = FrameData::create(m_Context, m_DescriptorLayout, m_DescriptorPool);
+            frame = FrameData::create(m_Context, m_DescriptorLayout, m_DescriptorPool, s_MaxMeshCount);
     }
 
     void Engine::createMeshRegistry()
     {
-        OneTimeCommand::create_command_pool(m_Context);
-
         std::vector<Buffer> stagingBuffers;
         OneTimeCommand otc = OneTimeCommand::create(m_Context);
         m_MeshRegistry = MeshRegistry::create(m_Context, otc.getCommandBuffer(), stagingBuffers);
@@ -232,7 +231,8 @@ namespace kailux
             recorder.setViewport(m_Swapchain.getExtent());
             recorder.setScissor(m_Swapchain.getExtent());
 
-            recordMeshData(frame, recorder.getCommandBuffer());
+            auto indirectCommands = getMeshIndirectCommands();
+            recordMeshData(frame, recorder.getCommandBuffer(), indirectCommands);
 
             recorder.endRendering();
 
@@ -277,20 +277,36 @@ namespace kailux
         m_CurrentFrame = (m_CurrentFrame + 1) % s_FramesInFlight;
     }
 
-    void Engine::recordMeshData(const FrameData &frame, vk::CommandBuffer cmd) const
+    std::vector<vk::DrawIndexedIndirectCommand> Engine::getMeshIndirectCommands() const
+    {
+        auto views = m_MeshRegistry.viewAll();
+        std::vector<vk::DrawIndexedIndirectCommand> commands;
+        commands.reserve(views.size());
+        for (auto view: views)
+            commands.emplace_back(
+                view.indexCount,
+                1,
+                view.firstIndex,
+                view.vertexOffset,
+                0
+            );
+        return commands;
+    }
+
+    void Engine::recordMeshData(FrameData &frame, vk::CommandBuffer cmd,
+                                std::span<const vk::DrawIndexedIndirectCommand> indirectCommands) const
     {
         m_Pipeline.bind(cmd);
         m_MeshRegistry.bind(cmd);
         frame.getDescriptorSet().bind(m_Pipeline, cmd);
 
-        auto mv = m_MeshRegistry.view(m_MeshRegistry.getBuiltins().cube);
+        frame.getIndirectBuffer().upload(indirectCommands);
 
-        cmd.drawIndexed(
-            mv.indexCount,
-            1,
-            mv.firstIndex,
-            mv.vertexOffset,
-            0
+        cmd.drawIndexedIndirect(
+            frame.getIndirectBuffer().getBuffer(),
+            {},
+            indirectCommands.size(),
+            sizeof(vk::DrawIndexedIndirectCommand)
         );
     }
 
@@ -349,7 +365,9 @@ namespace kailux
                         KAILUX_LOG_INFO("[Engine]", e.toString())
                         if (e.button == MouseButton::Middle)
                         {
-                            (window.getCursorMode() == CursorMode::Normal) ? window.setCursorMode(CursorMode::Disabled) : window.setCursorMode(CursorMode::Normal);
+                            (window.getCursorMode() == CursorMode::Normal)
+                                ? window.setCursorMode(CursorMode::Disabled)
+                                : window.setCursorMode(CursorMode::Normal);
                             m_Camera.isFocused() ? m_Camera.loseFocus() : m_Camera.gainFocus();
                         }
                     },
