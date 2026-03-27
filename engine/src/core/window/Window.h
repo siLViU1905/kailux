@@ -35,6 +35,9 @@ namespace kailux
 
         bool isKeyPressed(int key) const;
         void getMousePos(double& x, double& y) const;
+        void disableCursor();
+        void enableCursor();
+        bool isCursorEnabled() const;
 
         void getFramebufferSize(int& width, int& height) const;
         constexpr int getWidth()  const { return m_Width;  }

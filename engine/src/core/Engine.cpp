@@ -67,7 +67,8 @@ namespace kailux
     {
         constexpr auto descLayoutBindings = make_descriptor_layout_bindings(1); //camera uniform buffer
         constexpr auto descPoolSizes = make_descriptor_pool_sizes(1); //camera uniform buffer
-        static_assert(check_descriptor_layout_bindings_and_pool_sizes_match(descLayoutBindings, descPoolSizes), "Descriptor layout binding and pool sizes does not match");
+        static_assert(check_descriptor_layout_bindings_and_pool_sizes_match(descLayoutBindings, descPoolSizes),
+                      "Descriptor layout binding and pool sizes does not match");
         m_DescriptorLayout = DescriptorLayout::create(m_Context, descLayoutBindings);
 
         m_DescriptorPool = DescriptorPool::create(m_Context, s_FramesInFlight, descPoolSizes);
@@ -325,32 +326,40 @@ namespace kailux
         frame.getCameraBuffer().upload(&cameraComponent, sizeof(CameraComponent));
     }
 
-    void Engine::handleEvent(Event event)
+    void Engine::handleEvent(Window &window)
     {
-        std::visit(EventOverloads{
-                       [](KeyPressed e)
-                       {
-                           KAILUX_LOG_INFO("[Engine]", e.toString())
-                       },
-                       [](KeyReleased e)
-                       {
-                           KAILUX_LOG_INFO("[Engine]", e.toString())
-                       },
-                       [](KeyRepeated e)
-                       {
-                           KAILUX_LOG_INFO("[Engine]", e.toString())
-                       },
-                       [](ButtonPressed e)
-                       {
-                           KAILUX_LOG_INFO("[Engine]", e.toString())
-                       },
-                       [](ButtonReleased e)
-                       {
-                           KAILUX_LOG_INFO("[Engine]", e.toString())
-                       }
-                   },
-                   event
-        );
+        if (auto event = window.getEvent())
+            std::visit(
+                EventOverloads
+                {
+                    [](KeyPressed e)
+                    {
+                        KAILUX_LOG_INFO("[Engine]", e.toString())
+                    },
+                    [](KeyReleased e)
+                    {
+                        KAILUX_LOG_INFO("[Engine]", e.toString())
+                    },
+                    [](KeyRepeated e)
+                    {
+                        KAILUX_LOG_INFO("[Engine]", e.toString())
+                    },
+                    [this, &window](ButtonPressed e)
+                    {
+                        KAILUX_LOG_INFO("[Engine]", e.toString())
+                        if (e.button == GLFW_MOUSE_BUTTON_3)
+                        {
+                            window.isCursorEnabled() ? window.disableCursor() : window.enableCursor();
+                            m_Camera.isFocused() ? m_Camera.loseFocus() : m_Camera.gainFocus();
+                        }
+                    },
+                    [](ButtonReleased e)
+                    {
+                        KAILUX_LOG_INFO("[Engine]", e.toString())
+                    }
+                },
+                *event
+            );
     }
 
     void Engine::run(Window &window)
@@ -360,8 +369,7 @@ namespace kailux
             m_Clock.tick();
             window.pollEvents();
 
-            if (auto event = window.getEvent())
-                handleEvent(*event);
+            handleEvent(window);
 
             auto deltaTime = m_Clock.getDeltaTime<float, TimeType::Seconds>();
             m_Camera.updateMovement(window, deltaTime);

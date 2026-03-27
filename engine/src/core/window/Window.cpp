@@ -9,7 +9,7 @@ namespace kailux
     {
     }
 
-    GLFWwindow * Window::getGLFWWindow()
+    GLFWwindow *Window::getGLFWWindow()
     {
         return m_WindowHandle;
     }
@@ -107,6 +107,21 @@ namespace kailux
     void Window::getMousePos(double &x, double &y) const
     {
         glfwGetCursorPos(m_WindowHandle, &x, &y);
+    }
+
+    void Window::disableCursor()
+    {
+        glfwSetInputMode(m_WindowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }
+
+    void Window::enableCursor()
+    {
+        glfwSetInputMode(m_WindowHandle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+
+    bool Window::isCursorEnabled() const
+    {
+        return glfwGetInputMode(m_WindowHandle, GLFW_CURSOR) == GLFW_CURSOR_NORMAL;
     }
 
     void Window::restore()
