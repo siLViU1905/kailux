@@ -111,6 +111,11 @@ namespace kailux
         cmd.bindIndexBuffer(m_IndexBuffer.getBuffer(), 0, vk::IndexType::eUint32);
     }
 
+    uint32_t MeshRegistry::getMeshCount() const
+    {
+        return static_cast<uint32_t>(m_Allocs.size());
+    }
+
     BuiltinMeshes MeshRegistry::getBuiltins() const
     {
         return m_Builtins;

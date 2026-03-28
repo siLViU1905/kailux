@@ -49,6 +49,11 @@ namespace kailux
         return *m_Buffer;
     }
 
+    vk::DeviceSize Buffer::getSize() const
+    {
+        return m_Size;
+    }
+
     void Buffer::upload(const void *data, vk::DeviceSize byte_size, vk::DeviceSize offset)
     {
         assert(m_Mapped && "Buffer is not host-visible");

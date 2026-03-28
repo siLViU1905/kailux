@@ -57,6 +57,7 @@ namespace kailux
         MeshView              view(MeshHandle handle) const;
         std::vector<MeshView> viewAll() const;
         void                  bind(vk::CommandBuffer cmd) const;
+        uint32_t              getMeshCount() const;
 
         BuiltinMeshes getBuiltins() const;
 

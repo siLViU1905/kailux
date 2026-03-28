@@ -187,7 +187,6 @@ namespace kailux
     {
         auto &frame = m_Frames[m_CurrentFrame];
         frame.reset(m_Context);
-        updateFrameBuffers(frame);
 
         auto acquired = m_Swapchain.acquire();
         if (!acquired)
@@ -197,8 +196,9 @@ namespace kailux
         }
         vk::Semaphore renderFinishedSemaphore = m_Swapchain.getPresentSemaphore(acquired->imageIndex); {
             CommandRecorder recorder(frame.getCommandBuffer());
+            updateFrameBuffers(frame, recorder);
 
-            recorder.barrier(
+            recorder.imageBarrier(
                 {
                     m_Swapchain.getColorImage(),
                     vk::ImageLayout::eUndefined,
@@ -206,7 +206,7 @@ namespace kailux
                 }
             );
 
-            recorder.barrier(
+            recorder.imageBarrier(
                 {
                     m_Swapchain.getImage(acquired->imageIndex),
                     vk::ImageLayout::eUndefined,
@@ -231,8 +231,7 @@ namespace kailux
             recorder.setViewport(m_Swapchain.getExtent());
             recorder.setScissor(m_Swapchain.getExtent());
 
-            auto indirectCommands = getMeshIndirectCommands();
-            recordMeshData(frame, recorder.getCommandBuffer(), indirectCommands);
+            recordMeshData(frame, recorder, m_MeshRegistry.getMeshCount());
 
             recorder.endRendering();
 
@@ -256,7 +255,7 @@ namespace kailux
 
             recorder.endRendering();
 
-            recorder.barrier(
+            recorder.imageBarrier(
                 {
                     m_Swapchain.getImage(acquired->imageIndex),
                     vk::ImageLayout::eColorAttachmentOptimal,
@@ -293,20 +292,15 @@ namespace kailux
         return commands;
     }
 
-    void Engine::recordMeshData(FrameData &frame, vk::CommandBuffer cmd,
-                                std::span<const vk::DrawIndexedIndirectCommand> indirectCommands) const
+    void Engine::recordMeshData(const FrameData &frame, const CommandRecorder &recorder, uint32_t meshCount) const
     {
-        m_Pipeline.bind(cmd);
-        m_MeshRegistry.bind(cmd);
-        frame.getDescriptorSet().bind(m_Pipeline, cmd);
+        m_Pipeline.bind(recorder.getCommandBuffer());
+        m_MeshRegistry.bind(recorder.getCommandBuffer());
+        frame.getDescriptorSet().bind(m_Pipeline, recorder.getCommandBuffer());
 
-        frame.getIndirectBuffer().upload(indirectCommands);
-
-        cmd.drawIndexedIndirect(
-            frame.getIndirectBuffer().getBuffer(),
-            {},
-            indirectCommands.size(),
-            sizeof(vk::DrawIndexedIndirectCommand)
+        recorder.drawIndexedIndirect(
+            frame.getIndirectBuffer(),
+            meshCount
         );
     }
 
@@ -332,7 +326,7 @@ namespace kailux
         m_ImGuiBackend.recordDrawData(recorder.getCommandBuffer());
     }
 
-    void Engine::updateFrameBuffers(FrameData &frame) const
+    void Engine::updateFrameBuffers(FrameData &frame, const CommandRecorder &recorder) const
     {
         CameraComponent cameraComponent(
             m_Camera.getProjection(),
@@ -340,6 +334,11 @@ namespace kailux
             {m_Camera.getPosition(), 0.f}
         );
         frame.getCameraBuffer().upload(&cameraComponent, sizeof(CameraComponent));
+
+        auto indirectCommands = getMeshIndirectCommands();
+        frame.getIndirectBuffer().upload(indirectCommands.data(), indirectCommands.size() * sizeof(vk::DrawIndexedIndirectCommand));
+
+        recorder.bufferMemoryBarriers(frame.getBufferMemoryBarriers());
     }
 
     void Engine::handleEvent(Window &window)

@@ -11,7 +11,8 @@ namespace kailux
         Buffer(vk::raii::Buffer&& buffer, vk::raii::DeviceMemory&& memory, void* mapped, vk::DeviceSize size);
         ~Buffer();
 
-        vk::Buffer getBuffer() const;
+        vk::Buffer     getBuffer() const;
+        vk::DeviceSize getSize() const;
 
         void upload(const void* data, vk::DeviceSize byte_size, vk::DeviceSize offset = 0);
         template<typename T>

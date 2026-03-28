@@ -36,7 +36,7 @@ namespace kailux
         m_Cmd.end();
     }
 
-    void CommandRecorder::barrier(const ImageBarrier &info) const
+    void CommandRecorder::imageBarrier(const ImageBarrier &info) const
     {
         vk::ImageMemoryBarrier2 imageBarrier{
             info.srcStage,
@@ -58,6 +58,14 @@ namespace kailux
         vk::DependencyInfo depInfo{};
         depInfo.imageMemoryBarrierCount = 1;
         depInfo.pImageMemoryBarriers = &imageBarrier;
+
+        m_Cmd.pipelineBarrier2(depInfo);
+    }
+
+    void CommandRecorder::bufferMemoryBarriers(std::span<const vk::BufferMemoryBarrier2> barriers) const
+    {
+        vk::DependencyInfo depInfo{};
+        depInfo.setBufferMemoryBarriers(barriers);
 
         m_Cmd.pipelineBarrier2(depInfo);
     }
@@ -121,6 +129,16 @@ namespace kailux
 
         m_Cmd.endRendering();
         m_InRendering = false;
+    }
+
+    void CommandRecorder::drawIndexedIndirect(const Buffer &indirectBuffer, uint32_t drawCount) const
+    {
+        m_Cmd.drawIndexedIndirect(
+            indirectBuffer.getBuffer(),
+            {},
+            drawCount,
+            sizeof(vk::DrawIndexedIndirectCommand)
+        );
     }
 
     void CommandRecorder::setViewport(vk::Extent2D extent)

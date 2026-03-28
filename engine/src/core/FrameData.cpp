@@ -99,6 +99,39 @@ namespace kailux
         return m_IndirectBuffer;
     }
 
+    const Buffer & FrameData::getIndirectBuffer() const
+    {
+        return m_IndirectBuffer;
+    }
+
+    std::array<vk::BufferMemoryBarrier2, FrameData::s_BufferMemoryBarriersCount> FrameData::getBufferMemoryBarriers() const
+    {
+        return {
+            vk::BufferMemoryBarrier2(
+                vk::PipelineStageFlagBits2::eHost,
+                vk::AccessFlagBits2::eHostWrite,
+                vk::PipelineStageFlagBits2::eVertexShader,
+                vk::AccessFlagBits2::eUniformRead,
+                vk::QueueFamilyIgnored,
+                vk::QueueFamilyIgnored,
+                m_CameraBuffer.getBuffer(),
+                {},
+                m_CameraBuffer.getSize()
+            ),
+            vk::BufferMemoryBarrier2(
+                vk::PipelineStageFlagBits2::eHost,
+                vk::AccessFlagBits2::eHostWrite,
+                vk::PipelineStageFlagBits2::eDrawIndirect,
+                vk::AccessFlagBits2::eIndirectCommandRead,
+                vk::QueueFamilyIgnored,
+                vk::QueueFamilyIgnored,
+                m_IndirectBuffer.getBuffer(),
+                {},
+                m_IndirectBuffer.getSize()
+            )
+        };
+    }
+
     void FrameData::createCommandPool(const Context &context)
     {
         vk::CommandPoolCreateInfo poolInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
@@ -153,7 +186,8 @@ namespace kailux
 
     void FrameData::createIndirectBuffer(const Context &context, uint32_t count)
     {
-        m_IndirectBuffer = BufferAllocator::alloc_host(context, count * sizeof(vk::DrawIndexedIndirectCommand), vk::BufferUsageFlagBits::eIndirectBuffer);
+        m_IndirectBuffer = BufferAllocator::alloc_host(context, count * sizeof(vk::DrawIndexedIndirectCommand),
+                                                       vk::BufferUsageFlagBits::eIndirectBuffer);
     }
 
     std::array<DescriptorSetInfo, 1> FrameData::makeDescriptorSetInfo() const
