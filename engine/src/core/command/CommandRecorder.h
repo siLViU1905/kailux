@@ -1,19 +1,21 @@
 #pragma once
 #include  <vulkan/vulkan_raii.hpp>
 
+#include "core/buffer/Buffer.h"
+
 namespace kailux
 {
 
     struct ImageBarrier
     {
-        vk::Image            image;
-        vk::ImageLayout      oldLayout;
-        vk::ImageLayout      newLayout;
-        vk::PipelineStageFlags2 srcStage  = vk::PipelineStageFlagBits2::eAllCommands;
-        vk::PipelineStageFlags2 dstStage  = vk::PipelineStageFlagBits2::eAllCommands;
-        vk::AccessFlags2     srcAccess   = vk::AccessFlagBits2::eMemoryWrite;
-        vk::AccessFlags2     dstAccess   = vk::AccessFlagBits2::eMemoryRead |
-                                           vk::AccessFlagBits2::eMemoryWrite;
+        vk::Image               image;
+        vk::ImageLayout         oldLayout;
+        vk::ImageLayout         newLayout;
+        vk::PipelineStageFlags2 srcStage    = vk::PipelineStageFlagBits2::eAllCommands;
+        vk::PipelineStageFlags2 dstStage    = vk::PipelineStageFlagBits2::eAllCommands;
+        vk::AccessFlags2        srcAccess   = vk::AccessFlagBits2::eMemoryWrite;
+        vk::AccessFlags2        dstAccess   = vk::AccessFlagBits2::eMemoryRead |
+                                              vk::AccessFlagBits2::eMemoryWrite;
     };
 
     struct RenderingInfo
@@ -43,10 +45,12 @@ namespace kailux
         CommandRecorder(CommandRecorder&&) = delete;
         CommandRecorder& operator=(CommandRecorder&&) = delete;
 
-        void barrier(const ImageBarrier& info) const;
+        void imageBarrier(const ImageBarrier& info) const;
+        void bufferMemoryBarriers(std::span<const vk::BufferMemoryBarrier2> barriers) const;
 
         void beginRendering(const RenderingInfo& info);
         void endRendering();
+        void drawIndexedIndirect(const Buffer& indirectBuffer, uint32_t drawCount) const;
 
         void setViewport(vk::Extent2D extent);
         void setScissor(vk::Extent2D extent);

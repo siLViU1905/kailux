@@ -1,6 +1,7 @@
 #pragma once
 #include "Context.h"
 #include "buffer/Buffer.h"
+#include "command/CommandRecorder.h"
 #include "descriptor/DescriptorSet.h"
 
 namespace kailux
@@ -23,8 +24,12 @@ namespace kailux
 
         const DescriptorSet& getDescriptorSet() const;
 
-        Buffer& getCameraBuffer();
-        Buffer& getIndirectBuffer();
+        Buffer&       getCameraBuffer();
+        Buffer&       getIndirectBuffer();
+        const Buffer& getIndirectBuffer() const;
+
+        static constexpr uint32_t s_BufferMemoryBarriersCount = 1 + 1; // camera buffer + indirect buffer
+        std::array<vk::BufferMemoryBarrier2, s_BufferMemoryBarriersCount> getBufferMemoryBarriers() const;
 
     private:
         void createCommandPool(const Context& context);
@@ -45,8 +50,8 @@ namespace kailux
         vk::raii::CommandBuffer m_ImGuiCommandBuffer;
         vk::raii::Fence         m_FenceInFlight;
 
-        DescriptorSet           m_DescriptorSet;
-        Buffer                  m_CameraBuffer;
-        Buffer                  m_IndirectBuffer;
+        DescriptorSet             m_DescriptorSet;
+        Buffer                    m_CameraBuffer;
+        Buffer                    m_IndirectBuffer;
     };
 }

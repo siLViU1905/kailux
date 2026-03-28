@@ -74,10 +74,10 @@ namespace kailux
         void                                        submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
         void                                        render(Window &window);
         std::vector<vk::DrawIndexedIndirectCommand> getMeshIndirectCommands() const;
-        void                                        recordMeshData(FrameData &frame, vk::CommandBuffer cmd, std::span<const vk::DrawIndexedIndirectCommand> indirectCommands) const;
+        void                                        recordMeshData(const FrameData &frame, const CommandRecorder &recorder, uint32_t meshCount) const;
         void                                        recordImGuiData(const FrameData& frame);
 
-        void updateFrameBuffers(FrameData& frame) const;
+        void updateFrameBuffers(FrameData& frame, const CommandRecorder& recorder) const;
 
         void handleEvent(Window &window);
 
