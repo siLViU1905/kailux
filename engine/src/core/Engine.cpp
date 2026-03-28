@@ -231,7 +231,7 @@ namespace kailux
             recorder.setViewport(m_Swapchain.getExtent());
             recorder.setScissor(m_Swapchain.getExtent());
 
-            recordMeshData(frame, recorder, m_MeshRegistry.getMeshCount());
+            recordMeshData(frame, recorder);
 
             recorder.endRendering();
 
@@ -292,7 +292,7 @@ namespace kailux
         return commands;
     }
 
-    void Engine::recordMeshData(const FrameData &frame, const CommandRecorder &recorder, uint32_t meshCount) const
+    void Engine::recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const
     {
         m_Pipeline.bind(recorder.getCommandBuffer());
         m_MeshRegistry.bind(recorder.getCommandBuffer());
@@ -300,7 +300,7 @@ namespace kailux
 
         recorder.drawIndexedIndirect(
             frame.getIndirectBuffer(),
-            meshCount
+            m_MeshRegistry.getMeshCount()
         );
     }
 
