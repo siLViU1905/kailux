@@ -29,6 +29,7 @@ target_link_libraries(kailux_engine PUBLIC
         glfw
         imgui::imgui
         glm::glm
+        EnTT::EnTT
 )
 
 target_precompile_headers(kailux_engine PUBLIC
