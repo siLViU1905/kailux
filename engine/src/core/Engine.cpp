@@ -3,11 +3,12 @@
 #include "command/CommandRecorder.h"
 #include "Logger.h"
 #include "command/OneTimeCommand.h"
-#include "components/CameraComponent.h"
+#include "components/entt/CameraComponent.h"
+#include "components/gpu/CameraData.h"
 
 namespace kailux
 {
-    Engine::Engine() : m_SampleCount(vk::SampleCountFlagBits::e1), m_CurrentFrame(0)
+    Engine::Engine() : m_SampleCount(vk::SampleCountFlagBits::e1), m_CurrentFrame(0), m_MainCameraEntity()
     {
     }
 
@@ -18,7 +19,8 @@ namespace kailux
                                               m_Frames(std::move(other.m_Frames)),
                                               m_CurrentFrame(other.m_CurrentFrame),
                                               m_Clock(other.m_Clock),
-                                              m_Camera(other.m_Camera)
+                                              m_EntityRegistry(std::move(other.m_EntityRegistry)),
+                                              m_MainCameraEntity(other.m_MainCameraEntity)
     {
     }
 
@@ -33,7 +35,8 @@ namespace kailux
             m_Frames = std::move(other.m_Frames);
             m_CurrentFrame = other.m_CurrentFrame;
             m_Clock = other.m_Clock;
-            m_Camera = other.m_Camera;
+            m_EntityRegistry = std::move(other.m_EntityRegistry);
+            m_MainCameraEntity = other.m_MainCameraEntity;
         }
         return *this;
     }
@@ -53,7 +56,7 @@ namespace kailux
         engine.createFrameResources();
         engine.createMeshRegistry();
         engine.createImGui(window);
-        engine.createCamera(window);
+        engine.createEntities(window);
         return engine;
     }
 
@@ -108,11 +111,17 @@ namespace kailux
         m_ImGuiBackend = ImGuiBackend::create(window, m_Context, m_Swapchain, m_SampleCount);
     }
 
-    void Engine::createCamera(Window &window)
+    void Engine::createEntities(const Window &window)
     {
+        m_MainCameraEntity = m_EntityRegistry.create();
+
         int windowWidth, windowHeight;
         window.getFramebufferSize(windowWidth, windowHeight);
-        m_Camera = Camera::create(windowWidth, windowHeight, {0.f, 0.f, 5.f});
+        m_EntityRegistry.emplace<CameraComponent>(
+            m_MainCameraEntity,
+            Camera::create(windowWidth, windowHeight, {0.f, 0.f, 5.f}),
+            true
+        );
     }
 
     PipelineInfo Engine::make_pipeline_info(vk::SampleCountFlagBits sampleCount)
@@ -328,15 +337,17 @@ namespace kailux
 
     void Engine::updateFrameBuffers(FrameData &frame, const CommandRecorder &recorder) const
     {
-        CameraComponent cameraComponent(
-            m_Camera.getProjection(),
-            m_Camera.getView(),
-            {m_Camera.getPosition(), 0.f}
+        const auto &camera = m_EntityRegistry.get<CameraComponent>(m_MainCameraEntity).camera;
+        CameraData cameraData(
+            camera.getProjection(),
+            camera.getView(),
+            {camera.getPosition(), 0.f}
         );
-        frame.getCameraBuffer().upload(&cameraComponent, sizeof(CameraComponent));
+        frame.getCameraBuffer().upload(&cameraData, sizeof(CameraData));
 
         auto indirectCommands = getMeshIndirectCommands();
-        frame.getIndirectBuffer().upload(indirectCommands.data(), indirectCommands.size() * sizeof(vk::DrawIndexedIndirectCommand));
+        frame.getIndirectBuffer().upload(indirectCommands.data(),
+                                         indirectCommands.size() * sizeof(vk::DrawIndexedIndirectCommand));
 
         recorder.bufferMemoryBarriers(frame.getBufferMemoryBarriers());
     }
@@ -367,7 +378,12 @@ namespace kailux
                             (window.getCursorMode() == CursorMode::Normal)
                                 ? window.setCursorMode(CursorMode::Disabled)
                                 : window.setCursorMode(CursorMode::Normal);
-                            m_Camera.isFocused() ? m_Camera.loseFocus() : m_Camera.gainFocus();
+                            auto view = m_EntityRegistry.view<CameraComponent>();
+                            for (auto entity: view)
+                            {
+                                auto &camera = view.get<CameraComponent>(entity).camera;
+                                camera.isFocused() ? camera.loseFocus() : camera.gainFocus();
+                            }
                         }
                     },
                     [](ButtonReleased e)
@@ -385,12 +401,16 @@ namespace kailux
         {
             m_Clock.tick();
             window.pollEvents();
-
             handleEvent(window);
 
             auto deltaTime = m_Clock.getDeltaTime<float, TimeType::Seconds>();
-            m_Camera.updateMovement(window, deltaTime);
-            m_Camera.updateLookAt(window, deltaTime);
+            auto view = m_EntityRegistry.view<CameraComponent>();
+            for (auto entity: view)
+            {
+                auto &camera = view.get<CameraComponent>(entity).camera;
+                camera.updateMovement(window, deltaTime);
+                camera.updateLookAt(window, deltaTime);
+            }
 
             if (window.isMinimized())
                 continue;

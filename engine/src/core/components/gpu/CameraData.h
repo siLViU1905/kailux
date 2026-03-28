@@ -1,16 +1,16 @@
 #pragma once
 #include <glm/glm.hpp>
 
-#include "core/Core.h"
+#include "../../Core.h"
 
 namespace kailux
 {
-    struct CameraComponent
+    struct CameraData
     {
         glm::mat4 projection{};
         glm::mat4 view{};
         glm::vec4 position{};
     };
 
-    KAILUX_CHECK_COMPONENT_SIZE(CameraComponent)
+    KAILUX_CHECK_COMPONENT_SIZE(CameraData)
 }

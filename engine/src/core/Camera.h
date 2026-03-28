@@ -12,7 +12,6 @@ namespace kailux
 
         static Camera create(int windowWidth, int windowHeight, glm::vec3 position, float speed = 2.f, float sensitivity = 1.f);
 
-        //using raw key codes until proper key handling implemented
         void updateMovement(const Window& window, float deltaTime);
         void updateLookAt(const Window& window, float deltaTime);
         void updateProjection(int width, int height);

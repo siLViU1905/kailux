@@ -37,6 +37,7 @@ target_precompile_headers(kailux_engine PUBLIC
         <vulkan/vulkan_raii.hpp>
         <glm/glm.hpp>
         <glm/gtc/matrix_transform.hpp>
+        <entt/entt.hpp>
         <imgui.h>
         <vector>
         <array>
