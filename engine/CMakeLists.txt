@@ -29,6 +29,7 @@ target_link_libraries(kailux_engine PUBLIC
         glfw
         imgui::imgui
         glm::glm
+        EnTT::EnTT
 )
 
 target_precompile_headers(kailux_engine PUBLIC
@@ -36,6 +37,7 @@ target_precompile_headers(kailux_engine PUBLIC
         <vulkan/vulkan_raii.hpp>
         <glm/glm.hpp>
         <glm/gtc/matrix_transform.hpp>
+        <entt/entt.hpp>
         <imgui.h>
         <vector>
         <array>

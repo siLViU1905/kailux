@@ -11,6 +11,7 @@
 
 #include "descriptor/DescriptorPool.h"
 #include "mesh/MeshRegistry.h"
+#include <entt/entt.hpp>
 
 namespace kailux
 {
@@ -35,7 +36,7 @@ namespace kailux
         void createFrameResources();
         void createMeshRegistry();
         void createImGui(Window& window);
-        void createCamera(Window& window);
+        void createEntities(const Window &window);
 
         //only one binding for now, for the camera uniform buffer
         static constexpr std::array<DescriptorLayoutBinding, 1> make_descriptor_layout_bindings(uint32_t uniformBufferCount)
@@ -95,6 +96,8 @@ namespace kailux
         uint32_t                                m_CurrentFrame;
 
         Clock                                   m_Clock;
-        Camera                                  m_Camera;
+
+        entt::registry                          m_EntityRegistry;
+        entt::entity                            m_MainCameraEntity;
     };
 }

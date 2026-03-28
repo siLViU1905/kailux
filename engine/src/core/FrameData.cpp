@@ -2,7 +2,7 @@
 
 #include "Pipeline.h"
 #include "buffer/BufferAllocator.h"
-#include "components/CameraComponent.h"
+#include "components/gpu/CameraData.h"
 
 namespace kailux
 {
@@ -181,7 +181,7 @@ namespace kailux
 
     void FrameData::createCameraBuffer(const Context &context)
     {
-        m_CameraBuffer = BufferAllocator::alloc_uniform(context, sizeof(CameraComponent));
+        m_CameraBuffer = BufferAllocator::alloc_uniform(context, sizeof(CameraData));
     }
 
     void FrameData::createIndirectBuffer(const Context &context, uint32_t count)
@@ -197,7 +197,7 @@ namespace kailux
                 DescriptorSetBufferInfo(
                     vk::DescriptorType::eUniformBuffer,
                     m_CameraBuffer.getBuffer(),
-                    sizeof(CameraComponent),
+                    sizeof(CameraData),
                     1
                 )
             }
