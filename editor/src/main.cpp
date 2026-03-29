@@ -3,6 +3,8 @@
 #include <core/window/Window.h>
 #include <core/Engine.h>
 
+#include "Editor.h"
+
 int main()
 {
     try
@@ -11,6 +13,12 @@ int main()
         window.updateUserPointer();
 
         auto engine = kailux::Engine::create(window);
+
+        auto editor = kailux::Editor::create();
+        engine.setOnEditorRender([&editor](kailux::Scene& scene)
+        {
+            editor.render(scene);
+        });
 
         engine.run(window);
     }

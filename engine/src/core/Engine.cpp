@@ -60,6 +60,11 @@ namespace kailux
         return engine;
     }
 
+    void Engine::setOnEditorRender(OnEditorRender &&callback)
+    {
+        m_OnEditorRender = std::move(callback);
+    }
+
     void Engine::createRenderingContext(Window &window)
     {
         m_Context = Context::create(window);
@@ -338,9 +343,9 @@ namespace kailux
             m_SampleCount
         );
 
+        //ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
         m_ImGuiBackend.beginFrame();
-        ImGui::Begin("Test");
-        ImGui::End();
+        m_OnEditorRender(m_Scene);
         m_ImGuiBackend.endFrame();
 
         CommandRecorder recorder(frame.getImGuiCommandBuffer(), inheritanceInfo);

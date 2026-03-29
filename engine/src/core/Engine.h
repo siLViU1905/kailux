@@ -25,6 +25,9 @@ namespace kailux
 
         static Engine create(Window& window);
 
+        using OnEditorRender = std::move_only_function<void(Scene&)>;
+        void setOnEditorRender(OnEditorRender&& callback);
+
         void run(Window& window);
 
     private:
@@ -115,5 +118,6 @@ namespace kailux
         Clock                                   m_Clock;
 
         Scene                                   m_Scene;
+        OnEditorRender                          m_OnEditorRender;
     };
 }
