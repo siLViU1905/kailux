@@ -38,24 +38,34 @@ namespace kailux
         void createImGui(Window& window);
         void createEntities(const Window &window);
 
-        //only one binding for now, for the camera uniform buffer
-        static constexpr std::array<DescriptorLayoutBinding, 1> make_descriptor_layout_bindings(uint32_t uniformBufferCount)
+        static constexpr uint32_t s_DescriptorLayoutBindingsCount = 1 + 1; // camera buffer + model buffer
+        static constexpr std::array<DescriptorLayoutBinding, s_DescriptorLayoutBindingsCount> make_descriptor_layout_bindings(uint32_t uniformBufferCount, uint32_t storageBufferCount)
         {
             return {
                 DescriptorLayoutBinding(
                     vk::DescriptorType::eUniformBuffer,
                     uniformBufferCount,
                     vk::ShaderStageFlagBits::eVertex
+                ),
+                DescriptorLayoutBinding(
+                    vk::DescriptorType::eStorageBuffer,
+                    storageBufferCount,
+                    vk::ShaderStageFlagBits::eVertex
                 )
             };
         }
-        static constexpr std::array<DescriptorPoolSize, 1> make_descriptor_pool_sizes(uint32_t uniformBufferCount)
+        static constexpr uint32_t s_DescriptorPoolSizesCount = s_DescriptorLayoutBindingsCount;
+        static constexpr std::array<DescriptorPoolSize, s_DescriptorPoolSizesCount> make_descriptor_pool_sizes(uint32_t uniformBufferCount, uint32_t storageBufferCount)
         {
             return {
                 DescriptorPoolSize(
                     vk::DescriptorType::eUniformBuffer,
                     uniformBufferCount
-                )
+                ),
+                DescriptorPoolSize(
+                   vk::DescriptorType::eStorageBuffer,
+                   storageBufferCount
+               )
             };
         }
         static constexpr bool check_descriptor_layout_bindings_and_pool_sizes_match(std::span<const DescriptorLayoutBinding> bindings, std::span<const DescriptorPoolSize> sizes)

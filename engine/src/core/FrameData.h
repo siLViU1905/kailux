@@ -40,9 +40,11 @@ namespace kailux
         void createSyncObjects(const Context& context);
         void createDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<DescriptorSetInfo> infos);
         void createCameraBuffer(const Context& context);
+        void createMeshModelBuffer(const Context& context, uint32_t meshCount);
         void createIndirectBuffer(const Context& context, uint32_t count);
 
-        std::array<DescriptorSetInfo, 1> makeDescriptorSetInfo() const;
+        static constexpr uint32_t s_DescriptorSetInfoCount = 1 + 1; // camera buffer + model buffer
+        std::array<DescriptorSetInfo, s_DescriptorSetInfoCount> makeDescriptorSetInfo() const;
 
         vk::raii::CommandPool   m_CommandPool;
         vk::raii::CommandPool   m_ImGuiCommandPool;
@@ -50,8 +52,9 @@ namespace kailux
         vk::raii::CommandBuffer m_ImGuiCommandBuffer;
         vk::raii::Fence         m_FenceInFlight;
 
-        DescriptorSet             m_DescriptorSet;
-        Buffer                    m_CameraBuffer;
-        Buffer                    m_IndirectBuffer;
+        DescriptorSet           m_DescriptorSet;
+        Buffer                  m_CameraBuffer;
+        Buffer                  m_MeshModelBuffer;
+        Buffer                  m_IndirectBuffer;
     };
 }

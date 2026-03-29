@@ -71,8 +71,8 @@ namespace kailux
 
     void Engine::createDescriptorResources()
     {
-        constexpr auto descLayoutBindings = make_descriptor_layout_bindings(1); //camera uniform buffer
-        constexpr auto descPoolSizes = make_descriptor_pool_sizes(1); //camera uniform buffer
+        constexpr auto descLayoutBindings = make_descriptor_layout_bindings(1, 1); // camera uniform buffer + models storage buffer
+        constexpr auto descPoolSizes = make_descriptor_pool_sizes(1, 1); // camera uniform buffer + models storage buffer
         static_assert(check_descriptor_layout_bindings_and_pool_sizes_match(descLayoutBindings, descPoolSizes),
                       "Descriptor layout binding and pool sizes does not match");
         m_DescriptorLayout = DescriptorLayout::create(m_Context, descLayoutBindings);

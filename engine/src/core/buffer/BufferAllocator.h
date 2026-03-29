@@ -21,6 +21,8 @@ namespace kailux
 
         static Buffer alloc_uniform(const Context &context, vk::DeviceSize size);
 
+        static Buffer alloc_storage(const Context &context, vk::DeviceSize size);
+
     private:
         static Buffer alloc(const Context &context, vk::DeviceSize size,
                             vk::BufferUsageFlags usage,
