@@ -3,6 +3,7 @@
 #include "Pipeline.h"
 #include "buffer/BufferAllocator.h"
 #include "components/gpu/CameraData.h"
+#include "components/gpu/MeshTransformData.h"
 
 namespace kailux
 {
@@ -21,6 +22,7 @@ namespace kailux
                                                        m_ImGuiCommandBuffer(std::move(other.m_ImGuiCommandBuffer)),
                                                        m_FenceInFlight(std::move(other.m_FenceInFlight)),
                                                        m_DescriptorSet(std::move(other.m_DescriptorSet)),
+                                                       m_MeshModelBuffer(std::move(other.m_MeshModelBuffer)),
                                                        m_CameraBuffer(std::move(other.m_CameraBuffer)),
                                                        m_IndirectBuffer(std::move(other.m_IndirectBuffer))
     {
@@ -37,6 +39,7 @@ namespace kailux
             m_FenceInFlight = std::move(other.m_FenceInFlight);
             m_DescriptorSet = std::move(other.m_DescriptorSet);
             m_CameraBuffer = std::move(other.m_CameraBuffer);
+            m_MeshModelBuffer = std::move(other.m_MeshModelBuffer);
             m_IndirectBuffer = std::move(other.m_IndirectBuffer);
         }
         return *this;
@@ -52,6 +55,7 @@ namespace kailux
         frame.createImGuiCommandBuffer(context);
         frame.createSyncObjects(context);
         frame.createCameraBuffer(context);
+        frame.createMeshModelBuffer(context, maxMeshCount);
         frame.createIndirectBuffer(context, maxMeshCount);
         auto descSetInfo = frame.makeDescriptorSetInfo();
         frame.createDescriptorSet(context, descriptorLayout, descriptorPool, descSetInfo);
@@ -94,20 +98,26 @@ namespace kailux
         return m_CameraBuffer;
     }
 
-    Buffer & FrameData::getIndirectBuffer()
+    Buffer & FrameData::getModelBuffer()
+    {
+        return m_MeshModelBuffer;
+    }
+
+    Buffer &FrameData::getIndirectBuffer()
     {
         return m_IndirectBuffer;
     }
 
-    const Buffer & FrameData::getIndirectBuffer() const
+    const Buffer &FrameData::getIndirectBuffer() const
     {
         return m_IndirectBuffer;
     }
 
-    std::array<vk::BufferMemoryBarrier2, FrameData::s_BufferMemoryBarriersCount> FrameData::getBufferMemoryBarriers() const
+    std::array<vk::BufferMemoryBarrier2, FrameData::s_BufferMemoryBarriersCount>
+    FrameData::getBufferMemoryBarriers() const
     {
         return {
-            vk::BufferMemoryBarrier2(
+            vk::BufferMemoryBarrier2( // camera
                 vk::PipelineStageFlagBits2::eHost,
                 vk::AccessFlagBits2::eHostWrite,
                 vk::PipelineStageFlagBits2::eVertexShader,
@@ -118,7 +128,18 @@ namespace kailux
                 {},
                 m_CameraBuffer.getSize()
             ),
-            vk::BufferMemoryBarrier2(
+            vk::BufferMemoryBarrier2( // model
+                vk::PipelineStageFlagBits2::eHost,
+                vk::AccessFlagBits2::eHostWrite,
+                vk::PipelineStageFlagBits2::eVertexShader,
+                vk::AccessFlagBits2::eShaderStorageRead,
+                vk::QueueFamilyIgnored,
+                vk::QueueFamilyIgnored,
+                m_MeshModelBuffer.getBuffer(),
+                {},
+                m_MeshModelBuffer.getSize()
+            ),
+            vk::BufferMemoryBarrier2( // indirect
                 vk::PipelineStageFlagBits2::eHost,
                 vk::AccessFlagBits2::eHostWrite,
                 vk::PipelineStageFlagBits2::eDrawIndirect,
@@ -184,23 +205,33 @@ namespace kailux
         m_CameraBuffer = BufferAllocator::alloc_uniform(context, sizeof(CameraData));
     }
 
+    void FrameData::createMeshModelBuffer(const Context &context, uint32_t meshCount)
+    {
+        m_MeshModelBuffer = BufferAllocator::alloc_storage(context, meshCount * sizeof(ModelMatrixType));
+    }
+
     void FrameData::createIndirectBuffer(const Context &context, uint32_t count)
     {
         m_IndirectBuffer = BufferAllocator::alloc_host(context, count * sizeof(vk::DrawIndexedIndirectCommand),
                                                        vk::BufferUsageFlagBits::eIndirectBuffer);
     }
 
-    std::array<DescriptorSetInfo, 1> FrameData::makeDescriptorSetInfo() const
+    std::array<DescriptorSetInfo, FrameData::s_DescriptorSetInfoCount> FrameData::makeDescriptorSetInfo() const
     {
         return {
-            {
-                DescriptorSetBufferInfo(
-                    vk::DescriptorType::eUniformBuffer,
-                    m_CameraBuffer.getBuffer(),
-                    sizeof(CameraData),
-                    1
-                )
-            }
+            DescriptorSetBufferInfo(
+                vk::DescriptorType::eUniformBuffer,
+                m_CameraBuffer.getBuffer(),
+                m_CameraBuffer.getSize(),
+                1
+            ),
+            DescriptorSetBufferInfo(
+                vk::DescriptorType::eStorageBuffer,
+                m_MeshModelBuffer.getBuffer(),
+                m_MeshModelBuffer.getSize(),
+                1
+            )
+
         };
     }
 }

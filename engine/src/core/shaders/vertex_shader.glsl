@@ -14,15 +14,19 @@ layout(binding = 0) uniform Camera
     mat4 projection;
     mat4 view;
     vec3 position;
-}
-camera;
+} camera;
+
+layout(std430, set = 0, binding = 1) readonly buffer TransformBuffer {
+    mat4 models[];
+} transformData;
 
 void main()
 {
-    fragPos = aPos;
-    fragNormal = aNormal;
+    mat4 model = transformData.models[gl_DrawID];
+    vec4 worldPos = model * vec4(aPos, 1.0);
 
-    vec3 modifiedPos = aPos;
-    modifiedPos.x += float(gl_DrawID) * 1.5;
-    gl_Position = camera.projection * camera.view * vec4(modifiedPos, 1.0);
+    fragPos = worldPos.xyz;
+    fragNormal = normalize(mat3(model) * aNormal);
+
+    gl_Position = camera.projection * camera.view * worldPos;
 }

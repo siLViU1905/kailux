@@ -4,7 +4,9 @@
 #include "Logger.h"
 #include "command/OneTimeCommand.h"
 #include "components/entt/CameraComponent.h"
+#include "components/entt/MeshComponent.h"
 #include "components/gpu/CameraData.h"
+#include "components/gpu/MeshTransformData.h"
 
 namespace kailux
 {
@@ -69,8 +71,10 @@ namespace kailux
 
     void Engine::createDescriptorResources()
     {
-        constexpr auto descLayoutBindings = make_descriptor_layout_bindings(1); //camera uniform buffer
-        constexpr auto descPoolSizes = make_descriptor_pool_sizes(1); //camera uniform buffer
+        constexpr auto descLayoutBindings = make_descriptor_layout_bindings(1, 1);
+        // camera uniform buffer + models storage buffer
+        constexpr auto descPoolSizes = make_descriptor_pool_sizes(1, 1);
+        // camera uniform buffer + models storage buffer
         static_assert(check_descriptor_layout_bindings_and_pool_sizes_match(descLayoutBindings, descPoolSizes),
                       "Descriptor layout binding and pool sizes does not match");
         m_DescriptorLayout = DescriptorLayout::create(m_Context, descLayoutBindings);
@@ -122,6 +126,16 @@ namespace kailux
             Camera::create(windowWidth, windowHeight, {0.f, 0.f, 5.f}),
             true
         );
+
+        auto createBuiltinEntity = [this](auto handle, MeshTransformData transform = {})
+        {
+            auto entity = m_EntityRegistry.create();
+            m_EntityRegistry.emplace<MeshComponent>(entity, handle);
+            m_EntityRegistry.emplace<MeshTransformData>(entity, transform);
+        };
+
+        createBuiltinEntity(m_MeshRegistry.getBuiltins().cube);
+        createBuiltinEntity(m_MeshRegistry.getBuiltins().sphere, MeshTransformData({1.5f, 0.f,0.f}));
     }
 
     PipelineInfo Engine::make_pipeline_info(vk::SampleCountFlagBits sampleCount)
@@ -337,6 +351,14 @@ namespace kailux
 
     void Engine::updateFrameBuffers(FrameData &frame, const CommandRecorder &recorder) const
     {
+        updateCameraBuffer(frame);
+        updateModelBuffer(frame);
+        updateIndirectBuffer(frame);
+        recorder.bufferMemoryBarriers(frame.getBufferMemoryBarriers());
+    }
+
+    void Engine::updateCameraBuffer(FrameData &frame) const
+    {
         const auto &camera = m_EntityRegistry.get<CameraComponent>(m_MainCameraEntity).camera;
         CameraData cameraData(
             camera.getProjection(),
@@ -344,12 +366,39 @@ namespace kailux
             {camera.getPosition(), 0.f}
         );
         frame.getCameraBuffer().upload(&cameraData, sizeof(CameraData));
+    }
 
-        auto indirectCommands = getMeshIndirectCommands();
+    void Engine::updateModelBuffer(FrameData &frame) const
+    {
+        std::vector<ModelMatrixType> modelMatrices;
+        auto view = m_EntityRegistry.view<MeshTransformData, MeshComponent>();
+        modelMatrices.reserve(view.size_hint());
+        for (auto entity: view)
+        {
+            const auto &transform = view.get<MeshTransformData>(entity);
+            modelMatrices.push_back(transform.getModelMatrix());
+        }
+        frame.getModelBuffer().upload(modelMatrices.data(), modelMatrices.size() * sizeof(ModelMatrixType));
+    }
+
+    void Engine::updateIndirectBuffer(FrameData &frame) const
+    {
+        std::vector<vk::DrawIndexedIndirectCommand> indirectCommands;
+        auto view = m_EntityRegistry.view<MeshComponent>();
+        indirectCommands.reserve(view.size());
+            view.each([this, &indirectCommands](auto mesh)
+            {
+                auto meshView = m_MeshRegistry.view(mesh.handle);
+                indirectCommands.emplace_back(
+                    meshView.indexCount,
+                    1,
+                    meshView.firstIndex,
+                    meshView.vertexOffset,
+                    0
+                );
+            });
         frame.getIndirectBuffer().upload(indirectCommands.data(),
                                          indirectCommands.size() * sizeof(vk::DrawIndexedIndirectCommand));
-
-        recorder.bufferMemoryBarriers(frame.getBufferMemoryBarriers());
     }
 
     void Engine::handleEvent(Window &window)

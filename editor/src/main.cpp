@@ -1,4 +1,5 @@
 #include <print>
+#include <iostream>
 #include <core/window/Window.h>
 #include <core/Engine.h>
 
@@ -15,6 +16,9 @@ int main()
     }
     catch (const std::exception& exception)
     {
-        std::println(stderr, "ERROR: {}", exception.what());
+        std::println(stderr, "Error: {}", exception.what());
+        std::println("Press Enter to close...");
+        std::cin.get();
+        return 1;
     }
 }
