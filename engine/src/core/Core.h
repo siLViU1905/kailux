@@ -7,5 +7,5 @@
     ClassName(ClassName&& other) noexcept; \
     ClassName& operator=(ClassName&& other) noexcept;
 
-#define KAILUX_CHECK_COMPONENT_SIZE(ClassName) \
+#define KAILUX_CHECK_DATA_STRUCTURE_SIZE(ClassName) \
     static_assert(sizeof(ClassName) % 16 == 0);

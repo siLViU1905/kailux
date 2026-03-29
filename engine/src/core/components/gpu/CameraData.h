@@ -12,5 +12,5 @@ namespace kailux
         glm::vec4 position{};
     };
 
-    KAILUX_CHECK_COMPONENT_SIZE(CameraData)
+    KAILUX_CHECK_DATA_STRUCTURE_SIZE(CameraData)
 }
