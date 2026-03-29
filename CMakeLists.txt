@@ -8,6 +8,7 @@ find_package(glfw3 REQUIRED)
 find_package(imgui REQUIRED)
 find_package(glm REQUIRED)
 find_package(EnTT REQUIRED)
+find_package(magic_enum REQUIRED)
 
 get_filename_component(VULKAN_BIN_DIR "${Vulkan_GLSLC_EXECUTABLE}" DIRECTORY)
 set(GLSLC_BIN "${VULKAN_BIN_DIR}/glslc.exe")

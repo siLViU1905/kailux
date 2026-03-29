@@ -30,6 +30,7 @@ target_link_libraries(kailux_engine PUBLIC
         imgui::imgui
         glm::glm
         EnTT::EnTT
+        magic_enum::magic_enum
 )
 
 target_precompile_headers(kailux_engine PUBLIC
