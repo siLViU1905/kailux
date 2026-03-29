@@ -13,7 +13,7 @@ layout(binding = 0) uniform Camera
 {
     mat4 projection;
     mat4 view;
-    vec3 position;
+    vec4 position;
 } camera;
 
 layout(std430, set = 0, binding = 1) readonly buffer TransformBuffer {
