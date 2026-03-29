@@ -98,6 +98,11 @@ namespace kailux
         return m_CameraBuffer;
     }
 
+    Buffer & FrameData::getModelBuffer()
+    {
+        return m_MeshModelBuffer;
+    }
+
     Buffer &FrameData::getIndirectBuffer()
     {
         return m_IndirectBuffer;
@@ -112,7 +117,7 @@ namespace kailux
     FrameData::getBufferMemoryBarriers() const
     {
         return {
-            vk::BufferMemoryBarrier2(
+            vk::BufferMemoryBarrier2( // camera
                 vk::PipelineStageFlagBits2::eHost,
                 vk::AccessFlagBits2::eHostWrite,
                 vk::PipelineStageFlagBits2::eVertexShader,
@@ -123,7 +128,18 @@ namespace kailux
                 {},
                 m_CameraBuffer.getSize()
             ),
-            vk::BufferMemoryBarrier2(
+            vk::BufferMemoryBarrier2( // model
+                vk::PipelineStageFlagBits2::eHost,
+                vk::AccessFlagBits2::eHostWrite,
+                vk::PipelineStageFlagBits2::eVertexShader,
+                vk::AccessFlagBits2::eShaderStorageRead,
+                vk::QueueFamilyIgnored,
+                vk::QueueFamilyIgnored,
+                m_MeshModelBuffer.getBuffer(),
+                {},
+                m_MeshModelBuffer.getSize()
+            ),
+            vk::BufferMemoryBarrier2( // indirect
                 vk::PipelineStageFlagBits2::eHost,
                 vk::AccessFlagBits2::eHostWrite,
                 vk::PipelineStageFlagBits2::eDrawIndirect,
@@ -191,7 +207,7 @@ namespace kailux
 
     void FrameData::createMeshModelBuffer(const Context &context, uint32_t meshCount)
     {
-        m_MeshModelBuffer = BufferAllocator::alloc_storage(context, meshCount * sizeof(MeshTransformData));
+        m_MeshModelBuffer = BufferAllocator::alloc_storage(context, meshCount * sizeof(ModelMatrixType));
     }
 
     void FrameData::createIndirectBuffer(const Context &context, uint32_t count)

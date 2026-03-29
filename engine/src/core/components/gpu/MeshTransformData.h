@@ -7,19 +7,21 @@
 
 namespace kailux
 {
+    using ModelMatrixType = glm::mat4;
+
     struct MeshTransformData
     {
-        glm::vec4 position{0.f, 0.f, 0.f, 1.f};
+        glm::vec3 position{0.f};
         glm::quat rotation = glm::identity<glm::quat>();
-        glm::vec4 scale{1.f, 1.f, 1.f, 0.f};
+        glm::vec3 scale{1.f};
 
-        glm::mat4 getModelMatrix() const
+        ModelMatrixType getModelMatrix() const
         {
-            return glm::translate(glm::mat4(1.f), glm::vec3(position))
+            return glm::translate(glm::mat4(1.f), position)
                    * glm::toMat4(rotation)
-                   * glm::scale(glm::mat4(1.f), glm::vec3(scale));
+                   * glm::scale(glm::mat4(1.f), scale);
         }
     };
 
-    KAILUX_CHECK_DATA_STRUCTURE_SIZE(MeshTransformData)
+    KAILUX_CHECK_DATA_STRUCTURE_SIZE(ModelMatrixType)
 }

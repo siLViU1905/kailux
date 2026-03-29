@@ -88,7 +88,11 @@ namespace kailux
         void                                        recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const;
         void                                        recordImGuiData(const FrameData& frame);
 
+
         void updateFrameBuffers(FrameData& frame, const CommandRecorder& recorder) const;
+        void updateCameraBuffer(FrameData& frame) const;
+        void updateModelBuffer(FrameData& frame) const;
+        void updateIndirectBuffer(FrameData& frame) const;
 
         void handleEvent(Window &window);
 

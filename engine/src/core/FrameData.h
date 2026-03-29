@@ -25,10 +25,11 @@ namespace kailux
         const DescriptorSet& getDescriptorSet() const;
 
         Buffer&       getCameraBuffer();
+        Buffer&       getModelBuffer();
         Buffer&       getIndirectBuffer();
         const Buffer& getIndirectBuffer() const;
 
-        static constexpr uint32_t s_BufferMemoryBarriersCount = 1 + 1; // camera buffer + indirect buffer
+        static constexpr uint32_t s_BufferMemoryBarriersCount = 1 + 1 + 1; // camera buffer + model buffer + indirect buffer
         std::array<vk::BufferMemoryBarrier2, s_BufferMemoryBarriersCount> getBufferMemoryBarriers() const;
 
     private:
