@@ -4,7 +4,9 @@
 #include "Logger.h"
 #include "command/OneTimeCommand.h"
 #include "components/entt/CameraComponent.h"
+#include "components/entt/MeshComponent.h"
 #include "components/gpu/CameraData.h"
+#include "components/gpu/MeshTransformData.h"
 
 namespace kailux
 {
@@ -122,6 +124,16 @@ namespace kailux
             Camera::create(windowWidth, windowHeight, {0.f, 0.f, 5.f}),
             true
         );
+
+        auto createBuiltinEntity = [this](auto handle)
+        {
+            auto entity = m_EntityRegistry.create();
+            m_EntityRegistry.emplace<MeshComponent>(entity, handle);
+            m_EntityRegistry.emplace<MeshTransformData>(entity);
+        };
+
+        createBuiltinEntity(m_MeshRegistry.getBuiltins().cube);
+        createBuiltinEntity(m_MeshRegistry.getBuiltins().sphere);
     }
 
     PipelineInfo Engine::make_pipeline_info(vk::SampleCountFlagBits sampleCount)
