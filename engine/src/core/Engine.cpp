@@ -10,7 +10,7 @@
 
 namespace kailux
 {
-    Engine::Engine() : m_SampleCount(vk::SampleCountFlagBits::e1), m_CurrentFrame(0), m_MainCameraEntity()
+    Engine::Engine() : m_SampleCount(vk::SampleCountFlagBits::e1), m_CurrentFrame(0)
     {
     }
 
@@ -21,8 +21,7 @@ namespace kailux
                                               m_Frames(std::move(other.m_Frames)),
                                               m_CurrentFrame(other.m_CurrentFrame),
                                               m_Clock(other.m_Clock),
-                                              m_EntityRegistry(std::move(other.m_EntityRegistry)),
-                                              m_MainCameraEntity(other.m_MainCameraEntity)
+                                              m_Scene(std::move(other.m_Scene))
     {
     }
 
@@ -37,8 +36,7 @@ namespace kailux
             m_Frames = std::move(other.m_Frames);
             m_CurrentFrame = other.m_CurrentFrame;
             m_Clock = other.m_Clock;
-            m_EntityRegistry = std::move(other.m_EntityRegistry);
-            m_MainCameraEntity = other.m_MainCameraEntity;
+            m_Scene = std::move(other.m_Scene);
         }
         return *this;
     }
@@ -58,7 +56,7 @@ namespace kailux
         engine.createFrameResources();
         engine.createMeshRegistry();
         engine.createImGui(window);
-        engine.createEntities(window);
+        engine.createSceneEntities(window);
         return engine;
     }
 
@@ -115,27 +113,27 @@ namespace kailux
         m_ImGuiBackend = ImGuiBackend::create(window, m_Context, m_Swapchain, m_SampleCount);
     }
 
-    void Engine::createEntities(const Window &window)
+    void Engine::createScene()
     {
-        m_MainCameraEntity = m_EntityRegistry.create();
+        m_Scene = Scene::create();
+    }
 
+    void Engine::createSceneEntities(const Window &window)
+    {
         int windowWidth, windowHeight;
         window.getFramebufferSize(windowWidth, windowHeight);
-        m_EntityRegistry.emplace<CameraComponent>(
-            m_MainCameraEntity,
-            Camera::create(windowWidth, windowHeight, {0.f, 0.f, 5.f}),
+        auto cameraEntity = m_Scene.createCameraEntity(
+            "MainCamera",
+            Camera::create(
+                windowWidth,
+                windowHeight,
+                {0.f, 0.f, 5.f}),
             true
         );
+        m_Scene.setMainCamera(cameraEntity);
 
-        auto createBuiltinEntity = [this](auto handle, MeshTransformData transform = {})
-        {
-            auto entity = m_EntityRegistry.create();
-            m_EntityRegistry.emplace<MeshComponent>(entity, handle);
-            m_EntityRegistry.emplace<MeshTransformData>(entity, transform);
-        };
-
-        createBuiltinEntity(m_MeshRegistry.getBuiltins().cube);
-        createBuiltinEntity(m_MeshRegistry.getBuiltins().sphere, MeshTransformData({1.5f, 0.f,0.f}));
+        m_Scene.createMeshEntity("Cube", m_MeshRegistry.getBuiltins().cube, {});
+        m_Scene.createMeshEntity("Sphere", m_MeshRegistry.getBuiltins().sphere, MeshTransformData({1.5f, 0.f, 0.f}));
     }
 
     PipelineInfo Engine::make_pipeline_info(vk::SampleCountFlagBits sampleCount)
@@ -359,19 +357,22 @@ namespace kailux
 
     void Engine::updateCameraBuffer(FrameData &frame) const
     {
-        const auto &camera = m_EntityRegistry.get<CameraComponent>(m_MainCameraEntity).camera;
-        CameraData cameraData(
+        const auto &camera = m_Scene.getEntityRegistry().get<CameraComponent>(m_Scene.getMainCamera()).camera;
+        CameraData data(
             camera.getProjection(),
             camera.getView(),
-            {camera.getPosition(), 0.f}
+            glm::vec4(camera.getPosition(), 1.f)
         );
-        frame.getCameraBuffer().upload(&cameraData, sizeof(CameraData));
+        frame.getCameraBuffer().upload(
+            &data,
+            sizeof(CameraData)
+        );
     }
 
     void Engine::updateModelBuffer(FrameData &frame) const
     {
         std::vector<ModelMatrixType> modelMatrices;
-        auto view = m_EntityRegistry.view<MeshTransformData, MeshComponent>();
+        auto view = m_Scene.getEntityRegistry().view<MeshTransformData, MeshComponent>();
         modelMatrices.reserve(view.size_hint());
         for (auto entity: view)
         {
@@ -384,19 +385,19 @@ namespace kailux
     void Engine::updateIndirectBuffer(FrameData &frame) const
     {
         std::vector<vk::DrawIndexedIndirectCommand> indirectCommands;
-        auto view = m_EntityRegistry.view<MeshComponent>();
+        auto view = m_Scene.getEntityRegistry().view<MeshComponent>();
         indirectCommands.reserve(view.size());
-            view.each([this, &indirectCommands](auto mesh)
-            {
-                auto meshView = m_MeshRegistry.view(mesh.handle);
-                indirectCommands.emplace_back(
-                    meshView.indexCount,
-                    1,
-                    meshView.firstIndex,
-                    meshView.vertexOffset,
-                    0
-                );
-            });
+        view.each([this, &indirectCommands](auto mesh)
+        {
+            auto meshView = m_MeshRegistry.view(mesh.handle);
+            indirectCommands.emplace_back(
+                meshView.indexCount,
+                1,
+                meshView.firstIndex,
+                meshView.vertexOffset,
+                0
+            );
+        });
         frame.getIndirectBuffer().upload(indirectCommands.data(),
                                          indirectCommands.size() * sizeof(vk::DrawIndexedIndirectCommand));
     }
@@ -427,7 +428,7 @@ namespace kailux
                             (window.getCursorMode() == CursorMode::Normal)
                                 ? window.setCursorMode(CursorMode::Disabled)
                                 : window.setCursorMode(CursorMode::Normal);
-                            auto view = m_EntityRegistry.view<CameraComponent>();
+                            auto view = m_Scene.getEntityRegistry().view<CameraComponent>();
                             for (auto entity: view)
                             {
                                 auto &camera = view.get<CameraComponent>(entity).camera;
@@ -453,7 +454,7 @@ namespace kailux
             handleEvent(window);
 
             auto deltaTime = m_Clock.getDeltaTime<float, TimeType::Seconds>();
-            auto view = m_EntityRegistry.view<CameraComponent>();
+            auto view = m_Scene.getEntityRegistry().view<CameraComponent>();
             for (auto entity: view)
             {
                 auto &camera = view.get<CameraComponent>(entity).camera;

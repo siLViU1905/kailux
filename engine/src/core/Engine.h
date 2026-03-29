@@ -13,6 +13,8 @@
 #include "mesh/MeshRegistry.h"
 #include <entt/entt.hpp>
 
+#include "Scene.h"
+
 namespace kailux
 {
     class Engine
@@ -36,7 +38,8 @@ namespace kailux
         void createFrameResources();
         void createMeshRegistry();
         void createImGui(Window& window);
-        void createEntities(const Window &window);
+        void createScene();
+        void createSceneEntities(const Window &window);
 
         static constexpr uint32_t s_DescriptorLayoutBindingsCount = 1 + 1; // camera buffer + model buffer
         static constexpr std::array<DescriptorLayoutBinding, s_DescriptorLayoutBindingsCount> make_descriptor_layout_bindings(uint32_t uniformBufferCount, uint32_t storageBufferCount)
@@ -111,7 +114,6 @@ namespace kailux
 
         Clock                                   m_Clock;
 
-        entt::registry                          m_EntityRegistry;
-        entt::entity                            m_MainCameraEntity;
+        Scene                                   m_Scene;
     };
 }
