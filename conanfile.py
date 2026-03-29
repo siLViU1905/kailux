@@ -16,6 +16,7 @@ class SLinkRecipe(ConanFile):
         self.requires("imgui/1.92.5")
         self.requires("glm/1.0.1")
         self.requires("entt/3.16.0")
+        self.requires("magic_enum/0.9.7")
 
     def configure(self):
         self.options["imgui"].with_glfw = True
