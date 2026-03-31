@@ -11,10 +11,10 @@ namespace kailux
 
         void render(Scene& scene) const;
 
-        std::vector<std::unique_ptr<Panel>>&       getPanels();
-        const std::vector<std::unique_ptr<Panel>>& getPanels() const;
+        std::vector<Scoped<Panel>>       &getPanels();
+        const std::vector<Scoped<Panel>> &getPanels() const;
 
     protected:
-        std::vector<std::unique_ptr<Panel>> m_Panels;
+        std::vector<Scoped<Panel>> m_Panels;
     };
 }

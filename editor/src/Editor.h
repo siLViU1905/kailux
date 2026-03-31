@@ -15,6 +15,6 @@ namespace kailux
     private:
         void createLayers();
 
-        std::unique_ptr<Layer> m_ActiveLayer;
+        Scoped<Layer> m_ActiveLayer;
     };
 }

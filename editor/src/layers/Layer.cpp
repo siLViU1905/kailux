@@ -25,12 +25,12 @@ namespace kailux
             panel->render(scene);
     }
 
-    std::vector<std::unique_ptr<Panel> > &Layer::getPanels()
+    std::vector<Scoped<Panel>> &Layer::getPanels()
     {
         return m_Panels;
     }
 
-    const std::vector<std::unique_ptr<Panel> > &Layer::getPanels() const
+    const std::vector<Scoped<Panel>> &Layer::getPanels() const
     {
         return m_Panels;
     }
