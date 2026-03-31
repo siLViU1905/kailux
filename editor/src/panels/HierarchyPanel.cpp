@@ -4,12 +4,12 @@
 
 namespace kailux
 {
-    HierarchyPanel::HierarchyPanel() : m_SelectedEntity()
+    HierarchyPanel::HierarchyPanel() : m_SelectedEntity(entt::null)
     {
     }
 
     HierarchyPanel::HierarchyPanel(std::string_view name, ImVec2 position, ImVec2 size, ImVec4 backgroundColor)
-        : Panel(name, position, size, backgroundColor), m_SelectedEntity()
+        : Panel(name, position, size, backgroundColor), m_SelectedEntity(entt::null)
     {
     }
 
@@ -43,6 +43,7 @@ namespace kailux
                 if (ImGui::Selectable(tag.name.c_str(), isSelected))
                 {
                     m_SelectedEntity = entity;
+                    m_OnEntitySelected(m_SelectedEntity, scene);
                 }
             }
         }
@@ -50,8 +51,8 @@ namespace kailux
         ImGui::PopStyleColor();
     }
 
-    entt::entity HierarchyPanel::getSelectedEntity() const
+    void HierarchyPanel::setOnEntitySelected(OnEntitySelected &&callback)
     {
-        return m_SelectedEntity;
+        m_OnEntitySelected = std::move(callback);
     }
 }

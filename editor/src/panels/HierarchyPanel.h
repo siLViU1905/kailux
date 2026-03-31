@@ -11,9 +11,11 @@ namespace kailux
 
         void render(Scene &scene) override;
 
-        entt::entity getSelectedEntity() const;
+        using OnEntitySelected = std::move_only_function<void(entt::entity, const Scene&)>;
+        void  setOnEntitySelected(OnEntitySelected&& callback);
 
     private:
-        entt::entity m_SelectedEntity;
+        OnEntitySelected m_OnEntitySelected;
+        entt::entity     m_SelectedEntity;
     };
 }
