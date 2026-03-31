@@ -35,6 +35,6 @@ namespace kailux
 
     void Editor::createLayers()
     {
-        m_ActiveLayer = std::make_unique<EditorLayer>(EditorLayer::create());
+        m_ActiveLayer = create_scoped<EditorLayer>(EditorLayer::create());
     }
 }
