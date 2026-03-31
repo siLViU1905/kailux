@@ -13,7 +13,7 @@ namespace kailux
 
     void EditorLayer::addHierarchyPanel()
     {
-        m_Panels.push_back(std::make_unique<HierarchyPanel>(
+        m_Panels.push_back(create_scoped<HierarchyPanel>(
                 s_HierarchyPanelName,
                 s_HierarchyPanelPosition,
                 s_HierarchyPanelSize,

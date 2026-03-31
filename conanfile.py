@@ -3,7 +3,7 @@ from conan.tools.cmake import cmake_layout
 from conan.tools.files import copy
 import os
 
-class SLinkRecipe(ConanFile):
+class kailux(ConanFile):
     name = "kailux"
     version = "1.0"
     package_type = "application"
