@@ -3,6 +3,7 @@
 #include "bindings/imgui_impl_glfw.h"
 #include "bindings/imgui_impl_vulkan.h"
 #include "../Swapchain.h"
+#include <ImGuizmo.h>
 
 namespace kailux
 {
@@ -70,10 +71,11 @@ namespace kailux
     void ImGuiBackend::beginFrame()
     {
         ImGui_ImplVulkan_NewFrame();
-
         ImGui_ImplGlfw_NewFrame();
-
         ImGui::NewFrame();
+
+        ImGuizmo::SetOrthographic(false);
+        ImGuizmo::BeginFrame();
     }
 
     void ImGuiBackend::endFrame()

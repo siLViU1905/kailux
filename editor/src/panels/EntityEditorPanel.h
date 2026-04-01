@@ -1,5 +1,6 @@
 #pragma once
 #include "Panel.h"
+#include <ImGuizmo.h>
 
 namespace kailux
 {
@@ -16,5 +17,8 @@ namespace kailux
     private:
         entt::entity m_SelectedEntity;
         glm::vec3    m_RotationDegrees;
+
+        ImGuizmo::OPERATION m_CurrentGizmoOperation;
+        ImGuizmo::MODE      m_CurrentGizmoMode;
     };
 }
