@@ -3,7 +3,7 @@ from conan.tools.cmake import cmake_layout
 from conan.tools.files import copy
 import os
 
-class SLinkRecipe(ConanFile):
+class kailux(ConanFile):
     name = "kailux"
     version = "1.0"
     package_type = "application"
@@ -17,6 +17,7 @@ class SLinkRecipe(ConanFile):
         self.requires("glm/1.0.1")
         self.requires("entt/3.16.0")
         self.requires("magic_enum/0.9.7")
+        self.requires("imguizmo/1.83")
 
     def configure(self):
         self.options["imgui"].with_glfw = True
