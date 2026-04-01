@@ -1,3 +1,5 @@
+find_file(IMGUIZMO_CPP ImGuizmo.cpp PATHS ${imguizmo_INCLUDE_DIRS}/../src)
+
 add_library(kailux_engine STATIC
         src/core/Context.cpp
         src/core/window/Window.cpp
@@ -8,6 +10,7 @@ add_library(kailux_engine STATIC
         src/core/imgui_backend/ImGuiBackend.cpp
         src/core/imgui_backend/bindings/imgui_impl_glfw.cpp
         src/core/imgui_backend/bindings/imgui_impl_vulkan.cpp
+        ${IMGUIZMO_CPP}
         src/core/window/Event.cpp
         src/core/buffer/Buffer.cpp
         src/core/buffer/BufferAllocator.cpp
@@ -23,6 +26,10 @@ add_library(kailux_engine STATIC
         src/core/Scene.cpp
 )
 
+target_compile_definitions(kailux_engine PUBLIC
+        IMGUI_DEFINE_MATH_OPERATORS
+)
+
 target_include_directories(kailux_engine PUBLIC src)
 
 target_link_libraries(kailux_engine PUBLIC
@@ -32,6 +39,7 @@ target_link_libraries(kailux_engine PUBLIC
         glm::glm
         EnTT::EnTT
         magic_enum::magic_enum
+        imguizmo::imguizmo
 )
 
 target_precompile_headers(kailux_engine PUBLIC
