@@ -9,7 +9,8 @@ namespace kailux
 {
     EntityEditorPanel::EntityEditorPanel() : m_SelectedEntity(entt::null), m_RotationDegrees({}),
                                              m_CurrentGizmoMode(ImGuizmo::LOCAL),
-                                             m_CurrentGizmoOperation(ImGuizmo::TRANSLATE)
+                                             m_CurrentGizmoOperation(ImGuizmo::TRANSLATE),
+    m_UniformScale(true)
     {
     }
 
@@ -17,7 +18,8 @@ namespace kailux
         : Panel(name, position, size, backgroundColor),
           m_SelectedEntity(entt::null), m_RotationDegrees({}),
           m_CurrentGizmoMode(ImGuizmo::LOCAL),
-          m_CurrentGizmoOperation(ImGuizmo::TRANSLATE)
+          m_CurrentGizmoOperation(ImGuizmo::TRANSLATE),
+    m_UniformScale(true)
     {
     }
 
@@ -79,7 +81,25 @@ namespace kailux
                     if (ImGui::InputFloat3("Rotation (Deg)", glm::value_ptr(m_RotationDegrees)))
                         transform.rotation = glm::quat(glm::radians(m_RotationDegrees));
 
-                    ImGui::InputFloat3("Scale", glm::value_ptr(transform.scale));
+                    auto oldScale = transform.scale;
+                    if (ImGui::InputFloat3("Scale", glm::value_ptr(transform.scale)))
+                    {
+                        if (m_UniformScale)
+                        {
+                            float newValue = oldScale.x;
+                            if (transform.scale.x != oldScale.x)
+                                newValue = transform.scale.x;
+                            else if (transform.scale.y != oldScale.y)
+                                newValue = transform.scale.y;
+                            else if (transform.scale.z != oldScale.z)
+                                newValue = transform.scale.z;
+                            transform.scale = glm::vec3(newValue);
+                        }
+                    }
+                    ImGui::SameLine();
+                    ImGui::Checkbox("##uniform", &m_UniformScale);
+                    if (ImGui::IsItemHovered())
+                        ImGui::SetTooltip("Uniform Scale");
                 }
             }
         }
@@ -122,7 +142,13 @@ namespace kailux
 
             transform.position = translation;
             transform.rotation = rotation;
-            transform.scale = scale;
+            if (m_UniformScale && m_CurrentGizmoOperation == ImGuizmo::SCALE)
+            {
+                float avgScale = (scale.x + scale.y + scale.z) / 3.f;
+                transform.scale = glm::vec3(avgScale);
+            }
+            else
+                transform.scale = scale;
 
             m_RotationDegrees = glm::degrees(glm::eulerAngles(transform.rotation));
         }

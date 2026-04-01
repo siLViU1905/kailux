@@ -20,5 +20,7 @@ namespace kailux
 
         ImGuizmo::OPERATION m_CurrentGizmoOperation;
         ImGuizmo::MODE      m_CurrentGizmoMode;
+
+        bool                m_UniformScale;
     };
 }
