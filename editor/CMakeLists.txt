@@ -6,6 +6,7 @@ add_executable(kailux_editor
         src/Editor.cpp
         src/layers/EditorLayer.cpp
         src/panels/EntityEditorPanel.cpp
+        src/panels/MenuPanel.cpp
 )
 
 target_precompile_headers(kailux_editor REUSE_FROM kailux_engine)
