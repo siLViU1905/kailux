@@ -2,6 +2,7 @@
 
 #include "../panels/EntityEditorPanel.h"
 #include "../panels/HierarchyPanel.h"
+#include "../panels/MenuPanel.h"
 
 namespace kailux
 {
@@ -15,6 +16,7 @@ namespace kailux
     void EditorLayer::addPanels()
     {
         m_Panels.resize(s_PanelsCount);
+        m_Panels[s_MenuPanelIndex] = create_scoped<MenuPanel>();
         m_Panels[s_HierarchyPanelIndex] = create_scoped<HierarchyPanel>(
                 s_HierarchyPanelName,
                 s_HierarchyPanelPosition,
