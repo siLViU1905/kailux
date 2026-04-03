@@ -74,8 +74,9 @@ namespace kailux
 
     void Engine::createDescriptorResources()
     {
-        static_assert(check_descriptor_layout_bindings_and_pool_sizes_match(s_DescriptorLayoutBindings, s_DescriptorPoolSizes),
-                      "Descriptor layout binding and pool sizes does not match");
+        static_assert(
+            check_descriptor_layout_bindings_and_pool_sizes_match(s_DescriptorLayoutBindings, s_DescriptorPoolSizes),
+            "Descriptor layout binding and pool sizes does not match");
         m_DescriptorLayout = DescriptorLayout::create(m_Context, s_DescriptorLayoutBindings);
 
         m_DescriptorPool = DescriptorPool::create(m_Context, s_FramesInFlight, s_DescriptorPoolSizes);
@@ -320,9 +321,13 @@ namespace kailux
         m_MeshRegistry.bind(recorder.getCommandBuffer());
         frame.getDescriptorSet().bind(m_Pipeline, recorder.getCommandBuffer());
 
+        auto meshCount = static_cast<uint32_t>(
+            m_Scene.getEntityRegistry().view<MeshComponent>().size()
+        );
+
         recorder.drawIndexedIndirect(
             frame.getIndirectBuffer(),
-            m_MeshRegistry.getMeshCount()
+            meshCount
         );
     }
 

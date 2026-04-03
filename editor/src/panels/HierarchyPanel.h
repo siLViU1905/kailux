@@ -15,6 +15,9 @@ namespace kailux
         void  setOnEntitySelected(OnEntitySelected&& callback);
 
     private:
+        static bool on_entity_rename(entt::entity entity, entt::registry &registry);
+        static bool on_entity_delete(entt::entity entity, Scene &scene);
+
         OnEntitySelected m_OnEntitySelected;
         entt::entity     m_SelectedEntity;
     };
