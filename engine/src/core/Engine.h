@@ -100,6 +100,7 @@ namespace kailux
         void updateCameraBuffer(FrameData& frame) const;
         void updateModelBuffer(FrameData& frame) const;
         void updateIndirectBuffer(FrameData& frame) const;
+        void updateSceneBuffer(FrameData& frame) const;
 
         void handleEvent(Window &window);
 

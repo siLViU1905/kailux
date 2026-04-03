@@ -102,6 +102,22 @@ namespace kailux
                         ImGui::SetTooltip("Uniform Scale");
                 }
             }
+            else if (registry.all_of<DirectionalLightData>(m_SelectedEntity))
+            {
+                auto& data = registry.get<DirectionalLightData>(m_SelectedEntity);
+                if (ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen))
+                {
+                    ImGui::SliderFloat3("Direction", glm::value_ptr(data.directionAndIntensity), -1.f, 1.f);
+                    float& intensity = data.directionAndIntensity.w;
+                    ImGui::InputFloat("Intensity", &intensity);
+                    ImGui::ColorPicker3("Color", glm::value_ptr(data.colorAndEnabled));
+                    float& enableValue = data.colorAndEnabled.w;
+                    static bool enabled = true;
+                    enabled = enableValue > 0.5f;
+                    if (ImGui::Checkbox("Enabled", &enabled))
+                        enabled ? enableValue = 1.f : enableValue = 0.f;
+                }
+            }
         }
         ImGui::End();
         ImGui::PopStyleColor();

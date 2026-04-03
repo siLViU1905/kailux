@@ -4,6 +4,7 @@
 #include "buffer/BufferAllocator.h"
 #include "components/gpu/CameraData.h"
 #include "components/gpu/MeshTransformData.h"
+#include "components/gpu/SceneData.h"
 
 namespace kailux
 {
@@ -24,7 +25,8 @@ namespace kailux
                                                        m_DescriptorSet(std::move(other.m_DescriptorSet)),
                                                        m_MeshModelBuffer(std::move(other.m_MeshModelBuffer)),
                                                        m_CameraBuffer(std::move(other.m_CameraBuffer)),
-                                                       m_IndirectBuffer(std::move(other.m_IndirectBuffer))
+                                                       m_IndirectBuffer(std::move(other.m_IndirectBuffer)),
+                                                       m_SceneBuffer(std::move(other.m_SceneBuffer))
     {
     }
 
@@ -41,6 +43,7 @@ namespace kailux
             m_CameraBuffer = std::move(other.m_CameraBuffer);
             m_MeshModelBuffer = std::move(other.m_MeshModelBuffer);
             m_IndirectBuffer = std::move(other.m_IndirectBuffer);
+            m_SceneBuffer = std::move(other.m_SceneBuffer);
         }
         return *this;
     }
@@ -57,6 +60,7 @@ namespace kailux
         frame.createCameraBuffer(context);
         frame.createMeshModelBuffer(context, maxMeshCount);
         frame.createIndirectBuffer(context, maxMeshCount);
+        frame.createSceneBuffer(context);
         auto descSetInfo = frame.makeDescriptorSetInfo();
         frame.createDescriptorSet(context, descriptorLayout, descriptorPool, descSetInfo);
         return frame;
@@ -98,7 +102,7 @@ namespace kailux
         return m_CameraBuffer;
     }
 
-    Buffer & FrameData::getModelBuffer()
+    Buffer &FrameData::getModelBuffer()
     {
         return m_MeshModelBuffer;
     }
@@ -111,6 +115,11 @@ namespace kailux
     const Buffer &FrameData::getIndirectBuffer() const
     {
         return m_IndirectBuffer;
+    }
+
+    Buffer &FrameData::getSceneBuffer()
+    {
+        return m_SceneBuffer;
     }
 
     std::array<vk::BufferMemoryBarrier2, FrameData::s_BufferMemoryBarriersCount>
@@ -149,6 +158,17 @@ namespace kailux
                 m_IndirectBuffer.getBuffer(),
                 {},
                 m_IndirectBuffer.getSize()
+            ),
+            vk::BufferMemoryBarrier2( // scene
+                vk::PipelineStageFlagBits2::eHost,
+                vk::AccessFlagBits2::eHostWrite,
+                vk::PipelineStageFlagBits2::eFragmentShader,
+                vk::AccessFlagBits2::eShaderStorageRead,
+                vk::QueueFamilyIgnored,
+                vk::QueueFamilyIgnored,
+                m_SceneBuffer.getBuffer(),
+                {},
+                m_SceneBuffer.getSize()
             )
         };
     }
@@ -216,6 +236,11 @@ namespace kailux
                                                        vk::BufferUsageFlagBits::eIndirectBuffer);
     }
 
+    void FrameData::createSceneBuffer(const Context &context)
+    {
+        m_SceneBuffer = BufferAllocator::alloc_storage(context, sizeof(SceneData));
+    }
+
     std::array<DescriptorSetInfo, FrameData::s_DescriptorSetInfoCount> FrameData::makeDescriptorSetInfo() const
     {
         return {
@@ -230,8 +255,13 @@ namespace kailux
                 m_MeshModelBuffer.getBuffer(),
                 m_MeshModelBuffer.getSize(),
                 1
+            ),
+            DescriptorSetBufferInfo(
+                vk::DescriptorType::eStorageBuffer,
+                m_SceneBuffer.getBuffer(),
+                m_SceneBuffer.getSize(),
+                1
             )
-
         };
     }
 }

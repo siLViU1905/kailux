@@ -339,7 +339,6 @@ namespace kailux
             m_SampleCount
         );
 
-        //ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
         m_ImGuiBackend.beginFrame();
         m_OnEditorRender(m_Scene);
         m_ImGuiBackend.endFrame();
@@ -353,6 +352,7 @@ namespace kailux
         updateCameraBuffer(frame);
         updateModelBuffer(frame);
         updateIndirectBuffer(frame);
+        updateSceneBuffer(frame);
         recorder.bufferMemoryBarriers(frame.getBufferMemoryBarriers());
     }
 
@@ -401,6 +401,12 @@ namespace kailux
         });
         frame.getIndirectBuffer().upload(indirectCommands.data(),
                                          indirectCommands.size() * sizeof(vk::DrawIndexedIndirectCommand));
+    }
+
+    void Engine::updateSceneBuffer(FrameData &frame) const
+    {
+        auto data = m_Scene.getData();
+        frame.getSceneBuffer().upload(&data, sizeof(SceneData));
     }
 
     void Engine::handleEvent(Window &window)
