@@ -50,47 +50,29 @@ namespace kailux
                 if (ImGui::BeginPopupContextItem())
                 {
                     static entt::entity lastEntity = entt::null;
-                    static char nameBuffer[64]{};
                     static bool nameExistsError = false;
 
                     if (ImGui::IsWindowAppearing() || lastEntity != entity)
                     {
                         lastEntity = entity;
                         nameExistsError = false;
-                        strncpy_s(nameBuffer, tag.name.c_str(), sizeof(nameBuffer) - 1);
-                        nameBuffer[sizeof(nameBuffer) - 1] = 0;
                     }
-
-                    ImGui::Text("Rename Entity");
-
-                    if (ImGui::InputText("##rename", nameBuffer, sizeof(nameBuffer),
-                                         ImGuiInputTextFlags_EnterReturnsTrue))
-                    {
-                        std::string newName(nameBuffer);
-
-                        bool foundDuplicate = false;
-                        for (auto otherEntity : view)
-                        {
-                            if (otherEntity != entity &&
-                                registry.get<TagComponent>(otherEntity).name == newName)
-                            {
-                                foundDuplicate = true;
-                                break;
-                            }
-                        }
-
-                        if (!newName.empty() && !foundDuplicate)
-                        {
-                            registry.get<TagComponent>(entity).name = newName;
-                            nameExistsError = false;
-                            ImGui::CloseCurrentPopup();
-                        }
-                        else
-                            nameExistsError = foundDuplicate;
-                    }
+                    nameExistsError = on_entity_rename(entity, registry);
 
                     if (nameExistsError)
                         ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Name already exists!");
+                    ImGui::Separator();
+
+                    if (on_entity_delete(entity, scene))
+                    {
+                        if (m_SelectedEntity == entity)
+                        {
+                            m_SelectedEntity = entt::null;
+                            m_OnEntitySelected(entt::null, scene);
+                        }
+                        ImGui::EndPopup();
+                        break;
+                    }
 
                     if (ImGui::Button("Cancel"))
                     {
@@ -109,5 +91,62 @@ namespace kailux
     void HierarchyPanel::setOnEntitySelected(OnEntitySelected &&callback)
     {
         m_OnEntitySelected = std::move(callback);
+    }
+
+    bool HierarchyPanel::on_entity_rename(entt::entity entity, entt::registry &registry)
+    {
+        static char nameBuffer[64]{};
+        static bool nameExistsError = false;
+
+        if (ImGui::IsWindowAppearing())
+        {
+            nameExistsError = false;
+            strncpy_s(nameBuffer, registry.get<TagComponent>(entity).name.c_str(), sizeof(nameBuffer) - 1);
+            nameBuffer[sizeof(nameBuffer) - 1] = 0;
+        }
+
+        ImGui::Text("Rename Entity");
+
+        if (ImGui::InputText("##rename", nameBuffer, sizeof(nameBuffer),
+                             ImGuiInputTextFlags_EnterReturnsTrue))
+        {
+            std::string newName(nameBuffer);
+
+            bool foundDuplicate = false;
+            auto view = registry.view<TagComponent>();
+            for (auto otherEntity: view)
+            {
+                if (otherEntity != entity &&
+                    registry.get<TagComponent>(otherEntity).name == newName)
+                {
+                    foundDuplicate = true;
+                    break;
+                }
+            }
+
+            if (!newName.empty() && !foundDuplicate)
+            {
+                registry.get<TagComponent>(entity).name = newName;
+                nameExistsError = false;
+                ImGui::CloseCurrentPopup();
+            } else
+                nameExistsError = foundDuplicate;
+        }
+        return nameExistsError;
+    }
+
+    bool HierarchyPanel::on_entity_delete(entt::entity entity, Scene &scene)
+    {
+        if (ImGui::MenuItem("Delete"))
+        {
+            if (entity != scene.getSun())
+            {
+                scene.getEntityRegistry().destroy(entity);
+                ImGui::CloseCurrentPopup();
+                return true;
+            }
+            ImGui::CloseCurrentPopup();
+        }
+        return false;
     }
 }
