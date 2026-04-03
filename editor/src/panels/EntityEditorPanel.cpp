@@ -4,6 +4,7 @@
 
 #include "core/components/entt/CameraComponent.h"
 #include "core/components/entt/TagComponent.h"
+#include "core/components/gpu/CameraData.h"
 
 namespace kailux
 {
@@ -109,13 +110,22 @@ namespace kailux
                 {
                     ImGui::SliderFloat3("Direction", glm::value_ptr(data.directionAndIntensity), -1.f, 1.f);
                     float& intensity = data.directionAndIntensity.w;
-                    ImGui::SliderFloat("Intensity", &intensity, 0.f, 5.f);
+                    ImGui::InputFloat("Intensity", &intensity);
                     ImGui::ColorPicker3("Color", glm::value_ptr(data.colorAndEnabled));
                     float& enableValue = data.colorAndEnabled.w;
                     static bool enabled = true;
                     enabled = enableValue > 0.5f;
                     if (ImGui::Checkbox("Enabled", &enabled))
                         enabled ? enableValue = 1.f : enableValue = 0.f;
+                }
+            }
+            else if (registry.all_of<CameraData>(m_SelectedEntity))
+            {
+                auto& data = registry.get<CameraData>(m_SelectedEntity);
+                if (ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen))
+                {
+                    float& exposure = data.positionAndExposure.w;
+                    ImGui::InputFloat("Exposure", &exposure, 0.f, 0.f, "%.6f");
                 }
             }
         }

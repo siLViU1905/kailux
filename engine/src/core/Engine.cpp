@@ -364,10 +364,11 @@ namespace kailux
     void Engine::updateCameraBuffer(FrameData &frame) const
     {
         const auto &camera = m_Scene.getEntityRegistry().get<CameraComponent>(m_Scene.getMainCamera()).camera;
+        const auto &lastData= m_Scene.getEntityRegistry().get<CameraData>(m_Scene.getMainCamera());
         CameraData data(
             camera.getProjection(),
             camera.getView(),
-            glm::vec4(camera.getPosition(), 1.f)
+            glm::vec4(camera.getPosition(), lastData.positionAndExposure.w)
         );
         frame.getCameraBuffer().upload(
             &data,

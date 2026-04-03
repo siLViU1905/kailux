@@ -47,7 +47,7 @@ namespace kailux
             entity,
             camera.getProjection(),
             camera.getView(),
-            glm::vec4(camera.getPosition(), 1.f)
+            glm::vec4(camera.getPosition(), CameraData::s_DefaultExposure)
         );
         return entity;
     }
