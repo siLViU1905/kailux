@@ -7,12 +7,15 @@
 
 namespace kailux
 {
-    Scene::Scene() : m_MainCameraEntity()
+    Scene::Scene() : m_MainCameraEntity(entt::null),
+                     m_Sun(entt::null)
     {
+        m_Sun = createSunEntity({});
     }
 
     Scene::Scene(Scene &&other) noexcept : m_EntityRegistry(std::move(other.m_EntityRegistry)),
-                                           m_MainCameraEntity(other.m_MainCameraEntity)
+                                           m_MainCameraEntity(other.m_MainCameraEntity),
+                                           m_Sun(other.m_Sun)
     {
     }
 
@@ -22,6 +25,7 @@ namespace kailux
         {
             m_EntityRegistry = std::move(other.m_EntityRegistry);
             m_MainCameraEntity = other.m_MainCameraEntity;
+            m_Sun = other.m_Sun;
         }
         return *this;
     }
@@ -62,12 +66,12 @@ namespace kailux
         return entity;
     }
 
-    entt::registry & Scene::getEntityRegistry()
+    entt::registry &Scene::getEntityRegistry()
     {
         return m_EntityRegistry;
     }
 
-    const entt::registry & Scene::getEntityRegistry() const
+    const entt::registry &Scene::getEntityRegistry() const
     {
         return m_EntityRegistry;
     }
@@ -82,10 +86,31 @@ namespace kailux
         m_MainCameraEntity = camera;
     }
 
+    entt::entity Scene::getSun() const
+    {
+        return m_Sun;
+    }
+
+    SceneData Scene::getData() const
+    {
+        const auto &sunData = m_EntityRegistry.get<SunData>(m_Sun);
+        return {sunData};
+    }
+
     entt::entity Scene::createEntity(std::string_view name)
     {
         entt::entity entity = m_EntityRegistry.create();
         m_EntityRegistry.emplace<TagComponent>(entity, name.data());
+        return entity;
+    }
+
+    entt::entity Scene::createSunEntity(const SunData &data)
+    {
+        auto entity = createEntity(s_SunName);
+        m_EntityRegistry.emplace<SunData>(
+            entity,
+            data
+        );
         return entity;
     }
 }

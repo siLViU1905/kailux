@@ -74,15 +74,11 @@ namespace kailux
 
     void Engine::createDescriptorResources()
     {
-        constexpr auto descLayoutBindings = make_descriptor_layout_bindings(1, 1);
-        // camera uniform buffer + models storage buffer
-        constexpr auto descPoolSizes = make_descriptor_pool_sizes(1, 1);
-        // camera uniform buffer + models storage buffer
-        static_assert(check_descriptor_layout_bindings_and_pool_sizes_match(descLayoutBindings, descPoolSizes),
+        static_assert(check_descriptor_layout_bindings_and_pool_sizes_match(s_DescriptorLayoutBindings, s_DescriptorPoolSizes),
                       "Descriptor layout binding and pool sizes does not match");
-        m_DescriptorLayout = DescriptorLayout::create(m_Context, descLayoutBindings);
+        m_DescriptorLayout = DescriptorLayout::create(m_Context, s_DescriptorLayoutBindings);
 
-        m_DescriptorPool = DescriptorPool::create(m_Context, s_FramesInFlight, descPoolSizes);
+        m_DescriptorPool = DescriptorPool::create(m_Context, s_FramesInFlight, s_DescriptorPoolSizes);
     }
 
     void Engine::createPipeline()
@@ -343,7 +339,6 @@ namespace kailux
             m_SampleCount
         );
 
-        //ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
         m_ImGuiBackend.beginFrame();
         m_OnEditorRender(m_Scene);
         m_ImGuiBackend.endFrame();
@@ -357,6 +352,7 @@ namespace kailux
         updateCameraBuffer(frame);
         updateModelBuffer(frame);
         updateIndirectBuffer(frame);
+        updateSceneBuffer(frame);
         recorder.bufferMemoryBarriers(frame.getBufferMemoryBarriers());
     }
 
@@ -405,6 +401,12 @@ namespace kailux
         });
         frame.getIndirectBuffer().upload(indirectCommands.data(),
                                          indirectCommands.size() * sizeof(vk::DrawIndexedIndirectCommand));
+    }
+
+    void Engine::updateSceneBuffer(FrameData &frame) const
+    {
+        auto data = m_Scene.getData();
+        frame.getSceneBuffer().upload(&data, sizeof(SceneData));
     }
 
     void Engine::handleEvent(Window &window)

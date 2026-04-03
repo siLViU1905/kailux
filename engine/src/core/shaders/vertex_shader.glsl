@@ -8,6 +8,7 @@ layout(location = 3) in vec4 aTangent;
 
 layout(location = 0) out vec3 fragPos;
 layout(location = 1) out vec3 fragNormal;
+layout(location = 2) out vec3 viewPos;
 
 layout(binding = 0) uniform Camera
 {
@@ -27,6 +28,7 @@ void main()
 
     fragPos = worldPos.xyz;
     fragNormal = normalize(mat3(model) * aNormal);
+    viewPos = camera.position.xyz;
 
     gl_Position = camera.projection * camera.view * worldPos;
 }

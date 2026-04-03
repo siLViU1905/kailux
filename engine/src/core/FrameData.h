@@ -28,8 +28,9 @@ namespace kailux
         Buffer&       getModelBuffer();
         Buffer&       getIndirectBuffer();
         const Buffer& getIndirectBuffer() const;
+        Buffer&       getSceneBuffer();
 
-        static constexpr uint32_t s_BufferMemoryBarriersCount = 1 + 1 + 1; // camera buffer + model buffer + indirect buffer
+        static constexpr uint32_t s_BufferMemoryBarriersCount = 1 + 1 + 1 + 1; // camera buffer + model buffer + indirect buffer + scene buffer
         std::array<vk::BufferMemoryBarrier2, s_BufferMemoryBarriersCount> getBufferMemoryBarriers() const;
 
     private:
@@ -43,8 +44,9 @@ namespace kailux
         void createCameraBuffer(const Context& context);
         void createMeshModelBuffer(const Context& context, uint32_t meshCount);
         void createIndirectBuffer(const Context& context, uint32_t count);
+        void createSceneBuffer(const Context& context);
 
-        static constexpr uint32_t s_DescriptorSetInfoCount = 1 + 1; // camera buffer + model buffer
+        static constexpr uint32_t s_DescriptorSetInfoCount = 1 + 1 + 1; // camera buffer + model buffer + scene buffer
         std::array<DescriptorSetInfo, s_DescriptorSetInfoCount> makeDescriptorSetInfo() const;
 
         vk::raii::CommandPool   m_CommandPool;
@@ -57,5 +59,6 @@ namespace kailux
         Buffer                  m_CameraBuffer;
         Buffer                  m_MeshModelBuffer;
         Buffer                  m_IndirectBuffer;
+        Buffer                  m_SceneBuffer;
     };
 }
