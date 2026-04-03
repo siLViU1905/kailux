@@ -44,36 +44,37 @@ namespace kailux
         void createScene();
         void createSceneEntities(const Window &window);
 
-        static constexpr uint32_t s_DescriptorLayoutBindingsCount = 1 + 1; // camera buffer + model buffer
-        static constexpr std::array<DescriptorLayoutBinding, s_DescriptorLayoutBindingsCount> make_descriptor_layout_bindings(uint32_t uniformBufferCount, uint32_t storageBufferCount)
-        {
-            return {
-                DescriptorLayoutBinding(
-                    vk::DescriptorType::eUniformBuffer,
-                    uniformBufferCount,
-                    vk::ShaderStageFlagBits::eVertex
-                ),
-                DescriptorLayoutBinding(
-                    vk::DescriptorType::eStorageBuffer,
-                    storageBufferCount,
-                    vk::ShaderStageFlagBits::eVertex
-                )
-            };
-        }
-        static constexpr uint32_t s_DescriptorPoolSizesCount = s_DescriptorLayoutBindingsCount;
-        static constexpr std::array<DescriptorPoolSize, s_DescriptorPoolSizesCount> make_descriptor_pool_sizes(uint32_t uniformBufferCount, uint32_t storageBufferCount)
-        {
-            return {
-                DescriptorPoolSize(
-                    vk::DescriptorType::eUniformBuffer,
-                    uniformBufferCount
-                ),
-                DescriptorPoolSize(
-                   vk::DescriptorType::eStorageBuffer,
-                   storageBufferCount
-               )
-            };
-        }
+        static constexpr std::array s_DescriptorLayoutBindings = {
+            DescriptorLayoutBinding(
+                vk::DescriptorType::eUniformBuffer,
+                1, // camera
+                vk::ShaderStageFlagBits::eVertex
+            ),
+            DescriptorLayoutBinding(
+                vk::DescriptorType::eStorageBuffer,
+                1, // model
+                vk::ShaderStageFlagBits::eVertex
+            ),
+            DescriptorLayoutBinding(
+                vk::DescriptorType::eStorageBuffer,
+                1, // scene
+                vk::ShaderStageFlagBits::eFragment
+            )
+        };
+        static constexpr std::array s_DescriptorPoolSizes = {
+            DescriptorPoolSize(
+                vk::DescriptorType::eUniformBuffer,
+                1 // camera
+            ),
+            DescriptorPoolSize(
+                vk::DescriptorType::eStorageBuffer,
+                1 // model
+            ),
+            DescriptorPoolSize(
+                vk::DescriptorType::eStorageBuffer,
+                1 // scene
+            )
+        };
         static constexpr bool check_descriptor_layout_bindings_and_pool_sizes_match(std::span<const DescriptorLayoutBinding> bindings, std::span<const DescriptorPoolSize> sizes)
         {
             if (bindings.size() != sizes.size())
