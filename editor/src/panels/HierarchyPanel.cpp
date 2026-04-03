@@ -31,7 +31,8 @@ namespace kailux
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, m_BackgroundColor);
 
-        if (ImGui::Begin(m_Name.c_str(), nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize))
+        if (ImGui::Begin(m_Name.c_str(), nullptr,
+                         ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize))
         {
             auto &registry = scene.getEntityRegistry();
 
@@ -44,6 +45,60 @@ namespace kailux
                 {
                     m_SelectedEntity = entity;
                     m_OnEntitySelected(m_SelectedEntity, scene);
+                }
+
+                if (ImGui::BeginPopupContextItem())
+                {
+                    static entt::entity lastEntity = entt::null;
+                    static char nameBuffer[64]{};
+                    static bool nameExistsError = false;
+
+                    if (ImGui::IsWindowAppearing() || lastEntity != entity)
+                    {
+                        lastEntity = entity;
+                        nameExistsError = false;
+                        strncpy_s(nameBuffer, tag.name.c_str(), sizeof(nameBuffer) - 1);
+                        nameBuffer[sizeof(nameBuffer) - 1] = 0;
+                    }
+
+                    ImGui::Text("Rename Entity");
+
+                    if (ImGui::InputText("##rename", nameBuffer, sizeof(nameBuffer),
+                                         ImGuiInputTextFlags_EnterReturnsTrue))
+                    {
+                        std::string newName(nameBuffer);
+
+                        bool foundDuplicate = false;
+                        for (auto otherEntity : view)
+                        {
+                            if (otherEntity != entity &&
+                                registry.get<TagComponent>(otherEntity).name == newName)
+                            {
+                                foundDuplicate = true;
+                                break;
+                            }
+                        }
+
+                        if (!newName.empty() && !foundDuplicate)
+                        {
+                            registry.get<TagComponent>(entity).name = newName;
+                            nameExistsError = false;
+                            ImGui::CloseCurrentPopup();
+                        }
+                        else
+                            nameExistsError = foundDuplicate;
+                    }
+
+                    if (nameExistsError)
+                        ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Name already exists!");
+
+                    if (ImGui::Button("Cancel"))
+                    {
+                        nameExistsError = false;
+                        ImGui::CloseCurrentPopup();
+                    }
+
+                    ImGui::EndPopup();
                 }
             }
         }
