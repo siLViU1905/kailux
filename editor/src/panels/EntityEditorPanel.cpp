@@ -109,7 +109,7 @@ namespace kailux
                 {
                     ImGui::SliderFloat3("Direction", glm::value_ptr(data.directionAndIntensity), -1.f, 1.f);
                     float& intensity = data.directionAndIntensity.w;
-                    ImGui::InputFloat("Intensity", &intensity);
+                    ImGui::SliderFloat("Intensity", &intensity, 0.f, 5.f);
                     ImGui::ColorPicker3("Color", glm::value_ptr(data.colorAndEnabled));
                     float& enableValue = data.colorAndEnabled.w;
                     static bool enabled = true;
