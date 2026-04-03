@@ -41,9 +41,9 @@ namespace kailux
             std::array<vk::PipelineShaderStageCreateInfo, 2> getStages() const;
         };
 
-        static std::vector<char> read_shader_from_file(std::string_view path);
+        static std::vector<char>      read_shader_from_file(std::string_view path);
         static vk::raii::ShaderModule create_shader_module(const Context &context, const std::vector<char> &code);
-        static ShaderModules create_shader_modules(const Context &context, const ShaderInfo& info);
+        static ShaderModules          create_shader_modules(const Context &context, const ShaderInfo& info);
 
         void createLayout(const Context& context, const DescriptorLayout& descriptorSetLayout);
         void createPipeline(const Context &context, const Swapchain& swapchain, const ShaderModules& shaderModules, const PipelineInfo& info);
