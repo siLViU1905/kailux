@@ -102,6 +102,20 @@ namespace kailux
                     if (ImGui::IsItemHovered())
                         ImGui::SetTooltip("Uniform Scale");
                 }
+                auto& material = registry.get<MeshMaterialData>(m_SelectedEntity);
+                if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
+                {
+                    float& roughness = material.albedoAndRoughness.w;
+                    ImGui::SliderFloat("Roughness", &roughness, 0.f, 1.f);
+
+                    float& metallic = material.pbrParams.x;
+                    ImGui::SliderFloat("Metallic", &metallic, 0.f, 1.f);
+
+                    float& ao = material.pbrParams.y;
+                    ImGui::SliderFloat("AO", &ao, 0.f, 1.f);
+
+                    ImGui::ColorPicker3("Albedo", glm::value_ptr(material.albedoAndRoughness));
+                }
             }
             else if (registry.all_of<DirectionalLightData>(m_SelectedEntity))
             {

@@ -3,6 +3,8 @@
 #include "Pipeline.h"
 #include "buffer/BufferAllocator.h"
 #include "components/gpu/CameraData.h"
+#include "components/gpu/MeshData.h"
+#include "components/gpu/MeshMaterialData.h"
 #include "components/gpu/MeshTransformData.h"
 #include "components/gpu/SceneData.h"
 
@@ -23,7 +25,7 @@ namespace kailux
                                                        m_ImGuiCommandBuffer(std::move(other.m_ImGuiCommandBuffer)),
                                                        m_FenceInFlight(std::move(other.m_FenceInFlight)),
                                                        m_DescriptorSet(std::move(other.m_DescriptorSet)),
-                                                       m_MeshModelBuffer(std::move(other.m_MeshModelBuffer)),
+                                                       m_MeshDataBuffer(std::move(other.m_MeshDataBuffer)),
                                                        m_CameraBuffer(std::move(other.m_CameraBuffer)),
                                                        m_IndirectBuffer(std::move(other.m_IndirectBuffer)),
                                                        m_SceneBuffer(std::move(other.m_SceneBuffer))
@@ -41,7 +43,7 @@ namespace kailux
             m_FenceInFlight = std::move(other.m_FenceInFlight);
             m_DescriptorSet = std::move(other.m_DescriptorSet);
             m_CameraBuffer = std::move(other.m_CameraBuffer);
-            m_MeshModelBuffer = std::move(other.m_MeshModelBuffer);
+            m_MeshDataBuffer = std::move(other.m_MeshDataBuffer);
             m_IndirectBuffer = std::move(other.m_IndirectBuffer);
             m_SceneBuffer = std::move(other.m_SceneBuffer);
         }
@@ -58,7 +60,7 @@ namespace kailux
         frame.createImGuiCommandBuffer(context);
         frame.createSyncObjects(context);
         frame.createCameraBuffer(context);
-        frame.createMeshModelBuffer(context, maxMeshCount);
+        frame.createMeshDataBuffer(context, maxMeshCount);
         frame.createIndirectBuffer(context, maxMeshCount);
         frame.createSceneBuffer(context);
         auto descSetInfo = frame.makeDescriptorSetInfo();
@@ -104,7 +106,7 @@ namespace kailux
 
     Buffer &FrameData::getModelBuffer()
     {
-        return m_MeshModelBuffer;
+        return m_MeshDataBuffer;
     }
 
     Buffer &FrameData::getIndirectBuffer()
@@ -144,9 +146,9 @@ namespace kailux
                 vk::AccessFlagBits2::eShaderStorageRead,
                 vk::QueueFamilyIgnored,
                 vk::QueueFamilyIgnored,
-                m_MeshModelBuffer.getBuffer(),
+                m_MeshDataBuffer.getBuffer(),
                 {},
-                m_MeshModelBuffer.getSize()
+                m_MeshDataBuffer.getSize()
             ),
             vk::BufferMemoryBarrier2( // indirect
                 vk::PipelineStageFlagBits2::eHost,
@@ -225,9 +227,9 @@ namespace kailux
         m_CameraBuffer = BufferAllocator::alloc_uniform(context, sizeof(CameraData));
     }
 
-    void FrameData::createMeshModelBuffer(const Context &context, uint32_t meshCount)
+    void FrameData::createMeshDataBuffer(const Context &context, uint32_t meshCount)
     {
-        m_MeshModelBuffer = BufferAllocator::alloc_storage(context, meshCount * sizeof(ModelMatrixType));
+        m_MeshDataBuffer = BufferAllocator::alloc_storage(context, meshCount * sizeof(MeshData));
     }
 
     void FrameData::createIndirectBuffer(const Context &context, uint32_t count)
@@ -252,8 +254,8 @@ namespace kailux
             ),
             DescriptorSetBufferInfo(
                 vk::DescriptorType::eStorageBuffer,
-                m_MeshModelBuffer.getBuffer(),
-                m_MeshModelBuffer.getSize(),
+                m_MeshDataBuffer.getBuffer(),
+                m_MeshDataBuffer.getSize(),
                 1
             ),
             DescriptorSetBufferInfo(

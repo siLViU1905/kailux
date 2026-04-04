@@ -52,7 +52,8 @@ namespace kailux
         return entity;
     }
 
-    entt::entity Scene::createMeshEntity(std::string_view name, MeshHandle handle, const MeshTransformData &transform)
+    entt::entity Scene::createMeshEntity(std::string_view name, MeshHandle handle, const MeshTransformData &transform,
+                                         const MeshMaterialData &material)
     {
         auto entity = createEntity(name);
         m_EntityRegistry.emplace<MeshComponent>(
@@ -62,6 +63,11 @@ namespace kailux
         m_EntityRegistry.emplace<MeshTransformData>(
             entity,
             transform
+        );
+        m_EntityRegistry.emplace<MeshMaterialData>
+        (
+            entity,
+            material
         );
         return entity;
     }
