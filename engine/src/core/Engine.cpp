@@ -136,7 +136,8 @@ namespace kailux
         m_Scene.setMainCamera(cameraEntity);
 
         m_Scene.createMeshEntity("Cube", m_MeshRegistry.getBuiltins().cube, {}, {});
-        m_Scene.createMeshEntity("Sphere", m_MeshRegistry.getBuiltins().sphere, MeshTransformData({1.5f, 0.f, 0.f}), {});
+        m_Scene.createMeshEntity("Sphere", m_MeshRegistry.getBuiltins().sphere, MeshTransformData({1.5f, 0.f, 0.f}),
+                                 {});
     }
 
     PipelineInfo Engine::make_pipeline_info(vk::SampleCountFlagBits sampleCount)
@@ -237,6 +238,8 @@ namespace kailux
                     vk::ImageLayout::eColorAttachmentOptimal
                 });
 
+            const auto& ambient = m_Scene.getAmbient();
+            vk::ClearColorValue clearColor(ambient.x, ambient.y, ambient.z, ambient.w);
             recorder.beginRendering(
                 {
                     m_Swapchain.getColorImageView(),
@@ -245,7 +248,7 @@ namespace kailux
                     vk::ImageLayout::eColorAttachmentOptimal,
                     vk::AttachmentLoadOp::eClear,
                     vk::AttachmentStoreOp::eStore,
-                    {std::array{0.1f, 0.1f, 0.1f, 1.0f}},
+                    clearColor,
                     m_Swapchain.getDepthImageView(),
                     vk::ImageLayout::eDepthAttachmentOptimal,
                     {}
@@ -365,7 +368,7 @@ namespace kailux
     void Engine::updateCameraBuffer(FrameData &frame) const
     {
         const auto &camera = m_Scene.getEntityRegistry().get<CameraComponent>(m_Scene.getMainCamera()).camera;
-        const auto &lastData= m_Scene.getEntityRegistry().get<CameraData>(m_Scene.getMainCamera());
+        const auto &lastData = m_Scene.getEntityRegistry().get<CameraData>(m_Scene.getMainCamera());
         CameraData data(
             camera.getProjection(),
             camera.getView(),
@@ -389,7 +392,7 @@ namespace kailux
             data.emplace_back(
                 transform.getModelMatrix(),
                 material
-                );
+            );
         }
         frame.getModelBuffer().upload(data.data(), data.size() * sizeof(MeshData));
     }
