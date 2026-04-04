@@ -6,6 +6,7 @@
 #include "components/entt/CameraComponent.h"
 #include "components/entt/MeshComponent.h"
 #include "components/gpu/CameraData.h"
+#include "components/gpu/MeshData.h"
 #include "components/gpu/MeshTransformData.h"
 
 namespace kailux
@@ -134,8 +135,9 @@ namespace kailux
         );
         m_Scene.setMainCamera(cameraEntity);
 
-        m_Scene.createMeshEntity("Cube", m_MeshRegistry.getBuiltins().cube, {});
-        m_Scene.createMeshEntity("Sphere", m_MeshRegistry.getBuiltins().sphere, MeshTransformData({1.5f, 0.f, 0.f}));
+        m_Scene.createMeshEntity("Cube", m_MeshRegistry.getBuiltins().cube, {}, {});
+        m_Scene.createMeshEntity("Sphere", m_MeshRegistry.getBuiltins().sphere, MeshTransformData({1.5f, 0.f, 0.f}),
+                                 {});
     }
 
     PipelineInfo Engine::make_pipeline_info(vk::SampleCountFlagBits sampleCount)
@@ -236,6 +238,8 @@ namespace kailux
                     vk::ImageLayout::eColorAttachmentOptimal
                 });
 
+            const auto& ambient = m_Scene.getAmbient();
+            vk::ClearColorValue clearColor(ambient.x, ambient.y, ambient.z, ambient.w);
             recorder.beginRendering(
                 {
                     m_Swapchain.getColorImageView(),
@@ -244,7 +248,7 @@ namespace kailux
                     vk::ImageLayout::eColorAttachmentOptimal,
                     vk::AttachmentLoadOp::eClear,
                     vk::AttachmentStoreOp::eStore,
-                    {std::array{0.1f, 0.1f, 0.1f, 1.0f}},
+                    clearColor,
                     m_Swapchain.getDepthImageView(),
                     vk::ImageLayout::eDepthAttachmentOptimal,
                     {}
@@ -355,7 +359,7 @@ namespace kailux
     void Engine::updateFrameBuffers(FrameData &frame, const CommandRecorder &recorder) const
     {
         updateCameraBuffer(frame);
-        updateModelBuffer(frame);
+        updateMeshDataBuffer(frame);
         updateIndirectBuffer(frame);
         updateSceneBuffer(frame);
         recorder.bufferMemoryBarriers(frame.getBufferMemoryBarriers());
@@ -364,10 +368,11 @@ namespace kailux
     void Engine::updateCameraBuffer(FrameData &frame) const
     {
         const auto &camera = m_Scene.getEntityRegistry().get<CameraComponent>(m_Scene.getMainCamera()).camera;
+        const auto &lastData = m_Scene.getEntityRegistry().get<CameraData>(m_Scene.getMainCamera());
         CameraData data(
             camera.getProjection(),
             camera.getView(),
-            glm::vec4(camera.getPosition(), 1.f)
+            glm::vec4(camera.getPosition(), lastData.positionAndExposure.w)
         );
         frame.getCameraBuffer().upload(
             &data,
@@ -375,17 +380,21 @@ namespace kailux
         );
     }
 
-    void Engine::updateModelBuffer(FrameData &frame) const
+    void Engine::updateMeshDataBuffer(FrameData &frame) const
     {
-        std::vector<ModelMatrixType> modelMatrices;
-        auto view = m_Scene.getEntityRegistry().view<MeshTransformData, MeshComponent>();
-        modelMatrices.reserve(view.size_hint());
+        std::vector<MeshData> data;
+        auto view = m_Scene.getEntityRegistry().view<MeshTransformData, MeshMaterialData, MeshComponent>();
+        data.reserve(view.size_hint());
         for (auto entity: view)
         {
             const auto &transform = view.get<MeshTransformData>(entity);
-            modelMatrices.push_back(transform.getModelMatrix());
+            const auto &material = view.get<MeshMaterialData>(entity);
+            data.emplace_back(
+                transform.getModelMatrix(),
+                material
+            );
         }
-        frame.getModelBuffer().upload(modelMatrices.data(), modelMatrices.size() * sizeof(ModelMatrixType));
+        frame.getModelBuffer().upload(data.data(), data.size() * sizeof(MeshData));
     }
 
     void Engine::updateIndirectBuffer(FrameData &frame) const

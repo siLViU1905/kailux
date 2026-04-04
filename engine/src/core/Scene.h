@@ -4,6 +4,7 @@
 #include "Camera.h"
 #include "Core.h"
 #include "components/gpu/MeshTransformData.h"
+#include "components/gpu/MeshMaterialData.h"
 #include "components/gpu/SceneData.h"
 #include "mesh/MeshRegistry.h"
 
@@ -17,7 +18,7 @@ namespace kailux
         static Scene create();
 
         entt::entity createCameraEntity(std::string_view name, const Camera& camera, bool isPrimary);
-        entt::entity createMeshEntity(std::string_view name, MeshHandle handle, const MeshTransformData& transform);
+        entt::entity createMeshEntity(std::string_view name, MeshHandle handle, const MeshTransformData& transform, const MeshMaterialData & material);
 
         entt::registry&       getEntityRegistry();
         const entt::registry& getEntityRegistry() const;
@@ -25,6 +26,8 @@ namespace kailux
         void                  setMainCamera(entt::entity camera);
         entt::entity          getSun() const;
         SceneData             getData() const;
+        glm::vec4&            getAmbient();
+        const glm::vec4&      getAmbient() const;
 
     private:
         static constexpr std::string_view s_SunName = "Sun";
@@ -37,5 +40,7 @@ namespace kailux
         entt::registry m_EntityRegistry;
         entt::entity   m_MainCameraEntity;
         entt::entity   m_Sun;
+
+        glm::vec4      m_Ambient;
     };
 }

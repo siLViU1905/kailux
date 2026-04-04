@@ -1,4 +1,5 @@
 #include "MenuPanel.h"
+#include <glm/gtc/type_ptr.hpp>
 
 namespace kailux
 {
@@ -15,6 +16,7 @@ namespace kailux
     {
         if (ImGui::BeginMainMenuBar())
         {
+
             if (ImGui::BeginMenu("File"))
             {
                 if (ImGui::MenuItem("New Scene")) {}
@@ -26,6 +28,19 @@ namespace kailux
             {
                 if (ImGui::MenuItem("Profiler"))
                     m_ShowProfiler = true;
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Scene"))
+            {
+                if (ImGui::BeginMenu("Ambient Light"))
+                {
+                    ImGui::ColorEdit3("Color", glm::value_ptr(scene.getAmbient()));
+                    ImGui::SliderFloat("Intensity", &scene.getAmbient().w, 0.f, 1.f);
+
+                    ImGui::EndMenu();
+                }
+
                 ImGui::EndMenu();
             }
 
