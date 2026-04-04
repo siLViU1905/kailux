@@ -10,7 +10,7 @@ float DistributionGGX(vec3 N, vec3 H, float roughness)
     float NdotH = max(dot(N, H), 0.0);
     float NdotH2 = NdotH * NdotH;
 
-    float nom   = a2;
+    float nom = a2;
     float denom = (NdotH2 * (a2 - 1.0) + 1.0);
     denom = PI * denom * denom;
 
@@ -22,7 +22,7 @@ float GeometrySchlickGGX(float NdotV, float roughness)
     float r = (roughness + 1.0);
     float k = (r * r) / 8.0;
 
-    float nom   = NdotV;
+    float nom = NdotV;
     float denom = NdotV * (1.0 - k) + k;
 
     return nom / denom;
@@ -44,10 +44,14 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 }
 // --- END INCLUDE ---
 
-
 layout (location = 0) in vec3 fragPos;
 layout (location = 1) in vec3 fragNormal;
 layout (location = 2) in vec3 viewPos;
+layout (location = 3) in flat float fragExposure;
+layout (location = 4) in flat vec3  fragAlbedo;
+layout (location = 5) in flat float fragRoughness;
+layout (location = 6) in flat float fragMetallic;
+layout (location = 7) in flat float fragAO;
 
 layout (location = 0) out vec4 outColor;
 
@@ -59,8 +63,9 @@ struct DirectionalLight
     vec4 colorAndEnabled;
 };
 
-layout(std430, set=0, binding = 2) readonly buffer SceneBuffer {
+layout (std430, set = 0, binding = 2) readonly buffer SceneBuffer {
     DirectionalLight sun;
+    vec4             ambient;
 } sceneData;
 
 void main()
@@ -70,14 +75,15 @@ void main()
     vec3 lightColor = sceneData.sun.colorAndEnabled.rgb;
     bool enabled = sceneData.sun.colorAndEnabled.w > 0.5;
 
-    if (!enabled) {
-        outColor = vec4(0.0, 0.0, 0.0, 1.0);
+    vec3 ambient = sceneData.ambient.rgb * sceneData.ambient.a * fragAlbedo * fragAO;
+
+    if (!enabled)
+    {
+        vec3 color = ambient * fragExposure;
+        color = toneMapACES(color);
+        outColor = vec4(pow(color, vec3(1.0/2.2)), 1.0);
         return;
     }
-
-    vec3 albedo = vec3(0.5);
-    float metallic = 0.0;
-    float roughness = 0.5;
 
     vec3 N = normalize(fragNormal);
     vec3 V = normalize(viewPos - fragPos);
@@ -86,26 +92,25 @@ void main()
     vec3 radiance = lightColor * intensity;
 
     vec3 F0 = vec3(0.04);
-    F0 = mix(F0, albedo, metallic);
+    F0 = mix(F0, fragAlbedo, fragMetallic);
 
     vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
-    float D = DistributionGGX(N, H, roughness);
-    float G = GeometrySmith(N, V, L, roughness);
+    float D = DistributionGGX(N, H, fragRoughness);
+    float G = GeometrySmith(N, V, L, fragRoughness);
 
-    vec3 numerator    = D * G * F;
+    vec3 numerator = D * G * F;
     float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
     vec3 specular = numerator / denominator;
 
     vec3 kS = F;
     vec3 kD = vec3(1.0) - kS;
-    kD *= 1.0 - metallic;
+    kD *= 1.0 - fragMetallic;
 
     float NdotL = max(dot(N, L), 0.0);
-    vec3 Lo = (kD * albedo / PI + specular) * radiance * NdotL;
+    vec3 Lo = (kD * fragAlbedo / PI + specular) * radiance * NdotL;
 
-    vec3 ambient = vec3(0.03) * albedo;
-    vec3 color = ambient + Lo;
-
+    vec3 color = Lo * fragExposure;
+    color += ambient.rgb * sceneData.ambient.a;
     color = toneMapACES(color);
     color = pow(color, vec3(1.0/2.2));
 

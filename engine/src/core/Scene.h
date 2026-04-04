@@ -26,6 +26,8 @@ namespace kailux
         void                  setMainCamera(entt::entity camera);
         entt::entity          getSun() const;
         SceneData             getData() const;
+        glm::vec4&            getAmbient();
+        const glm::vec4&      getAmbient() const;
 
     private:
         static constexpr std::string_view s_SunName = "Sun";
@@ -38,5 +40,7 @@ namespace kailux
         entt::registry m_EntityRegistry;
         entt::entity   m_MainCameraEntity;
         entt::entity   m_Sun;
+
+        glm::vec4      m_Ambient;
     };
 }

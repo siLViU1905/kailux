@@ -8,14 +8,16 @@
 namespace kailux
 {
     Scene::Scene() : m_MainCameraEntity(entt::null),
-                     m_Sun(entt::null)
+                     m_Sun(entt::null),
+                     m_Ambient(SceneData().ambient)
     {
         m_Sun = createSunEntity({});
     }
 
     Scene::Scene(Scene &&other) noexcept : m_EntityRegistry(std::move(other.m_EntityRegistry)),
                                            m_MainCameraEntity(other.m_MainCameraEntity),
-                                           m_Sun(other.m_Sun)
+                                           m_Sun(other.m_Sun),
+                                           m_Ambient(other.m_Ambient)
     {
     }
 
@@ -26,6 +28,7 @@ namespace kailux
             m_EntityRegistry = std::move(other.m_EntityRegistry);
             m_MainCameraEntity = other.m_MainCameraEntity;
             m_Sun = other.m_Sun;
+            m_Ambient = other.m_Ambient;
         }
         return *this;
     }
@@ -100,7 +103,17 @@ namespace kailux
     SceneData Scene::getData() const
     {
         const auto &sunData = m_EntityRegistry.get<SunData>(m_Sun);
-        return {sunData};
+        return {sunData, m_Ambient};
+    }
+
+    glm::vec4 & Scene::getAmbient()
+    {
+        return m_Ambient;
+    }
+
+    const glm::vec4 & Scene::getAmbient() const
+    {
+        return m_Ambient;
     }
 
     entt::entity Scene::createEntity(std::string_view name)
