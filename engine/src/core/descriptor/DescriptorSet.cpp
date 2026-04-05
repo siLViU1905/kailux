@@ -25,7 +25,7 @@ namespace kailux
 
     DescriptorSet DescriptorSet::create(const Context &context, const DescriptorLayout &layout,
                                         const DescriptorPool &pool,
-                                        std::span<DescriptorSetInfo> infos)
+                                        std::span<const DescriptorSetInfo> infos)
     {
         KAILUX_LOG_PARENT_CLR_GREEN("[DescriptorSet]")
         DescriptorSet set;
@@ -47,7 +47,7 @@ namespace kailux
     }
 
     void DescriptorSet::createSet(const Context &context, const DescriptorLayout &layout, const DescriptorPool &pool,
-                                  std::span<DescriptorSetInfo> infos)
+                                  std::span<const DescriptorSetInfo> infos)
     {
         auto layoutHandle = layout.getLayout();
         vk::DescriptorSetAllocateInfo allocInfo(
