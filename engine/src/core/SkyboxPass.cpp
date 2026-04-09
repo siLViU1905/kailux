@@ -42,12 +42,12 @@ namespace kailux
         return m_Texture;
     }
 
-    const DescriptorLayout & SkyboxPass::getDescriptorLayout() const
+    const DescriptorLayout &SkyboxPass::getDescriptorLayout() const
     {
         return m_DescriptorLayout;
     }
 
-    const DescriptorPool & SkyboxPass::getDescriptorPool() const
+    const DescriptorPool &SkyboxPass::getDescriptorPool() const
     {
         return m_DescriptorPool;
     }
@@ -68,6 +68,10 @@ namespace kailux
     PipelineInfo SkyboxPass::make_pipeline_info(vk::SampleCountFlagBits samples)
     {
         PipelineInfo info;
+
+        info.vertexInputBinding = Vertex::get_binding_description();
+        constexpr auto vertexAttribDesc = Vertex::get_attribute_description();
+        info.vertexInputAttribute = {vertexAttribDesc.cbegin(), vertexAttribDesc.cend()};
 
         info.topology = vk::PrimitiveTopology::eTriangleList;
 

@@ -157,6 +157,11 @@ namespace kailux
     PipelineInfo Engine::make_pipeline_info(vk::SampleCountFlagBits sampleCount)
     {
         PipelineInfo info;
+
+        info.vertexInputBinding = Vertex::get_binding_description();
+        constexpr auto vertexAttribDesc = Vertex::get_attribute_description();
+        info.vertexInputAttribute = {vertexAttribDesc.cbegin(), vertexAttribDesc.cend()};
+
         info.topology = vk::PrimitiveTopology::eTriangleList;
 
         info.rasterizer = {
