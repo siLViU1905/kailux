@@ -68,6 +68,11 @@ namespace kailux
                 vk::DescriptorType::eStorageBuffer,
                 1, // scene
                 vk::ShaderStageFlagBits::eFragment
+                ),
+            DescriptorLayoutBinding(
+                vk::DescriptorType::eCombinedImageSampler,
+                1, // skybox
+                vk::ShaderStageFlagBits::eFragment
             )
         };
         static constexpr std::array s_DescriptorPoolSizes = {
@@ -82,6 +87,10 @@ namespace kailux
             DescriptorPoolSize(
                 vk::DescriptorType::eStorageBuffer,
                 1 // scene
+                ),
+            DescriptorPoolSize(
+                vk::DescriptorType::eCombinedImageSampler,
+                1 // skybox
             )
         };
         static constexpr bool check_descriptor_layout_bindings_and_pool_sizes_match(std::span<const DescriptorLayoutBinding> bindings, std::span<const DescriptorPoolSize> sizes)
