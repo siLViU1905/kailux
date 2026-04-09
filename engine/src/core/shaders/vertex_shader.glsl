@@ -15,7 +15,7 @@ layout (location = 5) out flat float fragRoughness;
 layout (location = 6) out flat float fragMetallic;
 layout (location = 7) out flat float fragAO;
 
-layout (binding = 0) uniform Camera
+layout (set = 0, binding = 0) uniform Camera
 {
     mat4 projection;
     mat4 view;

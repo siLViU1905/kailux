@@ -16,7 +16,6 @@ add_library(kailux_engine STATIC
         src/core/buffer/BufferAllocator.cpp
         src/core/mesh/MeshRegistry.cpp
         src/core/Pipeline.cpp
-        src/core/Pipeline.h
         src/core/descriptor/DescriptorLayout.cpp
         src/core/command/OneTimeCommand.cpp
         src/core/Camera.cpp
@@ -24,6 +23,10 @@ add_library(kailux_engine STATIC
         src/core/descriptor/DescriptorSet.cpp
         src/core/Clock.cpp
         src/core/Scene.cpp
+        src/core/texture/Texture.cpp
+        src/core/texture/TextureAllocator.cpp
+        src/core/texture/ImageLoader.cpp
+        src/core/SkyboxPass.cpp
 )
 
 target_compile_definitions(kailux_engine PUBLIC
@@ -40,6 +43,7 @@ target_link_libraries(kailux_engine PUBLIC
         EnTT::EnTT
         magic_enum::magic_enum
         imguizmo::imguizmo
+        stb::stb
 )
 
 target_precompile_headers(kailux_engine PUBLIC

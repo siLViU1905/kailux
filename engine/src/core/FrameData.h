@@ -1,8 +1,10 @@
 #pragma once
 #include "Context.h"
+#include "SkyboxPass.h"
 #include "buffer/Buffer.h"
 #include "command/CommandRecorder.h"
 #include "descriptor/DescriptorSet.h"
+#include "texture/Texture.h"
 
 namespace kailux
 {
@@ -14,6 +16,7 @@ namespace kailux
         static FrameData create(const Context &context,
                                 const DescriptorLayout& descriptorLayout,
                                 const DescriptorPool& descriptorPool,
+                                const SkyboxPass& skybox,
                                 uint32_t maxMeshCount);
 
         void reset(const Context& context) const;
@@ -23,6 +26,7 @@ namespace kailux
         vk::Fence         getFenceInFlight() const;
 
         const DescriptorSet& getDescriptorSet() const;
+        const DescriptorSet& getSkyboxDescriptorSet() const;
 
         Buffer&       getCameraBuffer();
         Buffer&       getModelBuffer();
@@ -40,14 +44,19 @@ namespace kailux
         void createCommandBuffer(const Context& context);
         void createImGuiCommandBuffer(const Context& context);
         void createSyncObjects(const Context& context);
-        void createDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<DescriptorSetInfo> infos);
+        void createDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
+                                 DescriptorSetInfo> infos);
+        void createSkyboxDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
+                                       DescriptorSetInfo> infos);
         void createCameraBuffer(const Context& context);
         void createMeshDataBuffer(const Context& context, uint32_t meshCount);
         void createIndirectBuffer(const Context& context, uint32_t count);
         void createSceneBuffer(const Context& context);
 
         static constexpr uint32_t s_DescriptorSetInfoCount = 1 + 1 + 1; // camera buffer + mesh data buffer + scene buffer
+        static constexpr uint32_t s_SkyboxDescriptorSetInfoCount = 1 + 1; // camera buffer + cube texture
         std::array<DescriptorSetInfo, s_DescriptorSetInfoCount> makeDescriptorSetInfo() const;
+        std::array<DescriptorSetInfo, s_SkyboxDescriptorSetInfoCount> makeSkyboxDescriptorSetInfo(const Texture& skyboxTexture) const;
 
         vk::raii::CommandPool   m_CommandPool;
         vk::raii::CommandPool   m_ImGuiCommandPool;
@@ -56,6 +65,7 @@ namespace kailux
         vk::raii::Fence         m_FenceInFlight;
 
         DescriptorSet           m_DescriptorSet;
+        DescriptorSet           m_SkyboxDescriptorSet;
         Buffer                  m_CameraBuffer;
         Buffer                  m_MeshDataBuffer;
         Buffer                  m_IndirectBuffer;

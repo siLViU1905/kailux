@@ -14,11 +14,13 @@ namespace kailux
 
     struct PipelineInfo
     {
-        vk::PrimitiveTopology                    topology;
-        vk::PipelineRasterizationStateCreateInfo rasterizer;
-        vk::PipelineColorBlendAttachmentState    colorBlendAttachment;
-        vk::SampleCountFlagBits                  samples = vk::SampleCountFlagBits::e1;
-        vk::PipelineDepthStencilStateCreateInfo  depthStencilInfo;
+        vk::VertexInputBindingDescription                vertexInputBinding;
+        std::vector<vk::VertexInputAttributeDescription> vertexInputAttribute;
+        vk::PrimitiveTopology                            topology;
+        vk::PipelineRasterizationStateCreateInfo         rasterizer;
+        vk::PipelineColorBlendAttachmentState            colorBlendAttachment;
+        vk::SampleCountFlagBits                          samples = vk::SampleCountFlagBits::e1;
+        vk::PipelineDepthStencilStateCreateInfo          depthStencilInfo;
     };
 
     class Pipeline

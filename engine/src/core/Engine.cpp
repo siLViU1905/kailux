@@ -8,6 +8,7 @@
 #include "components/gpu/CameraData.h"
 #include "components/gpu/MeshData.h"
 #include "components/gpu/MeshTransformData.h"
+#include "texture/TextureAllocator.h"
 
 namespace kailux
 {
@@ -22,7 +23,8 @@ namespace kailux
                                               m_Frames(std::move(other.m_Frames)),
                                               m_CurrentFrame(other.m_CurrentFrame),
                                               m_Clock(other.m_Clock),
-                                              m_Scene(std::move(other.m_Scene))
+                                              m_Scene(std::move(other.m_Scene)),
+                                              m_Skybox(std::move(other.m_Skybox))
     {
     }
 
@@ -38,6 +40,7 @@ namespace kailux
             m_CurrentFrame = other.m_CurrentFrame;
             m_Clock = other.m_Clock;
             m_Scene = std::move(other.m_Scene);
+            m_Skybox = std::move(other.m_Skybox);
         }
         return *this;
     }
@@ -54,6 +57,7 @@ namespace kailux
         OneTimeCommand::create_command_pool(engine.m_Context);
         engine.createDescriptorResources();
         engine.createPipeline();
+        engine.createSkybox();
         engine.createFrameResources();
         engine.createMeshRegistry();
         engine.createImGui(window);
@@ -97,10 +101,20 @@ namespace kailux
         );
     }
 
+    void Engine::createSkybox()
+    {
+        m_Skybox = SkyboxPass::create(
+            m_Context,
+            m_Swapchain,
+            s_FramesInFlight,
+            s_SkyboxTexturePaths
+        );
+    }
+
     void Engine::createFrameResources()
     {
         for (auto &frame: m_Frames)
-            frame = FrameData::create(m_Context, m_DescriptorLayout, m_DescriptorPool, s_MaxMeshCount);
+            frame = FrameData::create(m_Context, m_DescriptorLayout, m_DescriptorPool, m_Skybox, s_MaxMeshCount);
     }
 
     void Engine::createMeshRegistry()
@@ -143,6 +157,11 @@ namespace kailux
     PipelineInfo Engine::make_pipeline_info(vk::SampleCountFlagBits sampleCount)
     {
         PipelineInfo info;
+
+        info.vertexInputBinding = Vertex::get_binding_description();
+        constexpr auto vertexAttribDesc = Vertex::get_attribute_description();
+        info.vertexInputAttribute = {vertexAttribDesc.cbegin(), vertexAttribDesc.cend()};
+
         info.topology = vk::PrimitiveTopology::eTriangleList;
 
         info.rasterizer = {
@@ -238,7 +257,7 @@ namespace kailux
                     vk::ImageLayout::eColorAttachmentOptimal
                 });
 
-            const auto& ambient = m_Scene.getAmbient();
+            const auto &ambient = m_Scene.getAmbient();
             vk::ClearColorValue clearColor(ambient.x, ambient.y, ambient.z, ambient.w);
             recorder.beginRendering(
                 {
@@ -259,6 +278,12 @@ namespace kailux
             recorder.setScissor(m_Swapchain.getExtent());
 
             recordMeshData(frame, recorder);
+
+            m_Skybox.render(
+                recorder.getCommandBuffer(),
+                frame.getSkyboxDescriptorSet(),
+                m_MeshRegistry.view(m_MeshRegistry.getBuiltins().cube)
+            );
 
             recorder.endRendering();
 

@@ -28,7 +28,7 @@ namespace kailux
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(DescriptorSet)
 
         static DescriptorSet create(const Context &context, const DescriptorLayout &layout, const DescriptorPool &pool,
-                                    std::span<DescriptorSetInfo> infos);
+                                    std::span<const DescriptorSetInfo> infos);
 
         vk::DescriptorSet getDescriptorSet() const;
 
@@ -36,7 +36,7 @@ namespace kailux
 
     private:
         void createSet(const Context &context, const DescriptorLayout &layout, const DescriptorPool &pool,
-                       std::span<DescriptorSetInfo> infos);
+                       std::span<const DescriptorSetInfo> infos);
 
         vk::raii::DescriptorSet m_Set;
     };
