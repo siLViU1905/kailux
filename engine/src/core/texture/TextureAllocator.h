@@ -44,5 +44,13 @@ namespace kailux
             uint32_t height,
             uint32_t mipLevels
         );
+        static void generate_mipmaps_cubemap(
+            vk::CommandBuffer cmd,
+            vk::Image image,
+            uint32_t width,
+            uint32_t height,
+            uint32_t mipLevels,
+            uint32_t face
+        );
     };
 }

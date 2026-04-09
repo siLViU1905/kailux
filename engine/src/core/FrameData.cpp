@@ -69,7 +69,7 @@ namespace kailux
         frame.createMeshDataBuffer(context, maxMeshCount);
         frame.createIndirectBuffer(context, maxMeshCount);
         frame.createSceneBuffer(context);
-        auto descSetInfo = frame.makeDescriptorSetInfo();
+        auto descSetInfo = frame.makeDescriptorSetInfo(skybox.getTexture());
         frame.createDescriptorSet(context, descriptorLayout, descriptorPool, descSetInfo);
         auto skyboxDescInfo = frame.makeSkyboxDescriptorSetInfo(skybox.getTexture());
         frame.createSkyboxDescriptorSet(context, skybox.getDescriptorLayout(), skybox.getDescriptorPool(), skyboxDescInfo);
@@ -263,7 +263,7 @@ namespace kailux
         m_SceneBuffer = BufferAllocator::alloc_storage(context, sizeof(SceneData));
     }
 
-    std::array<DescriptorSetInfo, FrameData::s_DescriptorSetInfoCount> FrameData::makeDescriptorSetInfo() const
+    std::array<DescriptorSetInfo, FrameData::s_DescriptorSetInfoCount> FrameData::makeDescriptorSetInfo(const Texture& skyboxTexture) const
     {
         return {
             DescriptorSetBufferInfo(
@@ -282,6 +282,12 @@ namespace kailux
                 vk::DescriptorType::eStorageBuffer,
                 m_SceneBuffer.getBuffer(),
                 m_SceneBuffer.getSize(),
+                1
+            ),
+            DescriptorSetImageInfo(
+                skyboxTexture.getSampler(),
+                skyboxTexture.getImageView(),
+                vk::ImageLayout::eShaderReadOnlyOptimal,
                 1
             )
         };

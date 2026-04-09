@@ -42,6 +42,11 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 {
     return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
+
+vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
+{
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
 // --- END INCLUDE ---
 
 layout (location = 0) in vec3 fragPos;
@@ -68,6 +73,8 @@ layout (std430, set = 0, binding = 2) readonly buffer SceneBuffer {
     vec4             ambient;
 } sceneData;
 
+layout(set = 0, binding = 3) uniform samplerCube skyboxSampler;
+
 void main()
 {
     vec3 L = normalize(-sceneData.sun.directionAndIntensity.xyz);
@@ -75,24 +82,28 @@ void main()
     vec3 lightColor = sceneData.sun.colorAndEnabled.rgb;
     bool enabled = sceneData.sun.colorAndEnabled.w > 0.5;
 
-    vec3 ambient = sceneData.ambient.rgb * sceneData.ambient.a * fragAlbedo * fragAO;
+    vec3 N = normalize(fragNormal);
+    vec3 V = normalize(viewPos - fragPos);
+
+    vec3 F0 = mix(vec3(0.04), fragAlbedo, fragMetallic);
+    vec3 F_env = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, fragRoughness);
+    vec3 kD_env = (1.0 - F_env) * (1.0 - fragMetallic);
+
+    vec3 R = reflect(-V, N);
+    const float MAX_REFLECTION_LOD = 10.0;
+    vec3 envSpecular = textureLod(skyboxSampler, R, fragRoughness * MAX_REFLECTION_LOD).rgb;
+
+    vec3 ambient = (kD_env * sceneData.ambient.rgb * sceneData.ambient.a * fragAlbedo + F_env * envSpecular) * fragAO;
 
     if (!enabled)
     {
-        vec3 color = ambient * fragExposure;
-        color = toneMapACES(color);
+        vec3 color = toneMapACES(ambient);
         outColor = vec4(pow(color, vec3(1.0/2.2)), 1.0);
         return;
     }
 
-    vec3 N = normalize(fragNormal);
-    vec3 V = normalize(viewPos - fragPos);
     vec3 H = normalize(V + L);
-
     vec3 radiance = lightColor * intensity;
-
-    vec3 F0 = vec3(0.04);
-    F0 = mix(F0, fragAlbedo, fragMetallic);
 
     vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
     float D = DistributionGGX(N, H, fragRoughness);
@@ -109,8 +120,7 @@ void main()
     float NdotL = max(dot(N, L), 0.0);
     vec3 Lo = (kD * fragAlbedo / PI + specular) * radiance * NdotL;
 
-    vec3 color = Lo * fragExposure;
-    color += ambient.rgb * sceneData.ambient.a;
+    vec3 color = Lo * fragExposure + ambient;
     color = toneMapACES(color);
     color = pow(color, vec3(1.0/2.2));
 

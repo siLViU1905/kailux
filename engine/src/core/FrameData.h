@@ -53,9 +53,9 @@ namespace kailux
         void createIndirectBuffer(const Context& context, uint32_t count);
         void createSceneBuffer(const Context& context);
 
-        static constexpr uint32_t s_DescriptorSetInfoCount = 1 + 1 + 1; // camera buffer + mesh data buffer + scene buffer
+        static constexpr uint32_t s_DescriptorSetInfoCount = 1 + 1 + 1 + 1; // camera buffer + mesh data buffer + scene buffer + skybox sampler
         static constexpr uint32_t s_SkyboxDescriptorSetInfoCount = 1 + 1; // camera buffer + cube texture
-        std::array<DescriptorSetInfo, s_DescriptorSetInfoCount> makeDescriptorSetInfo() const;
+        std::array<DescriptorSetInfo, s_DescriptorSetInfoCount> makeDescriptorSetInfo(const Texture& skyboxTexture) const;
         std::array<DescriptorSetInfo, s_SkyboxDescriptorSetInfoCount> makeSkyboxDescriptorSetInfo(const Texture& skyboxTexture) const;
 
         vk::raii::CommandPool   m_CommandPool;
