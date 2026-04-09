@@ -25,8 +25,9 @@ namespace kailux
                                                        m_ImGuiCommandBuffer(std::move(other.m_ImGuiCommandBuffer)),
                                                        m_FenceInFlight(std::move(other.m_FenceInFlight)),
                                                        m_DescriptorSet(std::move(other.m_DescriptorSet)),
-                                                       m_MeshDataBuffer(std::move(other.m_MeshDataBuffer)),
+                                                       m_SkyboxDescriptorSet(std::move(other.m_SkyboxDescriptorSet)),
                                                        m_CameraBuffer(std::move(other.m_CameraBuffer)),
+                                                       m_MeshDataBuffer(std::move(other.m_MeshDataBuffer)),
                                                        m_IndirectBuffer(std::move(other.m_IndirectBuffer)),
                                                        m_SceneBuffer(std::move(other.m_SceneBuffer))
     {
@@ -42,6 +43,7 @@ namespace kailux
             m_ImGuiCommandBuffer = std::move(other.m_ImGuiCommandBuffer);
             m_FenceInFlight = std::move(other.m_FenceInFlight);
             m_DescriptorSet = std::move(other.m_DescriptorSet);
+            m_SkyboxDescriptorSet = std::move(other.m_SkyboxDescriptorSet);
             m_CameraBuffer = std::move(other.m_CameraBuffer);
             m_MeshDataBuffer = std::move(other.m_MeshDataBuffer);
             m_IndirectBuffer = std::move(other.m_IndirectBuffer);
@@ -50,8 +52,12 @@ namespace kailux
         return *this;
     }
 
-    FrameData FrameData::create(const Context &context, const DescriptorLayout &descriptorLayout,
-                                const DescriptorPool &descriptorPool, uint32_t maxMeshCount)
+    FrameData FrameData::create(
+        const Context &context,
+        const DescriptorLayout &descriptorLayout,
+        const DescriptorPool &descriptorPool,
+        const SkyboxPass &skybox,
+        uint32_t maxMeshCount)
     {
         FrameData frame;
         frame.createCommandPool(context);
@@ -65,6 +71,9 @@ namespace kailux
         frame.createSceneBuffer(context);
         auto descSetInfo = frame.makeDescriptorSetInfo();
         frame.createDescriptorSet(context, descriptorLayout, descriptorPool, descSetInfo);
+        auto skyboxDescInfo = frame.makeSkyboxDescriptorSetInfo(skybox.getTexture());
+        frame.createSkyboxDescriptorSet(context, skybox.getDescriptorLayout(), skybox.getDescriptorPool(), skyboxDescInfo);
+
         return frame;
     }
 
@@ -97,6 +106,11 @@ namespace kailux
     const DescriptorSet &FrameData::getDescriptorSet() const
     {
         return m_DescriptorSet;
+    }
+
+    const DescriptorSet & FrameData::getSkyboxDescriptorSet() const
+    {
+        return m_SkyboxDescriptorSet;
     }
 
     Buffer &FrameData::getCameraBuffer()
@@ -217,9 +231,15 @@ namespace kailux
     }
 
     void FrameData::createDescriptorSet(const Context &context, const DescriptorLayout &descriptorLayout,
-                                        const DescriptorPool &descriptorPool, std::span<DescriptorSetInfo> infos)
+                                        const DescriptorPool &descriptorPool, std::span<const DescriptorSetInfo> infos)
     {
         m_DescriptorSet = DescriptorSet::create(context, descriptorLayout, descriptorPool, infos);
+    }
+
+    void FrameData::createSkyboxDescriptorSet(const Context &context, const DescriptorLayout &descriptorLayout,
+                                              const DescriptorPool &descriptorPool, std::span<const DescriptorSetInfo> infos)
+    {
+        m_SkyboxDescriptorSet = DescriptorSet::create(context, descriptorLayout, descriptorPool, infos);
     }
 
     void FrameData::createCameraBuffer(const Context &context)
@@ -262,6 +282,25 @@ namespace kailux
                 vk::DescriptorType::eStorageBuffer,
                 m_SceneBuffer.getBuffer(),
                 m_SceneBuffer.getSize(),
+                1
+            )
+        };
+    }
+
+    std::array<DescriptorSetInfo, FrameData::s_SkyboxDescriptorSetInfoCount> FrameData::makeSkyboxDescriptorSetInfo(
+        const Texture &skyboxTexture) const
+    {
+        return {
+            DescriptorSetBufferInfo(
+                vk::DescriptorType::eUniformBuffer,
+                m_CameraBuffer.getBuffer(),
+                m_CameraBuffer.getSize(),
+                1
+            ),
+            DescriptorSetImageInfo(
+                skyboxTexture.getSampler(),
+                skyboxTexture.getImageView(),
+                vk::ImageLayout::eShaderReadOnlyOptimal,
                 1
             )
         };

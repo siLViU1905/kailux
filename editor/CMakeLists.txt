@@ -11,7 +11,7 @@ add_executable(kailux_editor
 
 target_precompile_headers(kailux_editor REUSE_FROM kailux_engine)
 
-add_dependencies(kailux_editor CompileShaders)
+add_dependencies(kailux_editor CompileShaders CopyAssets)
 
 target_link_libraries(kailux_editor PRIVATE
         kailux_engine

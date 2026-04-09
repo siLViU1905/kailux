@@ -34,10 +34,19 @@ namespace kailux
         static constexpr std::string_view s_VertexShaderPath = "shaders/vertex_shader.spv";
         static constexpr std::string_view s_FragmentShaderPath = "shaders/fragment_shader.spv";
         static constexpr uint32_t         s_MaxMeshCount = 1'000;
+        static constexpr std::array<std::string_view, 6> s_SkyboxTexturePaths = {
+            "assets/cubemap/px.png",
+            "assets/cubemap/nx.png",
+            "assets/cubemap/py.png",
+            "assets/cubemap/ny.png",
+            "assets/cubemap/pz.png",
+            "assets/cubemap/nz.png"
+        };
 
         void createRenderingContext(Window& window);
         void createDescriptorResources();
         void createPipeline();
+        void createSkybox();
         void createFrameResources();
         void createMeshRegistry();
         void createImGui(Window& window);
@@ -121,5 +130,6 @@ namespace kailux
 
         Scene                                   m_Scene;
         OnEditorRender                          m_OnEditorRender;
+        SkyboxPass                              m_Skybox;
     };
 }

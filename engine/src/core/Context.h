@@ -25,6 +25,7 @@ namespace kailux
         friend class FrameData;
         friend class ImGuiBackend;
         friend class BufferAllocator;
+        friend class TextureAllocator;
         friend class Pipeline;
         friend class DescriptorLayout;
         friend class DescriptorPool;

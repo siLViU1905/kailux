@@ -18,6 +18,8 @@ set(GLSLC_BIN "${VULKAN_BIN_DIR}/glslc.exe")
 set(GLSL_SOURCES
         "engine/src/core/shaders/vertex_shader.glsl"
         "engine/src/core/shaders/fragment_shader.glsl"
+        "engine/src/core/shaders/skybox_vertex_shader.glsl"
+        "engine/src/core/shaders/skybox_fragment_shader.glsl"
 )
 
 set(SHADER_BINARY_DIR "${CMAKE_BINARY_DIR}/editor/shaders")
@@ -53,6 +55,16 @@ foreach(GLSL_SRC ${GLSL_SOURCES})
 endforeach()
 
 add_custom_target(CompileShaders ALL DEPENDS ${ALL_SPIRV_OUTPUTS})
+
+set(ASSETS_BINARY_DIR "${CMAKE_BINARY_DIR}/editor/assets")
+
+add_custom_target(CopyAssets ALL
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/assets"
+        "${ASSETS_BINARY_DIR}"
+        COMMENT "Copying assets folder to ${ASSETS_BINARY_DIR}"
+        VERBATIM
+)
 
 add_subdirectory(engine)
 add_subdirectory(editor)
