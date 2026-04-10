@@ -69,7 +69,7 @@ namespace kailux
         frame.createMeshDataBuffer(context, maxMeshCount);
         frame.createIndirectBuffer(context, maxMeshCount);
         frame.createSceneBuffer(context);
-        auto descSetInfo = frame.makeDescriptorSetInfo(skybox.getTexture());
+        auto descSetInfo = frame.makeDescriptorSetInfo(skybox);
         frame.createDescriptorSet(context, descriptorLayout, descriptorPool, descSetInfo);
         auto skyboxDescInfo = frame.makeSkyboxDescriptorSetInfo(skybox.getTexture());
         frame.createSkyboxDescriptorSet(context, skybox.getDescriptorLayout(), skybox.getDescriptorPool(), skyboxDescInfo);
@@ -263,7 +263,7 @@ namespace kailux
         m_SceneBuffer = BufferAllocator::alloc_storage(context, sizeof(SceneData));
     }
 
-    std::array<DescriptorSetInfo, FrameData::s_DescriptorSetInfoCount> FrameData::makeDescriptorSetInfo(const Texture& skyboxTexture) const
+    std::array<DescriptorSetInfo, FrameData::s_DescriptorSetInfoCount> FrameData::makeDescriptorSetInfo(const SkyboxPass &skybox) const
     {
         return {
             DescriptorSetBufferInfo(
@@ -285,11 +285,23 @@ namespace kailux
                 1
             ),
             DescriptorSetImageInfo(
-                skyboxTexture.getSampler(),
-                skyboxTexture.getImageView(),
+                skybox.getTexture().getSampler(),
+                skybox.getTexture().getImageView(),
                 vk::ImageLayout::eShaderReadOnlyOptimal,
                 1
-            )
+                ),
+                DescriptorSetImageInfo(
+                    skybox.getIrradianceMapTexture().getSampler(),
+                    skybox.getIrradianceMapTexture().getImageView(),
+                    vk::ImageLayout::eShaderReadOnlyOptimal,
+                    1
+                    ),
+                DescriptorSetImageInfo(
+                    skybox.getBRDFLutTexture().getSampler(),
+                    skybox.getBRDFLutTexture().getImageView(),
+                    vk::ImageLayout::eShaderReadOnlyOptimal,
+                    1
+                )
         };
     }
 
