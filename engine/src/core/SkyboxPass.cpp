@@ -11,7 +11,9 @@ namespace kailux
     SkyboxPass::SkyboxPass(SkyboxPass &&other) noexcept : m_DescriptorLayout(std::move(other.m_DescriptorLayout)),
                                                           m_Pipeline(std::move(other.m_Pipeline)),
                                                           m_DescriptorPool(std::move(other.m_DescriptorPool)),
-                                                          m_Texture(std::move(other.m_Texture))
+                                                          m_Texture(std::move(other.m_Texture)),
+                                                          m_IrradianceMapTexture(std::move(other.m_IrradianceMapTexture)),
+                                                          m_BRDFLutTexture(std::move(other.m_BRDFLutTexture))
     {
     }
 
@@ -23,6 +25,8 @@ namespace kailux
             m_Pipeline = std::move(other.m_Pipeline);
             m_DescriptorPool = std::move(other.m_DescriptorPool);
             m_Texture = std::move(other.m_Texture);
+            m_IrradianceMapTexture = std::move(other.m_IrradianceMapTexture);
+            m_BRDFLutTexture = std::move(other.m_BRDFLutTexture);
         }
         return *this;
     }
@@ -34,12 +38,24 @@ namespace kailux
         pass.createDescriptorResources(context, sets);
         pass.createPipeline(context, swapchain);
         pass.createTexture(context, paths);
+        pass.createIrradianceTexture(context);
+        pass.createBRDFLutTexture(context);
         return pass;
     }
 
     const Texture &SkyboxPass::getTexture() const
     {
         return m_Texture;
+    }
+
+    const Texture & SkyboxPass::getIrradianceMapTexture() const
+    {
+        return m_IrradianceMapTexture;
+    }
+
+    const Texture & SkyboxPass::getBRDFLutTexture() const
+    {
+        return m_BRDFLutTexture;
     }
 
     const DescriptorLayout &SkyboxPass::getDescriptorLayout() const
@@ -138,5 +154,26 @@ namespace kailux
         }
 
         m_Texture = TextureAllocator::create_cubemap(context, faces);
+    }
+
+    void SkyboxPass::createIrradianceTexture(const Context &context)
+    {
+        std::array<ImageLoader::ImageData, 6> faces;
+        int i = 0;
+        for (auto path: s_IrradianceTexturePaths)
+        {
+            auto result = ImageLoader::load_image(path);
+            if (!result)
+                return;
+            faces[i++] = *result;
+        }
+
+        m_IrradianceMapTexture = TextureAllocator::create_cubemap(context, faces);
+    }
+
+    void SkyboxPass::createBRDFLutTexture(const Context &context)
+    {
+        if (auto data = ImageLoader::load_image(s_BRDFLutPath))
+            m_BRDFLutTexture = TextureAllocator::create_from_image_data(context, *data);
     }
 }

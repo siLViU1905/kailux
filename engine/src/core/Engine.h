@@ -73,6 +73,16 @@ namespace kailux
                 vk::DescriptorType::eCombinedImageSampler,
                 1, // skybox
                 vk::ShaderStageFlagBits::eFragment
+                ),
+            DescriptorLayoutBinding(
+                vk::DescriptorType::eCombinedImageSampler,
+                1, // irradiance map
+                vk::ShaderStageFlagBits::eFragment
+            ),
+            DescriptorLayoutBinding(
+                vk::DescriptorType::eCombinedImageSampler,
+                1, // brdf lut
+                vk::ShaderStageFlagBits::eFragment
             )
         };
         static constexpr std::array s_DescriptorPoolSizes = {
@@ -91,6 +101,14 @@ namespace kailux
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
                 1 // skybox
+                ),
+            DescriptorPoolSize(
+                vk::DescriptorType::eCombinedImageSampler,
+                1 // irradiance map
+            ),
+            DescriptorPoolSize(
+                vk::DescriptorType::eCombinedImageSampler,
+                1 // brdf lut
             )
         };
         static constexpr bool check_descriptor_layout_bindings_and_pool_sizes_match(std::span<const DescriptorLayoutBinding> bindings, std::span<const DescriptorPoolSize> sizes)

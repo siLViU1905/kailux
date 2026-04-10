@@ -74,53 +74,59 @@ layout (std430, set = 0, binding = 2) readonly buffer SceneBuffer {
 } sceneData;
 
 layout(set = 0, binding = 3) uniform samplerCube skyboxSampler;
+layout(set = 0, binding = 4) uniform samplerCube irradianceSampler;
+layout(set = 0, binding = 5) uniform sampler2D brdfLutSampler;
 
 void main()
 {
+    vec3 N = normalize(fragNormal);
+    vec3 V = normalize(viewPos - fragPos);
+    vec3 R = reflect(-V, N);
+
+    vec3 F0 = mix(vec3(0.04), fragAlbedo, fragMetallic);
+
+    vec3 F_env = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, fragRoughness);
+    vec3 kS_env = F_env;
+    vec3 kD_env = (1.0 - kS_env) * (1.0 - fragMetallic);
+
+    vec3 irradiance = texture(irradianceSampler, N).rgb * 1.5;
+    vec3 diffuseIBL = irradiance * fragAlbedo;
+
+    const float MAX_REFLECTION_LOD = 10.0;
+    vec3 prefilteredColor = textureLod(skyboxSampler, R, fragRoughness * MAX_REFLECTION_LOD).rgb;
+    vec2 brdf = texture(brdfLutSampler, vec2(max(dot(N, V), 0.0), fragRoughness)).rg;
+    vec3 specularIBL = prefilteredColor * (F_env * brdf.x + brdf.y);
+
+    vec3 ambient = (kD_env * irradiance * fragAlbedo + specularIBL) * fragAO;
+
     vec3 L = normalize(-sceneData.sun.directionAndIntensity.xyz);
     float intensity = sceneData.sun.directionAndIntensity.w;
     vec3 lightColor = sceneData.sun.colorAndEnabled.rgb;
     bool enabled = sceneData.sun.colorAndEnabled.w > 0.5;
 
-    vec3 N = normalize(fragNormal);
-    vec3 V = normalize(viewPos - fragPos);
-
-    vec3 F0 = mix(vec3(0.04), fragAlbedo, fragMetallic);
-    vec3 F_env = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, fragRoughness);
-    vec3 kD_env = (1.0 - F_env) * (1.0 - fragMetallic);
-
-    vec3 R = reflect(-V, N);
-    const float MAX_REFLECTION_LOD = 10.0;
-    vec3 envSpecular = textureLod(skyboxSampler, R, fragRoughness * MAX_REFLECTION_LOD).rgb;
-
-    vec3 ambient = (kD_env * sceneData.ambient.rgb * sceneData.ambient.a * fragAlbedo + F_env * envSpecular) * fragAO;
-
-    if (!enabled)
+    vec3 Lo = vec3(0.0);
+    if (enabled)
     {
-        vec3 color = toneMapACES(ambient);
-        outColor = vec4(pow(color, vec3(1.0/2.2)), 1.0);
-        return;
+        vec3 H = normalize(V + L);
+        vec3 radiance = lightColor * intensity;
+
+        vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+        float D = DistributionGGX(N, H, fragRoughness);
+        float G = GeometrySmith(N, V, L, fragRoughness);
+
+        vec3 numerator = D * G * F;
+        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
+        vec3 specular = numerator / denominator;
+
+        vec3 kS = F;
+        vec3 kD = (vec3(1.0) - kS) * (1.0 - fragMetallic);
+
+        float NdotL = max(dot(N, L), 0.0);
+        Lo = (kD * fragAlbedo / PI + specular) * radiance * NdotL;
     }
 
-    vec3 H = normalize(V + L);
-    vec3 radiance = lightColor * intensity;
-
-    vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
-    float D = DistributionGGX(N, H, fragRoughness);
-    float G = GeometrySmith(N, V, L, fragRoughness);
-
-    vec3 numerator = D * G * F;
-    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
-    vec3 specular = numerator / denominator;
-
-    vec3 kS = F;
-    vec3 kD = vec3(1.0) - kS;
-    kD *= 1.0 - fragMetallic;
-
-    float NdotL = max(dot(N, L), 0.0);
-    vec3 Lo = (kD * fragAlbedo / PI + specular) * radiance * NdotL;
-
     vec3 color = Lo * fragExposure + ambient;
+
     color = toneMapACES(color);
     color = pow(color, vec3(1.0/2.2));
 
