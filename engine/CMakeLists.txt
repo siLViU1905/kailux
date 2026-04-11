@@ -27,6 +27,7 @@ add_library(kailux_engine STATIC
         src/core/texture/TextureAllocator.cpp
         src/core/texture/ImageLoader.cpp
         src/core/SkyboxPass.cpp
+        src/core/mesh/MeshLoader.cpp
 )
 
 target_compile_definitions(kailux_engine PUBLIC
@@ -44,6 +45,7 @@ target_link_libraries(kailux_engine PUBLIC
         magic_enum::magic_enum
         imguizmo::imguizmo
         stb::stb
+        assimp::assimp
 )
 
 target_precompile_headers(kailux_engine PUBLIC

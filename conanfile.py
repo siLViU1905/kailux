@@ -18,7 +18,8 @@ class kailux(ConanFile):
         self.requires("entt/3.16.0")
         self.requires("magic_enum/0.9.7")
         self.requires("imguizmo/1.83")
-        self.requires("stb/cci.20240531")
+        self.requires("stb/cci.20240531", override=True)
+        self.requires("assimp/6.0.2")
 
     def configure(self):
         self.options["imgui"].with_glfw = True
