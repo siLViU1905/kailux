@@ -28,6 +28,7 @@ add_library(kailux_engine STATIC
         src/core/texture/ImageLoader.cpp
         src/core/SkyboxPass.cpp
         src/core/mesh/MeshLoader.cpp
+        src/core/FileDialog.cpp
 )
 
 target_compile_definitions(kailux_engine PUBLIC
@@ -46,6 +47,7 @@ target_link_libraries(kailux_engine PUBLIC
         imguizmo::imguizmo
         stb::stb
         assimp::assimp
+        portable-file-dialogs::portable-file-dialogs
 )
 
 target_precompile_headers(kailux_engine PUBLIC
