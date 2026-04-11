@@ -63,12 +63,6 @@ namespace kailux
         return registry;
     }
 
-    MeshHandle MeshRegistry::upload(std::span<const Vertex> vertices, std::span<const IndexType> indices,
-                                    const Context &context, vk::CommandBuffer cmd, std::vector<Buffer> &stagingBuffer)
-    {
-        return uploadInternal(vertices, indices, context, cmd, stagingBuffer, false);
-    }
-
     void MeshRegistry::destroy(MeshHandle handle)
     {
         assert(handle.valid());
@@ -123,7 +117,7 @@ namespace kailux
 
     vk::DeviceSize MeshRegistry::LinearZone::alloc(vk::DeviceSize size, vk::DeviceSize alignment)
     {
-        vk::DeviceSize aligned = (cursor + alignment - 1) & ~(alignment - 1);
+        vk::DeviceSize aligned = ((cursor + alignment - 1) / alignment) * alignment;
         if (aligned + size > capacity)
             throw std::runtime_error("Built in mesh zone out of memory");
         cursor = aligned + size;
@@ -134,7 +128,7 @@ namespace kailux
     {
         for (auto it = freeBlocks.begin(); it != freeBlocks.end(); ++it)
         {
-            vk::DeviceSize aligned = (it->offset + alignment - 1) & ~(alignment - 1);
+            vk::DeviceSize aligned = ((it->offset + alignment - 1) / alignment) * alignment;
             vk::DeviceSize padding = aligned - it->offset;
 
             if (it->size >= size + padding)
@@ -220,11 +214,11 @@ namespace kailux
 
         if (isBuiltin)
         {
-            voffset = m_BuiltinVertexZone.alloc(vsize, alignof(Vertex));
+            voffset = m_BuiltinVertexZone.alloc(vsize, sizeof(Vertex));
             ioffset = m_BuiltinIndexZone.alloc(isize, sizeof(IndexType));
         } else
         {
-            voffset = m_AssetVertexZone.alloc(vsize, alignof(Vertex));
+            voffset = m_AssetVertexZone.alloc(vsize, sizeof(Vertex));
             ioffset = m_AssetIndexZone.alloc(isize, sizeof(IndexType));
         }
 
@@ -385,5 +379,11 @@ namespace kailux
         }
 
         return data;
+    }
+
+    MeshHandle MeshRegistry::upload(const Context &context,
+                                    vk::CommandBuffer cmd, const MeshData &data, std::vector<Buffer> &stagingBuffer)
+    {
+        return uploadInternal(data.vertices, data.indices, context, cmd, stagingBuffer, false);
     }
 }
