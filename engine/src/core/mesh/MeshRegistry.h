@@ -35,24 +35,19 @@ namespace kailux
     class MeshRegistry
     {
     public:
-        static constexpr vk::DeviceSize s_BuiltinZoneSize = 16 * 1024 * 1024; //16MB
-        static constexpr vk::DeviceSize s_AssetZoneSize = 64 * 1024 * 1024; //64MB
-        static constexpr vk::DeviceSize s_TotalSize = s_BuiltinZoneSize + s_AssetZoneSize;
+        static constexpr vk::DeviceSize s_VertexAlignment  = sizeof(Vertex);
+        static constexpr vk::DeviceSize s_BuiltinZoneSize  = (16 * 1024 * 1024 / s_VertexAlignment) * s_VertexAlignment;
+        static constexpr vk::DeviceSize s_AssetZoneSize    = (64 * 1024 * 1024 / s_VertexAlignment) * s_VertexAlignment;
+        static constexpr vk::DeviceSize s_TotalSize        = s_BuiltinZoneSize + s_AssetZoneSize;
 
         using IndexType = uint32_t;
 
     public:
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(MeshRegistry)
 
-        static MeshRegistry create(const Context &context,
+        static MeshRegistry  create(const Context &context,
                                    vk::CommandBuffer cmd,
                                    std::vector<Buffer> &stagingBuffers);
-
-        MeshHandle           upload(std::span<const Vertex> vertices,
-                                    std::span<const IndexType> indices,
-                                    const Context &context,
-                                    vk::CommandBuffer cmd,
-                                    std::vector<Buffer> &stagingBuffer);
         void                  destroy(MeshHandle handle);
         MeshView              view(MeshHandle handle) const;
         std::vector<MeshView> viewAll() const;
@@ -141,5 +136,10 @@ namespace kailux
 
         static MeshData generate_cube();
         static MeshData generate_sphere(uint32_t sectors = 32, uint32_t stacks = 32);
+
+        MeshHandle      upload(const Context &context,
+                               vk::CommandBuffer cmd,
+                               const MeshData &data,
+                               std::vector<Buffer> &stagingBuffer);
     };
 }
