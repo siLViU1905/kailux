@@ -8,10 +8,11 @@ namespace kailux
     public:
         static EditorLayer create();
 
-    private:
         static constexpr uint32_t         s_MenuPanelIndex = 0;
-
         static constexpr uint32_t         s_HierarchyPanelIndex = 1;
+        static constexpr uint32_t         s_EntityEditorIndex = 2;
+
+    private:
         static constexpr std::string_view s_HierarchyPanelName = "EntitiesHierarchy";
         static constexpr ImVec2           s_HierarchyPanelPosition = {0.8f, 0.f};
         static constexpr ImVec2           s_HierarchyPanelSize = {
@@ -19,7 +20,6 @@ namespace kailux
                                               0.6f
                                           };
 
-        static constexpr uint32_t         s_EntityEditorIndex = 2;
         static constexpr std::string_view s_EntityEditorName = "EntityEditor";
         static constexpr ImVec2           s_EntityEditorPosition = {s_HierarchyPanelPosition.x, s_HierarchyPanelPosition.y + s_HierarchyPanelSize.y};
         static constexpr ImVec2           s_EntityEditorSize = {

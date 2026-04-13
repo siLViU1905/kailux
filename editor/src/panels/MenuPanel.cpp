@@ -3,7 +3,7 @@
 
 namespace kailux
 {
-    MenuPanel::MenuPanel():m_ShowProfiler(false)
+    MenuPanel::MenuPanel() : m_ShowProfiler(false)
     {
     }
 
@@ -12,15 +12,23 @@ namespace kailux
     {
     }
 
+    void MenuPanel::setOnLoadMesh(OnLoadMesh &&callback)
+    {
+        m_OnLoadMesh = std::move(callback);
+    }
+
     void MenuPanel::render(Scene &scene)
     {
         if (ImGui::BeginMainMenuBar())
         {
-
             if (ImGui::BeginMenu("File"))
             {
-                if (ImGui::MenuItem("New Scene")) {}
-                if (ImGui::MenuItem("Open...")) {}
+                if (ImGui::MenuItem("New Scene"))
+                {
+                }
+                if (ImGui::MenuItem("Open..."))
+                {
+                }
                 ImGui::EndMenu();
             }
 
@@ -39,6 +47,10 @@ namespace kailux
                     ImGui::SliderFloat("Intensity", &scene.getAmbient().w, 0.f, 1.f);
 
                     ImGui::EndMenu();
+                } else if (ImGui::MenuItem("Load mesh..."))
+                {
+                    m_LoadMeshDialog.open("Choose a supported format");
+                    sendLoadMeshPaths();
                 }
 
                 ImGui::EndMenu();
@@ -69,10 +81,17 @@ namespace kailux
 
         auto overlay = std::format("Frametime: {}", average);
 
-        ImGui::PlotLines("Frame Time", frameTimeHistory.data(), 100, offset, overlay.c_str(), 0.0f, 50.0f, ImVec2(0, 80.0f));
+        ImGui::PlotLines("Frame Time", frameTimeHistory.data(), 100, offset, overlay.c_str(), 0.0f, 50.0f,
+                         ImVec2(0, 80.0f));
 
         ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
 
         ImGui::End();
+    }
+
+    void MenuPanel::sendLoadMeshPaths()
+    {
+        while (auto path = m_LoadMeshDialog.tryPopPath())
+            m_OnLoadMesh(*path);
     }
 }
