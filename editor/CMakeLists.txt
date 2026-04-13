@@ -1,5 +1,4 @@
-add_executable(kailux_editor
-        src/main.cpp
+add_library(kailux_editor
         src/panels/HierarchyPanel.cpp
         src/panels/Panel.cpp
         src/layers/Layer.cpp
@@ -11,7 +10,7 @@ add_executable(kailux_editor
 
 target_precompile_headers(kailux_editor REUSE_FROM kailux_engine)
 
-add_dependencies(kailux_editor CompileShaders CopyAssets)
+target_include_directories(kailux_editor PUBLIC src)
 
 target_link_libraries(kailux_editor PRIVATE
         kailux_engine
