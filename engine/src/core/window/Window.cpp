@@ -9,57 +9,6 @@ namespace kailux
     {
     }
 
-    GLFWwindow *Window::getGLFWWindow()
-    {
-        return m_WindowHandle;
-    }
-
-    Window::Window(GLFWwindow *handle, int width, int height)
-        : m_WindowHandle(handle), m_Width(width), m_Height(height), m_FramebufferResized(false)
-    {
-    }
-
-    Window::~Window()
-    {
-        if (m_WindowHandle)
-        {
-            glfwDestroyWindow(m_WindowHandle);
-            glfwTerminate();
-        }
-    }
-
-    Window Window::create(int width, int height, std::string_view title)
-    {
-        KAILUX_LOG_PARENT_CLR_BLUE("[WINDOW]")
-        if (!glfwInit())
-            throw std::runtime_error("Failed to init GLFW");
-        KAILUX_LOG_CHILD_CLR_BLUE("GLFW initialized")
-
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-
-        GLFWwindow *handle = glfwCreateWindow(width, height, title.data(), nullptr, nullptr);
-        if (!handle)
-        {
-            glfwTerminate();
-            throw std::runtime_error("Failed to create GLFW window");
-        }
-        KAILUX_LOG_CHILD_CLR_BLUE("Window created")
-
-        Window window(handle, width, height);
-
-        glfwSetFramebufferSizeCallback(handle, glfw_framebuffer_callback);
-        glfwSetKeyCallback(handle, glfw_key_callback);
-        glfwSetMouseButtonCallback(handle, glfw_button_callback);
-
-        return window;
-    }
-
-    void Window::updateUserPointer()
-    {
-        glfwSetWindowUserPointer(m_WindowHandle, this);
-    }
-
     Window::Window(Window &&other) noexcept : m_WindowHandle(other.m_WindowHandle),
                                               m_FramebufferResized(other.m_FramebufferResized),
                                               m_Width(other.m_Width),
@@ -67,11 +16,8 @@ namespace kailux
                                               m_EventQueue(std::move(other.m_EventQueue))
     {
         other.m_WindowHandle = nullptr;
-
         other.m_FramebufferResized = false;
-
         other.m_Width = 0;
-
         other.m_Height = 0;
     }
 
@@ -91,6 +37,70 @@ namespace kailux
             other.m_Height = 0;
         }
         return *this;
+    }
+
+    Window::~Window()
+    {
+        if (m_WindowHandle)
+        {
+            glfwDestroyWindow(m_WindowHandle);
+            glfwTerminate();
+        }
+    }
+
+    GLFWwindow *Window::getGLFWWindow()
+    {
+        return m_WindowHandle;
+    }
+
+    void Window::initGLFW()
+    {
+        if (!glfwInit())
+            throw std::runtime_error("Failed to init GLFW");
+
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    }
+
+    void Window::createWindow(int width, int height, std::string_view title)
+    {
+        m_Width = width;
+        m_Height = height;
+        m_WindowHandle = glfwCreateWindow(width, height, title.data(), nullptr, nullptr);
+        if (!m_WindowHandle)
+        {
+            glfwTerminate();
+            throw std::runtime_error("Failed to create GLFW window");
+        }
+    }
+
+    void Window::setCallbacks() const
+    {
+        glfwSetFramebufferSizeCallback(m_WindowHandle, glfw_framebuffer_callback);
+        glfwSetKeyCallback(m_WindowHandle, glfw_key_callback);
+        glfwSetMouseButtonCallback(m_WindowHandle, glfw_button_callback);
+    }
+
+    Window Window::create(int width, int height, std::string_view title)
+    {
+        KAILUX_LOG_PARENT_CLR_BLUE("[WINDOW]")
+        Window window;
+
+        window.initGLFW();
+        KAILUX_LOG_CHILD_CLR_BLUE("GLFW initialized")
+
+        window.createWindow(width, height, title);
+        KAILUX_LOG_CHILD_CLR_BLUE("Window created")
+
+        window.setCallbacks();
+        KAILUX_LOG_CHILD_CLR_BLUE("Callbacks set")
+
+        return window;
+    }
+
+    void Window::updateUserPointer()
+    {
+        glfwSetWindowUserPointer(m_WindowHandle, this);
     }
 
     bool Window::isOpen() const
