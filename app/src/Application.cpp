@@ -31,6 +31,7 @@ namespace kailux
         app.m_Window.updateUserPointer();
         app.m_Engine = Engine::create(app.m_Window);
         app.m_Editor = Editor::create();
+        app.setCallbacks();
         return app;
     }
 

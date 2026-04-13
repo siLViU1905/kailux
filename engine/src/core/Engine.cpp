@@ -20,6 +20,10 @@ namespace kailux
                                               m_SampleCount(other.m_SampleCount),
                                               m_Swapchain(std::move(other.m_Swapchain)),
                                               m_ImGuiBackend(std::move(other.m_ImGuiBackend)),
+                                              m_DescriptorLayout(std::move(other.m_DescriptorLayout)),
+                                              m_DescriptorPool(std::move(other.m_DescriptorPool)),
+                                              m_Pipeline(std::move(other.m_Pipeline)),
+                                              m_MeshRegistry(std::move(other.m_MeshRegistry)),
                                               m_Frames(std::move(other.m_Frames)),
                                               m_CurrentFrame(other.m_CurrentFrame),
                                               m_Clock(other.m_Clock),
@@ -36,6 +40,10 @@ namespace kailux
             m_SampleCount = other.m_SampleCount;
             m_Swapchain = std::move(other.m_Swapchain);
             m_ImGuiBackend = std::move(other.m_ImGuiBackend);
+            m_DescriptorLayout = std::move(other.m_DescriptorLayout);
+            m_DescriptorPool = std::move(other.m_DescriptorPool);
+            m_Pipeline = std::move(other.m_Pipeline);
+            m_MeshRegistry = std::move(other.m_MeshRegistry);
             m_Frames = std::move(other.m_Frames);
             m_CurrentFrame = other.m_CurrentFrame;
             m_Clock = other.m_Clock;

@@ -19,6 +19,15 @@ namespace kailux
     {
     }
 
+    Window::~Window()
+    {
+        if (m_WindowHandle)
+        {
+            glfwDestroyWindow(m_WindowHandle);
+            glfwTerminate();
+        }
+    }
+
     Window Window::create(int width, int height, std::string_view title)
     {
         KAILUX_LOG_PARENT_CLR_BLUE("[WINDOW]")
@@ -54,7 +63,8 @@ namespace kailux
     Window::Window(Window &&other) noexcept : m_WindowHandle(other.m_WindowHandle),
                                               m_FramebufferResized(other.m_FramebufferResized),
                                               m_Width(other.m_Width),
-                                              m_Height(other.m_Height)
+                                              m_Height(other.m_Height),
+                                              m_EventQueue(std::move(other.m_EventQueue))
     {
         other.m_WindowHandle = nullptr;
 
@@ -73,6 +83,7 @@ namespace kailux
             m_FramebufferResized = other.m_FramebufferResized;
             m_Width = other.m_Width;
             m_Height = other.m_Height;
+            m_EventQueue = std::move(other.m_EventQueue);
 
             other.m_WindowHandle = nullptr;
             other.m_FramebufferResized = false;
@@ -221,12 +232,5 @@ namespace kailux
                 break;
             default: ;
         }
-    }
-
-    Window::~Window()
-    {
-        glfwDestroyWindow(m_WindowHandle);
-
-        glfwTerminate();
     }
 }
