@@ -8,7 +8,8 @@ namespace kailux
     {
     }
 
-    Editor::Editor(Editor &&other) noexcept : m_ActiveLayer(std::move(other.m_ActiveLayer))
+    Editor::Editor(Editor &&other) noexcept : m_ActiveLayer(std::move(other.m_ActiveLayer)),
+    m_EditorLayer(std::move(other.m_EditorLayer))
     {
     }
 
@@ -17,6 +18,7 @@ namespace kailux
         if (this != &other)
         {
             m_ActiveLayer = std::move(other.m_ActiveLayer);
+            m_EditorLayer = std::move(other.m_EditorLayer);
         }
         return *this;
     }
@@ -28,6 +30,16 @@ namespace kailux
         return editor;
     }
 
+    const EditorLayer & Editor::getEditorLayer() const
+    {
+        return *m_EditorLayer;
+    }
+
+    EditorLayer& Editor::getEditorLayer()
+    {
+        return *m_EditorLayer;
+    }
+
     void Editor::render(Scene &scene) const
     {
         m_ActiveLayer->render(scene);
@@ -35,6 +47,7 @@ namespace kailux
 
     void Editor::createLayers()
     {
-        m_ActiveLayer = create_scoped<EditorLayer>(EditorLayer::create());
+        m_EditorLayer = create_scoped<EditorLayer>(EditorLayer::create());
+        m_ActiveLayer = m_EditorLayer;
     }
 }

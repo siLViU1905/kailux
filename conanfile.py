@@ -20,6 +20,7 @@ class kailux(ConanFile):
         self.requires("imguizmo/1.83")
         self.requires("stb/cci.20240531", override=True)
         self.requires("assimp/6.0.2")
+        self.requires("portable-file-dialogs/0.1.0")
 
     def configure(self):
         self.options["imgui"].with_glfw = True

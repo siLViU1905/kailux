@@ -4,6 +4,7 @@
 #include <core/Engine.h>
 
 #include "Editor.h"
+#include "panels/MenuPanel.h"
 
 int main()
 {
@@ -15,6 +16,11 @@ int main()
         auto engine = kailux::Engine::create(window);
 
         auto editor = kailux::Editor::create();
+        auto& menuPanel = static_cast<kailux::MenuPanel&>(*editor.getEditorLayer().getPanels()[kailux::EditorLayer::s_MenuPanelIndex]);
+        menuPanel.setOnLoadMesh([&engine](std::string_view path)
+        {
+            (void)engine.loadMesh(path);
+        });
         engine.setOnEditorRender([&editor](kailux::Scene& scene)
         {
             editor.render(scene);

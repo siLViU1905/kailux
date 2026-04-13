@@ -1,5 +1,5 @@
 #pragma once
-#include "Camera.h"
+
 #include "Clock.h"
 #include "Context.h"
 #include "descriptor/DescriptorLayout.h"
@@ -14,6 +14,7 @@
 #include <entt/entt.hpp>
 
 #include "Scene.h"
+#include "mesh/MeshLoader.h"
 
 namespace kailux
 {
@@ -24,6 +25,9 @@ namespace kailux
         ~Engine();
 
         static Engine create(Window& window);
+
+        using LoadResult = std::expected<void, std::string>;
+        LoadResult loadMesh(std::string_view path);
 
         using OnEditorRender = std::move_only_function<void(Scene&)>;
         void setOnEditorRender(OnEditorRender&& callback);

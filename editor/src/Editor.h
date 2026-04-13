@@ -1,5 +1,5 @@
 #pragma once
-#include "layers/Layer.h"
+#include "layers/EditorLayer.h"
 
 namespace kailux
 {
@@ -10,11 +10,15 @@ namespace kailux
 
         static Editor create();
 
+        const EditorLayer& getEditorLayer() const;
+        EditorLayer&       getEditorLayer();
+
         void render(Scene& scene) const;
 
     private:
         void createLayers();
 
-        Scoped<Layer> m_ActiveLayer;
+        Shared<Layer> m_ActiveLayer;
+        Shared<EditorLayer> m_EditorLayer;
     };
 }

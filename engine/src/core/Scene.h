@@ -29,6 +29,8 @@ namespace kailux
         glm::vec4&            getAmbient();
         const glm::vec4&      getAmbient() const;
 
+        std::string           getMeshEntityName();
+
     private:
         static constexpr std::string_view s_SunName = "Sun";
         static constexpr std::string_view s_SceneName = "Scene";
@@ -42,5 +44,7 @@ namespace kailux
         entt::entity   m_Sun;
 
         glm::vec4      m_Ambient;
+
+        uint32_t m_MeshEntityNameCount;
     };
 }
