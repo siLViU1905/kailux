@@ -45,7 +45,9 @@ namespace kailux
         GLFWwindow* getGLFWWindow();
 
     private:
-        explicit Window(GLFWwindow* handle, int width, int height);
+        void initGLFW();
+        void createWindow(int width, int height, std::string_view title);
+        void setCallbacks() const;
 
         static void glfw_framebuffer_callback(GLFWwindow* window, int width, int height);
         static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
