@@ -19,6 +19,15 @@ namespace kailux
     {
     }
 
+    Window::~Window()
+    {
+        if (m_WindowHandle)
+        {
+            glfwDestroyWindow(m_WindowHandle);
+            glfwTerminate();
+        }
+    }
+
     Window Window::create(int width, int height, std::string_view title)
     {
         KAILUX_LOG_PARENT_CLR_BLUE("[WINDOW]")
@@ -54,7 +63,8 @@ namespace kailux
     Window::Window(Window &&other) noexcept : m_WindowHandle(other.m_WindowHandle),
                                               m_FramebufferResized(other.m_FramebufferResized),
                                               m_Width(other.m_Width),
-                                              m_Height(other.m_Height)
+                                              m_Height(other.m_Height),
+                                              m_EventQueue(std::move(other.m_EventQueue))
     {
         other.m_WindowHandle = nullptr;
 
@@ -63,6 +73,24 @@ namespace kailux
         other.m_Width = 0;
 
         other.m_Height = 0;
+    }
+
+    Window &Window::operator=(Window &&other) noexcept
+    {
+        if (this != &other)
+        {
+            m_WindowHandle = other.m_WindowHandle;
+            m_FramebufferResized = other.m_FramebufferResized;
+            m_Width = other.m_Width;
+            m_Height = other.m_Height;
+            m_EventQueue = std::move(other.m_EventQueue);
+
+            other.m_WindowHandle = nullptr;
+            other.m_FramebufferResized = false;
+            other.m_Width = 0;
+            other.m_Height = 0;
+        }
+        return *this;
     }
 
     bool Window::isOpen() const
@@ -167,9 +195,9 @@ namespace kailux
     {
         auto *self = static_cast<Window *>(glfwGetWindowUserPointer(window));
 
-        Key kKey         = static_cast<Key>(key);
-        KeyAction kAct   = static_cast<KeyAction>(action);
-        KeyMods kMods    = static_cast<KeyMods>(mods);
+        Key kKey = static_cast<Key>(key);
+        KeyAction kAct = static_cast<KeyAction>(action);
+        KeyMods kMods = static_cast<KeyMods>(mods);
 
         switch (kAct)
         {
@@ -190,9 +218,9 @@ namespace kailux
     {
         auto *self = static_cast<Window *>(glfwGetWindowUserPointer(window));
 
-        MouseButton mBtn   = static_cast<MouseButton>(button);
-        MouseAction mAct   = static_cast<MouseAction>(action);
-        MouseMods mMods    = static_cast<MouseMods>(mods);
+        MouseButton mBtn = static_cast<MouseButton>(button);
+        MouseAction mAct = static_cast<MouseAction>(action);
+        MouseMods mMods = static_cast<MouseMods>(mods);
 
         switch (mAct)
         {
@@ -204,12 +232,5 @@ namespace kailux
                 break;
             default: ;
         }
-    }
-
-    Window::~Window()
-    {
-        glfwDestroyWindow(m_WindowHandle);
-
-        glfwTerminate();
     }
 }

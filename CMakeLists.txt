@@ -24,7 +24,7 @@ set(GLSL_SOURCES
         "engine/src/core/shaders/skybox_fragment_shader.glsl"
 )
 
-set(SHADER_BINARY_DIR "${CMAKE_BINARY_DIR}/editor/shaders")
+set(SHADER_BINARY_DIR "${CMAKE_BINARY_DIR}/app/shaders")
 file(MAKE_DIRECTORY "${SHADER_BINARY_DIR}")
 set(ALL_SPIRV_OUTPUTS "")
 
@@ -58,7 +58,7 @@ endforeach()
 
 add_custom_target(CompileShaders ALL DEPENDS ${ALL_SPIRV_OUTPUTS})
 
-set(ASSETS_BINARY_DIR "${CMAKE_BINARY_DIR}/editor/assets")
+set(ASSETS_BINARY_DIR "${CMAKE_BINARY_DIR}/app/assets")
 
 add_custom_target(CopyAssets ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -70,4 +70,5 @@ add_custom_target(CopyAssets ALL
 
 add_subdirectory(engine)
 add_subdirectory(editor)
+add_subdirectory(app)
 
