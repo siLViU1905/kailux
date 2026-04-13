@@ -65,6 +65,21 @@ namespace kailux
         return engine;
     }
 
+    Engine::LoadResult Engine::loadMesh(std::string_view path)
+    {
+        std::vector<Buffer> stagingBuffers;
+        auto otc = OneTimeCommand::create(m_Context);
+        auto meshData = MeshLoader::load(path);
+        if (!meshData)
+            return std::unexpected(meshData.error());
+
+        auto handle = m_MeshRegistry.upload(m_Context, otc.getCommandBuffer(), *meshData, stagingBuffers);
+        m_Scene.createMeshEntity(m_Scene.getMeshEntityName(), handle, MeshTransformData({-2.f, 0.f, 0.f}), {});
+
+        otc.submit(m_Context);
+        return {};
+    }
+
     void Engine::setOnEditorRender(OnEditorRender &&callback)
     {
         m_OnEditorRender = std::move(callback);
