@@ -62,9 +62,22 @@ namespace kailux
         std::vector<vk::DescriptorBufferInfo> bufferInfos;
         std::vector<vk::DescriptorImageInfo> imageInfos;
 
+        uint32_t totalBufferCount = 0;
+        uint32_t totalImageCount = 0;
+        for (const auto &info: infos)
+            std::visit([&](const auto &arg)
+            {
+                using T = std::decay_t<decltype(arg)>;
+
+                if constexpr (std::is_same_v<T, DescriptorSetBufferInfo>)
+                    totalBufferCount += arg.count;
+                else if constexpr (std::is_same_v<T, DescriptorSetImageInfo>)
+                    totalImageCount += arg.count;
+            }, info);
+
         descriptorWrites.reserve(infos.size());
-        bufferInfos.reserve(infos.size());
-        imageInfos.reserve(infos.size());
+        bufferInfos.reserve(totalBufferCount);
+        imageInfos.reserve(totalImageCount);
 
         for (uint32_t i = 0; i < infos.size(); ++i)
         {
@@ -74,7 +87,10 @@ namespace kailux
 
                 if constexpr (std::is_same_v<T, DescriptorSetBufferInfo>)
                 {
-                    bufferInfos.emplace_back(arg.buffer, 0, arg.size);
+                    auto startIndex = static_cast<uint32_t>(bufferInfos.size());
+                    for (uint32_t c = 0; c < arg.count; ++c)
+                        bufferInfos.emplace_back(arg.buffer, 0, arg.size);
+
                     descriptorWrites.emplace_back(
                         *m_Set,
                         i,
@@ -82,18 +98,21 @@ namespace kailux
                         arg.count,
                         arg.type,
                         nullptr,
-                        &bufferInfos.back()
+                        &bufferInfos[startIndex]
                     );
                 } else if constexpr (std::is_same_v<T, DescriptorSetImageInfo>)
                 {
-                    imageInfos.emplace_back(arg.sampler, arg.view, arg.layout);
+                    auto startIndex = static_cast<uint32_t>(imageInfos.size());
+                    for (uint32_t c = 0; c < arg.count; ++c)
+                        imageInfos.emplace_back(arg.sampler, arg.view, arg.layout);
+
                     descriptorWrites.emplace_back(
                         *m_Set,
                         i,
                         0,
                         arg.count,
                         vk::DescriptorType::eCombinedImageSampler,
-                        &imageInfos.back(),
+                        &imageInfos[startIndex],
                         nullptr
                     );
                 }
