@@ -305,32 +305,32 @@ namespace kailux
                 1
             ),
             DescriptorSetImageInfo(
-                textureRegistry.view(textureRegistry.getDefaultSet().albedo)->getSampler(),
-                textureRegistry.view(textureRegistry.getDefaultSet().albedo)->getImageView(),
+                textureRegistry.view(textureRegistry.getDefaultSetHandle()).albedo->getSampler(),
+                textureRegistry.view(textureRegistry.getDefaultSetHandle()).albedo->getImageView(),
                 vk::ImageLayout::eShaderReadOnlyOptimal,
                 meshCount
             ),
             DescriptorSetImageInfo(
-                textureRegistry.view(textureRegistry.getDefaultSet().normal)->getSampler(),
-                textureRegistry.view(textureRegistry.getDefaultSet().normal)->getImageView(),
+                textureRegistry.view(textureRegistry.getDefaultSetHandle()).normal->getSampler(),
+                textureRegistry.view(textureRegistry.getDefaultSetHandle()).normal->getImageView(),
                 vk::ImageLayout::eShaderReadOnlyOptimal,
                 meshCount
             ),
             DescriptorSetImageInfo(
-                textureRegistry.view(textureRegistry.getDefaultSet().roughness)->getSampler(),
-                textureRegistry.view(textureRegistry.getDefaultSet().roughness)->getImageView(),
+                textureRegistry.view(textureRegistry.getDefaultSetHandle()).roughness->getSampler(),
+                textureRegistry.view(textureRegistry.getDefaultSetHandle()).roughness->getImageView(),
                 vk::ImageLayout::eShaderReadOnlyOptimal,
                 meshCount
             ),
             DescriptorSetImageInfo(
-                textureRegistry.view(textureRegistry.getDefaultSet().metallic)->getSampler(),
-                textureRegistry.view(textureRegistry.getDefaultSet().metallic)->getImageView(),
+                textureRegistry.view(textureRegistry.getDefaultSetHandle()).metallic->getSampler(),
+                textureRegistry.view(textureRegistry.getDefaultSetHandle()).metallic->getImageView(),
                 vk::ImageLayout::eShaderReadOnlyOptimal,
                 meshCount
             ),
             DescriptorSetImageInfo(
-                textureRegistry.view(textureRegistry.getDefaultSet().ao)->getSampler(),
-                textureRegistry.view(textureRegistry.getDefaultSet().ao)->getImageView(),
+                textureRegistry.view(textureRegistry.getDefaultSetHandle()).ao->getSampler(),
+                textureRegistry.view(textureRegistry.getDefaultSetHandle()).ao->getImageView(),
                 vk::ImageLayout::eShaderReadOnlyOptimal,
                 meshCount
             )

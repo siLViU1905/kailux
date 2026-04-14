@@ -6,7 +6,7 @@
 
 namespace kailux
 {
-    struct TextureHandle
+    struct TextureSetHandle
     {
         static constexpr uint32_t s_InvalidIndex = ~0u;
 
@@ -17,11 +17,11 @@ namespace kailux
 
     struct TextureSet
     {
-        TextureHandle albedo;
-        TextureHandle normal;
-        TextureHandle roughness;
-        TextureHandle metallic;
-        TextureHandle ao;
+        Shared<Texture> albedo;
+        Shared<Texture> normal;
+        Shared<Texture> roughness;
+        Shared<Texture> metallic;
+        Shared<Texture> ao;
     };
 
     class TextureRegistry
@@ -33,19 +33,21 @@ namespace kailux
 
         static TextureRegistry create(const Context& context, uint32_t meshCount);
 
-        Shared<Texture>   view(TextureHandle handle) const;
-        TextureHandle     registerTexture(Shared<Texture> texture);
-        void              unregisterTexture(TextureHandle handle);
-        uint32_t          acquireSlot();
-
-        TextureSet        getDefaultSet() const;
+        TextureSetHandle  registerTextureSet(const TextureSet& set);
+        void              unregisterTextureSet(TextureSetHandle handle);
+        void              updateTextureSet(TextureSetHandle handle, const TextureSet& set);
+        const TextureSet& view(TextureSetHandle handle) const;
+        TextureSetHandle  getDefaultSetHandle() const;
 
     private:
-        void allocResources(uint32_t meshCount);
-        void createDefaultTextures(const Context& context);
+        void     allocResources(uint32_t meshCount);
+        void     createDefaultTextures(const Context& context);
+
+        uint32_t acquireSlot();
 
         TextureSet                   m_DefaultSet;
-        std::vector<Shared<Texture>> m_TexturePool;
+        TextureSetHandle             m_DefaultSetHandle;
+        std::vector<TextureSet>      m_TexturePool;
         std::deque<uint32_t>         m_FreeSlots;
     };
 }

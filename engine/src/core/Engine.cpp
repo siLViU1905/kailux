@@ -187,14 +187,14 @@ namespace kailux
         m_Scene.createMeshEntity(
             "Cube",
             m_MeshRegistry.getBuiltins().cube,
-            m_TextureRegistry.getDefaultSet(),
+            m_TextureRegistry.getDefaultSetHandle(),
             {},
             {}
         );
         m_Scene.createMeshEntity(
             "Sphere",
             m_MeshRegistry.getBuiltins().sphere,
-            m_TextureRegistry.getDefaultSet(),
+            m_TextureRegistry.getDefaultSetHandle(),
             MeshTransformData({1.5f, 0.f, 0.f}),
             {}
         );
@@ -460,12 +460,7 @@ namespace kailux
         {
             const auto &transform = view.get<MeshTransformData>(entity);
             auto material = view.get<MeshMaterialData>(entity);
-            auto textureHandles = view.get<MaterialComponent>(entity);
-            material.albedoIdx = textureHandles.set.albedo.index;
-            material.normalIdx = textureHandles.set.normal.index;
-            material.roughnessIdx = textureHandles.set.roughness.index;
-            material.metallicIdx = textureHandles.set.metallic.index;
-            material.aoIdx = textureHandles.set.ao.index;
+            material.materialIdx = view.get<MaterialComponent>(entity).handle.index;
             data.emplace_back(
                 transform.getModelMatrix(),
                 material
@@ -552,7 +547,7 @@ namespace kailux
             auto handle = m_MeshRegistry.upload(m_Context, otc.getCommandBuffer(), *data, stagingBuffers);
             m_Scene.createMeshEntity(m_Scene.getMeshEntityName(),
                                      handle,
-                                     m_TextureRegistry.getDefaultSet(),
+                                     m_TextureRegistry.getDefaultSetHandle(),
                                      MeshTransformData({-2.f, 0.f, 0.f}),
                                      {}
             );

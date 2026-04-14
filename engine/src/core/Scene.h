@@ -21,8 +21,8 @@ namespace kailux
         entt::entity createCameraEntity(std::string_view name, const Camera& camera, bool isPrimary);
         entt::entity createMeshEntity(
             std::string_view name,
-            MeshHandle handle,
-            TextureSet textureSet,
+            MeshHandle meshHandle,
+            TextureSetHandle textureSetHandle,
             const MeshTransformData &transform,
             const MeshMaterialData &material
         );

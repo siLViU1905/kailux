@@ -6,7 +6,8 @@ namespace kailux
 {
     TextureRegistry::TextureRegistry() = default;
 
-    TextureRegistry::TextureRegistry(TextureRegistry &&other) noexcept : m_DefaultSet(other.m_DefaultSet),
+    TextureRegistry::TextureRegistry(TextureRegistry &&other) noexcept : m_DefaultSet(std::move(other.m_DefaultSet)),
+                                                                         m_DefaultSetHandle(other.m_DefaultSetHandle),
                                                                          m_TexturePool(std::move(other.m_TexturePool)),
                                                                          m_FreeSlots(std::move(other.m_FreeSlots))
     {
@@ -16,7 +17,8 @@ namespace kailux
     {
         if (this != &other)
         {
-            m_DefaultSet = other.m_DefaultSet;
+            m_DefaultSet = std::move(other.m_DefaultSet);
+            m_DefaultSetHandle = other.m_DefaultSetHandle;
             m_TexturePool = std::move(other.m_TexturePool);
             m_FreeSlots = std::move(other.m_FreeSlots);
         }
@@ -28,65 +30,71 @@ namespace kailux
         TextureRegistry registry;
         registry.allocResources(meshCount);
         registry.createDefaultTextures(context);
+        registry.m_DefaultSetHandle = registry.registerTextureSet(registry.m_DefaultSet);
         return registry;
     }
 
-    Shared<Texture> TextureRegistry::view(TextureHandle handle) const
+    TextureSetHandle TextureRegistry::registerTextureSet(const TextureSet &set)
+    {
+        auto slot = acquireSlot();
+        m_TexturePool[slot] = set;
+        return {slot};
+    }
+
+    const TextureSet &TextureRegistry::view(TextureSetHandle handle) const
     {
         assert(handle.valid());
         return m_TexturePool[handle.index];
     }
 
-    TextureHandle TextureRegistry::registerTexture(Shared<Texture> texture)
-    {
-        auto slot = acquireSlot();
-        m_TexturePool[slot] = texture;
-        return {slot};
-    }
-
-    void TextureRegistry::unregisterTexture(TextureHandle handle)
+    void TextureRegistry::unregisterTextureSet(TextureSetHandle handle)
     {
         if (!handle.valid())
             return;
-
-        m_TexturePool[handle.index].reset();
+        m_TexturePool[handle.index] = m_DefaultSet;
 
         m_FreeSlots.push_back(handle.index);
+    }
+
+    void TextureRegistry::updateTextureSet(TextureSetHandle handle, const TextureSet &set)
+    {
+        if (!handle.valid())
+            return;
+        m_TexturePool[handle.index] = set;
     }
 
     uint32_t TextureRegistry::acquireSlot()
     {
         if (m_FreeSlots.empty())
-            return TextureHandle::s_InvalidIndex;
+            return TextureSetHandle::s_InvalidIndex;
         auto slot = m_FreeSlots.front();
         m_FreeSlots.pop_front();
         return slot;
     }
 
-    TextureSet TextureRegistry::getDefaultSet() const
+    TextureSetHandle TextureRegistry::getDefaultSetHandle() const
     {
-        return m_DefaultSet;
+        return m_DefaultSetHandle;
     }
 
     void TextureRegistry::allocResources(uint32_t meshCount)
     {
-        m_TexturePool.resize(meshCount * s_TextureTypes);
+        m_TexturePool.resize(meshCount, m_DefaultSet);
 
-        for (uint32_t i = 0; i < meshCount * s_TextureTypes; ++i)
+        for (uint32_t i = 0; i < meshCount; ++i)
             m_FreeSlots.push_back(i);
     }
 
     void TextureRegistry::createDefaultTextures(const Context &context)
     {
-        ImageLoader::ImageData data;
+        ImageLoader::ImageData data{};
         data = {
             1,
             1,
             1,
             {191, 191, 191, 255}
         };
-        auto texture = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data));
-        m_DefaultSet.albedo = registerTexture(texture);
+        m_DefaultSet.albedo = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data));
 
         data = {
             1,
@@ -94,8 +102,7 @@ namespace kailux
             1,
             {128, 128, 255, 255}
         };
-        texture = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data));
-        m_DefaultSet.normal = registerTexture(texture);
+        m_DefaultSet.normal = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data));
 
         data = {
             1,
@@ -103,8 +110,7 @@ namespace kailux
             1,
             {255, 255, 255, 255}
         };
-        texture = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data));
-        m_DefaultSet.roughness = registerTexture(texture);
+        m_DefaultSet.roughness = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data));
 
         data = {
             1,
@@ -112,8 +118,7 @@ namespace kailux
             1,
             {0, 0, 0, 255}
         };
-        texture = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data));
-        m_DefaultSet.metallic = registerTexture(texture);
+        m_DefaultSet.metallic = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data));
 
         data = {
             1,
@@ -121,7 +126,6 @@ namespace kailux
             1,
             {255, 255, 255, 255}
         };
-        texture = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data));
-        m_DefaultSet.ao = registerTexture(texture);
+        m_DefaultSet.ao = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data));
     }
 }
