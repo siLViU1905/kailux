@@ -57,7 +57,9 @@ namespace kailux
         const DescriptorLayout &descriptorLayout,
         const DescriptorPool &descriptorPool,
         const SkyboxPass &skybox,
-        uint32_t maxMeshCount)
+        const TextureRegistry &textureRegistry,
+        uint32_t maxMeshCount
+    )
     {
         FrameData frame;
         frame.createCommandPool(context);
@@ -69,7 +71,7 @@ namespace kailux
         frame.createMeshDataBuffer(context, maxMeshCount);
         frame.createIndirectBuffer(context, maxMeshCount);
         frame.createSceneBuffer(context);
-        auto descSetInfo = frame.makeDescriptorSetInfo(skybox);
+        auto descSetInfo = frame.makeDescriptorSetInfo(skybox, textureRegistry, maxMeshCount);
         frame.createDescriptorSet(context, descriptorLayout, descriptorPool, descSetInfo);
         auto skyboxDescInfo = frame.makeSkyboxDescriptorSetInfo(skybox.getTexture());
         frame.createSkyboxDescriptorSet(context, skybox.getDescriptorLayout(), skybox.getDescriptorPool(), skyboxDescInfo);
@@ -263,7 +265,7 @@ namespace kailux
         m_SceneBuffer = BufferAllocator::alloc_storage(context, sizeof(SceneData));
     }
 
-    std::array<DescriptorSetInfo, FrameData::s_DescriptorSetInfoCount> FrameData::makeDescriptorSetInfo(const SkyboxPass &skybox) const
+    std::array<DescriptorSetInfo, FrameData::s_DescriptorSetInfoCount> FrameData::makeDescriptorSetInfo(const SkyboxPass &skybox, const TextureRegistry& textureRegistry, uint32_t meshCount) const
     {
         return {
             DescriptorSetBufferInfo(
@@ -289,19 +291,49 @@ namespace kailux
                 skybox.getTexture().getImageView(),
                 vk::ImageLayout::eShaderReadOnlyOptimal,
                 1
-                ),
-                DescriptorSetImageInfo(
-                    skybox.getIrradianceMapTexture().getSampler(),
-                    skybox.getIrradianceMapTexture().getImageView(),
-                    vk::ImageLayout::eShaderReadOnlyOptimal,
-                    1
-                    ),
-                DescriptorSetImageInfo(
-                    skybox.getBRDFLutTexture().getSampler(),
-                    skybox.getBRDFLutTexture().getImageView(),
-                    vk::ImageLayout::eShaderReadOnlyOptimal,
-                    1
-                )
+            ),
+            DescriptorSetImageInfo(
+                skybox.getIrradianceMapTexture().getSampler(),
+                skybox.getIrradianceMapTexture().getImageView(),
+                vk::ImageLayout::eShaderReadOnlyOptimal,
+                1
+            ),
+            DescriptorSetImageInfo(
+                skybox.getBRDFLutTexture().getSampler(),
+                skybox.getBRDFLutTexture().getImageView(),
+                vk::ImageLayout::eShaderReadOnlyOptimal,
+                1
+            ),
+            DescriptorSetImageInfo(
+                textureRegistry.view(textureRegistry.getDefaultSet().albedo)->getSampler(),
+                textureRegistry.view(textureRegistry.getDefaultSet().albedo)->getImageView(),
+                vk::ImageLayout::eShaderReadOnlyOptimal,
+                meshCount
+            ),
+            DescriptorSetImageInfo(
+                textureRegistry.view(textureRegistry.getDefaultSet().normal)->getSampler(),
+                textureRegistry.view(textureRegistry.getDefaultSet().normal)->getImageView(),
+                vk::ImageLayout::eShaderReadOnlyOptimal,
+                meshCount
+            ),
+            DescriptorSetImageInfo(
+                textureRegistry.view(textureRegistry.getDefaultSet().roughness)->getSampler(),
+                textureRegistry.view(textureRegistry.getDefaultSet().roughness)->getImageView(),
+                vk::ImageLayout::eShaderReadOnlyOptimal,
+                meshCount
+            ),
+            DescriptorSetImageInfo(
+                textureRegistry.view(textureRegistry.getDefaultSet().metallic)->getSampler(),
+                textureRegistry.view(textureRegistry.getDefaultSet().metallic)->getImageView(),
+                vk::ImageLayout::eShaderReadOnlyOptimal,
+                meshCount
+            ),
+            DescriptorSetImageInfo(
+                textureRegistry.view(textureRegistry.getDefaultSet().ao)->getSampler(),
+                textureRegistry.view(textureRegistry.getDefaultSet().ao)->getImageView(),
+                vk::ImageLayout::eShaderReadOnlyOptimal,
+                meshCount
+            )
         };
     }
 

@@ -5,6 +5,7 @@
 #include "Logger.h"
 #include "command/OneTimeCommand.h"
 #include "components/entt/CameraComponent.h"
+#include "components/entt/MaterialComponent.h"
 #include "components/entt/MeshComponent.h"
 #include "components/gpu/CameraData.h"
 #include "components/gpu/MeshData.h"
@@ -25,6 +26,7 @@ namespace kailux
                                               m_DescriptorPool(std::move(other.m_DescriptorPool)),
                                               m_Pipeline(std::move(other.m_Pipeline)),
                                               m_MeshRegistry(std::move(other.m_MeshRegistry)),
+                                              m_TextureRegistry(std::move(other.m_TextureRegistry)),
                                               m_Frames(std::move(other.m_Frames)),
                                               m_CurrentFrame(other.m_CurrentFrame),
                                               m_Clock(other.m_Clock),
@@ -46,6 +48,7 @@ namespace kailux
             m_DescriptorPool = std::move(other.m_DescriptorPool);
             m_Pipeline = std::move(other.m_Pipeline);
             m_MeshRegistry = std::move(other.m_MeshRegistry);
+            m_TextureRegistry = std::move(other.m_TextureRegistry);
             m_Frames = std::move(other.m_Frames);
             m_CurrentFrame = other.m_CurrentFrame;
             m_Clock = other.m_Clock;
@@ -74,8 +77,9 @@ namespace kailux
         engine.createDescriptorResources();
         engine.createPipeline();
         engine.createSkybox();
-        engine.createFrameResources();
         engine.createMeshRegistry();
+        engine.createTextureRegistry();
+        engine.createFrameResources();
         engine.createImGui(window);
         engine.createSceneEntities(window);
         return engine;
@@ -140,7 +144,7 @@ namespace kailux
     void Engine::createFrameResources()
     {
         for (auto &frame: m_Frames)
-            frame = FrameData::create(m_Context, m_DescriptorLayout, m_DescriptorPool, m_Skybox, s_MaxMeshCount);
+            frame = FrameData::create(m_Context, m_DescriptorLayout, m_DescriptorPool, m_Skybox, m_TextureRegistry, s_MaxMeshCount);
     }
 
     void Engine::createMeshRegistry()
@@ -149,6 +153,11 @@ namespace kailux
         OneTimeCommand otc = OneTimeCommand::create(m_Context);
         m_MeshRegistry = MeshRegistry::create(m_Context, otc.getCommandBuffer(), stagingBuffers);
         otc.submit(m_Context);
+    }
+
+    void Engine::createTextureRegistry()
+    {
+        m_TextureRegistry = TextureRegistry::create(m_Context, s_MaxMeshCount);
     }
 
     void Engine::createImGui(Window &window)
@@ -175,9 +184,20 @@ namespace kailux
         );
         m_Scene.setMainCamera(cameraEntity);
 
-        m_Scene.createMeshEntity("Cube", m_MeshRegistry.getBuiltins().cube, {}, {});
-        m_Scene.createMeshEntity("Sphere", m_MeshRegistry.getBuiltins().sphere, MeshTransformData({1.5f, 0.f, 0.f}),
-                                 {});
+        m_Scene.createMeshEntity(
+            "Cube",
+            m_MeshRegistry.getBuiltins().cube,
+            m_TextureRegistry.getDefaultSet(),
+            {},
+            {}
+        );
+        m_Scene.createMeshEntity(
+            "Sphere",
+            m_MeshRegistry.getBuiltins().sphere,
+            m_TextureRegistry.getDefaultSet(),
+            MeshTransformData({1.5f, 0.f, 0.f}),
+            {}
+        );
     }
 
     PipelineInfo Engine::make_pipeline_info(vk::SampleCountFlagBits sampleCount)
@@ -434,12 +454,18 @@ namespace kailux
     void Engine::updateMeshDataBuffer(FrameData &frame) const
     {
         std::vector<MeshData> data;
-        auto view = m_Scene.getEntityRegistry().view<MeshTransformData, MeshMaterialData, MeshComponent>();
+        auto view = m_Scene.getEntityRegistry().view<MeshTransformData, MeshMaterialData, MeshComponent, MaterialComponent>();
         data.reserve(view.size_hint());
         for (auto entity: view)
         {
             const auto &transform = view.get<MeshTransformData>(entity);
-            const auto &material = view.get<MeshMaterialData>(entity);
+            auto material = view.get<MeshMaterialData>(entity);
+            auto textureHandles = view.get<MaterialComponent>(entity);
+            material.albedoIdx = textureHandles.set.albedo.index;
+            material.normalIdx = textureHandles.set.normal.index;
+            material.roughnessIdx = textureHandles.set.roughness.index;
+            material.metallicIdx = textureHandles.set.metallic.index;
+            material.aoIdx = textureHandles.set.ao.index;
             data.emplace_back(
                 transform.getModelMatrix(),
                 material
@@ -524,7 +550,12 @@ namespace kailux
             std::vector<Buffer> stagingBuffers;
             auto otc = OneTimeCommand::create(m_Context);
             auto handle = m_MeshRegistry.upload(m_Context, otc.getCommandBuffer(), *data, stagingBuffers);
-            m_Scene.createMeshEntity(m_Scene.getMeshEntityName(), handle, MeshTransformData({-2.f, 0.f, 0.f}), {});
+            m_Scene.createMeshEntity(m_Scene.getMeshEntityName(),
+                                     handle,
+                                     m_TextureRegistry.getDefaultSet(),
+                                     MeshTransformData({-2.f, 0.f, 0.f}),
+                                     {}
+            );
 
             otc.submit(m_Context);
         }
