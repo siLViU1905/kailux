@@ -61,6 +61,7 @@ namespace kailux
         if (m_Context.getDevice())
         {
             waitIdle();
+            m_Frames = {};
             OneTimeCommand::destroy_command_pool();
         }
     }
