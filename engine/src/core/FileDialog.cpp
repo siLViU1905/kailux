@@ -5,10 +5,19 @@ namespace kailux
 {
     void FileDialog::open(std::string_view title)
     {
-        auto result = pfd::open_file(title.data());
-        const auto& paths = result.result();
-        for (const auto& path : paths)
-            m_PathsQueue.push(path);
+        m_DiagHandle = create_scoped<pfd::open_file>(title.data());
+    }
+
+    bool FileDialog::poll()
+    {
+        if (m_DiagHandle && m_DiagHandle->ready())
+        {
+            for (const auto& path : m_DiagHandle->result())
+                m_PathsQueue.push(path);
+            m_DiagHandle.reset();
+            return true;
+        }
+        return false;
     }
 
     FileDialog::PopPathResult FileDialog::tryPopPath()
