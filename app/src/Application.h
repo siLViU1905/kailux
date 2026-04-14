@@ -1,6 +1,7 @@
 #pragma once
 #include "Editor.h"
 #include "core/Engine.h"
+#include "core/FileDialog.h"
 #include "core/window/Window.h"
 
 namespace kailux
@@ -24,8 +25,14 @@ namespace kailux
     private:
         void setCallbacks();
 
-        Window m_Window;
-        Engine m_Engine;
-        Editor m_Editor;
+        void pollMeshLoad();
+
+        Window           m_Window;
+        Engine           m_Engine;
+        Editor           m_Editor;
+
+        static constexpr uint32_t s_ThreadCount = 2;
+        Shared<ThreadDispatcher>  m_ThreadDispatcher;
+        FileDialog                m_LoadMeshDialog;
     };
 }

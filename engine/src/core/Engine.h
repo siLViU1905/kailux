@@ -15,6 +15,8 @@
 
 #include "Scene.h"
 #include "mesh/MeshLoader.h"
+#include "utilities/Queue.h"
+#include "utilities/ThreadDispatcher.h"
 
 namespace kailux
 {
@@ -26,11 +28,12 @@ namespace kailux
 
         static Engine create(Window& window);
 
-        using LoadResult = std::expected<void, std::string>;
-        LoadResult loadMesh(std::string_view path);
-
         using OnEditorRender = std::move_only_function<void(Scene&)>;
         void setOnEditorRender(OnEditorRender&& callback);
+
+        void waitIdle() const;
+
+        Queue<MeshRegistry::MeshData>& getPendingDataQueue();
 
         void run(Window& window);
 
@@ -144,6 +147,8 @@ namespace kailux
 
         void handleEvent(Window &window);
 
+        void pollPendingData();
+
         static constexpr uint32_t s_FramesInFlight = 2;
 
         Context                                 m_Context;
@@ -162,5 +167,7 @@ namespace kailux
         Scene                                   m_Scene;
         OnEditorRender                          m_OnEditorRender;
         SkyboxPass                              m_Skybox;
+
+        Queue<MeshRegistry::MeshData>           m_PendingData;
     };
 }
