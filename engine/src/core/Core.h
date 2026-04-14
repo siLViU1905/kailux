@@ -7,6 +7,14 @@
     ClassName(ClassName&& other) noexcept; \
     ClassName& operator=(ClassName&& other) noexcept;
 
+#define KAILUX_DECLARE_SINGLETON(ClassName) \
+    ClassName() = delete; \
+    ClassName(const ClassName&) = delete; \
+    ClassName& operator=(const ClassName&) = delete; \
+    ClassName(ClassName&& other) noexcept = delete; \
+    ClassName& operator=(ClassName&& other) noexcept = delete; \
+    static Shared<ClassName> get();
+
 #define KAILUX_CHECK_DATA_STRUCTURE_SIZE(ClassName) \
     static_assert(sizeof(ClassName) % 16 == 0);
 

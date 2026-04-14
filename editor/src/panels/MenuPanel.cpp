@@ -48,10 +48,7 @@ namespace kailux
 
                     ImGui::EndMenu();
                 } else if (ImGui::MenuItem("Load mesh..."))
-                {
-                    m_LoadMeshDialog.open("Choose a supported format");
-                    sendLoadMeshPaths();
-                }
+                    m_OnLoadMesh();
 
                 ImGui::EndMenu();
             }
@@ -87,11 +84,5 @@ namespace kailux
         ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
 
         ImGui::End();
-    }
-
-    void MenuPanel::sendLoadMeshPaths()
-    {
-        while (auto path = m_LoadMeshDialog.tryPopPath())
-            m_OnLoadMesh(*path);
     }
 }

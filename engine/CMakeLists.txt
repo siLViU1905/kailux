@@ -29,6 +29,7 @@ add_library(kailux_engine STATIC
         src/core/SkyboxPass.cpp
         src/core/mesh/MeshLoader.cpp
         src/core/FileDialog.cpp
+        src/core/utilities/ThreadDispatcher.cpp
 )
 
 target_compile_definitions(kailux_engine PUBLIC

@@ -9,7 +9,8 @@ namespace kailux
 
     Application::Application(Application &&other) noexcept : m_Window(std::move(other.m_Window)),
                                                              m_Engine(std::move(other.m_Engine)),
-                                                             m_Editor(std::move(other.m_Editor))
+                                                             m_Editor(std::move(other.m_Editor)),
+                                                             m_ThreadDispatcher(std::move(other.m_ThreadDispatcher))
     {
     }
 
@@ -20,6 +21,7 @@ namespace kailux
             m_Window = std::move(other.m_Window);
             m_Engine = std::move(other.m_Engine);
             m_Editor = std::move(other.m_Editor);
+            m_ThreadDispatcher = std::move(other.m_ThreadDispatcher);
         }
         return *this;
     }
@@ -31,26 +33,48 @@ namespace kailux
         app.m_Window.updateUserPointer();
         app.m_Engine = Engine::create(app.m_Window);
         app.m_Editor = Editor::create();
+        ThreadDispatcher::s_MaxThreads = s_ThreadCount;
+        app.m_ThreadDispatcher = ThreadDispatcher::get();
         app.setCallbacks();
         return app;
     }
 
     void Application::run()
     {
-        m_Engine.run(m_Window);
+        while (m_Window.isOpen())
+        {
+            m_Window.pollEvents();
+
+            pollMeshLoad();
+
+            m_Engine.run(m_Window);
+        }
+        m_Engine.waitIdle();
     }
 
     void Application::setCallbacks()
     {
-        auto& menuPanel = static_cast<MenuPanel&>(*m_Editor.getEditorLayer().getPanels()[kailux::EditorLayer::s_MenuPanelIndex]);
-        menuPanel.setOnLoadMesh([this](std::string_view path)
+        auto &menuPanel = static_cast<MenuPanel &>(*m_Editor.getEditorLayer().getPanels()[
+            EditorLayer::s_MenuPanelIndex]);
+        menuPanel.setOnLoadMesh([this]()
         {
-            (void)m_Engine.loadMesh(path);
+            m_LoadMeshDialog.open("Choose a supported mesh format");
         });
 
-        m_Engine.setOnEditorRender([this](Scene& scene)
+        m_Engine.setOnEditorRender([this](Scene &scene)
         {
             m_Editor.render(scene);
         });
+    }
+
+    void Application::pollMeshLoad()
+    {
+        if (m_LoadMeshDialog.poll())
+            while (auto path = m_LoadMeshDialog.tryPopPath())
+                m_ThreadDispatcher->enqueue([this, p = *path]()
+                {
+                    if (auto data = MeshLoader::load(p))
+                        m_Engine.getPendingDataQueue().push(std::move(*data));
+                });
     }
 }

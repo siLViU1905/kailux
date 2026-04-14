@@ -10,14 +10,13 @@ namespace kailux
         MenuPanel();
         MenuPanel(std::string_view name, ImVec2 position, ImVec2 size, ImVec4 backgroundColor);
 
-        using OnLoadMesh = std::move_only_function<void(std::string_view)>;
+        using OnLoadMesh = std::move_only_function<void()>;
         void setOnLoadMesh(OnLoadMesh&& callback);
 
         void render(Scene &scene) override;
 
     private:
         void renderProfilerWindow();
-        void sendLoadMeshPaths();
 
         bool       m_ShowProfiler;
         OnLoadMesh m_OnLoadMesh;

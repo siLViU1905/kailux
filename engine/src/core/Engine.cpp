@@ -1,5 +1,6 @@
 #include "Engine.h"
 
+#include "FileDialog.h"
 #include "command/CommandRecorder.h"
 #include "Logger.h"
 #include "command/OneTimeCommand.h"
@@ -28,7 +29,8 @@ namespace kailux
                                               m_CurrentFrame(other.m_CurrentFrame),
                                               m_Clock(other.m_Clock),
                                               m_Scene(std::move(other.m_Scene)),
-                                              m_Skybox(std::move(other.m_Skybox))
+                                              m_Skybox(std::move(other.m_Skybox)),
+                                              m_PendingData(std::move(other.m_PendingData))
     {
     }
 
@@ -49,13 +51,18 @@ namespace kailux
             m_Clock = other.m_Clock;
             m_Scene = std::move(other.m_Scene);
             m_Skybox = std::move(other.m_Skybox);
+            m_PendingData = std::move(other.m_PendingData);
         }
         return *this;
     }
 
     Engine::~Engine()
     {
-        OneTimeCommand::destroy_command_pool();
+        if (m_Context.getDevice())
+        {
+            waitIdle();
+            OneTimeCommand::destroy_command_pool();
+        }
     }
 
     Engine Engine::create(Window &window)
@@ -73,24 +80,19 @@ namespace kailux
         return engine;
     }
 
-    Engine::LoadResult Engine::loadMesh(std::string_view path)
-    {
-        std::vector<Buffer> stagingBuffers;
-        auto otc = OneTimeCommand::create(m_Context);
-        auto meshData = MeshLoader::load(path);
-        if (!meshData)
-            return std::unexpected(meshData.error());
-
-        auto handle = m_MeshRegistry.upload(m_Context, otc.getCommandBuffer(), *meshData, stagingBuffers);
-        m_Scene.createMeshEntity(m_Scene.getMeshEntityName(), handle, MeshTransformData({-2.f, 0.f, 0.f}), {});
-
-        otc.submit(m_Context);
-        return {};
-    }
-
     void Engine::setOnEditorRender(OnEditorRender &&callback)
     {
         m_OnEditorRender = std::move(callback);
+    }
+
+    void Engine::waitIdle() const
+    {
+        m_Context.getDevice().waitIdle();
+    }
+
+    Queue<MeshRegistry::MeshData> &Engine::getPendingDataQueue()
+    {
+        return m_PendingData;
     }
 
     void Engine::createRenderingContext(Window &window)
@@ -514,32 +516,40 @@ namespace kailux
             );
     }
 
+    void Engine::pollPendingData()
+    {
+        if (auto data = m_PendingData.tryPop())
+        {
+            std::vector<Buffer> stagingBuffers;
+            auto otc = OneTimeCommand::create(m_Context);
+            auto handle = m_MeshRegistry.upload(m_Context, otc.getCommandBuffer(), *data, stagingBuffers);
+            m_Scene.createMeshEntity(m_Scene.getMeshEntityName(), handle, MeshTransformData({-2.f, 0.f, 0.f}), {});
+
+            otc.submit(m_Context);
+        }
+    }
+
     void Engine::run(Window &window)
     {
-        while (window.isOpen())
+        m_Clock.tick();
+        handleEvent(window);
+        pollPendingData();
+
+        auto deltaTime = m_Clock.getDeltaTime<float, TimeType::Seconds>();
+        auto view = m_Scene.getEntityRegistry().view<CameraComponent>();
+        for (auto entity: view)
         {
-            m_Clock.tick();
-            window.pollEvents();
-            handleEvent(window);
-
-            auto deltaTime = m_Clock.getDeltaTime<float, TimeType::Seconds>();
-            auto view = m_Scene.getEntityRegistry().view<CameraComponent>();
-            for (auto entity: view)
-            {
-                auto &camera = view.get<CameraComponent>(entity).camera;
-                camera.updateMovement(window, deltaTime);
-                camera.updateLookAt(window, deltaTime);
-            }
-
-            if (window.isMinimized())
-                continue;
-
-            if (window.wasResized())
-                m_Swapchain.recreate(window, m_Context, m_SampleCount);
-
-            render(window);
+            auto &camera = view.get<CameraComponent>(entity).camera;
+            camera.updateMovement(window, deltaTime);
+            camera.updateLookAt(window, deltaTime);
         }
 
-        m_Context.getDevice().waitIdle();
+        if (window.isMinimized())
+            return;
+
+        if (window.wasResized())
+            m_Swapchain.recreate(window, m_Context, m_SampleCount);
+
+        render(window);
     }
 }
