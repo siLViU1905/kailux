@@ -56,6 +56,7 @@ namespace kailux
         void createSkybox();
         void createFrameResources();
         void createMeshRegistry();
+        void createTextureRegistry();
         void createImGui(Window& window);
         void createScene();
         void createSceneEntities(const Window &window);
@@ -75,12 +76,12 @@ namespace kailux
                 vk::DescriptorType::eStorageBuffer,
                 1, // scene
                 vk::ShaderStageFlagBits::eFragment
-                ),
+            ),
             DescriptorLayoutBinding(
                 vk::DescriptorType::eCombinedImageSampler,
                 1, // skybox
                 vk::ShaderStageFlagBits::eFragment
-                ),
+            ),
             DescriptorLayoutBinding(
                 vk::DescriptorType::eCombinedImageSampler,
                 1, // irradiance map
@@ -89,6 +90,31 @@ namespace kailux
             DescriptorLayoutBinding(
                 vk::DescriptorType::eCombinedImageSampler,
                 1, // brdf lut
+                vk::ShaderStageFlagBits::eFragment
+            ),
+            DescriptorLayoutBinding(
+                vk::DescriptorType::eCombinedImageSampler,
+                s_MaxMeshCount, // albedo
+                vk::ShaderStageFlagBits::eFragment
+            ),
+            DescriptorLayoutBinding(
+                vk::DescriptorType::eCombinedImageSampler,
+                s_MaxMeshCount, // normal
+                vk::ShaderStageFlagBits::eFragment
+            ),
+            DescriptorLayoutBinding(
+                vk::DescriptorType::eCombinedImageSampler,
+                s_MaxMeshCount, // roughness
+                vk::ShaderStageFlagBits::eFragment
+            ),
+            DescriptorLayoutBinding(
+                vk::DescriptorType::eCombinedImageSampler,
+                s_MaxMeshCount, // metallic
+                vk::ShaderStageFlagBits::eFragment
+            ),
+            DescriptorLayoutBinding(
+                vk::DescriptorType::eCombinedImageSampler,
+                s_MaxMeshCount, // ao
                 vk::ShaderStageFlagBits::eFragment
             )
         };
@@ -104,11 +130,11 @@ namespace kailux
             DescriptorPoolSize(
                 vk::DescriptorType::eStorageBuffer,
                 1 // scene
-                ),
+            ),
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
                 1 // skybox
-                ),
+            ),
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
                 1 // irradiance map
@@ -116,6 +142,26 @@ namespace kailux
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
                 1 // brdf lut
+            ),
+            DescriptorPoolSize(
+                vk::DescriptorType::eCombinedImageSampler,
+                s_MaxMeshCount // albedo
+            ),
+            DescriptorPoolSize(
+                vk::DescriptorType::eCombinedImageSampler,
+                s_MaxMeshCount // normal
+            ),
+            DescriptorPoolSize(
+                vk::DescriptorType::eCombinedImageSampler,
+                s_MaxMeshCount // roughness
+            ),
+            DescriptorPoolSize(
+                vk::DescriptorType::eCombinedImageSampler,
+                s_MaxMeshCount // metallic
+            ),
+            DescriptorPoolSize(
+                vk::DescriptorType::eCombinedImageSampler,
+                s_MaxMeshCount // ao
             )
         };
         static constexpr bool check_descriptor_layout_bindings_and_pool_sizes_match(std::span<const DescriptorLayoutBinding> bindings, std::span<const DescriptorPoolSize> sizes)
@@ -159,6 +205,7 @@ namespace kailux
         DescriptorPool                          m_DescriptorPool;
         Pipeline                                m_Pipeline;
         MeshRegistry                            m_MeshRegistry;
+        TextureRegistry                         m_TextureRegistry;
         std::array<FrameData, s_FramesInFlight> m_Frames;
         uint32_t                                m_CurrentFrame;
 

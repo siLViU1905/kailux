@@ -2,6 +2,7 @@
 
 #include "components/entt/CameraComponent.h"
 #include "components/entt/MeshComponent.h"
+#include "components/entt/MaterialComponent.h"
 #include "components/entt/TagComponent.h"
 #include "components/gpu/CameraData.h"
 
@@ -58,14 +59,23 @@ namespace kailux
         return entity;
     }
 
-    entt::entity Scene::createMeshEntity(std::string_view name, MeshHandle handle, const MeshTransformData &transform,
-                                         const MeshMaterialData &material)
+    entt::entity Scene::createMeshEntity(
+        std::string_view name,
+        MeshHandle meshHandle,
+        TextureSetHandle textureSetHandle,
+        const MeshTransformData &transform,
+        const MeshMaterialData &material
+    )
     {
         auto entity = createEntity(name);
         m_EntityRegistry.emplace<MeshComponent>(
             entity,
-            handle
+            meshHandle
         );
+        m_EntityRegistry.emplace<MaterialComponent>(
+            entity,
+            textureSetHandle
+            );
         m_EntityRegistry.emplace<MeshTransformData>(
             entity,
             transform

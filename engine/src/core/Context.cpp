@@ -335,6 +335,9 @@ namespace kailux
         f11.shaderDrawParameters = vk::True;
 
         f12.runtimeDescriptorArray = vk::True;
+        f12.descriptorBindingPartiallyBound = vk::True;
+        f12.descriptorBindingSampledImageUpdateAfterBind = vk::True;
+        f12.shaderSampledImageArrayNonUniformIndexing = vk::True;
 
         f13.dynamicRendering = vk::True;
         f13.synchronization2 = vk::True;

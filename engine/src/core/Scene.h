@@ -7,6 +7,7 @@
 #include "components/gpu/MeshMaterialData.h"
 #include "components/gpu/SceneData.h"
 #include "mesh/MeshRegistry.h"
+#include "texture/TextureRegistry.h"
 
 namespace kailux
 {
@@ -18,7 +19,13 @@ namespace kailux
         static Scene create();
 
         entt::entity createCameraEntity(std::string_view name, const Camera& camera, bool isPrimary);
-        entt::entity createMeshEntity(std::string_view name, MeshHandle handle, const MeshTransformData& transform, const MeshMaterialData & material);
+        entt::entity createMeshEntity(
+            std::string_view name,
+            MeshHandle meshHandle,
+            TextureSetHandle textureSetHandle,
+            const MeshTransformData &transform,
+            const MeshMaterialData &material
+        );
 
         entt::registry&       getEntityRegistry();
         const entt::registry& getEntityRegistry() const;
