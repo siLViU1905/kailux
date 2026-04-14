@@ -57,6 +57,8 @@ layout (location = 4) in flat vec3  fragAlbedo;
 layout (location = 5) in flat float fragRoughness;
 layout (location = 6) in flat float fragMetallic;
 layout (location = 7) in flat float fragAO;
+layout (location = 8) in vec2 fragTexCoord;
+layout (location = 9) in mat3 fragTBN;
 
 layout (location = 0) out vec4 outColor;
 
@@ -79,7 +81,9 @@ layout(set = 0, binding = 5) uniform sampler2D brdfLutSampler;
 
 void main()
 {
-    vec3 N = normalize(fragNormal);
+    vec3 localNormal = vec3(0.0, 0.0, 1.0);
+
+    vec3 N = normalize(fragTBN * localNormal);
     vec3 V = normalize(viewPos - fragPos);
     vec3 R = reflect(-V, N);
 
