@@ -49,7 +49,7 @@ namespace kailux
             vk::QueueFamilyIgnored,
             info.image,
             vk::ImageSubresourceRange{
-                vk::ImageAspectFlagBits::eColor,
+                info.aspect,
                 0, 1,
                 0, 1
             }

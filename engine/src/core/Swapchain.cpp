@@ -62,7 +62,7 @@ namespace kailux
         return *this;
     }
 
-    void Swapchain::createSwapchain(Window &window, const Context &context)
+    void Swapchain::createSwapchain(const Window &window, const Context &context)
     {
         auto surfaceCapabilities = context.getPhysicalDevice().getSurfaceCapabilitiesKHR(context.getSurface());
 
@@ -131,7 +131,7 @@ namespace kailux
         return swapChain;
     }
 
-    void Swapchain::recreate(Window &window, const Context &context, vk::SampleCountFlagBits sampleCount)
+    void Swapchain::recreate(const Window &window, const Context &context, vk::SampleCountFlagBits sampleCount)
     {
         int width = 0, height = 0;
         while (width == 0 || height == 0)
@@ -141,6 +141,8 @@ namespace kailux
         }
 
         context.getDevice().waitIdle();
+
+        // createSwapchain(window, context);
 
         m_ImageViews.clear();
         m_Images.clear();
@@ -182,6 +184,11 @@ namespace kailux
         return *m_ColorImage;
     }
 
+    vk::Image Swapchain::getDepthImage() const
+    {
+        return *m_DepthImage;
+    }
+
     vk::ImageView Swapchain::getImageView(uint32_t index) const
     {
         return *m_ImageViews[index];
@@ -204,22 +211,21 @@ namespace kailux
 
     std::optional<Swapchain::AcquireResult> Swapchain::acquire()
     {
-        vk::Semaphore semaphore = *m_AcquireSemaphores[m_SemaphoreIndex];
-        auto [result, imageIndex] = m_Swapchain.acquireNextImage(
-            UINT64_MAX,
-            semaphore,
-            nullptr
-        );
+        auto semaphore = *m_AcquireSemaphores[m_SemaphoreIndex];
+        try
+        {
+            auto [result, imageIndex] = m_Swapchain.acquireNextImage(UINT64_MAX, semaphore, nullptr);
 
-        if (result == vk::Result::eErrorOutOfDateKHR)
+            m_SemaphoreIndex = (m_SemaphoreIndex + 1) % m_AcquireSemaphores.size();
+
+            return AcquireResult(imageIndex, semaphore);
+        } catch (const vk::OutOfDateKHRError &)
+        {
             return std::nullopt;
-
-        if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR)
-            throw std::runtime_error("Failed to acquire swap chain image");
-
-        m_SemaphoreIndex = (m_SemaphoreIndex + 1) % m_AcquireSemaphores.size();
-
-        return AcquireResult(imageIndex, semaphore);
+        } catch (...)
+        {
+            return std::nullopt;
+        }
     }
 
     vk::Semaphore Swapchain::getPresentSemaphore(uint32_t index) const
@@ -235,13 +241,15 @@ namespace kailux
             imageIndex
         };
 
-        vk::Result result = context.getGraphicsQueue().presentKHR(presentInfo);
-
-        if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR)
+        try
+        {
+            auto result = context.getGraphicsQueue().presentKHR(presentInfo);
+            if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR)
+                return false;
+        } catch (const vk::OutOfDateKHRError &)
+        {
             return false;
-
-        if (result != vk::Result::eSuccess)
-            throw std::runtime_error("Failed to present swap chain image");
+        }
 
         return true;
     }
@@ -257,14 +265,13 @@ namespace kailux
         return availableFormats[0];
     }
 
-    vk::Extent2D Swapchain::choose_swap_extent(const vk::SurfaceCapabilitiesKHR &capabilities, Window &window)
+    vk::Extent2D Swapchain::choose_swap_extent(const vk::SurfaceCapabilitiesKHR &capabilities, const Window &window)
     {
         if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
             return capabilities.currentExtent;
 
         int width, height;
-
-        glfwGetFramebufferSize(window.getGLFWWindow(), &width, &height);
+        window.getFramebufferSize(width, height);
 
         return {
             std::clamp<uint32_t>(width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width),

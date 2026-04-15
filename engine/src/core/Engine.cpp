@@ -273,8 +273,7 @@ namespace kailux
         m_Context.getGraphicsQueue().submit2(submitInfo, frame.getFenceInFlight());
     }
 
-    void Engine::render(Window &window)
-    {
+    void Engine::render(Window &window) {
         auto &frame = m_Frames[m_CurrentFrame];
         frame.reset(m_Context);
 
@@ -284,7 +283,9 @@ namespace kailux
             m_Swapchain.recreate(window, m_Context, m_SampleCount);
             return;
         }
-        vk::Semaphore renderFinishedSemaphore = m_Swapchain.getPresentSemaphore(acquired->imageIndex); {
+
+        vk::Semaphore renderFinishedSemaphore = m_Swapchain.getPresentSemaphore(acquired->imageIndex);
+        {
             CommandRecorder recorder(frame.getCommandBuffer());
             updateFrameBuffers(frame, recorder);
 
@@ -302,6 +303,18 @@ namespace kailux
                     vk::ImageLayout::eUndefined,
                     vk::ImageLayout::eColorAttachmentOptimal
                 });
+
+            recorder.imageBarrier(
+                {
+                m_Swapchain.getDepthImage(),
+                vk::ImageLayout::eUndefined,
+                vk::ImageLayout::eDepthAttachmentOptimal,
+                vk::PipelineStageFlagBits2::eTopOfPipe,
+                vk::PipelineStageFlagBits2::eEarlyFragmentTests,
+                vk::AccessFlagBits2::eNone,
+                vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+                    vk::ImageAspectFlagBits::eDepth
+            });
 
             const auto &ambient = m_Scene.getAmbient();
             vk::ClearColorValue clearColor(ambient.x, ambient.y, ambient.z, ambient.w);

@@ -2,6 +2,7 @@
 #include "descriptor/DescriptorLayout.h"
 #include "Pipeline.h"
 #include "descriptor/DescriptorPool.h"
+#include "descriptor/DescriptorSet.h"
 #include "mesh/MeshRegistry.h"
 #include "texture/Texture.h"
 

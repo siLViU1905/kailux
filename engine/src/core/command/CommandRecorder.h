@@ -16,6 +16,7 @@ namespace kailux
         vk::AccessFlags2        srcAccess   = vk::AccessFlagBits2::eMemoryWrite;
         vk::AccessFlags2        dstAccess   = vk::AccessFlagBits2::eMemoryRead |
                                               vk::AccessFlagBits2::eMemoryWrite;
+        vk::ImageAspectFlags    aspect      = vk::ImageAspectFlagBits::eColor;
     };
 
     struct RenderingInfo
