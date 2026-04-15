@@ -303,6 +303,18 @@ namespace kailux
                     vk::ImageLayout::eColorAttachmentOptimal
                 });
 
+            recorder.imageBarrier(
+                {
+                m_Swapchain.getDepthImage(),
+                vk::ImageLayout::eUndefined,
+                vk::ImageLayout::eDepthAttachmentOptimal,
+                vk::PipelineStageFlagBits2::eTopOfPipe,
+                vk::PipelineStageFlagBits2::eEarlyFragmentTests,
+                vk::AccessFlagBits2::eNone,
+                vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+                    vk::ImageAspectFlagBits::eDepth
+            });
+
             const auto &ambient = m_Scene.getAmbient();
             vk::ClearColorValue clearColor(ambient.x, ambient.y, ambient.z, ambient.w);
             recorder.beginRendering(

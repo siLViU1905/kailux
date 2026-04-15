@@ -182,6 +182,11 @@ namespace kailux
         return *m_ColorImage;
     }
 
+    vk::Image Swapchain::getDepthImage() const
+    {
+        return *m_DepthImage;
+    }
+
     vk::ImageView Swapchain::getImageView(uint32_t index) const
     {
         return *m_ImageViews[index];
