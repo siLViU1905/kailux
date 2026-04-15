@@ -5,7 +5,6 @@
 
 #include "descriptor/DescriptorLayout.h"
 #include "Logger.h"
-#include "Swapchain.h"
 #include "mesh/Vertex.h"
 
 namespace kailux

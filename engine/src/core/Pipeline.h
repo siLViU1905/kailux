@@ -3,6 +3,8 @@
 
 #include "Context.h"
 #include "Core.h"
+#include "Swapchain.h"
+#include "descriptor/DescriptorLayout.h"
 
 namespace kailux
 {
