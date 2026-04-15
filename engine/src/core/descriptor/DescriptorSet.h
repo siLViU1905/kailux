@@ -1,6 +1,9 @@
 #pragma once
 #include "../Core.h"
 #include "../Context.h"
+#include "DescriptorLayout.h"
+#include "DescriptorPool.h"
+#include "../Pipeline.h"
 
 namespace kailux
 {

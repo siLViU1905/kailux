@@ -2,6 +2,7 @@
 #include <vulkan/vulkan_raii.hpp>
 #include <imgui.h>
 #include "core/Context.h"
+#include "../Swapchain.h"
 
 namespace kailux
 {

@@ -101,7 +101,7 @@ namespace kailux
         if (ImGui::IsWindowAppearing())
         {
             nameExistsError = false;
-            strncpy_s(nameBuffer, registry.get<TagComponent>(entity).name.c_str(), sizeof(nameBuffer) - 1);
+            std::strncpy(nameBuffer, registry.get<TagComponent>(entity).name.c_str(), sizeof(nameBuffer) - 1);
             nameBuffer[sizeof(nameBuffer) - 1] = 0;
         }
 
