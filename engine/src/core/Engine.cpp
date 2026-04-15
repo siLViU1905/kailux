@@ -273,8 +273,7 @@ namespace kailux
         m_Context.getGraphicsQueue().submit2(submitInfo, frame.getFenceInFlight());
     }
 
-    void Engine::render(Window &window)
-    {
+    void Engine::render(Window &window) {
         auto &frame = m_Frames[m_CurrentFrame];
         frame.reset(m_Context);
 
@@ -284,7 +283,9 @@ namespace kailux
             m_Swapchain.recreate(window, m_Context, m_SampleCount);
             return;
         }
-        vk::Semaphore renderFinishedSemaphore = m_Swapchain.getPresentSemaphore(acquired->imageIndex); {
+
+        vk::Semaphore renderFinishedSemaphore = m_Swapchain.getPresentSemaphore(acquired->imageIndex);
+        {
             CommandRecorder recorder(frame.getCommandBuffer());
             updateFrameBuffers(frame, recorder);
 

@@ -10,7 +10,7 @@ namespace kailux
 
         static Swapchain create(Window& window, const Context& context, vk::SampleCountFlagBits sampleCount);
 
-        void recreate(Window& window, const Context& context, vk::SampleCountFlagBits sampleCount);
+        void recreate(const Window &window, const Context& context, vk::SampleCountFlagBits sampleCount);
 
         vk::Format              getFormat() const;
         vk::Format              getDepthFormat() const;
@@ -35,11 +35,11 @@ namespace kailux
 
     private:
         static vk::SurfaceFormatKHR choose_swap_surface_format(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
-        static vk::Extent2D choose_swap_extent(const vk::SurfaceCapabilitiesKHR &capabilities, Window& window);
+        static vk::Extent2D choose_swap_extent(const vk::SurfaceCapabilitiesKHR &capabilities, const Window &window);
         static vk::PresentModeKHR choose_swap_present_mode(const std::vector<vk::PresentModeKHR> &availablePresentModes);
         static vk::Format find_depth_format(const Context& context);
 
-        void createSwapchain(Window& window, const Context& context);
+        void createSwapchain(const Window& window, const Context& context);
         void createImageViews(const Context& context);
         void createColorResources(const Context &context, vk::SampleCountFlagBits sampleCount);
         void createDepthResources(const Context& context, vk::SampleCountFlagBits sampleCount);

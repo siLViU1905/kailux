@@ -44,6 +44,8 @@ namespace kailux
         while (m_Window.isOpen())
         {
             m_Window.pollEvents();
+            if (m_Window.isMinimized())
+                continue;
 
             pollMeshLoad();
 
