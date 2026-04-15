@@ -1,12 +1,12 @@
 #!/bin/bash
 
-conan export scripts/imguizmo [cite: 2]
+conan export scripts/imguizmo
 
 if [ -d "build" ]; then
-    rm -rf build [cite: 2]
+    rm -rf build
 fi
 
-echo "[INFO] Conan install: DEBUG..." [cite: 2]
+echo "[INFO] Conan install: DEBUG..."
 conan install . --output-folder=build --build=missing \
     -s build_type=Debug \
     -s compiler.cppstd=23 \

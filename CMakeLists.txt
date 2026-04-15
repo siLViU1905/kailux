@@ -3,10 +3,6 @@ project(kailux)
 
 set(CMAKE_CXX_STANDARD 23)
 
-if(EXISTS "${CMAKE_BINARY_DIR}/build/Debug/generators/conan_toolchain.cmake")
-    set(CMAKE_TOOLCHAIN_FILE "${CMAKE_BINARY_DIR}/build/Debug/generators/conan_toolchain.cmake" CACHE PATH "")
-endif()
-
 find_package(Vulkan 1.4 REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(imgui REQUIRED)
