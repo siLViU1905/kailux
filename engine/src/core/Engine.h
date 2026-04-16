@@ -33,7 +33,7 @@ namespace kailux
 
         void waitIdle() const;
 
-        Queue<MeshRegistry::MeshData>& getPendingDataQueue();
+        Queue<MeshLoader::LoadData> &getPendingDataQueue();
 
         void run(Window& window);
 
@@ -61,6 +61,7 @@ namespace kailux
         void createScene();
         void createSceneEntities(const Window &window);
 
+        static constexpr uint32_t   s_MeshTextureBindStart = 6;
         static constexpr std::array s_DescriptorLayoutBindings = {
             DescriptorLayoutBinding(
                 vk::DescriptorType::eUniformBuffer,
@@ -193,7 +194,9 @@ namespace kailux
 
         void handleEvent(Window &window);
 
-        void pollPendingData();
+        void             pollPendingData();
+        MeshHandle       uploadMeshToRegistry(const MeshRegistry::MeshData& data);
+        TextureSetHandle uploadTextureSetToRegistry(const TextureRegistry::MaterialData& data);
 
         static constexpr uint32_t s_FramesInFlight = 2;
 
@@ -215,6 +218,6 @@ namespace kailux
         OnEditorRender                          m_OnEditorRender;
         SkyboxPass                              m_Skybox;
 
-        Queue<MeshRegistry::MeshData>           m_PendingData;
+        Queue<MeshLoader::LoadData>             m_PendingData;
     };
 }

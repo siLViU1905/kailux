@@ -1,5 +1,7 @@
 #include "Engine.h"
 
+#include <magic_enum/magic_enum.hpp>
+
 #include "FileDialog.h"
 #include "command/CommandRecorder.h"
 #include "Logger.h"
@@ -95,7 +97,7 @@ namespace kailux
         m_Context.getDevice().waitIdle();
     }
 
-    Queue<MeshRegistry::MeshData> &Engine::getPendingDataQueue()
+    Queue<MeshLoader::LoadData> &Engine::getPendingDataQueue()
     {
         return m_PendingData;
     }
@@ -144,7 +146,8 @@ namespace kailux
     void Engine::createFrameResources()
     {
         for (auto &frame: m_Frames)
-            frame = FrameData::create(m_Context, m_DescriptorLayout, m_DescriptorPool, m_Skybox, m_TextureRegistry, s_MaxMeshCount);
+            frame = FrameData::create(m_Context, m_DescriptorLayout, m_DescriptorPool, m_Skybox, m_TextureRegistry,
+                                      s_MaxMeshCount);
     }
 
     void Engine::createMeshRegistry()
@@ -273,7 +276,8 @@ namespace kailux
         m_Context.getGraphicsQueue().submit2(submitInfo, frame.getFenceInFlight());
     }
 
-    void Engine::render(Window &window) {
+    void Engine::render(Window &window)
+    {
         auto &frame = m_Frames[m_CurrentFrame];
         frame.reset(m_Context);
 
@@ -284,8 +288,7 @@ namespace kailux
             return;
         }
 
-        vk::Semaphore renderFinishedSemaphore = m_Swapchain.getPresentSemaphore(acquired->imageIndex);
-        {
+        vk::Semaphore renderFinishedSemaphore = m_Swapchain.getPresentSemaphore(acquired->imageIndex); {
             CommandRecorder recorder(frame.getCommandBuffer());
             updateFrameBuffers(frame, recorder);
 
@@ -306,15 +309,15 @@ namespace kailux
 
             recorder.imageBarrier(
                 {
-                m_Swapchain.getDepthImage(),
-                vk::ImageLayout::eUndefined,
-                vk::ImageLayout::eDepthAttachmentOptimal,
-                vk::PipelineStageFlagBits2::eTopOfPipe,
-                vk::PipelineStageFlagBits2::eEarlyFragmentTests,
-                vk::AccessFlagBits2::eNone,
-                vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+                    m_Swapchain.getDepthImage(),
+                    vk::ImageLayout::eUndefined,
+                    vk::ImageLayout::eDepthAttachmentOptimal,
+                    vk::PipelineStageFlagBits2::eTopOfPipe,
+                    vk::PipelineStageFlagBits2::eEarlyFragmentTests,
+                    vk::AccessFlagBits2::eNone,
+                    vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
                     vk::ImageAspectFlagBits::eDepth
-            });
+                });
 
             const auto &ambient = m_Scene.getAmbient();
             vk::ClearColorValue clearColor(ambient.x, ambient.y, ambient.z, ambient.w);
@@ -467,7 +470,8 @@ namespace kailux
     void Engine::updateMeshDataBuffer(FrameData &frame) const
     {
         std::vector<MeshData> data;
-        auto view = m_Scene.getEntityRegistry().view<MeshTransformData, MeshMaterialData, MeshComponent, MaterialComponent>();
+        auto view = m_Scene.getEntityRegistry().view<MeshTransformData, MeshMaterialData, MeshComponent,
+            MaterialComponent>();
         data.reserve(view.size_hint());
         for (auto entity: view)
         {
@@ -512,7 +516,7 @@ namespace kailux
     {
         if (auto event = window.getEvent())
             std::visit(
-                EventOverloads
+                VisitOverloads
                 {
                     [](KeyPressed e)
                     {
@@ -555,18 +559,63 @@ namespace kailux
     {
         if (auto data = m_PendingData.tryPop())
         {
-            std::vector<Buffer> stagingBuffers;
-            auto otc = OneTimeCommand::create(m_Context);
-            auto handle = m_MeshRegistry.upload(m_Context, otc.getCommandBuffer(), *data, stagingBuffers);
+            auto meshHandle = uploadMeshToRegistry(data.value().meshData);
+            auto textureHandle = uploadTextureSetToRegistry(data.value().materialData);
             m_Scene.createMeshEntity(m_Scene.getMeshEntityName(),
-                                     handle,
-                                     m_TextureRegistry.getDefaultSetHandle(),
+                                     meshHandle,
+                                     textureHandle,
                                      MeshTransformData({-2.f, 0.f, 0.f}),
                                      {}
             );
-
-            otc.submit(m_Context);
         }
+    }
+
+    MeshHandle Engine::uploadMeshToRegistry(const MeshRegistry::MeshData &data)
+    {
+        std::vector<Buffer> stagingBuffers;
+        auto otc = OneTimeCommand::create(m_Context);
+        auto handle = m_MeshRegistry.upload(m_Context, otc.getCommandBuffer(), data, stagingBuffers);
+        otc.submit(m_Context);
+        return handle;
+    }
+
+    TextureSetHandle Engine::uploadTextureSetToRegistry(const TextureRegistry::MaterialData &data)
+    {
+        auto handle = m_TextureRegistry.
+                registerTextureSet(m_TextureRegistry.createSetFromMaterialData(m_Context, data));
+        const auto &set = m_TextureRegistry.view(handle);
+
+        auto makeUpdateInfo = [handle](uint32_t binding, const auto &texture)-> DescriptorSetUpdateInfo
+        {
+            return {
+                binding,
+                handle.index,
+                DescriptorSetImageInfo(
+                    texture->getSampler(),
+                    texture->getImageView(),
+                    vk::ImageLayout::eShaderReadOnlyOptimal,
+                    1
+                )
+            };
+        };
+        uint32_t textureIndex = 0;
+        std::array updateInfos = {
+            makeUpdateInfo(s_MeshTextureBindStart + textureIndex++, set.albedo),
+            makeUpdateInfo(s_MeshTextureBindStart + textureIndex++, set.normal),
+            makeUpdateInfo(s_MeshTextureBindStart + textureIndex++, set.roughness),
+            makeUpdateInfo(s_MeshTextureBindStart + textureIndex++, set.metallic),
+            makeUpdateInfo(s_MeshTextureBindStart + textureIndex++, set.ao)
+        };
+        constexpr auto textureTypes = magic_enum::enum_values<TextureType>().size();
+        static_assert(textureTypes == updateInfos.size(), "There is a missing texture in update info");
+
+        for (const auto &frame: m_Frames)
+            frame.getDescriptorSet().updateInfo(
+                m_Context,
+                updateInfos
+            );
+
+        return handle;
     }
 
     void Engine::run(Window &window)

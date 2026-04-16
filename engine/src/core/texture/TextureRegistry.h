@@ -1,4 +1,6 @@
 #pragma once
+#include <assimp/material.h>
+
 #include "ImageLoader.h"
 #include "Texture.h"
 #include "core/Context.h"
@@ -24,6 +26,15 @@ namespace kailux
         Shared<Texture> ao;
     };
 
+    enum class TextureType
+    {
+        Albedo = aiTextureType_BASE_COLOR,
+        Normal = aiTextureType_NORMALS,
+        Roughness = aiTextureType_DIFFUSE_ROUGHNESS,
+        Metallic = aiTextureType_METALNESS,
+        AO = aiTextureType_AMBIENT_OCCLUSION
+    };
+
     class TextureRegistry
     {
     public:
@@ -38,6 +49,17 @@ namespace kailux
         void              updateTextureSet(TextureSetHandle handle, const TextureSet& set);
         const TextureSet& view(TextureSetHandle handle) const;
         TextureSetHandle  getDefaultSetHandle() const;
+
+        struct MaterialData
+        {
+            std::string albedoPath;
+            std::string normalPath;
+            std::string roughnessPath;
+            std::string metallicPath;
+            std::string aoPath;
+        };
+
+        TextureSet createSetFromMaterialData(const Context &context, const MaterialData& data) const;
 
     private:
         void     allocResources(uint32_t meshCount);

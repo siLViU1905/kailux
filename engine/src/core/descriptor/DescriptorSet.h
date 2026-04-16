@@ -25,6 +25,13 @@ namespace kailux
 
     using DescriptorSetInfo = std::variant<DescriptorSetBufferInfo, DescriptorSetImageInfo>;
 
+    struct DescriptorSetUpdateInfo
+    {
+        uint32_t          binding{};
+        uint32_t          arrayIndex{};
+        DescriptorSetInfo info;
+    };
+
     class DescriptorSet
     {
     public:
@@ -36,6 +43,7 @@ namespace kailux
         vk::DescriptorSet getDescriptorSet() const;
 
         void bind(const Pipeline& pipeline, vk::CommandBuffer cmd) const;
+        void updateInfo(const Context& context, std::span<const DescriptorSetUpdateInfo> updateInfos) const;
 
     private:
         void createSet(const Context &context, const DescriptorLayout &layout, const DescriptorPool &pool,

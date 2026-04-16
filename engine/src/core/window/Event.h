@@ -187,12 +187,6 @@ namespace kailux
         Disabled = GLFW_CURSOR_DISABLED
     };
 
-    template<class... Events>
-    struct EventOverloads : Events...
-    {
-        using Events::operator()...;
-    };
-
     struct KeyPressed;
     struct KeyReleased;
     struct KeyRepeated;

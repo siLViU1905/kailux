@@ -77,6 +77,27 @@ namespace kailux
         return m_DefaultSetHandle;
     }
 
+    TextureSet TextureRegistry::createSetFromMaterialData(const Context &context, const MaterialData &data) const
+    {
+        auto set = m_DefaultSet;
+        auto imgData = ImageLoader::load_image(data.albedoPath);
+        if (imgData)
+            set.albedo = create_shared<Texture>(TextureAllocator::create_from_image_data(context, *imgData));
+        imgData = ImageLoader::load_image(data.normalPath);
+        if (imgData)
+            set.normal = create_shared<Texture>(TextureAllocator::create_from_image_data(context, *imgData));
+        imgData = ImageLoader::load_image(data.roughnessPath);
+        if (imgData)
+            set.roughness = create_shared<Texture>(TextureAllocator::create_from_image_data(context, *imgData));
+        imgData = ImageLoader::load_image(data.metallicPath);
+        if (imgData)
+            set.metallic = create_shared<Texture>(TextureAllocator::create_from_image_data(context, *imgData));
+        imgData = ImageLoader::load_image(data.aoPath);
+        if (imgData)
+            set.ao = create_shared<Texture>(TextureAllocator::create_from_image_data(context, *imgData));
+        return set;
+    }
+
     void TextureRegistry::allocResources(uint32_t meshCount)
     {
         m_TexturePool.resize(meshCount, m_DefaultSet);
