@@ -65,15 +65,18 @@ namespace kailux
         uint32_t totalBufferCount = 0;
         uint32_t totalImageCount = 0;
         for (const auto &info: infos)
-            std::visit([&](const auto &arg)
-            {
-                using T = std::decay_t<decltype(arg)>;
-
-                if constexpr (std::is_same_v<T, DescriptorSetBufferInfo>)
-                    totalBufferCount += arg.count;
-                else if constexpr (std::is_same_v<T, DescriptorSetImageInfo>)
-                    totalImageCount += arg.count;
-            }, info);
+            std::visit(
+                VisitOverloads
+                {
+                    [&](const DescriptorSetBufferInfo &bufferInfo)
+                    {
+                        totalBufferCount += bufferInfo.count;
+                    },
+                    [&](const DescriptorSetImageInfo &imageInfo)
+                    {
+                        totalImageCount += imageInfo.count;
+                    }
+                }, info);
 
         descriptorWrites.reserve(infos.size());
         bufferInfos.reserve(totalBufferCount);
@@ -81,42 +84,42 @@ namespace kailux
 
         for (uint32_t i = 0; i < infos.size(); ++i)
         {
-            std::visit([&](const auto &arg)
-            {
-                using T = std::decay_t<decltype(arg)>;
-
-                if constexpr (std::is_same_v<T, DescriptorSetBufferInfo>)
+            std::visit(
+                VisitOverloads
                 {
-                    auto startIndex = static_cast<uint32_t>(bufferInfos.size());
-                    for (uint32_t c = 0; c < arg.count; ++c)
-                        bufferInfos.emplace_back(arg.buffer, 0, arg.size);
+                    [&](const DescriptorSetBufferInfo &bufferInfo)
+                    {
+                        auto startIndex = static_cast<uint32_t>(bufferInfos.size());
+                        for (uint32_t c = 0; c < bufferInfo.count; ++c)
+                            bufferInfos.emplace_back(bufferInfo.buffer, 0, bufferInfo.size);
 
-                    descriptorWrites.emplace_back(
-                        *m_Set,
-                        i,
-                        0,
-                        arg.count,
-                        arg.type,
-                        nullptr,
-                        &bufferInfos[startIndex]
-                    );
-                } else if constexpr (std::is_same_v<T, DescriptorSetImageInfo>)
-                {
-                    auto startIndex = static_cast<uint32_t>(imageInfos.size());
-                    for (uint32_t c = 0; c < arg.count; ++c)
-                        imageInfos.emplace_back(arg.sampler, arg.view, arg.layout);
+                        descriptorWrites.emplace_back(
+                            *m_Set,
+                            i,
+                            0,
+                            bufferInfo.count,
+                            bufferInfo.type,
+                            nullptr,
+                            &bufferInfos[startIndex]
+                        );
+                    },
+                    [&](const DescriptorSetImageInfo &imageInfo)
+                    {
+                        auto startIndex = static_cast<uint32_t>(imageInfos.size());
+                        for (uint32_t c = 0; c < imageInfo.count; ++c)
+                            imageInfos.emplace_back(imageInfo.sampler, imageInfo.view, imageInfo.layout);
 
-                    descriptorWrites.emplace_back(
-                        *m_Set,
-                        i,
-                        0,
-                        arg.count,
-                        vk::DescriptorType::eCombinedImageSampler,
-                        &imageInfos[startIndex],
-                        nullptr
-                    );
-                }
-            }, infos[i]);
+                        descriptorWrites.emplace_back(
+                            *m_Set,
+                            i,
+                            0,
+                            imageInfo.count,
+                            vk::DescriptorType::eCombinedImageSampler,
+                            &imageInfos[startIndex],
+                            nullptr
+                        );
+                    }
+                }, infos[i]);
         }
 
         context.m_Device.updateDescriptorSets(descriptorWrites, {});
