@@ -95,7 +95,7 @@ namespace kailux
         m_Context.getDevice().waitIdle();
     }
 
-    Queue<MeshRegistry::MeshData> &Engine::getPendingDataQueue()
+    Queue<MeshLoader::LoadData> &Engine::getPendingDataQueue()
     {
         return m_PendingData;
     }
@@ -557,10 +557,11 @@ namespace kailux
         {
             std::vector<Buffer> stagingBuffers;
             auto otc = OneTimeCommand::create(m_Context);
-            auto handle = m_MeshRegistry.upload(m_Context, otc.getCommandBuffer(), *data, stagingBuffers);
+            auto meshHandle = m_MeshRegistry.upload(m_Context, otc.getCommandBuffer(), data.value().meshData, stagingBuffers);
+            auto textureHandle = m_TextureRegistry.registerTextureSet(m_TextureRegistry.createSetFromMaterialData(m_Context, data.value().materialData));
             m_Scene.createMeshEntity(m_Scene.getMeshEntityName(),
-                                     handle,
-                                     m_TextureRegistry.getDefaultSetHandle(),
+                                     meshHandle,
+                                     textureHandle,
                                      MeshTransformData({-2.f, 0.f, 0.f}),
                                      {}
             );

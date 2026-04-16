@@ -33,7 +33,7 @@ namespace kailux
 
         void waitIdle() const;
 
-        Queue<MeshRegistry::MeshData>& getPendingDataQueue();
+        Queue<MeshLoader::LoadData> &getPendingDataQueue();
 
         void run(Window& window);
 
@@ -215,6 +215,6 @@ namespace kailux
         OnEditorRender                          m_OnEditorRender;
         SkyboxPass                              m_Skybox;
 
-        Queue<MeshRegistry::MeshData>           m_PendingData;
+        Queue<MeshLoader::LoadData>             m_PendingData;
     };
 }

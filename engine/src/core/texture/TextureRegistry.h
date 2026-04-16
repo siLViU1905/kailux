@@ -59,6 +59,8 @@ namespace kailux
             std::string aoPath;
         };
 
+        TextureSet createSetFromMaterialData(const Context &context, const MaterialData& data) const;
+
     private:
         void     allocResources(uint32_t meshCount);
         void     createDefaultTextures(const Context& context);

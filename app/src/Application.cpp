@@ -76,7 +76,7 @@ namespace kailux
                 m_ThreadDispatcher->enqueue([this, p = *path]()
                 {
                     if (auto data = MeshLoader::load(p))
-                        m_Engine.getPendingDataQueue().push(std::move(data.value().meshData));
+                        m_Engine.getPendingDataQueue().push(std::move(*data));
                 });
     }
 }
