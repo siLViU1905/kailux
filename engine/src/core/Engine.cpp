@@ -512,7 +512,7 @@ namespace kailux
     {
         if (auto event = window.getEvent())
             std::visit(
-                EventOverloads
+                VisitOverloads
                 {
                     [](KeyPressed e)
                     {
