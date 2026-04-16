@@ -61,6 +61,7 @@ namespace kailux
         void createScene();
         void createSceneEntities(const Window &window);
 
+        static constexpr uint32_t   s_MeshTextureBindStart = 6;
         static constexpr std::array s_DescriptorLayoutBindings = {
             DescriptorLayoutBinding(
                 vk::DescriptorType::eUniformBuffer,
@@ -193,7 +194,9 @@ namespace kailux
 
         void handleEvent(Window &window);
 
-        void pollPendingData();
+        void             pollPendingData();
+        MeshHandle       uploadMeshToRegistry(const MeshRegistry::MeshData& data);
+        TextureSetHandle uploadTextureSetToRegistry(const TextureRegistry::MaterialData& data);
 
         static constexpr uint32_t s_FramesInFlight = 2;
 
