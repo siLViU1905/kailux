@@ -35,4 +35,10 @@ namespace kailux
     {
         return std::make_shared<T>(std::forward<Args>(args)...);
     }
+
+    template<class... Overloads>
+    struct VisitOverloads : Overloads...
+    {
+        using Overloads::operator()...;
+    };
 }
