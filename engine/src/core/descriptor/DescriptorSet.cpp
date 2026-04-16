@@ -46,6 +46,64 @@ namespace kailux
         cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline.getLayout(), 0, *m_Set, {});
     }
 
+    void DescriptorSet::updateInfo(const Context &context, std::span<const DescriptorSetUpdateInfo> updateInfos) const
+    {
+        std::vector<vk::WriteDescriptorSet> descriptorWrites;
+        std::vector<vk::DescriptorBufferInfo> bufferInfos;
+        std::vector<vk::DescriptorImageInfo> imageInfos;
+
+        descriptorWrites.reserve(updateInfos.size());
+
+        bufferInfos.reserve(updateInfos.size());
+        imageInfos.reserve(updateInfos.size());
+
+        for (const auto &update: updateInfos)
+        {
+            std::visit(
+                VisitOverloads{
+                    [&](const DescriptorSetBufferInfo &bufferInfo)
+                    {
+                        bufferInfos.emplace_back(
+                            bufferInfo.buffer,
+                            0,
+                            bufferInfo.size
+                        );
+
+                        descriptorWrites.emplace_back(
+                            *m_Set,
+                            update.binding,
+                            update.arrayIndex,
+                            bufferInfo.count,
+                            bufferInfo.type,
+                            nullptr,
+                            &bufferInfos.back()
+                        );
+                    },
+                    [&](const DescriptorSetImageInfo &imageInfo)
+                    {
+                        imageInfos.emplace_back(
+                            imageInfo.sampler,
+                            imageInfo.view,
+                            imageInfo.layout
+                        );
+
+                        descriptorWrites.emplace_back(
+                            *m_Set,
+                            update.binding,
+                            update.arrayIndex,
+                            imageInfo.count,
+                            vk::DescriptorType::eCombinedImageSampler,
+                            &imageInfos.back(),
+                            nullptr
+                        );
+                    }
+                },
+                update.info
+            );
+        }
+        context.m_Device.updateDescriptorSets(descriptorWrites, {});
+    }
+
     void DescriptorSet::createSet(const Context &context, const DescriptorLayout &layout, const DescriptorPool &pool,
                                   std::span<const DescriptorSetInfo> infos)
     {
