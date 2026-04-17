@@ -79,22 +79,21 @@ namespace kailux
 
     TextureSet TextureRegistry::createSetFromMaterialData(const Context &context, const MaterialData &data) const
     {
+        auto checkSize = [](const ImageLoader::ImageData& data)-> bool
+        {
+            return data.width && data.height;
+        };
         auto set = m_DefaultSet;
-        auto imgData = ImageLoader::load_image(data.albedoPath);
-        if (imgData)
-            set.albedo = create_shared<Texture>(TextureAllocator::create_from_image_data(context, *imgData));
-        imgData = ImageLoader::load_image(data.normalPath);
-        if (imgData)
-            set.normal = create_shared<Texture>(TextureAllocator::create_from_image_data(context, *imgData));
-        imgData = ImageLoader::load_image(data.roughnessPath);
-        if (imgData)
-            set.roughness = create_shared<Texture>(TextureAllocator::create_from_image_data(context, *imgData));
-        imgData = ImageLoader::load_image(data.metallicPath);
-        if (imgData)
-            set.metallic = create_shared<Texture>(TextureAllocator::create_from_image_data(context, *imgData));
-        imgData = ImageLoader::load_image(data.aoPath);
-        if (imgData)
-            set.ao = create_shared<Texture>(TextureAllocator::create_from_image_data(context, *imgData));
+        if (checkSize(data.albedoData))
+            set.albedo = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data.albedoData));
+        if (checkSize(data.normalData))
+            set.normal = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data.normalData));
+        if (checkSize(data.normalData))
+            set.roughness = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data.roughnessData));
+        if (checkSize(data.metallicData))
+            set.metallic = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data.metallicData));
+        if (checkSize(data.aoData))
+            set.ao = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data.aoData));
         return set;
     }
 

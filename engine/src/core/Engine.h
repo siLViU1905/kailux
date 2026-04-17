@@ -35,6 +35,9 @@ namespace kailux
 
         Queue<MeshLoader::LoadData> &getPendingDataQueue();
 
+        void unregisterMesh(MeshHandle handle);
+        void unregisterTextureSet(TextureSetHandle handle);
+
         void run(Window& window);
 
     private:
@@ -177,7 +180,8 @@ namespace kailux
 
             return true;
         }
-        static PipelineInfo make_pipeline_info(vk::SampleCountFlagBits sampleCount);
+        static PipelineInfo                                                                make_pipeline_info(vk::SampleCountFlagBits sampleCount);
+        static std::array<DescriptorSetUpdateInfo, TextureRegistry::s_TextureTypes.size()> make_descriptor_set_update_info_from_texture_set(TextureSetHandle handle, const TextureSet& set);
 
         void                                        submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
         void                                        render(Window &window);
@@ -195,8 +199,10 @@ namespace kailux
         void handleEvent(Window &window);
 
         void             pollPendingData();
-        MeshHandle       uploadMeshToRegistry(const MeshRegistry::MeshData& data);
-        TextureSetHandle uploadTextureSetToRegistry(const TextureRegistry::MaterialData& data);
+        MeshHandle       uploadMeshDataToRegistry(const MeshRegistry::MeshData& data);
+        TextureSetHandle uploadMaterialDataToRegistry(const TextureRegistry::MaterialData &data);
+
+        void updatePendingFrameTasks();
 
         static constexpr uint32_t s_FramesInFlight = 2;
 
@@ -219,5 +225,14 @@ namespace kailux
         SkyboxPass                              m_Skybox;
 
         Queue<MeshLoader::LoadData>             m_PendingData;
+
+        static constexpr uint32_t               s_ResourceCleanupFrameDelay = s_FramesInFlight + 1;
+        using FrameTask = std::move_only_function<void()>;
+        struct PendingFrameTask
+        {
+            FrameTask task;
+            uint32_t  remainingFrames = s_ResourceCleanupFrameDelay;
+        };
+        std::vector<PendingFrameTask>           m_PendingFrameTasks;
     };
 }

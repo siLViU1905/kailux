@@ -41,7 +41,9 @@ namespace kailux
     void DescriptorLayout::createLayout(const Context &context, std::span<const DescriptorLayoutBinding> bindings)
     {
         std::vector<vk::DescriptorSetLayoutBinding> vkBindings;
+        std::vector<vk::DescriptorBindingFlags> bindingFlagsArr;
         vkBindings.reserve(bindings.size());
+        bindingFlagsArr.reserve(bindings.size());
         uint32_t bindPoint = 0;
         for (auto bind: bindings)
         {
@@ -51,14 +53,26 @@ namespace kailux
                 bind.count,
                 bind.shaderType
             );
+
+            vk::DescriptorBindingFlags f = vk::DescriptorBindingFlagBits::ePartiallyBound;
+
+            if (bind.type == vk::DescriptorType::eCombinedImageSampler)
+                f |= vk::DescriptorBindingFlagBits::eUpdateAfterBind;
+
+            bindingFlagsArr.push_back(f);
             ++bindPoint;
         }
 
+        vk::DescriptorSetLayoutBindingFlagsCreateInfo bindingFlags;
+        bindingFlags.bindingCount = static_cast<uint32_t>(bindingFlagsArr.size());
+        bindingFlags.pBindingFlags = bindingFlagsArr.data();
+
         vk::DescriptorSetLayoutCreateInfo layoutInfo(
-            {},
+            vk::DescriptorSetLayoutCreateFlagBits::eUpdateAfterBindPool,
             static_cast<uint32_t>(vkBindings.size()),
             vkBindings.data()
         );
+        layoutInfo.pNext = &bindingFlags;
 
         m_Layout = vk::raii::DescriptorSetLayout(context.m_Device, layoutInfo);
     }

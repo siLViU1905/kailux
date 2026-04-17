@@ -1,5 +1,6 @@
 #pragma once
 #include <assimp/material.h>
+#include <magic_enum/magic_enum.hpp>
 
 #include "ImageLoader.h"
 #include "Texture.h"
@@ -38,7 +39,7 @@ namespace kailux
     class TextureRegistry
     {
     public:
-        static constexpr uint32_t s_TextureTypes = 5;
+        static constexpr std::array s_TextureTypes = magic_enum::enum_values<TextureType>();
 
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(TextureRegistry)
 
@@ -52,11 +53,11 @@ namespace kailux
 
         struct MaterialData
         {
-            std::string albedoPath;
-            std::string normalPath;
-            std::string roughnessPath;
-            std::string metallicPath;
-            std::string aoPath;
+            ImageLoader::ImageData albedoData;
+            ImageLoader::ImageData normalData;
+            ImageLoader::ImageData roughnessData;
+            ImageLoader::ImageData metallicData;
+            ImageLoader::ImageData aoData;
         };
 
         TextureSet createSetFromMaterialData(const Context &context, const MaterialData& data) const;
