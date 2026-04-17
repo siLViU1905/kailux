@@ -6,7 +6,7 @@ namespace kailux
     {
         bool isPrimary = false;
 
-        glm::vec3 position = {0.f, 0.f, 0.f};
+        glm::vec3 position = {0.f, 0.f, 5.f};
         glm::vec3 forward = {0.0f, 0.0f, -1.0f};
         glm::vec3 right = {1.0f, 0.0f, 0.0f};
         glm::vec3 up = {0.f, 1.f, 0.f};

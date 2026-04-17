@@ -16,13 +16,13 @@ A lightweight, modern C++ rendering engine.
 The only thing is to run the provided batch file:
 
 ```bat
-build.bat
+scripts/windows_build.bat
 ```
 In the build folder you will find the sln file, open it with Visual Studio and build
 
 ## Linux
 
 ```bat
-build.sh
+scripts/linux_build.sh
 ```
 In the build folder([debug/release]/app) you will find the executable 'kailux_application'
