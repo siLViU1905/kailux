@@ -42,19 +42,18 @@ namespace kailux
         return {};
     }
 
-    entt::entity Scene::createCameraEntity(std::string_view name, const Camera &camera, bool isPrimary)
+    entt::entity Scene::createCameraEntity(std::string_view name, bool isPrimary, int width, int height)
     {
         auto entity = createEntity(name);
-        m_EntityRegistry.emplace<CameraComponent>(
+        auto component = m_EntityRegistry.emplace<CameraComponent>(
             entity,
-            camera,
             isPrimary
         );
         m_EntityRegistry.emplace<CameraData>(
             entity,
-            camera.getProjection(),
-            camera.getView(),
-            glm::vec4(camera.getPosition(), CameraData::s_DefaultExposure)
+            Camera::get_projection(component, width, height),
+            Camera::get_view(component),
+            glm::vec4(component.position, component.exposure)
         );
         return entity;
     }

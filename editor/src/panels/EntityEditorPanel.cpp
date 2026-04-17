@@ -133,20 +133,15 @@ namespace kailux
                         enabled ? enableValue = 1.f : enableValue = 0.f;
                 }
             }
-            else if (registry.all_of<CameraData>(m_SelectedEntity))
+            else if (registry.all_of<CameraComponent>(m_SelectedEntity))
             {
-                auto& data = registry.get<CameraData>(m_SelectedEntity);
+                auto& camera = registry.get<CameraComponent>(m_SelectedEntity);
                 if (ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen))
-                {
-                    float& exposure = data.positionAndExposure.w;
-                    ImGui::InputFloat("Exposure", &exposure, 0.f, 0.f, "%.6f");
-                }
+                    ImGui::InputFloat("Exposure", &camera.exposure, 0.f, 0.f, "%.6f");
             }
         }
         ImGui::End();
         ImGui::PopStyleColor();
-
-        const auto &camera = registry.get<CameraComponent>(scene.getMainCamera());
 
         if (!registry.all_of<MeshTransformData>(m_SelectedEntity))
             return;
@@ -164,9 +159,11 @@ namespace kailux
             viewport->Size.x, viewport->Size.y
         );
 
+        const auto &cameraData = registry.get<CameraData>(scene.getMainCamera());
+
         ImGuizmo::Manipulate(
-            glm::value_ptr(camera.camera.getView()),
-            glm::value_ptr(camera.camera.getProjection()),
+            glm::value_ptr(cameraData.view),
+            glm::value_ptr(cameraData.projection),
             m_CurrentGizmoOperation,
             m_CurrentGizmoMode,
             glm::value_ptr(modelMatrix)

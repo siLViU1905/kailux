@@ -18,7 +18,7 @@ namespace kailux
 
         static Scene create();
 
-        entt::entity createCameraEntity(std::string_view name, const Camera& camera, bool isPrimary);
+        entt::entity createCameraEntity(std::string_view name, bool isPrimary, int width, int height);
         entt::entity createMeshEntity(
             std::string_view name,
             MeshHandle meshHandle,
