@@ -27,21 +27,34 @@ namespace kailux
 
         static glm::mat4 aiMatrix4x4_to_glm(const aiMatrix4x4 &m);
 
+        struct MaterialPaths
+        {
+            std::string albedoPath;
+            std::string normalPath;
+            std::string roughnessPath;
+            std::string metallicPath;
+            std::string aoPath;
+        };
+
         static void process_node(const aiNode *node,
                                  const aiScene *scene,
                                  const glm::mat4 &parentMatrix,
-                                 LoadData &outData,
+                                 MeshRegistry::MeshData &outMeshData,
+                                 MaterialPaths &outPaths,
                                  std::string_view directoryPath
         );
         static void process_mesh(const aiMesh *mesh,
                                  const aiScene *scene,
-                                 const glm::mat4 &worldMatrix, LoadData &outData,
+                                 const glm::mat4 &worldMatrix,
+                                 MeshRegistry::MeshData &outMeshData,
+                                 MaterialPaths &outPaths,
                                  std::string_view directoryPath
         );
         static void process_mesh_material(const aiMesh *mesh,
                                           const aiScene *scene,
-                                          LoadData &outData,
+                                          MaterialPaths &outPaths,
                                           std::string_view directoryPath
         );
+        static TextureRegistry::MaterialData process_material_paths(const MaterialPaths& paths);
     };
 }

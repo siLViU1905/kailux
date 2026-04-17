@@ -22,9 +22,18 @@ namespace kailux
             return std::unexpected(std::format("Assimp failed to load '{}': {}", path, importer.GetErrorString()));
 
         auto meshDirectoryPath = path.substr(0, path.find_last_of('/'));
-        LoadData outData;
-        process_node(scene->mRootNode, scene, s_ParentMatrix, outData, meshDirectoryPath);
-        return outData;
+        MeshRegistry::MeshData meshData;
+        MaterialPaths paths;
+
+        process_node(scene->mRootNode, scene, s_ParentMatrix, meshData, paths, meshDirectoryPath);
+        auto materialData = process_material_paths(paths);
+
+        LoadData loadData(
+            std::move(meshData),
+            std::move(materialData)
+        );
+
+        return loadData;
     }
 
     glm::mat4 MeshLoader::aiMatrix4x4_to_glm(const aiMatrix4x4 &m)
@@ -35,7 +44,9 @@ namespace kailux
     void MeshLoader::process_node(const aiNode *node,
                                   const aiScene *scene,
                                   const glm::mat4 &parentMatrix,
-                                  LoadData &outData, std::string_view directoryPath
+                                  MeshRegistry::MeshData &outMeshData,
+                                  MaterialPaths &outPaths,
+                                  std::string_view directoryPath
     )
     {
         auto worldMatrix = parentMatrix * aiMatrix4x4_to_glm(node->mTransformation);
@@ -43,20 +54,24 @@ namespace kailux
         for (uint32_t i = 0; i < node->mNumMeshes; i++)
         {
             const aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-            process_mesh(mesh, scene, worldMatrix, outData, directoryPath);
+            process_mesh(mesh, scene, worldMatrix, outMeshData, outPaths, directoryPath);
         }
 
         for (uint32_t i = 0; i < node->mNumChildren; i++)
-            process_node(node->mChildren[i], scene, worldMatrix, outData, directoryPath);
+            process_node(node->mChildren[i], scene, worldMatrix, outMeshData, outPaths, directoryPath);
     }
 
-    void MeshLoader::process_mesh(const aiMesh *mesh, const aiScene *scene, const glm::mat4 &worldMatrix,
-                                  LoadData &outData, std::string_view directoryPath)
+    void MeshLoader::process_mesh(const aiMesh *mesh,
+                                  const aiScene *scene,
+                                  const glm::mat4 &worldMatrix,
+                                  MeshRegistry::MeshData &outMeshData,
+                                  MaterialPaths &outPaths,
+                                  std::string_view directoryPath)
     {
         auto normalMatrix = glm::mat3(glm::transpose(glm::inverse(worldMatrix)));
 
-        auto vertexOffset = static_cast<uint32_t>(outData.meshData.vertices.size());
-        outData.meshData.vertices.reserve(outData.meshData.vertices.size() + mesh->mNumVertices);
+        auto vertexOffset = static_cast<uint32_t>(outMeshData.vertices.size());
+        outMeshData.vertices.reserve(outMeshData.vertices.size() + mesh->mNumVertices);
 
         for (uint32_t i = 0; i < mesh->mNumVertices; i++)
         {
@@ -90,33 +105,36 @@ namespace kailux
                 v.tangent = glm::vec4(tangent, handedness);
             }
 
-            outData.meshData.vertices.push_back(v);
+            outMeshData.vertices.push_back(v);
         }
 
-        outData.meshData.indices.reserve(outData.meshData.indices.size() + mesh->mNumFaces * 3);
+        outMeshData.indices.reserve(outMeshData.indices.size() + mesh->mNumFaces * 3);
         for (uint32_t i = 0; i < mesh->mNumFaces; i++)
         {
             const aiFace &face = mesh->mFaces[i];
             for (uint32_t j = 0; j < face.mNumIndices; j++)
-                outData.meshData.indices.push_back(face.mIndices[j] + vertexOffset);
+                outMeshData.indices.push_back(face.mIndices[j] + vertexOffset);
         }
-        process_mesh_material(mesh, scene, outData, directoryPath);
+        process_mesh_material(mesh, scene, outPaths, directoryPath);
     }
 
-    void MeshLoader::process_mesh_material(const aiMesh *mesh, const aiScene *scene, LoadData &outData, std::string_view directoryPath)
+    void MeshLoader::process_mesh_material(const aiMesh *mesh,
+                                           const aiScene *scene,
+                                           MaterialPaths &outPaths,
+                                           std::string_view directoryPath)
     {
         if (mesh->mMaterialIndex >= scene->mNumMaterials)
             return;
 
         constexpr auto textureTypes = magic_enum::enum_values<TextureType>();
         const auto *material = scene->mMaterials[mesh->mMaterialIndex];
-        auto getMaterialMemberPtr = [](TextureType type, TextureRegistry::MaterialData& data) -> std::string* {
+        auto getMaterialMemberPtr = [](TextureType type, MaterialPaths& paths) -> std::string* {
             switch (type) {
-                case TextureType::Albedo:    return &data.albedoPath;
-                case TextureType::Normal:    return &data.normalPath;
-                case TextureType::Roughness: return &data.roughnessPath;
-                case TextureType::Metallic:  return &data.metallicPath;
-                case TextureType::AO:        return &data.aoPath;
+                case TextureType::Albedo:    return &paths.albedoPath;
+                case TextureType::Normal:    return &paths.normalPath;
+                case TextureType::Roughness: return &paths.roughnessPath;
+                case TextureType::Metallic:  return &paths.metallicPath;
+                case TextureType::AO:        return &paths.aoPath;
                 default:                     return nullptr;
             }
         };
@@ -124,7 +142,7 @@ namespace kailux
         std::ranges::for_each(textureTypes, [&](auto type)
         {
             auto aiType = static_cast<aiTextureType>(type);
-            auto& targetPath = *getMaterialMemberPtr(type, outData.materialData);
+            auto& targetPath = *getMaterialMemberPtr(type, outPaths);
 
             if (material->GetTextureCount(aiType) &&
                 targetPath.empty()
@@ -138,5 +156,26 @@ namespace kailux
                 }
             }
         });
+    }
+
+    TextureRegistry::MaterialData MeshLoader::process_material_paths(const MaterialPaths &paths)
+    {
+        TextureRegistry::MaterialData data;
+        auto imgData = ImageLoader::load_image(paths.albedoPath);
+        if (imgData)
+            data.albedoData = std::move(*imgData);
+        imgData = ImageLoader::load_image(paths.normalPath);
+        if (imgData)
+            data.normalData = std::move(*imgData);
+        imgData = ImageLoader::load_image(paths.roughnessPath);
+        if (imgData)
+            data.roughnessData = std::move(*imgData);
+        imgData = ImageLoader::load_image(paths.metallicPath);
+        if (imgData)
+            data.metallicData = std::move(*imgData);
+        imgData = ImageLoader::load_image(paths.aoPath);
+        if (imgData)
+            data.aoData = std::move(*imgData);
+        return data;
     }
 }

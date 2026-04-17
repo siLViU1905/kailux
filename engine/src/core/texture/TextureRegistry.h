@@ -52,11 +52,11 @@ namespace kailux
 
         struct MaterialData
         {
-            std::string albedoPath;
-            std::string normalPath;
-            std::string roughnessPath;
-            std::string metallicPath;
-            std::string aoPath;
+            ImageLoader::ImageData albedoData;
+            ImageLoader::ImageData normalData;
+            ImageLoader::ImageData roughnessData;
+            ImageLoader::ImageData metallicData;
+            ImageLoader::ImageData aoData;
         };
 
         TextureSet createSetFromMaterialData(const Context &context, const MaterialData& data) const;
