@@ -1,6 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
-
+cd ..
 set BUILD_DIR=build
 set GENERATORS_DIR=%BUILD_DIR%\build\generators
 
