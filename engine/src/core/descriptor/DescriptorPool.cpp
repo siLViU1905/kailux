@@ -40,7 +40,7 @@ namespace kailux
             poolSizes.emplace_back(type, sets * count);
 
         vk::DescriptorPoolCreateInfo createInfo(
-            vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
+            vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet | vk::DescriptorPoolCreateFlagBits::eUpdateAfterBind,
             sets,
             poolSizes
         );
