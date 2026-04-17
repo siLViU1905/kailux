@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd ..
+
 conan export scripts/imguizmo
 
 if [ -d "build" ]; then
