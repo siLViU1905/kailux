@@ -1,4 +1,6 @@
 #include "Application.h"
+
+#include "panels/HierarchyPanel.h"
 #include "panels/MenuPanel.h"
 
 namespace kailux
@@ -62,6 +64,13 @@ namespace kailux
         {
             m_LoadMeshDialog.open("Choose a supported mesh format");
         });
+        auto &hierarchyPanel = static_cast<HierarchyPanel &>(*m_Editor.getEditorLayer().getPanels()[
+            EditorLayer::s_HierarchyPanelIndex]);
+        hierarchyPanel.setOnEntityDeleted([this](auto meshHandle, auto setHandle)
+        {
+            m_Engine.unregisterMesh(meshHandle);
+            m_Engine.unregisterTextureSet(setHandle);
+        });
 
         m_Engine.setOnEditorRender([this](Scene &scene)
         {
@@ -76,7 +85,9 @@ namespace kailux
                 m_ThreadDispatcher->enqueue([this, p = *path]()
                 {
                     if (auto data = MeshLoader::load(p))
+                    {
                         m_Engine.getPendingDataQueue().push(std::move(*data));
+                    }
                 });
     }
 }

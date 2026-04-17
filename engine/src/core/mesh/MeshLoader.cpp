@@ -126,7 +126,6 @@ namespace kailux
         if (mesh->mMaterialIndex >= scene->mNumMaterials)
             return;
 
-        constexpr auto textureTypes = magic_enum::enum_values<TextureType>();
         const auto *material = scene->mMaterials[mesh->mMaterialIndex];
         auto getMaterialMemberPtr = [](TextureType type, MaterialPaths& paths) -> std::string* {
             switch (type) {
@@ -139,7 +138,7 @@ namespace kailux
             }
         };
 
-        std::ranges::for_each(textureTypes, [&](auto type)
+        std::ranges::for_each(TextureRegistry::s_TextureTypes, [&](auto type)
         {
             auto aiType = static_cast<aiTextureType>(type);
             auto& targetPath = *getMaterialMemberPtr(type, outPaths);

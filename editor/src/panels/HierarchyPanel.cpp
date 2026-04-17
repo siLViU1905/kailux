@@ -1,5 +1,6 @@
 #include "HierarchyPanel.h"
 
+#include "core/components/entt/MeshComponent.h"
 #include "core/components/entt/TagComponent.h"
 
 namespace kailux
@@ -65,6 +66,9 @@ namespace kailux
 
                     if (on_entity_delete(entity, scene))
                     {
+                        auto [meshComponent, materialComponent] = registry.get<MeshComponent, MaterialComponent>(entity);
+                        m_OnEntityDeleted(meshComponent.handle, materialComponent.handle);
+                        registry.destroy(entity);
                         if (m_SelectedEntity == entity)
                         {
                             m_SelectedEntity = entt::null;
@@ -91,6 +95,11 @@ namespace kailux
     void HierarchyPanel::setOnEntitySelected(OnEntitySelected &&callback)
     {
         m_OnEntitySelected = std::move(callback);
+    }
+
+    void HierarchyPanel::setOnEntityDeleted(OnEntityDeleted &&callback)
+    {
+        m_OnEntityDeleted = std::move(callback);
     }
 
     bool HierarchyPanel::on_entity_rename(entt::entity entity, entt::registry &registry)
@@ -141,7 +150,6 @@ namespace kailux
         {
             if (entity != scene.getSun())
             {
-                scene.getEntityRegistry().destroy(entity);
                 ImGui::CloseCurrentPopup();
                 return true;
             }

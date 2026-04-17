@@ -1,5 +1,6 @@
 #pragma once
 #include <assimp/material.h>
+#include <magic_enum/magic_enum.hpp>
 
 #include "ImageLoader.h"
 #include "Texture.h"
@@ -38,7 +39,7 @@ namespace kailux
     class TextureRegistry
     {
     public:
-        static constexpr uint32_t s_TextureTypes = 5;
+        static constexpr std::array s_TextureTypes = magic_enum::enum_values<TextureType>();
 
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(TextureRegistry)
 

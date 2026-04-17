@@ -1,5 +1,6 @@
 #pragma once
 #include "Panel.h"
+#include "core/components/entt/MaterialComponent.h"
 
 namespace kailux
 {
@@ -14,11 +15,15 @@ namespace kailux
         using OnEntitySelected = std::move_only_function<void(entt::entity, const Scene&)>;
         void  setOnEntitySelected(OnEntitySelected&& callback);
 
+        using OnEntityDeleted = std::move_only_function<void(MeshHandle meshHandle, TextureSetHandle setHandle)>;
+        void  setOnEntityDeleted(OnEntityDeleted&& callback);
+
     private:
         static bool on_entity_rename(entt::entity entity, entt::registry &registry);
         static bool on_entity_delete(entt::entity entity, Scene &scene);
 
         OnEntitySelected m_OnEntitySelected;
+        OnEntityDeleted  m_OnEntityDeleted;
         entt::entity     m_SelectedEntity;
     };
 }

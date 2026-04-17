@@ -56,7 +56,7 @@ namespace kailux
         void createIndirectBuffer(const Context& context, uint32_t count);
         void createSceneBuffer(const Context& context);
 
-        static constexpr uint32_t s_DescriptorSetInfoCount = 1 + 1 + 1 + 1 + 1 + 1 + TextureRegistry::s_TextureTypes; // camera buffer + mesh data buffer + scene buffer + skybox sampler + irradiance map + brdf lut + textures
+        static constexpr uint32_t s_DescriptorSetInfoCount = 1 + 1 + 1 + 1 + 1 + 1 + TextureRegistry::s_TextureTypes.size(); // camera buffer + mesh data buffer + scene buffer + skybox sampler + irradiance map + brdf lut + textures
         static constexpr uint32_t s_SkyboxDescriptorSetInfoCount = 1 + 1; // camera buffer + cube texture
         std::array<DescriptorSetInfo, s_DescriptorSetInfoCount> makeDescriptorSetInfo(const SkyboxPass &skybox, const TextureRegistry& textureRegistry, uint32_t meshCount) const;
         std::array<DescriptorSetInfo, s_SkyboxDescriptorSetInfoCount> makeSkyboxDescriptorSetInfo(const Texture& skyboxTexture) const;

@@ -34,7 +34,8 @@ namespace kailux
                                               m_Clock(other.m_Clock),
                                               m_Scene(std::move(other.m_Scene)),
                                               m_Skybox(std::move(other.m_Skybox)),
-                                              m_PendingData(std::move(other.m_PendingData))
+                                              m_PendingData(std::move(other.m_PendingData)),
+                                              m_PendingFrameTasks(std::move(other.m_PendingFrameTasks))
     {
     }
 
@@ -57,6 +58,7 @@ namespace kailux
             m_Scene = std::move(other.m_Scene);
             m_Skybox = std::move(other.m_Skybox);
             m_PendingData = std::move(other.m_PendingData);
+            m_PendingFrameTasks = std::move(other.m_PendingFrameTasks);
         }
         return *this;
     }
@@ -100,6 +102,31 @@ namespace kailux
     Queue<MeshLoader::LoadData> &Engine::getPendingDataQueue()
     {
         return m_PendingData;
+    }
+
+    void Engine::unregisterMesh(MeshHandle handle)
+    {
+        m_MeshRegistry.destroy(handle);
+    }
+
+    void Engine::unregisterTextureSet(TextureSetHandle handle)
+    {
+        auto defaultHandle = m_TextureRegistry.getDefaultSetHandle();
+        const auto& defaultSet = m_TextureRegistry.view(defaultHandle);
+        auto updateInfos = make_descriptor_set_update_info_from_texture_set(defaultHandle, defaultSet);
+
+        for (const auto &frame: m_Frames)
+            frame.getDescriptorSet().updateInfo(
+                m_Context,
+                updateInfos
+            );
+
+        m_PendingFrameTasks.emplace_back(
+            [this, handle]()
+            {
+                m_TextureRegistry.unregisterTextureSet(handle);
+            }
+        );
     }
 
     void Engine::createRenderingContext(Window &window)
@@ -247,6 +274,33 @@ namespace kailux
         info.depthStencilInfo.stencilTestEnable = vk::False;
 
         return info;
+    }
+
+    std::array<DescriptorSetUpdateInfo, TextureRegistry::s_TextureTypes.size()> Engine::make_descriptor_set_update_info_from_texture_set(TextureSetHandle handle, const TextureSet& set)
+    {
+        auto makeUpdateInfo = [handle](uint32_t binding, const auto &texture)-> DescriptorSetUpdateInfo
+        {
+            return {
+                binding,
+                handle.index,
+                DescriptorSetImageInfo(
+                    texture->getSampler(),
+                    texture->getImageView(),
+                    vk::ImageLayout::eShaderReadOnlyOptimal,
+                    1
+                )
+            };
+        };
+        uint32_t textureIndex = 0;
+        std::array updateInfos = {
+            makeUpdateInfo(s_MeshTextureBindStart + textureIndex++, set.albedo),
+            makeUpdateInfo(s_MeshTextureBindStart + textureIndex++, set.normal),
+            makeUpdateInfo(s_MeshTextureBindStart + textureIndex++, set.roughness),
+            makeUpdateInfo(s_MeshTextureBindStart + textureIndex++, set.metallic),
+            makeUpdateInfo(s_MeshTextureBindStart + textureIndex++, set.ao)
+        };
+        static_assert(TextureRegistry::s_TextureTypes.size() == updateInfos.size(), "There is a missing texture in update info");
+        return updateInfos;
     }
 
     void Engine::submit(const FrameData &frame, vk::Semaphore imageAvailableSemaphore,
@@ -559,8 +613,8 @@ namespace kailux
     {
         if (auto data = m_PendingData.tryPop())
         {
-            auto meshHandle = uploadMeshToRegistry(data.value().meshData);
-            auto textureHandle = uploadTextureSetToRegistry(data.value().materialData);
+            auto meshHandle = uploadMeshDataToRegistry(data.value().meshData);
+            auto textureHandle = uploadMaterialDataToRegistry(data.value().materialData);
             m_Scene.createMeshEntity(m_Scene.getMeshEntityName(),
                                      meshHandle,
                                      textureHandle,
@@ -570,7 +624,7 @@ namespace kailux
         }
     }
 
-    MeshHandle Engine::uploadMeshToRegistry(const MeshRegistry::MeshData &data)
+    MeshHandle Engine::uploadMeshDataToRegistry(const MeshRegistry::MeshData &data)
     {
         std::vector<Buffer> stagingBuffers;
         auto otc = OneTimeCommand::create(m_Context);
@@ -579,35 +633,12 @@ namespace kailux
         return handle;
     }
 
-    TextureSetHandle Engine::uploadTextureSetToRegistry(const TextureRegistry::MaterialData &data)
+    TextureSetHandle Engine::uploadMaterialDataToRegistry(const TextureRegistry::MaterialData &data)
     {
-        auto handle = m_TextureRegistry.
-                registerTextureSet(m_TextureRegistry.createSetFromMaterialData(m_Context, data));
-        const auto &set = m_TextureRegistry.view(handle);
+        auto set = m_TextureRegistry.createSetFromMaterialData(m_Context, data);
+        auto handle = m_TextureRegistry.registerTextureSet(set);
 
-        auto makeUpdateInfo = [handle](uint32_t binding, const auto &texture)-> DescriptorSetUpdateInfo
-        {
-            return {
-                binding,
-                handle.index,
-                DescriptorSetImageInfo(
-                    texture->getSampler(),
-                    texture->getImageView(),
-                    vk::ImageLayout::eShaderReadOnlyOptimal,
-                    1
-                )
-            };
-        };
-        uint32_t textureIndex = 0;
-        std::array updateInfos = {
-            makeUpdateInfo(s_MeshTextureBindStart + textureIndex++, set.albedo),
-            makeUpdateInfo(s_MeshTextureBindStart + textureIndex++, set.normal),
-            makeUpdateInfo(s_MeshTextureBindStart + textureIndex++, set.roughness),
-            makeUpdateInfo(s_MeshTextureBindStart + textureIndex++, set.metallic),
-            makeUpdateInfo(s_MeshTextureBindStart + textureIndex++, set.ao)
-        };
-        constexpr auto textureTypes = magic_enum::enum_values<TextureType>().size();
-        static_assert(textureTypes == updateInfos.size(), "There is a missing texture in update info");
+        auto updateInfos = make_descriptor_set_update_info_from_texture_set(handle, set);
 
         for (const auto &frame: m_Frames)
             frame.getDescriptorSet().updateInfo(
@@ -618,11 +649,26 @@ namespace kailux
         return handle;
     }
 
+    void Engine::updatePendingFrameTasks()
+    {
+        std::erase_if(m_PendingFrameTasks, [](auto& task)
+        {
+            --task.remainingFrames;
+            if (task.remainingFrames == 0)
+            {
+                task.task();
+                return true;
+            }
+            return false;
+        });
+    }
+
     void Engine::run(Window &window)
     {
         m_Clock.tick();
         handleEvent(window);
         pollPendingData();
+        updatePendingFrameTasks();
 
         auto deltaTime = m_Clock.getDeltaTime<float, TimeType::Seconds>();
         auto view = m_Scene.getEntityRegistry().view<CameraComponent>();
