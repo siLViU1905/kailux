@@ -206,11 +206,9 @@ namespace kailux
         window.getFramebufferSize(windowWidth, windowHeight);
         auto cameraEntity = m_Scene.createCameraEntity(
             "MainCamera",
-            Camera::create(
-                windowWidth,
-                windowHeight,
-                {0.f, 0.f, 5.f}),
-            true
+            true,
+            windowWidth,
+            windowHeight
         );
         m_Scene.setMainCamera(cameraEntity);
 
@@ -508,13 +506,7 @@ namespace kailux
 
     void Engine::updateCameraBuffer(FrameData &frame) const
     {
-        const auto &camera = m_Scene.getEntityRegistry().get<CameraComponent>(m_Scene.getMainCamera()).camera;
-        const auto &lastData = m_Scene.getEntityRegistry().get<CameraData>(m_Scene.getMainCamera());
-        CameraData data(
-            camera.getProjection(),
-            camera.getView(),
-            glm::vec4(camera.getPosition(), lastData.positionAndExposure.w)
-        );
+        const auto &data = m_Scene.getEntityRegistry().get<CameraData>(m_Scene.getMainCamera());
         frame.getCameraBuffer().upload(
             &data,
             sizeof(CameraData)
@@ -595,8 +587,8 @@ namespace kailux
                             auto view = m_Scene.getEntityRegistry().view<CameraComponent>();
                             for (auto entity: view)
                             {
-                                auto &camera = view.get<CameraComponent>(entity).camera;
-                                camera.isFocused() ? camera.loseFocus() : camera.gainFocus();
+                                auto &focused = view.get<CameraComponent>(entity).focused;
+                                focused = !focused;
                             }
                         }
                     },
@@ -671,12 +663,15 @@ namespace kailux
         updatePendingFrameTasks();
 
         auto deltaTime = m_Clock.getDeltaTime<float, TimeType::Seconds>();
-        auto view = m_Scene.getEntityRegistry().view<CameraComponent>();
+        auto view = m_Scene.getEntityRegistry().view<CameraComponent, CameraData>();
         for (auto entity: view)
         {
-            auto &camera = view.get<CameraComponent>(entity).camera;
-            camera.updateMovement(window, deltaTime);
-            camera.updateLookAt(window, deltaTime);
+            auto &camera = view.get<CameraComponent>(entity);
+            Camera::updateMovement(camera, window, deltaTime);
+            Camera::updateLookAt(camera, window, deltaTime);
+            auto& data = view.get<CameraData>(entity);
+            data.view = Camera::get_view(camera);
+            data.positionAndExposure = {camera.position, camera.exposure};
         }
 
         if (window.isMinimized())
