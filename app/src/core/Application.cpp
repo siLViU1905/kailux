@@ -58,14 +58,12 @@ namespace kailux
 
     void Application::setCallbacks()
     {
-        auto &menuPanel = static_cast<MenuPanel &>(*m_Editor.getEditorLayer().getPanels()[
-            EditorLayer::s_MenuPanelIndex]);
+        auto &menuPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<MenuPanel>();
         menuPanel.setOnLoadMesh([this]()
         {
             m_LoadMeshDialog.open("Choose a supported mesh format");
         });
-        auto &hierarchyPanel = static_cast<HierarchyPanel &>(*m_Editor.getEditorLayer().getPanels()[
-            EditorLayer::s_HierarchyPanelIndex]);
+        auto &hierarchyPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<HierarchyPanel>();
         hierarchyPanel.setOnEntityDeleted([this](auto meshHandle, auto setHandle)
         {
             m_Engine.unregisterMesh(meshHandle);
@@ -85,9 +83,7 @@ namespace kailux
                 m_ThreadDispatcher->enqueue([this, p = *path]()
                 {
                     if (auto data = MeshLoader::load(p))
-                    {
                         m_Engine.getPendingDataQueue().push(std::move(*data));
-                    }
                 });
     }
 }
