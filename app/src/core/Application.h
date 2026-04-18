@@ -1,5 +1,5 @@
 #pragma once
-#include "Editor.h"
+#include "../../../editor/src/core/Editor.h"
 #include "core/Engine.h"
 #include "core/FileDialog.h"
 #include "core/window/Window.h"

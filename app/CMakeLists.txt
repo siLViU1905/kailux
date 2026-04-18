@@ -1,5 +1,5 @@
 add_executable(kailux_application
-        src/Application.cpp
+        src/core/Application.cpp
         src/main.cpp
 )
 
