@@ -1,7 +1,7 @@
 #include "Application.h"
 
-#include "panels/HierarchyPanel.h"
-#include "panels/MenuPanel.h"
+#include "core/panels/HierarchyPanel.h"
+#include "core/panels/MenuPanel.h"
 
 namespace kailux
 {
