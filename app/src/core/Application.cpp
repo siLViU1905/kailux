@@ -53,6 +53,8 @@ namespace kailux
             pollMeshLoad();
 
             auto deltaTime = m_Clock.getDeltaTime<float, TimeType::Seconds>();
+            m_Editor.update();
+
             m_Engine.update(deltaTime, m_Window);
             m_Engine.render(m_Window);
         }

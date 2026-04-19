@@ -25,6 +25,8 @@ namespace kailux
             return m_Layer;
         }
 
+        void update();
+
     private:
         static constexpr std::string_view s_HierarchyPanelName = "EntitiesHierarchy";
         static constexpr ImVec2           s_HierarchyPanelPosition = {0.8f, 0.f};
