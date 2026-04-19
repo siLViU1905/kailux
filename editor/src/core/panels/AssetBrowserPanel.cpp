@@ -30,8 +30,8 @@ namespace kailux
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, m_BackgroundColor);
 
-        if (ImGui::Begin(m_Name.c_str(), nullptr,
-                         ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize))
+        if (ImGui::Begin(m_Name.c_str(), &m_Open,
+                         ImGuiWindowFlags_NoMove))
         {
             if (m_CurrentPath != s_DefaultPath)
                 if (ImGui::Button("<- Back"))
