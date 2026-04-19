@@ -31,6 +31,8 @@ namespace kailux
         Engine           m_Engine;
         Editor           m_Editor;
 
+        Clock            m_Clock;
+
         static constexpr uint32_t s_ThreadCount = 2;
         Shared<ThreadDispatcher>  m_ThreadDispatcher;
         FileDialog                m_LoadMeshDialog;

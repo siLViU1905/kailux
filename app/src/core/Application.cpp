@@ -45,13 +45,16 @@ namespace kailux
     {
         while (m_Window.isOpen())
         {
+            m_Clock.tick();
             m_Window.pollEvents();
             if (m_Window.isMinimized())
                 continue;
 
             pollMeshLoad();
 
-            m_Engine.run(m_Window);
+            auto deltaTime = m_Clock.getDeltaTime<float, TimeType::Seconds>();
+            m_Engine.update(deltaTime, m_Window);
+            m_Engine.render(m_Window);
         }
         m_Engine.waitIdle();
     }

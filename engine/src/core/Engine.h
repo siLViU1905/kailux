@@ -38,7 +38,8 @@ namespace kailux
         void unregisterMesh(MeshHandle handle);
         void unregisterTextureSet(TextureSetHandle handle);
 
-        void run(Window& window);
+        void update(float deltaTime, Window &window);
+        void render(Window &window);
 
     private:
         static constexpr std::string_view s_VertexShaderPath = "shaders/vertex_shader.spv";
@@ -184,11 +185,9 @@ namespace kailux
         static std::array<DescriptorSetUpdateInfo, TextureRegistry::s_TextureTypes.size()> make_descriptor_set_update_info_from_texture_set(TextureSetHandle handle, const TextureSet& set);
 
         void                                        submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
-        void                                        render(Window &window);
         std::vector<vk::DrawIndexedIndirectCommand> getMeshIndirectCommands() const;
         void                                        recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const;
         void                                        recordImGuiData(const FrameData& frame);
-
 
         void updateFrameBuffers(FrameData& frame, const CommandRecorder& recorder) const;
         void updateCameraBuffer(FrameData& frame) const;
@@ -217,8 +216,6 @@ namespace kailux
         TextureRegistry                         m_TextureRegistry;
         std::array<FrameData, s_FramesInFlight> m_Frames;
         uint32_t                                m_CurrentFrame;
-
-        Clock                                   m_Clock;
 
         Scene                                   m_Scene;
         OnEditorRender                          m_OnEditorRender;
