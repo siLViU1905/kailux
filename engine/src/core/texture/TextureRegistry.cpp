@@ -9,7 +9,12 @@ namespace kailux
     TextureRegistry::TextureRegistry(TextureRegistry &&other) noexcept : m_DefaultSet(std::move(other.m_DefaultSet)),
                                                                          m_DefaultSetHandle(other.m_DefaultSetHandle),
                                                                          m_TexturePool(std::move(other.m_TexturePool)),
-                                                                         m_FreeSlots(std::move(other.m_FreeSlots))
+                                                                         m_FreeSlots(std::move(other.m_FreeSlots)),
+                                                                         m_AssetBrowserDirectoryTexture(
+                                                                             std::move(
+                                                                                 other.m_AssetBrowserDirectoryTexture)),
+                                                                         m_AssetBrowserFileTexture(
+                                                                             std::move(other.m_AssetBrowserFileTexture))
     {
     }
 
@@ -21,16 +26,23 @@ namespace kailux
             m_DefaultSetHandle = other.m_DefaultSetHandle;
             m_TexturePool = std::move(other.m_TexturePool);
             m_FreeSlots = std::move(other.m_FreeSlots);
+            m_AssetBrowserDirectoryTexture = std::move(other.m_AssetBrowserDirectoryTexture);
+            m_AssetBrowserFileTexture = std::move(other.m_AssetBrowserFileTexture);
         }
         return *this;
     }
 
-    TextureRegistry TextureRegistry::create(const Context &context, uint32_t meshCount)
+    TextureRegistry TextureRegistry::create(const Context &context,
+                                      uint32_t meshCount,
+                                      std::string_view directoryIconPath,
+                                      std::string_view fileIconPath
+                                      )
     {
         TextureRegistry registry;
         registry.allocResources(meshCount);
         registry.createDefaultTextures(context);
         registry.m_DefaultSetHandle = registry.registerTextureSet(registry.m_DefaultSet);
+        registry.createAssetBrowserTextures(context, directoryIconPath, fileIconPath);
         return registry;
     }
 
@@ -77,9 +89,19 @@ namespace kailux
         return m_DefaultSetHandle;
     }
 
+    const Texture & TextureRegistry::getAssetBrowserDirectoryIconTexture() const
+    {
+        return m_AssetBrowserDirectoryTexture;
+    }
+
+    const Texture & TextureRegistry::getAssetBrowserFileIconTexture() const
+    {
+        return m_AssetBrowserFileTexture;
+    }
+
     TextureSet TextureRegistry::createSetFromMaterialData(const Context &context, const MaterialData &data) const
     {
-        auto checkSize = [](const ImageLoader::ImageData& data)-> bool
+        auto checkSize = [](const ImageLoader::ImageData &data)-> bool
         {
             return data.width && data.height;
         };
@@ -89,7 +111,8 @@ namespace kailux
         if (checkSize(data.normalData))
             set.normal = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data.normalData));
         if (checkSize(data.normalData))
-            set.roughness = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data.roughnessData));
+            set.roughness = create_shared<Texture>(
+                TextureAllocator::create_from_image_data(context, data.roughnessData));
         if (checkSize(data.metallicData))
             set.metallic = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data.metallicData));
         if (checkSize(data.aoData))
@@ -147,5 +170,17 @@ namespace kailux
             {255, 255, 255, 255}
         };
         m_DefaultSet.ao = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data));
+    }
+
+    void TextureRegistry::createAssetBrowserTextures(const Context &context, std::string_view directoryIconPath,
+                                                     std::string_view fileIconPath)
+    {
+        auto imgData = ImageLoader::load_image(directoryIconPath);
+        if (imgData)
+            m_AssetBrowserDirectoryTexture = TextureAllocator::create_from_image_data(context, *imgData);
+
+        imgData = ImageLoader::load_image(fileIconPath);
+        if (imgData)
+            m_AssetBrowserFileTexture = TextureAllocator::create_from_image_data(context, *imgData);
     }
 }

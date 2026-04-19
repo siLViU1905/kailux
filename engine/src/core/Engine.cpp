@@ -127,6 +127,16 @@ namespace kailux
         );
     }
 
+    ImTextureID Engine::getAssetBrowserDirectoryTextureId() const
+    {
+        return ImGuiBackend::get_texture_id_from_texture(m_TextureRegistry.getAssetBrowserDirectoryIconTexture());
+    }
+
+    ImTextureID Engine::getAssetBrowserFileTextureId() const
+    {
+        return ImGuiBackend::get_texture_id_from_texture(m_TextureRegistry.getAssetBrowserFileIconTexture());
+    }
+
     void Engine::createRenderingContext(Window &window)
     {
         m_Context = Context::create(window);
@@ -185,7 +195,12 @@ namespace kailux
 
     void Engine::createTextureRegistry()
     {
-        m_TextureRegistry = TextureRegistry::create(m_Context, s_MaxMeshCount);
+        m_TextureRegistry = TextureRegistry::create(
+            m_Context,
+            s_MaxMeshCount,
+            s_DirectoryIconPath,
+            s_FileIconPath
+        );
     }
 
     void Engine::createImGui(Window &window)

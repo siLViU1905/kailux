@@ -3,6 +3,7 @@
 #include <imgui.h>
 #include "core/Context.h"
 #include "../Swapchain.h"
+#include "core/texture/Texture.h"
 
 namespace kailux
 {
@@ -19,6 +20,9 @@ namespace kailux
         void recordDrawData(vk::CommandBuffer cmd) const;
 
         void shutdown();
+
+        static ImTextureID get_texture_id_from_texture(const Texture &texture);
+
     private:
         void createImGuiContext();
         void createDescriptorPool(const Context& context);
