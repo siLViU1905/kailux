@@ -23,10 +23,10 @@ namespace kailux
         return *this;
     }
 
-    EditorLayer EditorLayer::create()
+    EditorLayer EditorLayer::create(ImTextureID directoryTextureId, ImTextureID fileTextureId)
     {
         EditorLayer layer;
-        layer.addPanels();
+        layer.addPanels(directoryTextureId, fileTextureId);
         return layer;
     }
 
@@ -40,7 +40,7 @@ namespace kailux
         m_Layer.getPanel<AssetBrowserPanel>().useFullWidth(!m_Layer.getPanel<EntityEditorPanel>().isOpen());
     }
 
-    void EditorLayer::addPanels()
+    void EditorLayer::addPanels(ImTextureID directoryTextureId, ImTextureID fileTextureId)
     {
         auto &panels = m_Layer.getPanels();
         std::get<MenuPanel>(panels) = {};
@@ -56,7 +56,7 @@ namespace kailux
                                       s_EntityEditorSize,
                                       s_PanelsBackgroundColor
                                   };
-        std::get<AssetBrowserPanel>(panels) = {
+        auto& assetBrowser = std::get<AssetBrowserPanel>(panels) = {
             s_AssetBrowserName,
             s_AssetBrowserPosition,
             s_AssetBrowserSize,
@@ -68,5 +68,8 @@ namespace kailux
             entityEditorPanel.setSelectedEntity(entity, scene);
             entityEditorPanel.open();
         });
+
+        assetBrowser.setDirectoryTextureId(directoryTextureId);
+        assetBrowser.setFileTextureId(fileTextureId);
     }
 }

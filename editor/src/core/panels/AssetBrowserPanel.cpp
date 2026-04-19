@@ -5,14 +5,18 @@
 namespace kailux
 {
     AssetBrowserPanel::AssetBrowserPanel() : m_CurrentPath(s_DefaultPath),
-                                             m_UseFullWidth(true)
+                                             m_UseFullWidth(true),
+                                             m_DirectoryTextureId(0),
+                                             m_FileTextureId(0)
     {
     }
 
     AssetBrowserPanel::AssetBrowserPanel(std::string_view name, ImVec2 position, ImVec2 size, ImVec4 backgroundColor)
         : Panel(name, position, size, backgroundColor),
           m_CurrentPath(s_DefaultPath),
-          m_UseFullWidth(true)
+          m_UseFullWidth(true),
+          m_DirectoryTextureId(0),
+          m_FileTextureId(0)
     {
     }
 
@@ -33,7 +37,7 @@ namespace kailux
         else
             size.x = m_Size.x * viewport->Size.x;
 
-        const ImGuiWindow* window = ImGui::FindWindowByName(m_Name.c_str());
+        const ImGuiWindow *window = ImGui::FindWindowByName(m_Name.c_str());
         if (window && window->Collapsed)
         {
             float titleBarHeight = ImGui::GetFrameHeight();
@@ -65,19 +69,18 @@ namespace kailux
                     ImGui::TableNextColumn();
 
                     bool isDirectory = entry.is_directory();
-                    if (isDirectory)
-                        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.1f, 0.6f, 0.1f, 1.0f));
-                    else
-                        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.1f, 0.1f, 0.6f, 1.0f));
+                    auto iconId = isDirectory ? m_DirectoryTextureId : m_FileTextureId;
 
                     auto name = entry.path().filename().string();
-                    ImGui::Button(name.c_str(), {iconSizePixels, iconSizePixels});
+                    ImGui::PushID(name.c_str());
+
+                    ImGui::ImageButton("##icon", iconId, {iconSizePixels, iconSizePixels});
 
                     if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
                         if (isDirectory)
                             m_CurrentPath /= entry.path().filename();
 
-                    ImGui::PopStyleColor();
+                    ImGui::PopID();
 
                     ImGui::TextWrapped("%s", name.c_str());
                 }
@@ -91,5 +94,15 @@ namespace kailux
     void AssetBrowserPanel::useFullWidth(bool use)
     {
         m_UseFullWidth = use;
+    }
+
+    void AssetBrowserPanel::setDirectoryTextureId(ImTextureID id)
+    {
+        m_DirectoryTextureId = id;
+    }
+
+    void AssetBrowserPanel::setFileTextureId(ImTextureID id)
+    {
+        m_FileTextureId = id;
     }
 }

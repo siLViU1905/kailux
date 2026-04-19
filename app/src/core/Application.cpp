@@ -34,7 +34,10 @@ namespace kailux
         app.m_Window = Window::create(windowInfo.width, windowInfo.height, windowInfo.title);
         app.m_Window.updateUserPointer();
         app.m_Engine = Engine::create(app.m_Window);
-        app.m_Editor = Editor::create();
+        app.m_Editor = Editor::create(
+            app.m_Engine.getAssetBrowserDirectoryTextureId(),
+            app.m_Engine.getAssetBrowserFileTextureId()
+        );
         ThreadDispatcher::s_MaxThreads = s_ThreadCount;
         app.m_ThreadDispatcher = ThreadDispatcher::get();
         app.setCallbacks();

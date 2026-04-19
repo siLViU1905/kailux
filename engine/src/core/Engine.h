@@ -38,6 +38,9 @@ namespace kailux
         void unregisterMesh(MeshHandle handle);
         void unregisterTextureSet(TextureSetHandle handle);
 
+        ImTextureID getAssetBrowserDirectoryTextureId() const;
+        ImTextureID getAssetBrowserFileTextureId() const;
+
         void update(float deltaTime, Window &window);
         void render(Window &window);
 
@@ -53,6 +56,8 @@ namespace kailux
             "assets/cubemap/pz.png",
             "assets/cubemap/nz.png"
         };
+        static constexpr std::string_view s_DirectoryIconPath = "assets/icons/directory_icon.png";
+        static constexpr std::string_view s_FileIconPath = "assets/icons/file_icon.png";
 
         void createRenderingContext(Window& window);
         void createDescriptorResources();

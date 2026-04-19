@@ -43,13 +43,20 @@ namespace kailux
 
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(TextureRegistry)
 
-        static TextureRegistry create(const Context& context, uint32_t meshCount);
+        static TextureRegistry create(const Context &context,
+                                      uint32_t meshCount,
+                                      std::string_view directoryIconPath,
+                                      std::string_view fileIconPath
+        );
 
         TextureSetHandle  registerTextureSet(const TextureSet& set);
         void              unregisterTextureSet(TextureSetHandle handle);
         void              updateTextureSet(TextureSetHandle handle, const TextureSet& set);
         const TextureSet& view(TextureSetHandle handle) const;
         TextureSetHandle  getDefaultSetHandle() const;
+
+        const Texture& getAssetBrowserDirectoryIconTexture() const;
+        const Texture& getAssetBrowserFileIconTexture() const;
 
         struct MaterialData
         {
@@ -65,6 +72,7 @@ namespace kailux
     private:
         void     allocResources(uint32_t meshCount);
         void     createDefaultTextures(const Context& context);
+        void     createAssetBrowserTextures(const Context& context, std::string_view directoryIconPath, std::string_view fileIconPath);
 
         uint32_t acquireSlot();
 
@@ -72,5 +80,8 @@ namespace kailux
         TextureSetHandle             m_DefaultSetHandle;
         std::vector<TextureSet>      m_TexturePool;
         std::deque<uint32_t>         m_FreeSlots;
+
+        Texture                      m_AssetBrowserDirectoryTexture;
+        Texture                      m_AssetBrowserFileTexture;
     };
 }

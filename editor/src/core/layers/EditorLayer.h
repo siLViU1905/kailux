@@ -12,7 +12,7 @@ namespace kailux
     public:
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(EditorLayer)
 
-        static EditorLayer create();
+        static EditorLayer create(ImTextureID directoryTextureId, ImTextureID fileTextureId);
 
         void render(Scene& scene);
 
@@ -51,7 +51,7 @@ namespace kailux
 
         static constexpr ImVec4   s_PanelsBackgroundColor = {0.15f, 0.15f, 0.15f, 1.f};
 
-        void addPanels();
+        void addPanels(ImTextureID directoryTextureId, ImTextureID fileTextureId);
 
         Layer<MenuPanel, HierarchyPanel, EntityEditorPanel, AssetBrowserPanel> m_Layer;
     };

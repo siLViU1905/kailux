@@ -8,7 +8,7 @@ namespace kailux
     public:
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(Editor)
 
-        static Editor create();
+        static Editor create(ImTextureID directoryTextureId, ImTextureID fileTextureId);
 
         template<typename Layer>
         auto& getLayer()
@@ -27,7 +27,7 @@ namespace kailux
         void update();
 
     private:
-        void createLayers();
+        void createLayers(ImTextureID directoryTextureId, ImTextureID fileTextureId);
 
         using LayerTypes = std::variant<EditorLayer>;
         Scoped<LayerTypes> m_ActiveLayer;
