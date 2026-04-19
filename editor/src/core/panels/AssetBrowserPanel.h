@@ -13,6 +13,8 @@ namespace kailux
 
         void render(Scene &scene) override;
 
+        void useFullWidth(bool use = true);
+
     private:
         static constexpr float s_RelativeIconSize = 0.1f;
         static constexpr float s_RelativeIconPadding = 0.1f;
@@ -22,5 +24,6 @@ namespace kailux
         static constexpr std::string_view s_DefaultPath = "assets";
 
         Path     m_CurrentPath;
+        bool     m_UseFullWidth;
     };
 }

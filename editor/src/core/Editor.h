@@ -24,6 +24,8 @@ namespace kailux
 
         void render(Scene& scene);
 
+        void update();
+
     private:
         void createLayers();
 

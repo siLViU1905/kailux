@@ -8,25 +8,29 @@
 
 namespace kailux
 {
-    EntityEditorPanel::EntityEditorPanel() : m_SelectedEntity(entt::null), m_RotationDegrees({}),
-                                             m_CurrentGizmoMode(ImGuizmo::LOCAL),
+    EntityEditorPanel::EntityEditorPanel() : m_SelectedEntity(entt::null),
+                                             m_RotationDegrees({}),
                                              m_CurrentGizmoOperation(ImGuizmo::TRANSLATE),
-    m_UniformScale(true)
+                                             m_CurrentGizmoMode(ImGuizmo::LOCAL),
+                                             m_UniformScale(true)
     {
+        m_Open = false;
     }
 
     EntityEditorPanel::EntityEditorPanel(std::string_view name, ImVec2 position, ImVec2 size, ImVec4 backgroundColor)
         : Panel(name, position, size, backgroundColor),
-          m_SelectedEntity(entt::null), m_RotationDegrees({}),
-          m_CurrentGizmoMode(ImGuizmo::LOCAL),
+          m_SelectedEntity(entt::null),
+          m_RotationDegrees({}),
           m_CurrentGizmoOperation(ImGuizmo::TRANSLATE),
-    m_UniformScale(true)
+          m_CurrentGizmoMode(ImGuizmo::LOCAL),
+          m_UniformScale(true)
     {
+        m_Open = false;
     }
 
     void EntityEditorPanel::render(Scene &scene)
     {
-        if (m_SelectedEntity == entt::null)
+        if (!m_Open || m_SelectedEntity == entt::null)
             return;
 
         const ImGuiViewport *viewport = ImGui::GetMainViewport();
@@ -47,7 +51,7 @@ namespace kailux
 
         auto &registry = scene.getEntityRegistry();
         if (ImGui::Begin(m_Name.c_str(), &m_Open,
-                         ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize))
+                         ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize))
         {
             auto &tag = registry.get<TagComponent>(m_SelectedEntity);
             ImGui::Text("Entity: %s", tag.name.c_str());
@@ -102,40 +106,38 @@ namespace kailux
                     if (ImGui::IsItemHovered())
                         ImGui::SetTooltip("Uniform Scale");
                 }
-                auto& material = registry.get<MeshMaterialData>(m_SelectedEntity);
+                auto &material = registry.get<MeshMaterialData>(m_SelectedEntity);
                 if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
                 {
-                    float& roughness = material.albedoAndRoughness.w;
+                    float &roughness = material.albedoAndRoughness.w;
                     ImGui::SliderFloat("Roughness", &roughness, 0.f, 1.f);
 
-                    float& metallic = material.pbrParams.x;
+                    float &metallic = material.pbrParams.x;
                     ImGui::SliderFloat("Metallic", &metallic, 0.f, 1.f);
 
-                    float& ao = material.pbrParams.y;
+                    float &ao = material.pbrParams.y;
                     ImGui::SliderFloat("AO", &ao, 0.f, 1.f);
 
                     ImGui::ColorPicker3("Albedo", glm::value_ptr(material.albedoAndRoughness));
                 }
-            }
-            else if (registry.all_of<DirectionalLightData>(m_SelectedEntity))
+            } else if (registry.all_of<DirectionalLightData>(m_SelectedEntity))
             {
-                auto& data = registry.get<DirectionalLightData>(m_SelectedEntity);
+                auto &data = registry.get<DirectionalLightData>(m_SelectedEntity);
                 if (ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen))
                 {
                     ImGui::SliderFloat3("Direction", glm::value_ptr(data.directionAndIntensity), -1.f, 1.f);
-                    float& intensity = data.directionAndIntensity.w;
+                    float &intensity = data.directionAndIntensity.w;
                     ImGui::InputFloat("Intensity", &intensity);
                     ImGui::ColorPicker3("Color", glm::value_ptr(data.colorAndEnabled));
-                    float& enableValue = data.colorAndEnabled.w;
+                    float &enableValue = data.colorAndEnabled.w;
                     static bool enabled = true;
                     enabled = enableValue > 0.5f;
                     if (ImGui::Checkbox("Enabled", &enabled))
                         enabled ? enableValue = 1.f : enableValue = 0.f;
                 }
-            }
-            else if (registry.all_of<CameraComponent>(m_SelectedEntity))
+            } else if (registry.all_of<CameraComponent>(m_SelectedEntity))
             {
-                auto& camera = registry.get<CameraComponent>(m_SelectedEntity);
+                auto &camera = registry.get<CameraComponent>(m_SelectedEntity);
                 if (ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen))
                     ImGui::InputFloat("Exposure", &camera.exposure, 0.f, 0.f, "%.6f");
             }
@@ -183,8 +185,7 @@ namespace kailux
             {
                 float avgScale = (scale.x + scale.y + scale.z) / 3.f;
                 transform.scale = glm::vec3(avgScale);
-            }
-            else
+            } else
                 transform.scale = scale;
 
             m_RotationDegrees = glm::degrees(glm::eulerAngles(transform.rotation));

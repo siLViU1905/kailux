@@ -37,6 +37,14 @@ namespace kailux
         }, *m_ActiveLayer);
     }
 
+    void Editor::update()
+    {
+        std::visit([](auto& layer)
+        {
+            layer.update();
+        }, *m_ActiveLayer);
+    }
+
     void Editor::createLayers()
     {
         m_ActiveLayer = create_scoped<LayerTypes>();

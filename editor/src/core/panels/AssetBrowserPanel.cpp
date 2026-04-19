@@ -1,14 +1,18 @@
 #include "AssetBrowserPanel.h"
 
+#include <imgui_internal.h>
+
 namespace kailux
 {
-    AssetBrowserPanel::AssetBrowserPanel() : m_CurrentPath(s_DefaultPath)
+    AssetBrowserPanel::AssetBrowserPanel() : m_CurrentPath(s_DefaultPath),
+                                             m_UseFullWidth(true)
     {
     }
 
     AssetBrowserPanel::AssetBrowserPanel(std::string_view name, ImVec2 position, ImVec2 size, ImVec4 backgroundColor)
         : Panel(name, position, size, backgroundColor),
-          m_CurrentPath(s_DefaultPath)
+          m_CurrentPath(s_DefaultPath),
+          m_UseFullWidth(true)
     {
     }
 
@@ -21,9 +25,20 @@ namespace kailux
             viewport->Pos.y + (m_Position.y * viewport->Size.y)
         );
         ImVec2 size(
-            m_Size.x * viewport->Size.x,
+            0.f,
             m_Size.y * viewport->Size.y
         );
+        if (m_UseFullWidth)
+            size.x = viewport->Size.x;
+        else
+            size.x = m_Size.x * viewport->Size.x;
+
+        const ImGuiWindow* window = ImGui::FindWindowByName(m_Name.c_str());
+        if (window && window->Collapsed)
+        {
+            float titleBarHeight = ImGui::GetFrameHeight();
+            pos.y = (viewport->Pos.y + viewport->Size.y) - titleBarHeight;
+        }
 
         ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
         ImGui::SetNextWindowSize(size, ImGuiCond_Always);
@@ -45,7 +60,7 @@ namespace kailux
             if (ImGui::BeginTable("AssetBrowserTable", columnCount))
             {
                 float iconSizePixels = size.x * s_RelativeIconSize;
-                for (const auto& entry : std::filesystem::directory_iterator(m_CurrentPath))
+                for (const auto &entry: std::filesystem::directory_iterator(m_CurrentPath))
                 {
                     ImGui::TableNextColumn();
 
@@ -71,5 +86,10 @@ namespace kailux
         }
         ImGui::End();
         ImGui::PopStyleColor();
+    }
+
+    void AssetBrowserPanel::useFullWidth(bool use)
+    {
+        m_UseFullWidth = use;
     }
 }

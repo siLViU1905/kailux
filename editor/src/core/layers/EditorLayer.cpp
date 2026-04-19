@@ -12,7 +12,6 @@ namespace kailux
 
     EditorLayer::EditorLayer(EditorLayer &&other) noexcept : m_Layer(std::move(other.m_Layer))
     {
-
     }
 
     EditorLayer &EditorLayer::operator=(EditorLayer &&other) noexcept
@@ -36,9 +35,14 @@ namespace kailux
         m_Layer.render(scene);
     }
 
+    void EditorLayer::update()
+    {
+        m_Layer.getPanel<AssetBrowserPanel>().useFullWidth(!m_Layer.getPanel<EntityEditorPanel>().isOpen());
+    }
+
     void EditorLayer::addPanels()
     {
-        auto& panels = m_Layer.getPanels();
+        auto &panels = m_Layer.getPanels();
         std::get<MenuPanel>(panels) = {};
         auto &hierarchyPanel = std::get<HierarchyPanel>(panels) = {
                                    s_HierarchyPanelName,
@@ -59,9 +63,10 @@ namespace kailux
             s_PanelsBackgroundColor
         };
 
-        hierarchyPanel.setOnEntitySelected([&entityEditorPanel](entt::entity entity, const Scene& scene)
+        hierarchyPanel.setOnEntitySelected([&entityEditorPanel](entt::entity entity, const Scene &scene)
         {
             entityEditorPanel.setSelectedEntity(entity, scene);
+            entityEditorPanel.open();
         });
     }
 }
