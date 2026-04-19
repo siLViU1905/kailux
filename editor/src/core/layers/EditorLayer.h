@@ -1,16 +1,29 @@
 #pragma once
 #include "Layer.h"
+#include "core/panels/AssetBrowserPanel.h"
+#include "core/panels/EntityEditorPanel.h"
+#include "core/panels/HierarchyPanel.h"
+#include "core/panels/MenuPanel.h"
 
 namespace kailux
 {
-    class EditorLayer : public Layer
+    class EditorLayer
     {
     public:
+        KAILUX_DECLARE_NON_COPYABLE_MOVABLE(EditorLayer)
+
         static EditorLayer create();
 
-        static constexpr uint32_t         s_MenuPanelIndex = 0;
-        static constexpr uint32_t         s_HierarchyPanelIndex = 1;
-        static constexpr uint32_t         s_EntityEditorIndex = 2;
+        void render(Scene& scene);
+
+        auto&       getLayer()
+        {
+            return m_Layer;
+        }
+        const auto& getLayer() const
+        {
+            return m_Layer;
+        }
 
     private:
         static constexpr std::string_view s_HierarchyPanelName = "EntitiesHierarchy";
@@ -27,9 +40,17 @@ namespace kailux
                                               1.f - s_EntityEditorPosition.y
                                           };
 
-        static constexpr uint32_t s_PanelsCount = 3;
+        static constexpr std::string_view s_AssetBrowserName = "AssetBrowser";
+        static constexpr ImVec2           s_AssetBrowserPosition = {0.f, s_EntityEditorPosition.y};
+        static constexpr ImVec2           s_AssetBrowserSize = {
+                                                s_EntityEditorPosition.x,
+                                              1.0f - s_EntityEditorPosition.y
+                                          };
+
         static constexpr ImVec4   s_PanelsBackgroundColor = {0.15f, 0.15f, 0.15f, 1.f};
 
         void addPanels();
+
+        Layer<MenuPanel, HierarchyPanel, EntityEditorPanel, AssetBrowserPanel> m_Layer;
     };
 }

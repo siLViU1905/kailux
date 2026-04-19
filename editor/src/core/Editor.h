@@ -10,15 +10,24 @@ namespace kailux
 
         static Editor create();
 
-        const EditorLayer& getEditorLayer() const;
-        EditorLayer&       getEditorLayer();
+        template<typename Layer>
+        auto& getLayer()
+        {
+            return std::get<Layer>(*m_ActiveLayer);
+        }
 
-        void render(Scene& scene) const;
+        template<typename Layer>
+        const auto& getLayer() const
+        {
+            return std::get<Layer>(*m_ActiveLayer);
+        }
+
+        void render(Scene& scene);
 
     private:
         void createLayers();
 
-        Shared<Layer> m_ActiveLayer;
-        Shared<EditorLayer> m_EditorLayer;
+        using LayerTypes = std::variant<EditorLayer>;
+        Scoped<LayerTypes> m_ActiveLayer;
     };
 }

@@ -31,7 +31,6 @@ namespace kailux
                                               m_TextureRegistry(std::move(other.m_TextureRegistry)),
                                               m_Frames(std::move(other.m_Frames)),
                                               m_CurrentFrame(other.m_CurrentFrame),
-                                              m_Clock(other.m_Clock),
                                               m_Scene(std::move(other.m_Scene)),
                                               m_Skybox(std::move(other.m_Skybox)),
                                               m_PendingData(std::move(other.m_PendingData)),
@@ -54,7 +53,6 @@ namespace kailux
             m_TextureRegistry = std::move(other.m_TextureRegistry);
             m_Frames = std::move(other.m_Frames);
             m_CurrentFrame = other.m_CurrentFrame;
-            m_Clock = other.m_Clock;
             m_Scene = std::move(other.m_Scene);
             m_Skybox = std::move(other.m_Skybox);
             m_PendingData = std::move(other.m_PendingData);
@@ -495,6 +493,27 @@ namespace kailux
         m_ImGuiBackend.recordDrawData(recorder.getCommandBuffer());
     }
 
+    void Engine::update(float deltaTime, Window &window)
+    {
+        handleEvent(window);
+        if (window.wasResized())
+            m_Swapchain.recreate(window, m_Context, m_SampleCount);
+
+        pollPendingData();
+        updatePendingFrameTasks();
+
+        auto view = m_Scene.getEntityRegistry().view<CameraComponent, CameraData>();
+        for (auto entity: view)
+        {
+            auto &camera = view.get<CameraComponent>(entity);
+            Camera::updateMovement(camera, window, deltaTime);
+            Camera::updateLookAt(camera, window, deltaTime);
+            auto& data = view.get<CameraData>(entity);
+            data.view = Camera::get_view(camera);
+            data.positionAndExposure = {camera.position, camera.exposure};
+        }
+    }
+
     void Engine::updateFrameBuffers(FrameData &frame, const CommandRecorder &recorder) const
     {
         updateCameraBuffer(frame);
@@ -653,33 +672,5 @@ namespace kailux
             }
             return false;
         });
-    }
-
-    void Engine::run(Window &window)
-    {
-        m_Clock.tick();
-        handleEvent(window);
-        pollPendingData();
-        updatePendingFrameTasks();
-
-        auto deltaTime = m_Clock.getDeltaTime<float, TimeType::Seconds>();
-        auto view = m_Scene.getEntityRegistry().view<CameraComponent, CameraData>();
-        for (auto entity: view)
-        {
-            auto &camera = view.get<CameraComponent>(entity);
-            Camera::updateMovement(camera, window, deltaTime);
-            Camera::updateLookAt(camera, window, deltaTime);
-            auto& data = view.get<CameraData>(entity);
-            data.view = Camera::get_view(camera);
-            data.positionAndExposure = {camera.position, camera.exposure};
-        }
-
-        if (window.isMinimized())
-            return;
-
-        if (window.wasResized())
-            m_Swapchain.recreate(window, m_Context, m_SampleCount);
-
-        render(window);
     }
 }

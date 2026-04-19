@@ -45,27 +45,28 @@ namespace kailux
     {
         while (m_Window.isOpen())
         {
+            m_Clock.tick();
             m_Window.pollEvents();
             if (m_Window.isMinimized())
                 continue;
 
             pollMeshLoad();
 
-            m_Engine.run(m_Window);
+            auto deltaTime = m_Clock.getDeltaTime<float, TimeType::Seconds>();
+            m_Engine.update(deltaTime, m_Window);
+            m_Engine.render(m_Window);
         }
         m_Engine.waitIdle();
     }
 
     void Application::setCallbacks()
     {
-        auto &menuPanel = static_cast<MenuPanel &>(*m_Editor.getEditorLayer().getPanels()[
-            EditorLayer::s_MenuPanelIndex]);
+        auto &menuPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<MenuPanel>();
         menuPanel.setOnLoadMesh([this]()
         {
             m_LoadMeshDialog.open("Choose a supported mesh format");
         });
-        auto &hierarchyPanel = static_cast<HierarchyPanel &>(*m_Editor.getEditorLayer().getPanels()[
-            EditorLayer::s_HierarchyPanelIndex]);
+        auto &hierarchyPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<HierarchyPanel>();
         hierarchyPanel.setOnEntityDeleted([this](auto meshHandle, auto setHandle)
         {
             m_Engine.unregisterMesh(meshHandle);
@@ -85,9 +86,7 @@ namespace kailux
                 m_ThreadDispatcher->enqueue([this, p = *path]()
                 {
                     if (auto data = MeshLoader::load(p))
-                    {
                         m_Engine.getPendingDataQueue().push(std::move(*data));
-                    }
                 });
     }
 }
