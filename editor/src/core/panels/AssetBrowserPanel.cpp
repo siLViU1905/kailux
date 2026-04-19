@@ -30,33 +30,46 @@ namespace kailux
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, m_BackgroundColor);
 
-        int columnCount = static_cast<int>(size.x / s_CellSize);
-        if (ImGui::BeginTable(m_Name.c_str(), columnCount,
+        if (ImGui::Begin(m_Name.c_str(), nullptr,
                          ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize))
         {
-            for (const auto& entry : std::filesystem::directory_iterator(m_CurrentPath))
+            if (m_CurrentPath != s_DefaultPath)
+                if (ImGui::Button("<- Back"))
+                    m_CurrentPath = m_CurrentPath.parent_path();
+
+            float availableWidth = ImGui::GetContentRegionAvail().x;
+            float cellWidthPixels = size.x * s_RelativeCellSize;
+            int columnCount = static_cast<int>(availableWidth / cellWidthPixels);
+            if (columnCount < 1)
+                columnCount = 1;
+            if (ImGui::BeginTable("AssetBrowserTable", columnCount))
             {
-                ImGui::TableNextColumn();
+                float iconSizePixels = size.x * s_RelativeIconSize;
+                for (const auto& entry : std::filesystem::directory_iterator(m_CurrentPath))
+                {
+                    ImGui::TableNextColumn();
 
-                bool isDirectory = entry.is_directory();
-                if (isDirectory)
-                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.1f, 0.6f, 0.1f, 1.0f));
-                else
-                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.1f, 0.1f, 0.6f, 1.0f));
-
-                auto name = entry.path().filename().string();
-                ImGui::Button(name.c_str(), {s_IconSize, s_IconSize});
-
-                if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+                    bool isDirectory = entry.is_directory();
                     if (isDirectory)
-                        m_CurrentPath /= entry.path().filename();
+                        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.1f, 0.6f, 0.1f, 1.0f));
+                    else
+                        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.1f, 0.1f, 0.6f, 1.0f));
 
-                ImGui::PopStyleColor();
+                    auto name = entry.path().filename().string();
+                    ImGui::Button(name.c_str(), {iconSizePixels, iconSizePixels});
 
-                ImGui::TextWrapped("%s", name.c_str());
+                    if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+                        if (isDirectory)
+                            m_CurrentPath /= entry.path().filename();
+
+                    ImGui::PopStyleColor();
+
+                    ImGui::TextWrapped("%s", name.c_str());
+                }
+                ImGui::EndTable();
             }
-            ImGui::EndTable();
         }
+        ImGui::End();
         ImGui::PopStyleColor();
     }
 }

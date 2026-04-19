@@ -14,12 +14,12 @@ namespace kailux
         void render(Scene &scene) override;
 
     private:
-        static constexpr float s_IconSize = 64.f;
-        static constexpr float s_IconPadding = 16.f;
-        static constexpr float s_CellSize = s_IconSize + s_IconPadding;
+        static constexpr float s_RelativeIconSize = 0.1f;
+        static constexpr float s_RelativeIconPadding = 0.1f;
+        static constexpr float s_RelativeCellSize = s_RelativeIconSize + s_RelativeIconPadding;
 
         using Path = std::filesystem::path;
-        static constexpr std::string_view s_DefaultPath = "assets/";
+        static constexpr std::string_view s_DefaultPath = "assets";
 
         Path     m_CurrentPath;
     };
