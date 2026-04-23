@@ -81,6 +81,16 @@ namespace kailux
 
                     ImGui::ImageButton("##icon", iconId, {iconSizePixels, iconSizePixels});
 
+                    if (!isDirectory)
+                        if (ImGui::BeginDragDropSource(s_DragDropSourceFlags))
+                        {
+                            auto itemPath = entry.path().string();
+                            ImGui::SetDragDropPayload(s_DragDropPayloadType.data(), itemPath.c_str(),
+                                                      itemPath.size() + 1);
+                            ImGui::Text("%s", name.c_str());
+                            ImGui::EndDragDropSource();
+                        }
+
                     if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
                         if (isDirectory)
                             m_CurrentPath /= entry.path().filename();

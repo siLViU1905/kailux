@@ -1,7 +1,10 @@
 #include "HierarchyPanel.h"
 
+#include <imgui_internal.h>
+
 #include "core/components/entt/MeshComponent.h"
 #include "core/components/entt/TagComponent.h"
+#include "AssetBrowserPanel.h"
 
 namespace kailux
 {
@@ -66,7 +69,8 @@ namespace kailux
 
                     if (on_entity_delete(entity, scene))
                     {
-                        auto [meshComponent, materialComponent] = registry.get<MeshComponent, MaterialComponent>(entity);
+                        auto [meshComponent, materialComponent] = registry.get<MeshComponent,
+                            MaterialComponent>(entity);
                         m_OnEntityDeleted(meshComponent.handle, materialComponent.handle);
                         registry.destroy(entity);
                         if (m_SelectedEntity == entity)
@@ -88,6 +92,20 @@ namespace kailux
                 }
             }
         }
+
+
+        if (ImGui::BeginDragDropTargetCustom(
+            ImGui::GetCurrentWindow()->InnerRect,
+            ImGui::GetID(m_Name.c_str())
+        ))
+        {
+            if (const auto *payload = ImGui::AcceptDragDropPayload(AssetBrowserPanel::s_DragDropPayloadType.data()))
+            {
+                std::string path = static_cast<const char *>(payload->Data);
+            }
+            ImGui::EndDragDropTarget();
+        }
+
         ImGui::End();
         ImGui::PopStyleColor();
     }
