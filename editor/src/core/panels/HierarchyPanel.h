@@ -18,12 +18,16 @@ namespace kailux
         using OnEntityDeleted = std::move_only_function<void(MeshHandle meshHandle, TextureSetHandle setHandle)>;
         void  setOnEntityDeleted(OnEntityDeleted&& callback);
 
+        using OnDragDrop = std::move_only_function<void(std::string_view path)>;
+        void  setOnDragDrop(OnDragDrop&& callback);
+
     private:
         static bool on_entity_rename(entt::entity entity, entt::registry &registry);
         static bool on_entity_delete(entt::entity entity, Scene &scene);
 
         OnEntitySelected m_OnEntitySelected;
         OnEntityDeleted  m_OnEntityDeleted;
+        OnDragDrop       m_OnDragDrop;
         entt::entity     m_SelectedEntity;
     };
 }

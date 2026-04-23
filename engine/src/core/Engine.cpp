@@ -455,6 +455,33 @@ namespace kailux
         m_CurrentFrame = (m_CurrentFrame + 1) % s_FramesInFlight;
     }
 
+    bool Engine::is_mesh_type_supported(std::string_view path)
+    {
+        static constexpr std::array<std::string_view, 3> supported =
+        {
+            "fbx",
+            "gltf",
+            "obj"
+        };
+
+        auto extension = path.substr(path.find_last_of(".") + 1);
+
+        return std::ranges::contains(supported, extension);
+    }
+
+    bool Engine::is_image_type_supported(std::string_view path)
+    {
+        static constexpr std::array<std::string_view, 2> supported =
+        {
+            "jpeg",
+            "png"
+        };
+
+        auto extension = path.substr(path.find_last_of(".") + 1);
+
+        return std::ranges::contains(supported, extension);
+    }
+
     std::vector<vk::DrawIndexedIndirectCommand> Engine::getMeshIndirectCommands() const
     {
         auto views = m_MeshRegistry.viewAll();
