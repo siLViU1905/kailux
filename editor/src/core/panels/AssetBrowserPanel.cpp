@@ -45,7 +45,7 @@ namespace kailux
         }
 
         ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
-        ImGui::SetNextWindowSize(size, ImGuiCond_Always);
+        ImGui::SetNextWindowSize(size, ImGuiCond_FirstUseEver);
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, m_BackgroundColor);
 

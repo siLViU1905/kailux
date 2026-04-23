@@ -44,6 +44,9 @@ namespace kailux
         void update(float deltaTime, Window &window);
         void render(Window &window);
 
+        static bool is_mesh_type_supported(std::string_view path);
+        static bool is_image_type_supported(std::string_view path);
+
     private:
         static constexpr std::string_view s_VertexShaderPath = "shaders/vertex_shader.spv";
         static constexpr std::string_view s_FragmentShaderPath = "shaders/fragment_shader.spv";

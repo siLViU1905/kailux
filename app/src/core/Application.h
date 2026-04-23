@@ -25,6 +25,7 @@ namespace kailux
     private:
         void setCallbacks();
 
+        // will be removed soon, no need for it because drag and drop loading added
         void pollMeshLoad();
 
         Window           m_Window;

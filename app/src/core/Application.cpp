@@ -77,6 +77,18 @@ namespace kailux
             m_Engine.unregisterMesh(meshHandle);
             m_Engine.unregisterTextureSet(setHandle);
         });
+        hierarchyPanel.setOnDragDrop([this](std::string_view path)
+        {
+            if (Engine::is_mesh_type_supported(path))
+            {
+                std::string pathStr = path.data();
+                m_ThreadDispatcher->enqueue([this, p = pathStr]()
+               {
+                   if (auto data = MeshLoader::load(p))
+                       m_Engine.getPendingDataQueue().push(std::move(*data));
+               });
+            }
+        });
 
         m_Engine.setOnEditorRender([this](Scene &scene)
         {

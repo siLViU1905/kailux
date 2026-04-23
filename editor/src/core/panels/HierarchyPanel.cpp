@@ -102,6 +102,7 @@ namespace kailux
             if (const auto *payload = ImGui::AcceptDragDropPayload(AssetBrowserPanel::s_DragDropPayloadType.data()))
             {
                 std::string path = static_cast<const char *>(payload->Data);
+                m_OnDragDrop(path);
             }
             ImGui::EndDragDropTarget();
         }
@@ -118,6 +119,11 @@ namespace kailux
     void HierarchyPanel::setOnEntityDeleted(OnEntityDeleted &&callback)
     {
         m_OnEntityDeleted = std::move(callback);
+    }
+
+    void HierarchyPanel::setOnDragDrop(OnDragDrop &&callback)
+    {
+        m_OnDragDrop = std::move(callback);
     }
 
     bool HierarchyPanel::on_entity_rename(entt::entity entity, entt::registry &registry)
