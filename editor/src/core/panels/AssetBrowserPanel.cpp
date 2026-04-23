@@ -53,8 +53,13 @@ namespace kailux
                          ImGuiWindowFlags_NoMove))
         {
             if (m_CurrentPath != s_DefaultPath)
+            {
                 if (ImGui::Button("<- Back"))
                     m_CurrentPath = m_CurrentPath.parent_path();
+                ImGui::SameLine();
+            }
+
+            ImGui::Text("%s", m_CurrentPath.string().c_str());
 
             float availableWidth = ImGui::GetContentRegionAvail().x;
             float cellWidthPixels = size.x * s_RelativeCellSize;
