@@ -19,8 +19,8 @@ namespace kailux
         void setFileTextureId(ImTextureID id);
 
     private:
-        static constexpr float s_RelativeIconSize = 0.1f;
-        static constexpr float s_RelativeIconPadding = 0.1f;
+        static constexpr float s_RelativeIconSize = 0.03f;
+        static constexpr float s_RelativeIconPadding = 0.015f;
         static constexpr float s_RelativeCellSize = s_RelativeIconSize + s_RelativeIconPadding;
 
         using Path = std::filesystem::path;
