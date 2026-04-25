@@ -69,9 +69,8 @@ namespace kailux
 
                     if (on_entity_delete(entity, scene))
                     {
-                        auto [meshComponent, materialComponent] = registry.get<MeshComponent,
-                            MaterialComponent>(entity);
-                        m_OnEntityDeleted(meshComponent.handle, materialComponent.handle);
+                        auto [meshComponent, materialComponent] = registry.get<MeshComponent, MaterialComponent>(entity);
+                        m_OnEntityDeleted(meshComponent, materialComponent);
                         registry.destroy(entity);
                         if (m_SelectedEntity == entity)
                         {
