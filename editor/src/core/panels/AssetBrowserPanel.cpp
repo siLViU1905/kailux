@@ -45,7 +45,7 @@ namespace kailux
         }
 
         ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
-        ImGui::SetNextWindowSize(size, ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(size, ImGuiCond_Always);
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, m_BackgroundColor);
 
@@ -79,7 +79,13 @@ namespace kailux
                     auto name = entry.path().filename().string();
                     ImGui::PushID(name.c_str());
 
+                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+                    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.1f));
+                    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.2f));
+
                     ImGui::ImageButton("##icon", iconId, {iconSizePixels, iconSizePixels});
+
+                    ImGui::PopStyleColor(3);
 
                     if (!isDirectory)
                         if (ImGui::BeginDragDropSource(s_DragDropSourceFlags))

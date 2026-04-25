@@ -21,7 +21,7 @@ namespace kailux
         static constexpr std::string_view s_DragDropPayloadType = "CONTENT_BROWSER_ITEM";
 
     private:
-        static constexpr float s_RelativeIconSize = 0.03f;
+        static constexpr float s_RelativeIconSize = 0.05f;
         static constexpr float s_RelativeIconPadding = 0.015f;
         static constexpr float s_RelativeCellSize = s_RelativeIconSize + s_RelativeIconPadding;
 
