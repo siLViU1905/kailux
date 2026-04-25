@@ -195,6 +195,8 @@ namespace kailux
     void EntityEditorPanel::setSelectedEntity(entt::entity entity, const Scene &scene)
     {
         m_SelectedEntity = entity;
+        if (entity == entt::null)
+            m_Open = false;
 
         if (scene.getEntityRegistry().all_of<MeshTransformData>(m_SelectedEntity))
         {

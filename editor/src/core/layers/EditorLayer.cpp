@@ -65,8 +65,8 @@ namespace kailux
 
         hierarchyPanel.setOnEntitySelected([&entityEditorPanel](entt::entity entity, const Scene &scene)
         {
-            entityEditorPanel.setSelectedEntity(entity, scene);
             entityEditorPanel.open();
+            entityEditorPanel.setSelectedEntity(entity, scene);
         });
 
         assetBrowser.setDirectoryTextureId(directoryTextureId);
