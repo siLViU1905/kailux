@@ -33,7 +33,8 @@ namespace kailux
                                               m_CurrentFrame(other.m_CurrentFrame),
                                               m_Scene(std::move(other.m_Scene)),
                                               m_Skybox(std::move(other.m_Skybox)),
-                                              m_PendingData(std::move(other.m_PendingData)),
+                                              m_PendingMeshData(std::move(other.m_PendingMeshData)),
+                                              m_MeshCache(std::move(other.m_MeshCache)),
                                               m_PendingFrameTasks(std::move(other.m_PendingFrameTasks))
     {
     }
@@ -55,7 +56,8 @@ namespace kailux
             m_CurrentFrame = other.m_CurrentFrame;
             m_Scene = std::move(other.m_Scene);
             m_Skybox = std::move(other.m_Skybox);
-            m_PendingData = std::move(other.m_PendingData);
+            m_PendingMeshData = std::move(other.m_PendingMeshData);
+            m_MeshCache = std::move(other.m_MeshCache);
             m_PendingFrameTasks = std::move(other.m_PendingFrameTasks);
         }
         return *this;
@@ -97,20 +99,21 @@ namespace kailux
         m_Context.getDevice().waitIdle();
     }
 
-    Queue<MeshLoader::LoadData> &Engine::getPendingDataQueue()
+    Queue<Engine::PendingMeshData> &Engine::getPendingMeshDataQueue()
     {
-        return m_PendingData;
+        return m_PendingMeshData;
     }
 
-    void Engine::unregisterMesh(MeshHandle handle)
+    void Engine::unregisterMesh(MeshHandle handle, std::string_view path)
     {
-        m_MeshRegistry.destroy(handle);
+        if (uncacheMesh(path))
+            m_MeshRegistry.destroy(handle);
     }
 
     void Engine::unregisterTextureSet(TextureSetHandle handle)
     {
         auto defaultHandle = m_TextureRegistry.getDefaultSetHandle();
-        const auto& defaultSet = m_TextureRegistry.view(defaultHandle);
+        const auto &defaultSet = m_TextureRegistry.view(defaultHandle);
         auto updateInfos = make_descriptor_set_update_info_from_texture_set(defaultHandle, defaultSet);
 
         for (const auto &frame: m_Frames)
@@ -228,16 +231,16 @@ namespace kailux
         m_Scene.createMeshEntity(
             "Cube",
             m_MeshRegistry.getBuiltins().cube,
+            "",
             m_TextureRegistry.getDefaultSetHandle(),
-            {},
-            {}
+            {}, {}
         );
         m_Scene.createMeshEntity(
             "Sphere",
             m_MeshRegistry.getBuiltins().sphere,
+            "",
             m_TextureRegistry.getDefaultSetHandle(),
-            MeshTransformData({1.5f, 0.f, 0.f}),
-            {}
+            MeshTransformData({1.5f, 0.f, 0.f}), {}
         );
     }
 
@@ -287,7 +290,8 @@ namespace kailux
         return info;
     }
 
-    std::array<DescriptorSetUpdateInfo, TextureRegistry::s_TextureTypes.size()> Engine::make_descriptor_set_update_info_from_texture_set(TextureSetHandle handle, const TextureSet& set)
+    std::array<DescriptorSetUpdateInfo, TextureRegistry::s_TextureTypes.size()>
+    Engine::make_descriptor_set_update_info_from_texture_set(TextureSetHandle handle, const TextureSet &set)
     {
         auto makeUpdateInfo = [handle](uint32_t binding, const auto &texture)-> DescriptorSetUpdateInfo
         {
@@ -310,7 +314,8 @@ namespace kailux
             makeUpdateInfo(s_MeshTextureBindStart + textureIndex++, set.metallic),
             makeUpdateInfo(s_MeshTextureBindStart + textureIndex++, set.ao)
         };
-        static_assert(TextureRegistry::s_TextureTypes.size() == updateInfos.size(), "There is a missing texture in update info");
+        static_assert(TextureRegistry::s_TextureTypes.size() == updateInfos.size(),
+                      "There is a missing texture in update info");
         return updateInfos;
     }
 
@@ -482,6 +487,38 @@ namespace kailux
         return std::ranges::contains(supported, extension);
     }
 
+    bool Engine::isMeshCached(std::string_view path) const
+    {
+        return m_MeshCache.contains(std::string(path));
+    }
+
+    void Engine::cacheMesh(std::string_view path, MeshHandle meshHandle, TextureSetHandle materialHandle)
+    {
+        auto strPath = std::string(path);
+        if (isMeshCached(path))
+        {
+            ++m_MeshCache[strPath].count;
+            return;
+        }
+        m_MeshCache[strPath] = {meshHandle, materialHandle};
+    }
+
+    std::optional<Engine::MeshCache> Engine::uncacheMesh(std::string_view path)
+    {
+        auto it = m_MeshCache.find(std::string(path));
+        if (it == m_MeshCache.end())
+            return std::nullopt;
+        auto &count = it->second.count;
+        if (count > 1)
+        {
+            --count;
+            return std::nullopt;
+        }
+        std::optional cache = it->second;
+        m_MeshCache.erase(it);
+        return cache;
+    }
+
     std::vector<vk::DrawIndexedIndirectCommand> Engine::getMeshIndirectCommands() const
     {
         auto views = m_MeshRegistry.viewAll();
@@ -550,7 +587,7 @@ namespace kailux
             auto &camera = view.get<CameraComponent>(entity);
             Camera::updateMovement(camera, window, deltaTime);
             Camera::updateLookAt(camera, window, deltaTime);
-            auto& data = view.get<CameraData>(entity);
+            auto &data = view.get<CameraData>(entity);
             data.view = Camera::get_view(camera);
             data.positionAndExposure = {camera.position, camera.exposure};
         }
@@ -664,15 +701,37 @@ namespace kailux
 
     void Engine::pollPendingData()
     {
-        if (auto data = m_PendingData.tryPop())
+        if (auto data = m_PendingMeshData.tryPop())
         {
-            auto meshHandle = uploadMeshDataToRegistry(data.value().meshData);
-            auto textureHandle = uploadMaterialDataToRegistry(data.value().materialData);
+            const auto &meshData = data->data;
+            MeshHandle meshHandle;
+            TextureSetHandle textureHandle;
+            if (isMeshCached(data->path))
+            {
+                auto cache = m_MeshCache.at(data->path);
+                const auto &material = m_TextureRegistry.view(cache.materialHandle);
+                auto newHandle = m_TextureRegistry.registerTextureSet(material);
+
+                auto updateInfos = make_descriptor_set_update_info_from_texture_set(newHandle, material);
+
+                for (const auto &frame: m_Frames)
+                    frame.getDescriptorSet().updateInfo(
+                        m_Context,
+                        updateInfos
+                    );
+                meshHandle = cache.meshHandle;
+                textureHandle = cache.materialHandle;
+            } else
+            {
+                meshHandle = uploadMeshDataToRegistry(meshData.meshData);
+                textureHandle = uploadMaterialDataToRegistry(meshData.materialData);
+            }
+            cacheMesh(data->path, meshHandle, textureHandle);
             m_Scene.createMeshEntity(m_Scene.getMeshEntityName(),
                                      meshHandle,
+                                     data->path,
                                      textureHandle,
-                                     MeshTransformData({-2.f, 0.f, 0.f}),
-                                     {}
+                                     MeshTransformData({-2.f, 0.f, 0.f}), {}
             );
         }
     }
@@ -704,7 +763,7 @@ namespace kailux
 
     void Engine::updatePendingFrameTasks()
     {
-        std::erase_if(m_PendingFrameTasks, [](auto& task)
+        std::erase_if(m_PendingFrameTasks, [](auto &task)
         {
             --task.remainingFrames;
             if (task.remainingFrames == 0)

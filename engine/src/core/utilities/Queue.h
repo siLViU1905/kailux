@@ -42,6 +42,12 @@ namespace kailux
             std::lock_guard lock(*m_Mutex);
             m_Queue.push_front(std::move(val));
         }
+        template<typename... Args>
+        void emplace(Args&&... args)
+        {
+            std::lock_guard lock(*m_Mutex);
+            m_Queue.emplace_front(std::forward<Args>(args)...);
+        }
 
         using PopResult = std::optional<T>;
         PopResult tryPop()
@@ -49,7 +55,7 @@ namespace kailux
             std::lock_guard lock(*m_Mutex);
             if (m_Queue.empty())
                 return std::nullopt;
-            auto val = std::move(m_Queue.back());
+            auto val = std::move(m_Queue.front());
             m_Queue.pop_front();
             return val;
         }

@@ -5,6 +5,7 @@ namespace kailux
 {
     struct MeshComponent
     {
-        MeshHandle handle;
+        MeshHandle  handle;
+        std::string path;
     };
 }

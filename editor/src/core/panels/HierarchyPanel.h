@@ -1,6 +1,7 @@
 #pragma once
 #include "Panel.h"
 #include "core/components/entt/MaterialComponent.h"
+#include "core/components/entt/MeshComponent.h"
 
 namespace kailux
 {
@@ -15,7 +16,7 @@ namespace kailux
         using OnEntitySelected = std::move_only_function<void(entt::entity, const Scene&)>;
         void  setOnEntitySelected(OnEntitySelected&& callback);
 
-        using OnEntityDeleted = std::move_only_function<void(MeshHandle meshHandle, TextureSetHandle setHandle)>;
+        using OnEntityDeleted = std::move_only_function<void(MeshComponent meshComponent, MaterialComponent materialComponent)>;
         void  setOnEntityDeleted(OnEntityDeleted&& callback);
 
         using OnDragDrop = std::move_only_function<void(std::string_view path)>;

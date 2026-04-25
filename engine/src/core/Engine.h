@@ -33,9 +33,15 @@ namespace kailux
 
         void waitIdle() const;
 
-        Queue<MeshLoader::LoadData> &getPendingDataQueue();
+        struct PendingMeshData
+        {
+            std::string path;
+            MeshLoader::LoadData data;
+        };
 
-        void unregisterMesh(MeshHandle handle);
+        Queue<PendingMeshData> &getPendingMeshDataQueue();
+
+        void unregisterMesh(MeshHandle handle, std::string_view path);
         void unregisterTextureSet(TextureSetHandle handle);
 
         ImTextureID getAssetBrowserDirectoryTextureId() const;
@@ -46,6 +52,8 @@ namespace kailux
 
         static bool is_mesh_type_supported(std::string_view path);
         static bool is_image_type_supported(std::string_view path);
+
+        bool isMeshCached(std::string_view path) const;
 
     private:
         static constexpr std::string_view s_VertexShaderPath = "shaders/vertex_shader.spv";
@@ -211,33 +219,43 @@ namespace kailux
 
         void updatePendingFrameTasks();
 
+        struct MeshCache
+        {
+            MeshHandle       meshHandle;
+            TextureSetHandle materialHandle;
+            uint32_t         count = 1;
+        };
+        void                     cacheMesh(std::string_view path, MeshHandle meshHandle, TextureSetHandle materialHandle);
+        std::optional<MeshCache> uncacheMesh(std::string_view path);
+
         static constexpr uint32_t s_FramesInFlight = 2;
 
-        Context                                 m_Context;
-        vk::SampleCountFlagBits                 m_SampleCount;
-        Swapchain                               m_Swapchain;
-        ImGuiBackend                            m_ImGuiBackend;
-        DescriptorLayout                        m_DescriptorLayout;
-        DescriptorPool                          m_DescriptorPool;
-        Pipeline                                m_Pipeline;
-        MeshRegistry                            m_MeshRegistry;
-        TextureRegistry                         m_TextureRegistry;
-        std::array<FrameData, s_FramesInFlight> m_Frames;
-        uint32_t                                m_CurrentFrame;
+        Context                                    m_Context;
+        vk::SampleCountFlagBits                    m_SampleCount;
+        Swapchain                                  m_Swapchain;
+        ImGuiBackend                               m_ImGuiBackend;
+        DescriptorLayout                           m_DescriptorLayout;
+        DescriptorPool                             m_DescriptorPool;
+        Pipeline                                   m_Pipeline;
+        MeshRegistry                               m_MeshRegistry;
+        TextureRegistry                            m_TextureRegistry;
+        std::array<FrameData, s_FramesInFlight>    m_Frames;
+        uint32_t                                   m_CurrentFrame;
 
-        Scene                                   m_Scene;
-        OnEditorRender                          m_OnEditorRender;
-        SkyboxPass                              m_Skybox;
+        Scene                                      m_Scene;
+        OnEditorRender                             m_OnEditorRender;
+        SkyboxPass                                 m_Skybox;
 
-        Queue<MeshLoader::LoadData>             m_PendingData;
+        Queue<PendingMeshData>                     m_PendingMeshData;
+        std::unordered_map<std::string, MeshCache> m_MeshCache;
 
-        static constexpr uint32_t               s_ResourceCleanupFrameDelay = s_FramesInFlight + 1;
+        static constexpr uint32_t                  s_ResourceCleanupFrameDelay = s_FramesInFlight + 1;
         using FrameTask = std::move_only_function<void()>;
         struct PendingFrameTask
         {
             FrameTask task;
             uint32_t  remainingFrames = s_ResourceCleanupFrameDelay;
         };
-        std::vector<PendingFrameTask>           m_PendingFrameTasks;
+        std::vector<PendingFrameTask>              m_PendingFrameTasks;
     };
 }

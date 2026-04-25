@@ -72,21 +72,24 @@ namespace kailux
             m_LoadMeshDialog.open("Choose a supported mesh format");
         });
         auto &hierarchyPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<HierarchyPanel>();
-        hierarchyPanel.setOnEntityDeleted([this](auto meshHandle, auto setHandle)
+        hierarchyPanel.setOnEntityDeleted([this](auto meshComponent, auto materialComponent)
         {
-            m_Engine.unregisterMesh(meshHandle);
-            m_Engine.unregisterTextureSet(setHandle);
+            m_Engine.unregisterMesh(meshComponent.handle, meshComponent.path);
+            m_Engine.unregisterTextureSet(materialComponent.handle);
         });
         hierarchyPanel.setOnDragDrop([this](std::string_view path)
         {
             if (Engine::is_mesh_type_supported(path))
             {
                 std::string pathStr = path.data();
-                m_ThreadDispatcher->enqueue([this, p = pathStr]()
-               {
-                   if (auto data = MeshLoader::load(p))
-                       m_Engine.getPendingDataQueue().push(std::move(*data));
-               });
+                if (m_Engine.isMeshCached(pathStr))
+                    m_Engine.getPendingMeshDataQueue().emplace(std::move(pathStr), MeshLoader::LoadData());
+                else
+                    m_ThreadDispatcher->enqueue([this, p = pathStr]()
+                    {
+                        if (auto data = MeshLoader::load(p))
+                            m_Engine.getPendingMeshDataQueue().emplace(std::move(p), std::move(*data));
+                    });
             }
         });
 
@@ -100,10 +103,15 @@ namespace kailux
     {
         if (m_LoadMeshDialog.poll())
             while (auto path = m_LoadMeshDialog.tryPopPath())
-                m_ThreadDispatcher->enqueue([this, p = *path]()
-                {
-                    if (auto data = MeshLoader::load(p))
-                        m_Engine.getPendingDataQueue().push(std::move(*data));
-                });
+            {
+                if (m_Engine.isMeshCached(*path))
+                    m_Engine.getPendingMeshDataQueue().emplace(std::move(*path), MeshLoader::LoadData());
+                else
+                    m_ThreadDispatcher->enqueue([this, p = *path]()
+                    {
+                        if (auto data = MeshLoader::load(p))
+                            m_Engine.getPendingMeshDataQueue().emplace(std::move(p), std::move(*data));
+                    });
+            }
     }
 }

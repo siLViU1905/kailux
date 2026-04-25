@@ -22,9 +22,9 @@ namespace kailux
         entt::entity createMeshEntity(
             std::string_view name,
             MeshHandle meshHandle,
+            std::string_view path,
             TextureSetHandle textureSetHandle,
-            const MeshTransformData &transform,
-            const MeshMaterialData &material
+            const MeshTransformData &transform, const MeshMaterialData &material
         );
 
         entt::registry&       getEntityRegistry();
