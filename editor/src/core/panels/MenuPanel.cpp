@@ -12,11 +12,6 @@ namespace kailux
     {
     }
 
-    void MenuPanel::setOnLoadMesh(OnLoadMesh &&callback)
-    {
-        m_OnLoadMesh = std::move(callback);
-    }
-
     void MenuPanel::render(Scene &scene)
     {
         if (ImGui::BeginMainMenuBar())
@@ -47,9 +42,7 @@ namespace kailux
                     ImGui::SliderFloat("Intensity", &scene.getAmbient().w, 0.f, 1.f);
 
                     ImGui::EndMenu();
-                } else if (ImGui::MenuItem("Load mesh..."))
-                    m_OnLoadMesh();
-
+                }
                 ImGui::EndMenu();
             }
 
