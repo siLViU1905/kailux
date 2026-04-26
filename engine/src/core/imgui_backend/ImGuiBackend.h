@@ -27,7 +27,7 @@ namespace kailux
         void createImGuiContext();
         void createDescriptorPool(const Context& context);
         void createImGuiVulkanContext(Window& window, const Context& context, const Swapchain& swapchain, vk::SampleCountFlagBits sampleCount);
-        // this style was taken from https://github.com/ocornut/imgui/issues/707#issuecomment-3341945111
+        // this style was taken from https://github.com/ocornut/imgui/issues/707#issuecomment-3476242710
         void applyStyle();
 
         ImGuiContext*            p_Context;
