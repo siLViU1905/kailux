@@ -64,4 +64,5 @@ target_precompile_headers(kailux_engine PUBLIC
         <array>
         <memory>
         <string>
+        <nlohmann/json.hpp>
 )
