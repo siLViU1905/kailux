@@ -7,8 +7,14 @@ namespace kailux
     AssetBrowserPanel::AssetBrowserPanel() : m_CurrentPath(s_DefaultPath),
                                              m_UseFullWidth(true),
                                              m_DirectoryTextureId(0),
-                                             m_FileTextureId(0)
+                                             m_FileTextureId(0),
+                                             m_ItemToRenamePath(""),
+                                             m_RenameBuffer(""),
+                                             m_IsRenaming(false)
+
     {
+        if (!std::filesystem::exists(m_CurrentPath))
+            std::filesystem::create_directory(m_CurrentPath);
     }
 
     AssetBrowserPanel::AssetBrowserPanel(std::string_view name, ImVec2 position, ImVec2 size, ImVec4 backgroundColor)
@@ -16,8 +22,13 @@ namespace kailux
           m_CurrentPath(s_DefaultPath),
           m_UseFullWidth(true),
           m_DirectoryTextureId(0),
-          m_FileTextureId(0)
+          m_FileTextureId(0),
+          m_ItemToRenamePath(""),
+          m_RenameBuffer(""),
+          m_IsRenaming(false)
     {
+        if (!std::filesystem::exists(m_CurrentPath))
+            std::filesystem::create_directory(m_CurrentPath);
     }
 
     void AssetBrowserPanel::render(Scene &scene)
@@ -85,7 +96,47 @@ namespace kailux
 
                     ImGui::ImageButton("##icon", iconId, {iconSizePixels, iconSizePixels});
 
+                    if (ImGui::BeginPopupContextItem())
+                    {
+                        if (ImGui::MenuItem("Rename"))
+                        {
+                            m_IsRenaming = true;
+                            m_ItemToRenamePath = entry.path();
+                            m_RenameBuffer.fill(0);
+                            std::strncpy(m_RenameBuffer.data(), name.c_str(), m_RenameBuffer.size());
+                        }
+                        if (ImGui::MenuItem("Delete"))
+                        {
+                            std::error_code ec;
+                            std::filesystem::remove_all(entry.path(), ec);
+                        }
+                        ImGui::EndPopup();
+                    }
+
                     ImGui::PopStyleColor(3);
+
+                    if (m_IsRenaming && m_ItemToRenamePath == entry.path())
+                    {
+                        ImGui::SetKeyboardFocusHere();
+                        if (ImGui::InputText("##rename", m_RenameBuffer.data(), m_RenameBuffer.size(), ImGuiInputTextFlags_EnterReturnsTrue))
+                        {
+                            std::filesystem::path newPath = entry.path().parent_path() / std::string(m_RenameBuffer.begin(), m_RenameBuffer.end());
+
+                            if (!std::filesystem::exists(newPath))
+                            {
+                                std::error_code ec;
+                                std::filesystem::rename(entry.path(), newPath, ec);
+                            }
+
+                            m_IsRenaming = false;
+                            m_ItemToRenamePath = "";
+                        }
+
+                        if (!ImGui::IsItemActive() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+                            m_IsRenaming = false;
+                    }
+                    else
+                        ImGui::TextWrapped("%s", name.c_str());
 
                     if (!isDirectory)
                         if (ImGui::BeginDragDropSource(s_DragDropSourceFlags))
@@ -102,10 +153,35 @@ namespace kailux
                             m_CurrentPath /= entry.path().filename();
 
                     ImGui::PopID();
-
-                    ImGui::TextWrapped("%s", name.c_str());
                 }
                 ImGui::EndTable();
+            }
+
+            if (ImGui::BeginPopupContextWindow("AssetBrowserContextMenu",
+                                               ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+            {
+                if (ImGui::MenuItem("New Folder"))
+                {
+                    std::filesystem::path newFolderPath = m_CurrentPath / "New Folder";
+                    int counter = 1;
+
+                    while (std::filesystem::exists(newFolderPath))
+                    {
+                        newFolderPath = m_CurrentPath / ("New Folder (" + std::to_string(counter) + ")");
+                        counter++;
+                    }
+
+                    std::error_code ec;
+                    if (std::filesystem::create_directory(newFolderPath, ec))
+                    {
+                    } else
+                    {
+                    }
+
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::EndPopup();
             }
         }
         ImGui::End();
