@@ -18,6 +18,8 @@ namespace kailux
         void setDirectoryTextureId(ImTextureID id);
         void setFileTextureId(ImTextureID id);
 
+        static constexpr std::string_view s_DefaultPath = "workspace";
+
         static constexpr std::string_view s_DragDropPayloadType = "CONTENT_BROWSER_ITEM";
 
     private:
@@ -30,7 +32,6 @@ namespace kailux
                                                                     ImGuiDragDropFlags_SourceNoPreviewTooltip;
 
         using Path = std::filesystem::path;
-        static constexpr std::string_view s_DefaultPath = "workspace";
 
         Path     m_CurrentPath;
         bool     m_UseFullWidth;

@@ -12,10 +12,13 @@ namespace kailux
 
         void render(Scene &scene) override;
 
+        using OnSceneSave = std::move_only_function<void()>;
+        void setOnSceneSave(OnSceneSave&& callback);
+
     private:
         void renderProfilerWindow();
 
-        bool       m_ShowProfiler;
-        FileDialog m_LoadMeshDialog;
+        bool        m_ShowProfiler;
+        OnSceneSave m_OnSceneSave;
     };
 }

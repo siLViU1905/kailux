@@ -33,6 +33,5 @@ namespace kailux
 
         static constexpr uint32_t s_ThreadCount = 2;
         Shared<ThreadDispatcher>  m_ThreadDispatcher;
-        FileDialog                m_LoadMeshDialog;
     };
 }

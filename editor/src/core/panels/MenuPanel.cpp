@@ -1,4 +1,6 @@
 #include "MenuPanel.h"
+
+#include <fstream>
 #include <glm/gtc/type_ptr.hpp>
 
 namespace kailux
@@ -23,6 +25,10 @@ namespace kailux
                 }
                 if (ImGui::MenuItem("Open..."))
                 {
+                }
+                if (ImGui::MenuItem("Save"))
+                {
+                    m_OnSceneSave();
                 }
                 ImGui::EndMenu();
             }
@@ -51,6 +57,11 @@ namespace kailux
             if (m_ShowProfiler)
                 renderProfilerWindow();
         }
+    }
+
+    void MenuPanel::setOnSceneSave(OnSceneSave &&callback)
+    {
+        m_OnSceneSave = std::move(callback);
     }
 
     void MenuPanel::renderProfilerWindow()

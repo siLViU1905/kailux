@@ -1,5 +1,6 @@
 #include "Engine.h"
 
+#include <fstream>
 #include <magic_enum/magic_enum.hpp>
 
 #include "FileDialog.h"
@@ -213,7 +214,7 @@ namespace kailux
 
     void Engine::createScene()
     {
-        m_Scene = Scene::create();
+        m_Scene = Scene::create("MainScene");
     }
 
     void Engine::createSceneEntities(const Window &window)
@@ -490,6 +491,19 @@ namespace kailux
     bool Engine::isMeshCached(std::string_view path) const
     {
         return m_MeshCache.contains(std::string(path));
+    }
+
+    void Engine::saveScene(std::string_view folder) const
+    {
+        std::filesystem::path savePath = folder;
+        savePath /= Scene::s_SaveFolder;
+        if (!std::filesystem::exists(savePath))
+            std::filesystem::create_directory(savePath);
+        savePath /= std::string(m_Scene.getName().data()) + "." + s_SceneFileExtension.data();
+
+        std::ofstream saveFile(savePath);
+        if (saveFile.is_open())
+            saveFile << m_Scene.serialize();
     }
 
     void Engine::cacheMesh(std::string_view path, MeshHandle meshHandle, TextureSetHandle materialHandle)

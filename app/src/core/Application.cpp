@@ -86,6 +86,12 @@ namespace kailux
             }
         });
 
+        auto& menuPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<MenuPanel>();
+        menuPanel.setOnSceneSave([this]()
+        {
+            m_Engine.saveScene(AssetBrowserPanel::s_DefaultPath);
+        });
+
         m_Engine.setOnEditorRender([this](Scene &scene)
         {
             m_Editor.render(scene);
