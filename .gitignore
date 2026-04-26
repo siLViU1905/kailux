@@ -2,3 +2,4 @@
 *.spv
 CMakeUserPresets.json
 /build
+/assets/a_backpack_for_an_adventure
