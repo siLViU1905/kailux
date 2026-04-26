@@ -55,6 +55,9 @@ namespace kailux
 
         bool isMeshCached(std::string_view path) const;
 
+        static constexpr std::string_view s_SceneFileExtension = "klx";
+        void saveScene(std::string_view folder) const;
+
     private:
         static constexpr std::string_view s_VertexShaderPath = "shaders/vertex_shader.spv";
         static constexpr std::string_view s_FragmentShaderPath = "shaders/fragment_shader.spv";

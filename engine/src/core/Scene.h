@@ -16,7 +16,7 @@ namespace kailux
     public:
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(Scene)
 
-        static Scene create();
+        static Scene create(std::string_view name);
 
         entt::entity createCameraEntity(std::string_view name, bool isPrimary, int width, int height);
         entt::entity createMeshEntity(
@@ -35,16 +35,21 @@ namespace kailux
         SceneData             getData() const;
         glm::vec4&            getAmbient();
         const glm::vec4&      getAmbient() const;
+        std::string_view      getName() const;
 
         std::string           getMeshEntityName();
 
+        static constexpr std::string_view s_SaveFolder = "scenes";
+        std::string           serialize() const;
+
     private:
         static constexpr std::string_view s_SunName = "Sun";
-        static constexpr std::string_view s_SceneName = "Scene";
 
         entt::entity createEntity(std::string_view name);
         using        SunData = DirectionalLightData;
         entt::entity createSunEntity(const SunData& data);
+
+        std::string    m_Name;
 
         entt::registry m_EntityRegistry;
         entt::entity   m_MainCameraEntity;

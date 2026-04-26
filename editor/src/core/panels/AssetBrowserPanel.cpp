@@ -84,7 +84,10 @@ namespace kailux
                 {
                     ImGui::TableNextColumn();
 
-                    bool isDirectory = entry.is_directory();
+                    std::error_code ec;
+                    bool isDirectory = std::filesystem::is_directory(entry.path(), ec);
+                    if (ec)
+                        continue;
                     auto iconId = isDirectory ? m_DirectoryTextureId : m_FileTextureId;
 
                     auto name = entry.path().filename().string();
@@ -95,6 +98,8 @@ namespace kailux
                     ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.2f));
 
                     ImGui::ImageButton("##icon", iconId, {iconSizePixels, iconSizePixels});
+
+                    bool iconDoubleClicked = ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left);
 
                     if (ImGui::BeginPopupContextItem())
                     {
@@ -114,6 +119,15 @@ namespace kailux
                     }
 
                     ImGui::PopStyleColor(3);
+
+                    if (!isDirectory)
+                        if (ImGui::BeginDragDropSource(s_DragDropSourceFlags))
+                        {
+                            std::string itemPath = entry.path().string();
+                            ImGui::SetDragDropPayload(s_DragDropPayloadType.data(), itemPath.c_str(), itemPath.size() + 1);
+                            ImGui::Text("%s", name.c_str());
+                            ImGui::EndDragDropSource();
+                        }
 
                     if (m_IsRenaming && m_ItemToRenamePath == entry.path())
                     {
@@ -138,18 +152,7 @@ namespace kailux
                     else
                         ImGui::TextWrapped("%s", name.c_str());
 
-                    if (!isDirectory)
-                        if (ImGui::BeginDragDropSource(s_DragDropSourceFlags))
-                        {
-                            auto itemPath = entry.path().string();
-                            ImGui::SetDragDropPayload(s_DragDropPayloadType.data(), itemPath.c_str(),
-                                                      itemPath.size() + 1);
-                            ImGui::Text("%s", name.c_str());
-                            ImGui::EndDragDropSource();
-                        }
-
-                    if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
-                        if (isDirectory)
+                    if (iconDoubleClicked && isDirectory)
                             m_CurrentPath /= entry.path().filename();
 
                     ImGui::PopID();

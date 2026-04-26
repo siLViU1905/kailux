@@ -5,10 +5,12 @@
 #include "components/entt/MaterialComponent.h"
 #include "components/entt/TagComponent.h"
 #include "components/gpu/CameraData.h"
+#include <nlohmann/json.hpp>
 
 namespace kailux
 {
-    Scene::Scene() : m_MainCameraEntity(entt::null),
+    Scene::Scene() : m_Name("Scene"),
+                     m_MainCameraEntity(entt::null),
                      m_Sun(entt::null),
                      m_Ambient(SceneData().ambient),
                      m_MeshEntityNameCount(0)
@@ -16,7 +18,8 @@ namespace kailux
         m_Sun = createSunEntity({});
     }
 
-    Scene::Scene(Scene &&other) noexcept : m_EntityRegistry(std::move(other.m_EntityRegistry)),
+    Scene::Scene(Scene &&other) noexcept : m_Name(std::move(other.m_Name)),
+                                           m_EntityRegistry(std::move(other.m_EntityRegistry)),
                                            m_MainCameraEntity(other.m_MainCameraEntity),
                                            m_Sun(other.m_Sun),
                                            m_Ambient(other.m_Ambient),
@@ -28,6 +31,7 @@ namespace kailux
     {
         if (this != &other)
         {
+            m_Name = std::move(other.m_Name);
             m_EntityRegistry = std::move(other.m_EntityRegistry);
             m_MainCameraEntity = other.m_MainCameraEntity;
             m_Sun = other.m_Sun;
@@ -37,9 +41,11 @@ namespace kailux
         return *this;
     }
 
-    Scene Scene::create()
+    Scene Scene::create(std::string_view name)
     {
-        return {};
+        Scene scene;
+        scene.m_Name = name;
+        return scene;
     }
 
     entt::entity Scene::createCameraEntity(std::string_view name, bool isPrimary, int width, int height)
@@ -75,7 +81,7 @@ namespace kailux
         m_EntityRegistry.emplace<MaterialComponent>(
             entity,
             textureSetHandle
-            );
+        );
         m_EntityRegistry.emplace<MeshTransformData>(
             entity,
             transform
@@ -129,9 +135,108 @@ namespace kailux
         return m_Ambient;
     }
 
+    std::string_view Scene::getName() const
+    {
+        return m_Name;
+    }
+
     std::string Scene::getMeshEntityName()
     {
         return "Mesh" + std::to_string(m_MeshEntityNameCount++);
+    }
+
+    std::string Scene::serialize() const
+    {
+        nlohmann::json js;
+
+        const auto &sunData = m_EntityRegistry.get<SunData>(m_Sun);
+        const auto &cameraComponent = m_EntityRegistry.get<CameraComponent>(m_MainCameraEntity);
+        js["Scene"] = {
+            {"name", m_Name},
+            {"ambient", {m_Ambient.x, m_Ambient.y, m_Ambient.z, m_Ambient.w}},
+            {"mesh_name_count", m_MeshEntityNameCount},
+            {
+                "sun", {
+                    {
+                        "direction",
+                        {
+                            sunData.directionAndIntensity.x, sunData.directionAndIntensity.y,
+                            sunData.directionAndIntensity.z
+                        }
+                    },
+                    {"intensity", sunData.directionAndIntensity.w},
+                    {"color", {sunData.colorAndEnabled.x, sunData.colorAndEnabled.y, sunData.colorAndEnabled.z}},
+                    {"enabled", sunData.colorAndEnabled.w}
+                }
+            },
+            {
+                "camera", {
+                    {"isPrimary", cameraComponent.isPrimary},
+                    {
+                        "transform", {
+                            {
+                                "position",
+                                {cameraComponent.position.x, cameraComponent.position.y, cameraComponent.position.z}
+                            },
+                            {
+                                "forward",
+                                {cameraComponent.forward.x, cameraComponent.forward.y, cameraComponent.forward.z}
+                            },
+                            {"up", {cameraComponent.up.x, cameraComponent.up.y, cameraComponent.up.z}},
+                            {"right", {cameraComponent.right.x, cameraComponent.right.y, cameraComponent.right.z}}
+                        }
+                    },
+                    {
+                        "settings", {
+                            {"fov", cameraComponent.fov},
+                            {"zNear", cameraComponent.zNear},
+                            {"zFar", cameraComponent.zFar},
+                            {"exposure", cameraComponent.exposure}
+                        }
+                    },
+                    {
+                        "input", {
+                            {"yaw", cameraComponent.yaw},
+                            {"pitch", cameraComponent.pitch},
+                            {"speed", cameraComponent.speed},
+                            {"sensitivity", cameraComponent.sensitivity},
+                            {"focused", cameraComponent.focused}
+                        }
+                    }
+                }
+            }
+        };
+
+        js["Mesh"] = nlohmann::json::array();
+        auto meshView = m_EntityRegistry.view<TagComponent, MeshComponent, MeshTransformData, MeshMaterialData>();
+        meshView.each([&js](const auto &tag, const auto &mesh, const auto &transform, const auto &material)
+        {
+            nlohmann::json meshEntry;
+
+            meshEntry["name"] = tag.name;
+
+            meshEntry["path"] = mesh.path;
+
+            meshEntry["transform"] = {
+                {"position", {transform.position.x, transform.position.y, transform.position.z}},
+                {"rotation", {transform.rotation.x, transform.rotation.y, transform.rotation.z}},
+                {"scale", {transform.scale.x, transform.scale.y, transform.scale.z}}
+            };
+
+            meshEntry["material"] = {
+                {
+                    "albedo",
+                    {material.albedoAndRoughness.x, material.albedoAndRoughness.y, material.albedoAndRoughness.z}
+                },
+                {"roughness", material.albedoAndRoughness.w},
+                {"metallic", material.pbrParams.x},
+                {"ao", material.pbrParams.y}
+            };
+
+            js["Mesh"].push_back(meshEntry);
+        });
+
+        return js.dump(3);
     }
 
     entt::entity Scene::createEntity(std::string_view name)
