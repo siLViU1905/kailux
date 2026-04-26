@@ -50,6 +50,7 @@ target_link_libraries(kailux_engine PUBLIC
         stb::stb
         assimp::assimp
         portable-file-dialogs::portable-file-dialogs
+        nlohmann_json::nlohmann_json
 )
 
 target_precompile_headers(kailux_engine PUBLIC
@@ -63,4 +64,5 @@ target_precompile_headers(kailux_engine PUBLIC
         <array>
         <memory>
         <string>
+        <nlohmann/json.hpp>
 )

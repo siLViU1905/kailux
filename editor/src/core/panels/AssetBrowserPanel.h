@@ -30,12 +30,16 @@ namespace kailux
                                                                     ImGuiDragDropFlags_SourceNoPreviewTooltip;
 
         using Path = std::filesystem::path;
-        static constexpr std::string_view s_DefaultPath = "assets";
+        static constexpr std::string_view s_DefaultPath = "workspace";
 
         Path     m_CurrentPath;
         bool     m_UseFullWidth;
 
         ImTextureID m_DirectoryTextureId;
         ImTextureID m_FileTextureId;
+
+        Path                  m_ItemToRenamePath;
+        std::array<char, 65>  m_RenameBuffer;
+        bool                  m_IsRenaming;
     };
 }
