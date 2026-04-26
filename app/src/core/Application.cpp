@@ -53,8 +53,6 @@ namespace kailux
             if (m_Window.isMinimized())
                 continue;
 
-            pollMeshLoad();
-
             auto deltaTime = m_Clock.getDeltaTime<float, TimeType::Seconds>();
             m_Editor.update();
 
@@ -66,11 +64,6 @@ namespace kailux
 
     void Application::setCallbacks()
     {
-        auto &menuPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<MenuPanel>();
-        menuPanel.setOnLoadMesh([this]()
-        {
-            m_LoadMeshDialog.open("Choose a supported mesh format");
-        });
         auto &hierarchyPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<HierarchyPanel>();
         hierarchyPanel.setOnEntityDeleted([this](auto meshComponent, auto materialComponent)
         {
@@ -97,21 +90,5 @@ namespace kailux
         {
             m_Editor.render(scene);
         });
-    }
-
-    void Application::pollMeshLoad()
-    {
-        if (m_LoadMeshDialog.poll())
-            while (auto path = m_LoadMeshDialog.tryPopPath())
-            {
-                if (m_Engine.isMeshCached(*path))
-                    m_Engine.getPendingMeshDataQueue().emplace(std::move(*path), MeshLoader::LoadData());
-                else
-                    m_ThreadDispatcher->enqueue([this, p = *path]()
-                    {
-                        if (auto data = MeshLoader::load(p))
-                            m_Engine.getPendingMeshDataQueue().emplace(std::move(p), std::move(*data));
-                    });
-            }
     }
 }
