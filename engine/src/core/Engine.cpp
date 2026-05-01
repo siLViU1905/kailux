@@ -233,15 +233,15 @@ namespace kailux
             "Cube",
             m_MeshRegistry.getBuiltins().cube,
             "",
-            m_TextureRegistry.getDefaultSetHandle(),
-            {}, {}
+            MeshType::Cube,
+            m_TextureRegistry.getDefaultSetHandle(), {}, {}
         );
         m_Scene.createMeshEntity(
             "Sphere",
             m_MeshRegistry.getBuiltins().sphere,
             "",
-            m_TextureRegistry.getDefaultSetHandle(),
-            MeshTransformData({1.5f, 0.f, 0.f}), {}
+            MeshType::Sphere,
+            m_TextureRegistry.getDefaultSetHandle(), MeshTransformData({1.5f, 0.f, 0.f}), {}
         );
     }
 
@@ -506,6 +506,62 @@ namespace kailux
             saveFile << m_Scene.serialize();
     }
 
+    void Engine::loadScene(std::string_view path, int windowWidth, int windowHeight)
+    {
+        std::ifstream saveFile(path.data(), std::ios::ate | std::ios::binary);
+        if (saveFile.is_open())
+        {
+            size_t fileSize = saveFile.tellg();
+            std::string content;
+            content.resize(fileSize);
+
+            saveFile.seekg(0);
+            saveFile.read(content.data(), fileSize);
+
+            auto js = m_Scene.deserialize(content, windowWidth, windowHeight);
+            if (js.contains("Mesh") && js["Mesh"].is_array())
+            {
+                for (const auto &meshJs: js["Mesh"])
+                {
+                    PendingMeshData pending;
+                    pending.path = meshJs.value("path", "");
+                    pending.name = meshJs.value("name", "");
+                    pending.type = meshJs.value("type", MeshType::Unknown);
+
+                    if (meshJs.contains("transform"))
+                    {
+                        auto &t = meshJs["transform"];
+                        pending.transform.position = {t["position"][0], t["position"][1], t["position"][2]};
+                        pending.transform.rotation = glm::quat(
+                            t["rotation"][3],
+                            t["rotation"][0],
+                            t["rotation"][1],
+                            t["rotation"][2]
+                        );
+                        pending.transform.scale = {t["scale"][0], t["scale"][1], t["scale"][2]};
+                    }
+
+                    if (meshJs.contains("material"))
+                    {
+                        auto &m = meshJs["material"];
+                        pending.material.albedoAndRoughness = {
+                            m["albedo"][0], m["albedo"][1], m["albedo"][2], m["roughness"]
+                        };
+                        pending.material.pbrParams = {
+                            m["metallic"], m["ao"], 0.f, 0.f
+                        };
+                    }
+
+                    if (!isMeshCached(pending.path))
+                        if (auto loadData = MeshLoader::load(pending.path))
+                            pending.data = std::move(*loadData);
+
+                    m_PendingMeshData.push(std::move(pending));
+                }
+            }
+        }
+    }
+
     void Engine::cacheMesh(std::string_view path, MeshHandle meshHandle, TextureSetHandle materialHandle)
     {
         auto strPath = std::string(path);
@@ -717,6 +773,36 @@ namespace kailux
     {
         if (auto data = m_PendingMeshData.tryPop())
         {
+            if (data->type == MeshType::Unknown)
+                return;
+            if (data->type != MeshType::Loaded)
+            {
+                auto createMeshEntity = [this, &data](auto meshHandle)
+                {
+                    const auto &material = m_TextureRegistry.view(m_TextureRegistry.getDefaultSetHandle());
+                    auto textureHandle = m_TextureRegistry.registerTextureSet(material);
+                    m_Scene.createMeshEntity(data->name.empty() ? m_Scene.getMeshEntityName() : data->name,
+                                             meshHandle,
+                                             data->path,
+                                             data->type,
+                                             textureHandle,
+                                             data->transform, data->material
+                    );
+                };
+                switch (data->type)
+                {
+                    case MeshType::Cube:
+                        createMeshEntity(m_MeshRegistry.getBuiltins().cube);
+                        break;
+                    case MeshType::Sphere:
+                        createMeshEntity(m_MeshRegistry.getBuiltins().sphere);
+                        break;
+                    default:
+                        break;
+                }
+                return;
+            }
+
             const auto &meshData = data->data;
             MeshHandle meshHandle;
             TextureSetHandle textureHandle;
@@ -741,11 +827,12 @@ namespace kailux
                 textureHandle = uploadMaterialDataToRegistry(meshData.materialData);
             }
             cacheMesh(data->path, meshHandle, textureHandle);
-            m_Scene.createMeshEntity(m_Scene.getMeshEntityName(),
+            m_Scene.createMeshEntity(data->name.empty() ? m_Scene.getMeshEntityName() : data->name,
                                      meshHandle,
                                      data->path,
+                                     data->type,
                                      textureHandle,
-                                     MeshTransformData({-2.f, 0.f, 0.f}), {}
+                                     data->transform, data->material
             );
         }
     }

@@ -35,8 +35,12 @@ namespace kailux
 
         struct PendingMeshData
         {
-            std::string path;
+            std::string          path;
             MeshLoader::LoadData data;
+            std::string          name;
+            MeshTransformData    transform;
+            MeshMaterialData     material;
+            MeshType             type = MeshType::Unknown;
         };
 
         Queue<PendingMeshData> &getPendingMeshDataQueue();
@@ -57,6 +61,7 @@ namespace kailux
 
         static constexpr std::string_view s_SceneFileExtension = "klx";
         void saveScene(std::string_view folder) const;
+        void loadScene(std::string_view path, int windowWidth, int windowHeight);
 
     private:
         static constexpr std::string_view s_VertexShaderPath = "shaders/vertex_shader.spv";

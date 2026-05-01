@@ -10,11 +10,22 @@ namespace kailux
     {
     public:
         static constexpr std::string_view s_DefaultTitle = "Choose a file";
+        static constexpr std::array<std::string_view, 2> s_DefaultFilters =
+        {
+            "All Files",
+            "*"
+        };
 
-        void open(std::string_view title = s_DefaultTitle);
+        using Filters = std::vector<std::string>;
+        void open(
+            std::string_view title = s_DefaultTitle,
+            const Filters& filters = std::ranges::to<Filters>(s_DefaultFilters)
+        );
+
         bool poll();
 
         using PopPathResult = std::optional<std::string>;
+
         PopPathResult tryPopPath();
 
     private:

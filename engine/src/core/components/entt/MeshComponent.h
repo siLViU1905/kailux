@@ -7,5 +7,6 @@ namespace kailux
     {
         MeshHandle  handle;
         std::string path;
+        MeshType    type;
     };
 }

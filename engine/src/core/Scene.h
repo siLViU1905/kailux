@@ -6,6 +6,7 @@
 #include "components/gpu/MeshTransformData.h"
 #include "components/gpu/MeshMaterialData.h"
 #include "components/gpu/SceneData.h"
+#include "mesh/MeshLoader.h"
 #include "mesh/MeshRegistry.h"
 #include "texture/TextureRegistry.h"
 
@@ -23,8 +24,8 @@ namespace kailux
             std::string_view name,
             MeshHandle meshHandle,
             std::string_view path,
-            TextureSetHandle textureSetHandle,
-            const MeshTransformData &transform, const MeshMaterialData &material
+            MeshType type,
+            TextureSetHandle textureSetHandle, const MeshTransformData &transform, const MeshMaterialData &material
         );
 
         entt::registry&       getEntityRegistry();
@@ -41,6 +42,7 @@ namespace kailux
 
         static constexpr std::string_view s_SaveFolder = "scenes";
         std::string           serialize() const;
+        nlohmann::json        deserialize(std::string_view content, int windowWidth, int windowHeight);
 
     private:
         static constexpr std::string_view s_SunName = "Sun";

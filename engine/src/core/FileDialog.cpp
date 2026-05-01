@@ -3,9 +3,12 @@
 
 namespace kailux
 {
-    void FileDialog::open(std::string_view title)
+    void FileDialog::open(
+        std::string_view title,
+        const Filters& filters
+    )
     {
-        m_DiagHandle = create_scoped<pfd::open_file>(title.data());
+        m_DiagHandle = create_scoped<pfd::open_file>(title.data(), "", filters);
     }
 
     bool FileDialog::poll()
