@@ -233,15 +233,15 @@ namespace kailux
             "Cube",
             m_MeshRegistry.getBuiltins().cube,
             "",
-            m_TextureRegistry.getDefaultSetHandle(),
-            {}, {}
+            MeshType::Cube,
+            m_TextureRegistry.getDefaultSetHandle(), {}, {}
         );
         m_Scene.createMeshEntity(
             "Sphere",
             m_MeshRegistry.getBuiltins().sphere,
             "",
-            m_TextureRegistry.getDefaultSetHandle(),
-            MeshTransformData({1.5f, 0.f, 0.f}), {}
+            MeshType::Sphere,
+            m_TextureRegistry.getDefaultSetHandle(), MeshTransformData({1.5f, 0.f, 0.f}), {}
         );
     }
 
@@ -506,7 +506,7 @@ namespace kailux
             saveFile << m_Scene.serialize();
     }
 
-    void Engine::loadScene(std::string_view path)
+    void Engine::loadScene(std::string_view path, int windowWidth, int windowHeight)
     {
         std::ifstream saveFile(path.data(), std::ios::ate | std::ios::binary);
         if (saveFile.is_open())
@@ -518,7 +518,7 @@ namespace kailux
             saveFile.seekg(0);
             saveFile.read(content.data(), fileSize);
 
-            auto js = m_Scene.deserialize(content);
+            auto js = m_Scene.deserialize(content, windowWidth, windowHeight);
             if (js.contains("Mesh") && js["Mesh"].is_array())
             {
                 for (const auto &meshJs: js["Mesh"])
@@ -526,6 +526,7 @@ namespace kailux
                     PendingMeshData pending;
                     pending.path = meshJs.value("path", "");
                     pending.name = meshJs.value("name", "");
+                    pending.type = meshJs.value("type", MeshType::Unknown);
 
                     if (meshJs.contains("transform"))
                     {
@@ -772,6 +773,36 @@ namespace kailux
     {
         if (auto data = m_PendingMeshData.tryPop())
         {
+            if (data->type == MeshType::Unknown)
+                return;
+            if (data->type != MeshType::Loaded)
+            {
+                auto createMeshEntity = [this, &data](auto meshHandle)
+                {
+                    const auto &material = m_TextureRegistry.view(m_TextureRegistry.getDefaultSetHandle());
+                    auto textureHandle = m_TextureRegistry.registerTextureSet(material);
+                    m_Scene.createMeshEntity(data->name.empty() ? m_Scene.getMeshEntityName() : data->name,
+                                             meshHandle,
+                                             data->path,
+                                             data->type,
+                                             textureHandle,
+                                             data->transform, data->material
+                    );
+                };
+                switch (data->type)
+                {
+                    case MeshType::Cube:
+                        createMeshEntity(m_MeshRegistry.getBuiltins().cube);
+                        break;
+                    case MeshType::Sphere:
+                        createMeshEntity(m_MeshRegistry.getBuiltins().sphere);
+                        break;
+                    default:
+                        break;
+                }
+                return;
+            }
+
             const auto &meshData = data->data;
             MeshHandle meshHandle;
             TextureSetHandle textureHandle;
@@ -799,9 +830,9 @@ namespace kailux
             m_Scene.createMeshEntity(data->name.empty() ? m_Scene.getMeshEntityName() : data->name,
                                      meshHandle,
                                      data->path,
+                                     data->type,
                                      textureHandle,
-                                     data->transform,
-                                     data->material
+                                     data->transform, data->material
             );
         }
     }

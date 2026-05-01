@@ -26,6 +26,14 @@ namespace kailux
         int32_t vertexOffset{};
     };
 
+    enum class MeshType : uint8_t
+    {
+        Cube,
+        Sphere,
+        Loaded,
+        Unknown
+    };
+
     struct BuiltinMeshes
     {
         MeshHandle cube;

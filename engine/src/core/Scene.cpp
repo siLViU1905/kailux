@@ -68,15 +68,18 @@ namespace kailux
         std::string_view name,
         MeshHandle meshHandle,
         std::string_view path,
+        MeshType type,
         TextureSetHandle textureSetHandle,
-        const MeshTransformData &transform, const MeshMaterialData &material
+        const MeshTransformData &transform,
+        const MeshMaterialData &material
     )
     {
         auto entity = createEntity(name);
         m_EntityRegistry.emplace<MeshComponent>(
             entity,
             meshHandle,
-            path.data()
+            path.data(),
+            type
         );
         m_EntityRegistry.emplace<MaterialComponent>(
             entity,
@@ -216,6 +219,7 @@ namespace kailux
             meshEntry["name"] = tag.name;
 
             meshEntry["path"] = mesh.path;
+            meshEntry["type"] = static_cast<uint8_t>(mesh.type);
 
             meshEntry["transform"] = {
                 {"position", {transform.position.x, transform.position.y, transform.position.z}},
@@ -239,12 +243,15 @@ namespace kailux
         return js.dump(3);
     }
 
-    nlohmann::json Scene::deserialize(std::string_view content)
+    nlohmann::json Scene::deserialize(std::string_view content, int windowWidth, int windowHeight)
     {
         auto js = nlohmann::json::parse(content);
         auto &sceneJs = js["Scene"];
 
-        m_Name = sceneJs.value("name", "DefaultScene");
+        m_EntityRegistry.clear();
+        m_Sun = createSunEntity({});
+
+        m_Name = sceneJs.value("name", "Scene");
         m_MeshEntityNameCount = sceneJs.value("mesh_name_count", 0);
 
         if (sceneJs.contains("ambient"))
@@ -269,9 +276,8 @@ namespace kailux
         sunData.colorAndEnabled.w = sunJs["enabled"];
 
         auto &camJs = sceneJs["camera"];
+        m_MainCameraEntity = createCameraEntity("MainCamera", camJs["isPrimary"], windowWidth, windowHeight);
         auto &cameraComponent = m_EntityRegistry.get<CameraComponent>(m_MainCameraEntity);
-
-        cameraComponent.isPrimary = camJs["isPrimary"];
 
         auto &transJs = camJs["transform"];
         cameraComponent.position = {transJs["position"][0], transJs["position"][1], transJs["position"][2]};

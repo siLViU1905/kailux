@@ -83,19 +83,26 @@ namespace kailux
                     m_ThreadDispatcher->enqueue([this, p = pathStr]()
                     {
                         if (auto data = MeshLoader::load(p))
-                            m_Engine.getPendingMeshDataQueue().emplace(std::move(p), std::move(*data));
+                            m_Engine.getPendingMeshDataQueue().emplace(
+                                std::move(p),
+                                std::move(*data),
+                                "",
+                                MeshTransformData(),
+                                MeshMaterialData(),
+                                MeshType::Loaded
+                            );
                     });
             }
         });
 
-        auto& menuPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<MenuPanel>();
+        auto &menuPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<MenuPanel>();
         menuPanel.setOnSceneSave([this]()
         {
             m_Engine.saveScene(AssetBrowserPanel::s_DefaultPath);
         });
         menuPanel.setOnSceneOpen([this]()
         {
-            m_LoadSceneDialog.open("Choose a scene", { "Kailux Scene", "*.klx" });
+            m_LoadSceneDialog.open("Choose a scene", {"Kailux Scene", "*.klx"});
         });
 
         m_Engine.setOnEditorRender([this](Scene &scene)
@@ -108,6 +115,6 @@ namespace kailux
     {
         if (m_LoadSceneDialog.poll())
             if (auto path = m_LoadSceneDialog.tryPopPath())
-                m_Engine.loadScene(*path);
+                m_Engine.loadScene(*path, m_Window.getWidth(), m_Window.getHeight());
     }
 }
