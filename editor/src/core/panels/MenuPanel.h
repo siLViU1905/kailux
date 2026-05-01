@@ -12,6 +12,9 @@ namespace kailux
 
         void render(Scene &scene) override;
 
+        using OnSceneOpen = std::move_only_function<void()>;
+        void setOnSceneOpen(OnSceneOpen&& callback);
+
         using OnSceneSave = std::move_only_function<void()>;
         void setOnSceneSave(OnSceneSave&& callback);
 
@@ -19,6 +22,7 @@ namespace kailux
         void renderProfilerWindow();
 
         bool        m_ShowProfiler;
+        OnSceneOpen m_OnSceneOpen;
         OnSceneSave m_OnSceneSave;
     };
 }

@@ -25,6 +25,7 @@ namespace kailux
                 }
                 if (ImGui::MenuItem("Open..."))
                 {
+                    m_OnSceneOpen();
                 }
                 if (ImGui::MenuItem("Save"))
                 {
@@ -57,6 +58,11 @@ namespace kailux
             if (m_ShowProfiler)
                 renderProfilerWindow();
         }
+    }
+
+    void MenuPanel::setOnSceneOpen(OnSceneOpen &&callback)
+    {
+        m_OnSceneOpen = std::move(callback);
     }
 
     void MenuPanel::setOnSceneSave(OnSceneSave &&callback)

@@ -53,6 +53,8 @@ namespace kailux
             if (m_Window.isMinimized())
                 continue;
 
+            pollSceneDialog();
+
             auto deltaTime = m_Clock.getDeltaTime<float, TimeType::Seconds>();
             m_Editor.update();
 
@@ -91,10 +93,21 @@ namespace kailux
         {
             m_Engine.saveScene(AssetBrowserPanel::s_DefaultPath);
         });
+        menuPanel.setOnSceneOpen([this]()
+        {
+            m_LoadSceneDialog.open("Choose a scene", { "Kailux Scene", "*.klx" });
+        });
 
         m_Engine.setOnEditorRender([this](Scene &scene)
         {
             m_Editor.render(scene);
         });
+    }
+
+    void Application::pollSceneDialog()
+    {
+        if (m_LoadSceneDialog.poll())
+            if (auto path = m_LoadSceneDialog.tryPopPath())
+                m_Engine.loadScene(*path);
     }
 }

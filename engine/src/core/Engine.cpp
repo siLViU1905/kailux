@@ -506,6 +506,61 @@ namespace kailux
             saveFile << m_Scene.serialize();
     }
 
+    void Engine::loadScene(std::string_view path)
+    {
+        std::ifstream saveFile(path.data(), std::ios::ate | std::ios::binary);
+        if (saveFile.is_open())
+        {
+            size_t fileSize = saveFile.tellg();
+            std::string content;
+            content.resize(fileSize);
+
+            saveFile.seekg(0);
+            saveFile.read(content.data(), fileSize);
+
+            auto js = m_Scene.deserialize(content);
+            if (js.contains("Mesh") && js["Mesh"].is_array())
+            {
+                for (const auto &meshJs: js["Mesh"])
+                {
+                    PendingMeshData pending;
+                    pending.path = meshJs.value("path", "");
+                    pending.name = meshJs.value("name", "");
+
+                    if (meshJs.contains("transform"))
+                    {
+                        auto &t = meshJs["transform"];
+                        pending.transform.position = {t["position"][0], t["position"][1], t["position"][2]};
+                        pending.transform.rotation = glm::quat(
+                            t["rotation"][3],
+                            t["rotation"][0],
+                            t["rotation"][1],
+                            t["rotation"][2]
+                        );
+                        pending.transform.scale = {t["scale"][0], t["scale"][1], t["scale"][2]};
+                    }
+
+                    if (meshJs.contains("material"))
+                    {
+                        auto &m = meshJs["material"];
+                        pending.material.albedoAndRoughness = {
+                            m["albedo"][0], m["albedo"][1], m["albedo"][2], m["roughness"]
+                        };
+                        pending.material.pbrParams = {
+                            m["metallic"], m["ao"], 0.f, 0.f
+                        };
+                    }
+
+                    if (!isMeshCached(pending.path))
+                        if (auto loadData = MeshLoader::load(pending.path))
+                            pending.data = std::move(*loadData);
+
+                    m_PendingMeshData.push(std::move(pending));
+                }
+            }
+        }
+    }
+
     void Engine::cacheMesh(std::string_view path, MeshHandle meshHandle, TextureSetHandle materialHandle)
     {
         auto strPath = std::string(path);
@@ -741,11 +796,12 @@ namespace kailux
                 textureHandle = uploadMaterialDataToRegistry(meshData.materialData);
             }
             cacheMesh(data->path, meshHandle, textureHandle);
-            m_Scene.createMeshEntity(m_Scene.getMeshEntityName(),
+            m_Scene.createMeshEntity(data->name.empty() ? m_Scene.getMeshEntityName() : data->name,
                                      meshHandle,
                                      data->path,
                                      textureHandle,
-                                     MeshTransformData({-2.f, 0.f, 0.f}), {}
+                                     data->transform,
+                                     data->material
             );
         }
     }
