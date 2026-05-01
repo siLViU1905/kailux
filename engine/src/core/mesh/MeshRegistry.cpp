@@ -86,19 +86,6 @@ namespace kailux
         };
     }
 
-    std::vector<MeshView> MeshRegistry::viewAll() const
-    {
-        std::vector<MeshView> views;
-        views.reserve(m_Allocs.size());
-        for (const auto &alloc: m_Allocs)
-            views.emplace_back(
-                static_cast<uint32_t>(alloc.indexOffset / sizeof(IndexType)),
-                alloc.indexCount,
-                static_cast<int32_t>(alloc.vertexOffset / sizeof(Vertex))
-            );
-        return views;
-    }
-
     void MeshRegistry::bind(vk::CommandBuffer cmd) const
     {
         cmd.bindVertexBuffers(0, m_VertexBuffer.getBuffer(), {0});

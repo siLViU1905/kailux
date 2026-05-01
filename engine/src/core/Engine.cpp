@@ -589,22 +589,6 @@ namespace kailux
         return cache;
     }
 
-    std::vector<vk::DrawIndexedIndirectCommand> Engine::getMeshIndirectCommands() const
-    {
-        auto views = m_MeshRegistry.viewAll();
-        std::vector<vk::DrawIndexedIndirectCommand> commands;
-        commands.reserve(views.size());
-        for (auto view: views)
-            commands.emplace_back(
-                view.indexCount,
-                1,
-                view.firstIndex,
-                view.vertexOffset,
-                0
-            );
-        return commands;
-    }
-
     void Engine::recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const
     {
         m_Pipeline.bind(recorder.getCommandBuffer());
