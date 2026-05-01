@@ -219,7 +219,7 @@ namespace kailux
 
             meshEntry["transform"] = {
                 {"position", {transform.position.x, transform.position.y, transform.position.z}},
-                {"rotation", {transform.rotation.x, transform.rotation.y, transform.rotation.z}},
+                {"rotation", {transform.rotation.x, transform.rotation.y, transform.rotation.z, transform.rotation.w}},
                 {"scale", {transform.scale.x, transform.scale.y, transform.scale.z}}
             };
 
@@ -237,6 +237,62 @@ namespace kailux
         });
 
         return js.dump(3);
+    }
+
+    nlohmann::json Scene::deserialize(std::string_view content)
+    {
+        auto js = nlohmann::json::parse(content);
+        auto &sceneJs = js["Scene"];
+
+        m_Name = sceneJs.value("name", "DefaultScene");
+        m_MeshEntityNameCount = sceneJs.value("mesh_name_count", 0);
+
+        if (sceneJs.contains("ambient"))
+        {
+            m_Ambient.x = sceneJs["ambient"][0];
+            m_Ambient.y = sceneJs["ambient"][1];
+            m_Ambient.z = sceneJs["ambient"][2];
+            m_Ambient.w = sceneJs["ambient"][3];
+        }
+
+        auto &sunJs = sceneJs["sun"];
+        auto &sunData = m_EntityRegistry.get<SunData>(m_Sun);
+
+        sunData.directionAndIntensity.x = sunJs["direction"][0];
+        sunData.directionAndIntensity.y = sunJs["direction"][1];
+        sunData.directionAndIntensity.z = sunJs["direction"][2];
+        sunData.directionAndIntensity.w = sunJs["intensity"];
+
+        sunData.colorAndEnabled.x = sunJs["color"][0];
+        sunData.colorAndEnabled.y = sunJs["color"][1];
+        sunData.colorAndEnabled.z = sunJs["color"][2];
+        sunData.colorAndEnabled.w = sunJs["enabled"];
+
+        auto &camJs = sceneJs["camera"];
+        auto &cameraComponent = m_EntityRegistry.get<CameraComponent>(m_MainCameraEntity);
+
+        cameraComponent.isPrimary = camJs["isPrimary"];
+
+        auto &transJs = camJs["transform"];
+        cameraComponent.position = {transJs["position"][0], transJs["position"][1], transJs["position"][2]};
+        cameraComponent.forward = {transJs["forward"][0], transJs["forward"][1], transJs["forward"][2]};
+        cameraComponent.up = {transJs["up"][0], transJs["up"][1], transJs["up"][2]};
+        cameraComponent.right = {transJs["right"][0], transJs["right"][1], transJs["right"][2]};
+
+        auto &setJs = camJs["settings"];
+        cameraComponent.fov = setJs["fov"];
+        cameraComponent.zNear = setJs["zNear"];
+        cameraComponent.zFar = setJs["zFar"];
+        cameraComponent.exposure = setJs["exposure"];
+
+        auto &inJs = camJs["input"];
+        cameraComponent.yaw = inJs["yaw"];
+        cameraComponent.pitch = inJs["pitch"];
+        cameraComponent.speed = inJs["speed"];
+        cameraComponent.sensitivity = inJs["sensitivity"];
+        cameraComponent.focused = inJs["focused"];
+
+        return js;
     }
 
     entt::entity Scene::createEntity(std::string_view name)

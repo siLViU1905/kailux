@@ -6,6 +6,7 @@
 #include "components/gpu/MeshTransformData.h"
 #include "components/gpu/MeshMaterialData.h"
 #include "components/gpu/SceneData.h"
+#include "mesh/MeshLoader.h"
 #include "mesh/MeshRegistry.h"
 #include "texture/TextureRegistry.h"
 
@@ -41,6 +42,7 @@ namespace kailux
 
         static constexpr std::string_view s_SaveFolder = "scenes";
         std::string           serialize() const;
+        nlohmann::json        deserialize(std::string_view content);
 
     private:
         static constexpr std::string_view s_SunName = "Sun";
