@@ -78,7 +78,14 @@ namespace kailux
             {
                 std::string pathStr = path.data();
                 if (m_Engine.isMeshCached(pathStr))
-                    m_Engine.getPendingMeshDataQueue().emplace(std::move(pathStr), MeshLoader::LoadData());
+                    m_Engine.getPendingMeshDataQueue().emplace(
+                        std::move(pathStr),
+                        MeshLoader::LoadData(),
+                        "",
+                        MeshTransformData(),
+                        MeshMaterialData(),
+                        MeshType::Loaded
+                    );
                 else
                     m_ThreadDispatcher->enqueue([this, p = pathStr]()
                     {
@@ -105,7 +112,7 @@ namespace kailux
             m_LoadSceneDialog.open("Choose a scene", {"Kailux Scene", "*.klx"});
         });
 
-        auto& projectPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<ProjectPanel>();
+        auto &projectPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<ProjectPanel>();
         m_Engine.setOnInfoLog([&projectPanel](auto message)
         {
             projectPanel.getConsole().log<LogSeverity::Info>(message);
