@@ -63,6 +63,11 @@ namespace kailux
         void saveScene(std::string_view folder) const;
         void loadScene(std::string_view path, int windowWidth, int windowHeight);
 
+        using OnLog = std::move_only_function<void(std::string_view)>;
+        void setOnInfoLog(OnLog&& callback);
+        void setOnWarningLog(OnLog&& callback);
+        void setOnErrorLog(OnLog&& callback);
+
     private:
         static constexpr std::string_view s_VertexShaderPath = "shaders/vertex_shader.spv";
         static constexpr std::string_view s_FragmentShaderPath = "shaders/fragment_shader.spv";
@@ -264,5 +269,9 @@ namespace kailux
             uint32_t  remainingFrames = s_ResourceCleanupFrameDelay;
         };
         std::vector<PendingFrameTask>              m_PendingFrameTasks;
+
+        OnLog                                      m_OnInfoLog;
+        OnLog                                      m_OnWarningLog;
+        OnLog                                      m_OnErrorLog;
     };
 }

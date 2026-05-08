@@ -36,16 +36,16 @@ namespace kailux
         auto       &getPanels() {return *m_Panels;}
         const auto &getPanels() const {return *m_Panels;}
 
-        template<typename Panel>
+        template<typename _Panel>
         auto& getPanel()
         {
-            return std::get<Panel>(*m_Panels);
+            return std::get<_Panel>(*m_Panels);
         }
 
-        template<typename Panel>
+        template<typename _Panel>
         const auto& getPanel() const
         {
-            return std::get<Panel>(*m_Panels);
+            return std::get<_Panel>(*m_Panels);
         }
 
     private:
