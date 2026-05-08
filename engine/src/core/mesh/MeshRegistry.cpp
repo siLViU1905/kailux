@@ -86,19 +86,6 @@ namespace kailux
         };
     }
 
-    std::vector<MeshView> MeshRegistry::viewAll() const
-    {
-        std::vector<MeshView> views;
-        views.reserve(m_Allocs.size());
-        for (const auto &alloc: m_Allocs)
-            views.emplace_back(
-                static_cast<uint32_t>(alloc.indexOffset / sizeof(IndexType)),
-                alloc.indexCount,
-                static_cast<int32_t>(alloc.vertexOffset / sizeof(Vertex))
-            );
-        return views;
-    }
-
     void MeshRegistry::bind(vk::CommandBuffer cmd) const
     {
         cmd.bindVertexBuffers(0, m_VertexBuffer.getBuffer(), {0});
@@ -133,6 +120,9 @@ namespace kailux
 
             if (it->size >= size + padding)
             {
+                if (aligned < base || (aligned + size) > (base + capacity))
+                    return 0;
+
                 vk::DeviceSize offset = aligned;
 
                 vk::DeviceSize remaining = it->size - size - padding;
@@ -341,8 +331,8 @@ namespace kailux
                     static_cast<float>(i) / static_cast<float>(stacks)
                 );
                 glm::vec4 tangent(
-                    -radius * std::sin(stackAngle) * std::sin(sectorAngle),
-                    radius * std::sin(stackAngle) * std::cos(sectorAngle),
+                    -radius * std::cos(stackAngle) * std::sin(sectorAngle),
+                    radius * std::cos(stackAngle) * std::cos(sectorAngle),
                     0.f,
                     1.f
                 );

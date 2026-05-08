@@ -209,7 +209,6 @@ namespace kailux
         static std::array<DescriptorSetUpdateInfo, TextureRegistry::s_TextureTypes.size()> make_descriptor_set_update_info_from_texture_set(TextureSetHandle handle, const TextureSet& set);
 
         void                                        submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
-        std::vector<vk::DrawIndexedIndirectCommand> getMeshIndirectCommands() const;
         void                                        recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const;
         void                                        recordImGuiData(const FrameData& frame);
 

@@ -58,7 +58,6 @@ namespace kailux
                                    std::vector<Buffer> &stagingBuffers);
         void                  destroy(MeshHandle handle);
         MeshView              view(MeshHandle handle) const;
-        std::vector<MeshView> viewAll() const;
         void                  bind(vk::CommandBuffer cmd) const;
         uint32_t              getMeshCount() const;
 
