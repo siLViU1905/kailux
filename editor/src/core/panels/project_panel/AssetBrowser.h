@@ -1,19 +1,15 @@
 #pragma once
-#include <filesystem>
 
-#include "Panel.h"
+#include <imgui.h>
 
 namespace kailux
 {
-    class AssetBrowserPanel : public Panel
+    class AssetBrowser
     {
     public:
-        AssetBrowserPanel();
-        AssetBrowserPanel(std::string_view name, ImVec2 position, ImVec2 size, ImVec4 backgroundColor);
+        AssetBrowser();
 
-        void render(Scene &scene) override;
-
-        void useFullWidth(bool use = true);
+        void render();
 
         void setDirectoryTextureId(ImTextureID id);
         void setFileTextureId(ImTextureID id);
@@ -34,7 +30,6 @@ namespace kailux
         using Path = std::filesystem::path;
 
         Path     m_CurrentPath;
-        bool     m_UseFullWidth;
 
         ImTextureID m_DirectoryTextureId;
         ImTextureID m_FileTextureId;

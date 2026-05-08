@@ -1,6 +1,6 @@
 #include "CommandRecorder.h"
 
-#include "../Logger.h"
+#include "../Log.h"
 
 namespace kailux
 {

@@ -1,7 +1,7 @@
 #include "DescriptorSet.h"
 
 #include "DescriptorPool.h"
-#include "../Logger.h"
+#include "../Log.h"
 #include "core/Pipeline.h"
 
 namespace kailux

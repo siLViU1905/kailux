@@ -1,6 +1,6 @@
 #pragma once
 #include "Layer.h"
-#include "core/panels/AssetBrowserPanel.h"
+#include "core/panels/project_panel/ProjectPanel.h"
 #include "core/panels/EntityEditorPanel.h"
 #include "core/panels/HierarchyPanel.h"
 #include "core/panels/MenuPanel.h"
@@ -42,9 +42,9 @@ namespace kailux
                                               1.f - s_EntityEditorPosition.y
                                           };
 
-        static constexpr std::string_view s_AssetBrowserName = "AssetBrowser";
-        static constexpr ImVec2           s_AssetBrowserPosition = {0.f, s_EntityEditorPosition.y};
-        static constexpr ImVec2           s_AssetBrowserSize = {
+        static constexpr std::string_view s_ProjectPanelName = "ProjectPanel";
+        static constexpr ImVec2           s_ProjectPanelPosition = {0.f, s_EntityEditorPosition.y};
+        static constexpr ImVec2           s_ProjectPanelSize = {
                                                 s_EntityEditorPosition.x,
                                               1.0f - s_EntityEditorPosition.y
                                           };
@@ -53,6 +53,6 @@ namespace kailux
 
         void addPanels(ImTextureID directoryTextureId, ImTextureID fileTextureId);
 
-        Layer<MenuPanel, HierarchyPanel, EntityEditorPanel, AssetBrowserPanel> m_Layer;
+        Layer<MenuPanel, HierarchyPanel, EntityEditorPanel, ProjectPanel> m_Layer;
     };
 }
