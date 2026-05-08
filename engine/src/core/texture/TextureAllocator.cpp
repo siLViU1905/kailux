@@ -154,6 +154,12 @@ namespace kailux
         };
     }
 
+    Texture TextureAllocator::create_empty(const Context &context, uint32_t width, uint32_t height, vk::Format format,
+        vk::ImageUsageFlags usage, vk::ImageAspectFlags aspect)
+    {
+        return alloc(context, width, height, 1, format, usage, aspect);
+    }
+
     Texture TextureAllocator::alloc(
         const Context &context,
         uint32_t width,

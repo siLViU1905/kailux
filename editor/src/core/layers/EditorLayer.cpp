@@ -32,6 +32,28 @@ namespace kailux
 
     void EditorLayer::render(Scene &scene)
     {
+        const auto *viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->Pos);
+        ImGui::SetNextWindowSize(viewport->Size);
+        ImGui::SetNextWindowViewport(viewport->ID);
+
+        constexpr ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking |
+                                                  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+                                                  ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+                                                  ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavInputs;
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
+
+        ImGui::Begin("KailuxDockSpace", nullptr, window_flags);
+        ImGui::PopStyleVar(3);
+
+        auto dockspace_id = ImGui::GetID("MyDockSpace");
+        ImGui::DockSpace(dockspace_id, ImVec2(0.f, 0.f));
+
+        ImGui::End();
+
         m_Layer.render(scene);
     }
 
@@ -43,6 +65,7 @@ namespace kailux
     void EditorLayer::addPanels(ImTextureID directoryTextureId, ImTextureID fileTextureId)
     {
         auto &panels = m_Layer.getPanels();
+        std::get<ViewportPanel>(panels) = {};
         std::get<MenuPanel>(panels) = {};
         auto &hierarchyPanel = std::get<HierarchyPanel>(panels) = {
                                    s_HierarchyPanelName,
@@ -56,12 +79,12 @@ namespace kailux
                                       s_EntityEditorSize,
                                       s_PanelsBackgroundColor
                                   };
-        auto& projectPanel = std::get<ProjectPanel>(panels) = {
-            s_ProjectPanelName,
-            s_ProjectPanelPosition,
-            s_ProjectPanelSize,
-            s_PanelsBackgroundColor
-        };
+        auto &projectPanel = std::get<ProjectPanel>(panels) = {
+                                 s_ProjectPanelName,
+                                 s_ProjectPanelPosition,
+                                 s_ProjectPanelSize,
+                                 s_PanelsBackgroundColor
+                             };
 
         hierarchyPanel.setOnEntitySelected([&entityEditorPanel](entt::entity entity, const Scene &scene)
         {
