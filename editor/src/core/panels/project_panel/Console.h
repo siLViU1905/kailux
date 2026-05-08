@@ -4,7 +4,7 @@
 
 namespace kailux
 {
-    enum class LogSeverity
+    enum class LogSeverity : uint8_t
     {
         Info,
         Warning,
@@ -19,34 +19,30 @@ namespace kailux
         template<LogSeverity severity>
         void log(std::string_view message)
         {
+            std::string formatedMessage;
             if constexpr (severity == LogSeverity::Info)
-                m_Logs.emplace_back(
-                    std::format("[{}]: {}", magic_enum::enum_name(severity), message),
-                    s_InfoSeverityColor
-                );
+                formatedMessage = std::format("[{}]: {}", magic_enum::enum_name(severity), message);
             else if constexpr (severity == LogSeverity::Warning)
-                m_Logs.emplace_back(
-                    std::format("[{}]: {}", magic_enum::enum_name(severity), message),
-                    s_WarningSeverityColor
-                );
+                formatedMessage = std::format("[{}]: {}", magic_enum::enum_name(severity), message);
             else if constexpr (severity == LogSeverity::Error)
-                m_Logs.emplace_back(
-                    std::format("[{}]: {}", magic_enum::enum_name(severity), message),
-                    s_ErrorSeverityColor
-                );
+                formatedMessage = std::format("[{}]: {}", magic_enum::enum_name(severity), message);
+
+            m_Logs.emplace_back(std::move(formatedMessage), severity);
         }
 
         void render();
 
     private:
-        static constexpr ImVec4 s_InfoSeverityColor = {0, 1, 0, 1};
-        static constexpr ImVec4 s_WarningSeverityColor = {1, 1, 0, 1};
-        static constexpr ImVec4 s_ErrorSeverityColor = {1, 0, 0, 1};
+        static constexpr std::array s_SeverityColors = {
+            ImVec4(0, 1, 0, 1), // info
+            ImVec4(1, 1, 0, 1), // warning
+            ImVec4(1, 0, 0, 1), // error
+        };
 
         struct Log
         {
             std::string message;
-            ImVec4 color;
+            LogSeverity severity;
         };
 
         std::vector<Log> m_Logs;
