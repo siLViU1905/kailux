@@ -37,6 +37,8 @@ namespace kailux
             ImVec4(1, 0, 0, 1), // error
         };
 
+        static std::string_view get_non_formated_message(std::string_view message);
+
         struct Log
         {
             std::string message;
