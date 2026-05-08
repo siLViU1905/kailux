@@ -105,6 +105,20 @@ namespace kailux
             m_LoadSceneDialog.open("Choose a scene", {"Kailux Scene", "*.klx"});
         });
 
+        auto& projectPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<ProjectPanel>();
+        m_Engine.setOnInfoLog([&projectPanel](auto message)
+        {
+            projectPanel.getConsole().log<LogSeverity::Info>(message);
+        });
+        m_Engine.setOnWarningLog([&projectPanel](auto message)
+        {
+            projectPanel.getConsole().log<LogSeverity::Warning>(message);
+        });
+        m_Engine.setOnErrorLog([&projectPanel](auto message)
+        {
+            projectPanel.getConsole().log<LogSeverity::Error>(message);
+        });
+
         m_Engine.setOnEditorRender([this](Scene &scene)
         {
             m_Editor.render(scene);

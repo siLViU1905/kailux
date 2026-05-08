@@ -13,7 +13,6 @@
 #include "components/gpu/CameraData.h"
 #include "components/gpu/MeshData.h"
 #include "components/gpu/MeshTransformData.h"
-#include "texture/TextureAllocator.h"
 
 namespace kailux
 {
@@ -36,7 +35,10 @@ namespace kailux
                                               m_Skybox(std::move(other.m_Skybox)),
                                               m_PendingMeshData(std::move(other.m_PendingMeshData)),
                                               m_MeshCache(std::move(other.m_MeshCache)),
-                                              m_PendingFrameTasks(std::move(other.m_PendingFrameTasks))
+                                              m_PendingFrameTasks(std::move(other.m_PendingFrameTasks)),
+                                              m_OnInfoLog(std::move(other.m_OnInfoLog)),
+                                              m_OnWarningLog(std::move(other.m_OnWarningLog)),
+                                              m_OnErrorLog(std::move(other.m_OnErrorLog))
     {
     }
 
@@ -60,6 +62,9 @@ namespace kailux
             m_PendingMeshData = std::move(other.m_PendingMeshData);
             m_MeshCache = std::move(other.m_MeshCache);
             m_PendingFrameTasks = std::move(other.m_PendingFrameTasks);
+            m_OnInfoLog = std::move(other.m_OnInfoLog);
+            m_OnWarningLog = std::move(other.m_OnWarningLog);
+            m_OnErrorLog = std::move(other.m_OnErrorLog);
         }
         return *this;
     }
@@ -562,6 +567,21 @@ namespace kailux
         }
     }
 
+    void Engine::setOnInfoLog(OnLog &&callback)
+    {
+        m_OnInfoLog = std::move(callback);
+    }
+
+    void Engine::setOnWarningLog(OnLog &&callback)
+    {
+        m_OnWarningLog = std::move(callback);
+    }
+
+    void Engine::setOnErrorLog(OnLog &&callback)
+    {
+        m_OnErrorLog = std::move(callback);
+    }
+
     void Engine::cacheMesh(std::string_view path, MeshHandle meshHandle, TextureSetHandle materialHandle)
     {
         auto strPath = std::string(path);
@@ -818,6 +838,7 @@ namespace kailux
                                      textureHandle,
                                      data->transform, data->material
             );
+            m_OnInfoLog(std::format("Loaded {} successfully", data->path));
         }
     }
 
