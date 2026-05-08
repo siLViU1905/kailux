@@ -15,7 +15,7 @@ namespace kailux
 
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 8));
 
-        for (const auto&[message, color] : m_Logs)
+        for (const auto&[message, severity] : m_Logs)
         {
             ImGui::BeginGroup();
 
@@ -30,7 +30,8 @@ namespace kailux
                 ImGui::GetWindowDrawList()->AddRectFilled(p0, p1, ImGui::GetColorU32(ImGuiCol_HeaderHovered, 0.3f));
             
             ImGui::GetWindowDrawList()->AddLine(ImVec2(p0.x, p1.y), p1, ImGui::GetColorU32(ImGuiCol_Separator, 0.5f));
-            
+
+            auto color = s_SeverityColors[static_cast<uint8_t>(severity)];
             ImGui::GetWindowDrawList()->AddRectFilled(p0, ImVec2(p0.x + lineWeight, p1.y), ImGui::ColorConvertFloat4ToU32(color));
             
             ImGui::SetCursorPosX(ImGui::GetCursorPosX() + lineWeight + 8.f);
