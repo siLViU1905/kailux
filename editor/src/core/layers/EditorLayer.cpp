@@ -56,7 +56,7 @@ namespace kailux
                                       s_EntityEditorSize,
                                       s_PanelsBackgroundColor
                                   };
-        auto& assetBrowser = std::get<ProjectPanel>(panels) = {
+        auto& projectPanel = std::get<ProjectPanel>(panels) = {
             s_ProjectPanelName,
             s_ProjectPanelPosition,
             s_ProjectPanelSize,
@@ -69,7 +69,7 @@ namespace kailux
             entityEditorPanel.setSelectedEntity(entity, scene);
         });
 
-        assetBrowser.setDirectoryTextureId(directoryTextureId);
-        assetBrowser.setFileTextureId(fileTextureId);
+        projectPanel.getAssetBrowser().setDirectoryTextureId(directoryTextureId);
+        projectPanel.getAssetBrowser().setFileTextureId(fileTextureId);
     }
 }

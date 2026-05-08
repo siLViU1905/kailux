@@ -98,7 +98,7 @@ namespace kailux
         auto &menuPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<MenuPanel>();
         menuPanel.setOnSceneSave([this]()
         {
-            m_Engine.saveScene(ProjectPanel::s_DefaultPath);
+            m_Engine.saveScene(AssetBrowser::s_DefaultPath);
         });
         menuPanel.setOnSceneOpen([this]()
         {

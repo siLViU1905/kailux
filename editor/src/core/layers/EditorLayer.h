@@ -1,6 +1,6 @@
 #pragma once
 #include "Layer.h"
-#include "core/panels/ProjectPanel.h"
+#include "core/panels/project_panel/ProjectPanel.h"
 #include "core/panels/EntityEditorPanel.h"
 #include "core/panels/HierarchyPanel.h"
 #include "core/panels/MenuPanel.h"

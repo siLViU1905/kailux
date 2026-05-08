@@ -1,105 +1,19 @@
-#include "ProjectPanel.h"
-
-#include <imgui_internal.h>
+#include "AssetBrowser.h"
 
 namespace kailux
 {
-    ProjectPanel::ProjectPanel() : m_CurrentPath(s_DefaultPath),
-                                             m_UseFullWidth(true),
+    AssetBrowser::AssetBrowser() : m_CurrentPath(s_DefaultPath),
                                              m_DirectoryTextureId(0),
                                              m_FileTextureId(0),
                                              m_ItemToRenamePath(""),
                                              m_RenameBuffer(""),
                                              m_IsRenaming(false)
-
     {
         if (!std::filesystem::exists(m_CurrentPath))
             std::filesystem::create_directory(m_CurrentPath);
     }
 
-    ProjectPanel::ProjectPanel(std::string_view name, ImVec2 position, ImVec2 size, ImVec4 backgroundColor)
-        : Panel(name, position, size, backgroundColor),
-          m_CurrentPath(s_DefaultPath),
-          m_UseFullWidth(true),
-          m_DirectoryTextureId(0),
-          m_FileTextureId(0),
-          m_ItemToRenamePath(""),
-          m_RenameBuffer(""),
-          m_IsRenaming(false)
-    {
-        if (!std::filesystem::exists(m_CurrentPath))
-            std::filesystem::create_directory(m_CurrentPath);
-    }
-
-    void ProjectPanel::render(Scene &scene)
-    {
-        const ImGuiViewport *viewport = ImGui::GetMainViewport();
-
-        ImVec2 pos(
-            viewport->Pos.x + (m_Position.x * viewport->Size.x),
-            viewport->Pos.y + (m_Position.y * viewport->Size.y)
-        );
-        ImVec2 size(
-            0.f,
-            m_Size.y * viewport->Size.y
-        );
-        if (m_UseFullWidth)
-            size.x = viewport->Size.x;
-        else
-            size.x = m_Size.x * viewport->Size.x;
-
-        const ImGuiWindow *window = ImGui::FindWindowByName(m_Name.c_str());
-        if (window && window->Collapsed)
-        {
-            float titleBarHeight = ImGui::GetFrameHeight();
-            pos.y = (viewport->Pos.y + viewport->Size.y) - titleBarHeight;
-        }
-
-        ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
-        ImGui::SetNextWindowSize(size, ImGuiCond_Always);
-
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, m_BackgroundColor);
-
-        if (ImGui::Begin(m_Name.c_str(), &m_Open,
-                         ImGuiWindowFlags_NoMove))
-        {
-            if (ImGui::BeginTabBar("ProjectPanelTabs"))
-            {
-                if (ImGui::BeginTabItem("Asset Browser"))
-                {
-                    renderAssetBrowser();
-                    ImGui::EndTabItem();
-                }
-
-                if (ImGui::BeginTabItem("Console"))
-                {
-                    renderConsole();
-                    ImGui::EndTabItem();
-                }
-
-                ImGui::EndTabBar();
-            }
-        }
-        ImGui::End();
-        ImGui::PopStyleColor();
-    }
-
-    void ProjectPanel::useFullWidth(bool use)
-    {
-        m_UseFullWidth = use;
-    }
-
-    void ProjectPanel::setDirectoryTextureId(ImTextureID id)
-    {
-        m_DirectoryTextureId = id;
-    }
-
-    void ProjectPanel::setFileTextureId(ImTextureID id)
-    {
-        m_FileTextureId = id;
-    }
-
-    void ProjectPanel::renderAssetBrowser()
+    void AssetBrowser::render()
     {
         if (m_CurrentPath != s_DefaultPath)
             {
@@ -212,17 +126,13 @@ namespace kailux
             }
     }
 
-    void ProjectPanel::renderConsole()
+    void AssetBrowser::setDirectoryTextureId(ImTextureID id)
     {
-        ImGui::BeginChild("ConsoleLogRegion", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+        m_DirectoryTextureId = id;
+    }
 
-        ImGui::TextColored(ImVec4(0, 1, 0, 1), "[INFO]: This is an info log.");
-        ImGui::TextColored(ImVec4(1, 1, 0, 1), "[WARN]: This is a warn log.");
-        ImGui::TextColored(ImVec4(1, 0, 0, 1), "[ERROR]: SThis is an error log.");
-
-        if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
-            ImGui::SetScrollHereY(1.f);
-
-        ImGui::EndChild();
+    void AssetBrowser::setFileTextureId(ImTextureID id)
+    {
+        m_FileTextureId = id;
     }
 }

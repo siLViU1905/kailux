@@ -5,7 +5,9 @@ add_library(kailux_editor
         src/core/layers/EditorLayer.cpp
         src/core/panels/EntityEditorPanel.cpp
         src/core/panels/MenuPanel.cpp
-        src/core/panels/ProjectPanel.cpp
+        src/core/panels/project_panel/ProjectPanel.cpp
+        src/core/panels/project_panel/AssetBrowser.cpp
+        src/core/panels/project_panel/Console.cpp
 )
 
 target_precompile_headers(kailux_editor REUSE_FROM kailux_engine)
