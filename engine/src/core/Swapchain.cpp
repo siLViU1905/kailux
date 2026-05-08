@@ -1,6 +1,6 @@
 #include "Swapchain.h"
 
-#include "Logger.h"
+#include "Log.h"
 
 namespace kailux
 {

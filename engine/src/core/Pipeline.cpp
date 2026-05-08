@@ -4,7 +4,7 @@
 #include <fstream>
 
 #include "descriptor/DescriptorLayout.h"
-#include "Logger.h"
+#include "Log.h"
 #include "mesh/Vertex.h"
 
 namespace kailux

@@ -1,5 +1,5 @@
 #include "ImGuiBackend.h"
-#include "../Logger.h"
+#include "../Log.h"
 #include "bindings/imgui_impl_glfw.h"
 #include "bindings/imgui_impl_vulkan.h"
 #include "../Swapchain.h"

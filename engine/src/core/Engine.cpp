@@ -5,7 +5,7 @@
 
 #include "FileDialog.h"
 #include "command/CommandRecorder.h"
-#include "Logger.h"
+#include "Log.h"
 #include "command/OneTimeCommand.h"
 #include "components/entt/CameraComponent.h"
 #include "components/entt/MaterialComponent.h"

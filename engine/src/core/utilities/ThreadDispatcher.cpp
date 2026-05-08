@@ -1,6 +1,6 @@
 #include "ThreadDispatcher.h"
 
-#include "core/Logger.h"
+#include "core/Log.h"
 
 namespace kailux
 {

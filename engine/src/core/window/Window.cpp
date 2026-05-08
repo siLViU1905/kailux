@@ -1,7 +1,7 @@
 #include "Window.h"
 
 #include <stdexcept>
-#include "../Logger.h"
+#include "../Log.h"
 
 namespace kailux
 {
