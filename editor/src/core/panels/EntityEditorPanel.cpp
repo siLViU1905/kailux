@@ -33,25 +33,10 @@ namespace kailux
         if (!m_Open || m_SelectedEntity == entt::null)
             return;
 
-        const ImGuiViewport *viewport = ImGui::GetMainViewport();
-
-        ImVec2 pos(
-            viewport->Pos.x + (m_Position.x * viewport->Size.x),
-            viewport->Pos.y + (m_Position.y * viewport->Size.y)
-        );
-        ImVec2 size(
-            m_Size.x * viewport->Size.x,
-            m_Size.y * viewport->Size.y
-        );
-
-        ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
-        ImGui::SetNextWindowSize(size, ImGuiCond_Always);
-
         ImGui::PushStyleColor(ImGuiCol_WindowBg, m_BackgroundColor);
 
         auto &registry = scene.getEntityRegistry();
-        if (ImGui::Begin(m_Name.c_str(), &m_Open,
-                         ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize))
+        if (ImGui::Begin(m_Name.c_str(), &m_Open))
         {
             auto &tag = registry.get<TagComponent>(m_SelectedEntity);
             ImGui::Text("Entity: %s", tag.name.c_str());
@@ -154,12 +139,6 @@ namespace kailux
         modelMatrix = glm::translate(modelMatrix, transform.position);
         modelMatrix *= glm::mat4_cast(transform.rotation);
         modelMatrix = glm::scale(modelMatrix, transform.scale);
-
-        ImGuizmo::SetDrawlist(ImGui::GetBackgroundDrawList());
-        ImGuizmo::SetRect(
-            viewport->Pos.x, viewport->Pos.y,
-            viewport->Size.x, viewport->Size.y
-        );
 
         const auto &cameraData = registry.get<CameraData>(scene.getMainCamera());
 

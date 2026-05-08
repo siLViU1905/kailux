@@ -12,7 +12,7 @@ class ImGuizmoConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
 
     def requirements(self):
-        self.requires("imgui/[>=1.90]")
+        self.requires("imgui/[>=1.90-docking]")
 
     def layout(self):
         basic_layout(self)

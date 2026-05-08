@@ -4,6 +4,7 @@
 #include "core/panels/EntityEditorPanel.h"
 #include "core/panels/HierarchyPanel.h"
 #include "core/panels/MenuPanel.h"
+#include "core/panels/ViewportPanel.h"
 
 namespace kailux
 {
@@ -53,6 +54,6 @@ namespace kailux
 
         void addPanels(ImTextureID directoryTextureId, ImTextureID fileTextureId);
 
-        Layer<MenuPanel, HierarchyPanel, EntityEditorPanel, ProjectPanel> m_Layer;
+        Layer<ViewportPanel, MenuPanel, HierarchyPanel, EntityEditorPanel, ProjectPanel> m_Layer;
     };
 }

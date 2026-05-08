@@ -126,6 +126,13 @@ namespace kailux
             projectPanel.getConsole().log<LogSeverity::Error>(message);
         });
 
+        auto& viewportPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<ViewportPanel>();
+        viewportPanel.setSceneTextureId(m_Engine.getSceneTextureId());
+        m_Engine.setOnSceneTextureRecreation([&viewportPanel](auto id)
+        {
+            viewportPanel.setSceneTextureId(id);
+        });
+
         m_Engine.setOnEditorRender([this](Scene &scene)
         {
             m_Editor.render(scene);

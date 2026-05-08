@@ -141,6 +141,7 @@ namespace kailux
         p_Context = ImGui::CreateContext();
 
         p_IO = &ImGui::GetIO();
+        p_IO->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     }
 
     void ImGuiBackend::createImGuiVulkanContext(Window &window, const Context &context, const Swapchain &swapchain,
@@ -158,7 +159,7 @@ namespace kailux
         initInfo.DescriptorPool = *m_DescriptorPool;
         initInfo.MinImageCount = swapchain.getImageCount();
         initInfo.ImageCount = swapchain.getImageCount();
-        initInfo.PipelineInfoMain.MSAASamples = static_cast<VkSampleCountFlagBits>(sampleCount);
+        initInfo.PipelineInfoMain.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
         initInfo.Allocator = nullptr;
         initInfo.CheckVkResultFn = nullptr;
 
@@ -173,8 +174,7 @@ namespace kailux
         initInfo.PipelineInfoMain.PipelineRenderingCreateInfo.pColorAttachmentFormats = reinterpret_cast<const VkFormat
             *>(&colorFormat);
         auto depthFormat = swapchain.getDepthFormat();
-        initInfo.PipelineInfoMain.PipelineRenderingCreateInfo.depthAttachmentFormat = *reinterpret_cast<const VkFormat
-            *>(&depthFormat);
+        initInfo.PipelineInfoMain.PipelineRenderingCreateInfo.depthAttachmentFormat = VK_FORMAT_UNDEFINED;
 
         if (!ImGui_ImplVulkan_Init(&initInfo))
             throw std::runtime_error("Failed to initialize ImGui for Vulkan");

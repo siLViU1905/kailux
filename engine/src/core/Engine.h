@@ -50,6 +50,7 @@ namespace kailux
 
         ImTextureID getAssetBrowserDirectoryTextureId() const;
         ImTextureID getAssetBrowserFileTextureId() const;
+        ImTextureID getSceneTextureId() const;
 
         void update(float deltaTime, Window &window);
         void render(Window &window);
@@ -67,6 +68,9 @@ namespace kailux
         void setOnInfoLog(OnLog&& callback);
         void setOnWarningLog(OnLog&& callback);
         void setOnErrorLog(OnLog&& callback);
+
+        using OnSceneTextureRecreation = std::move_only_function<void(ImTextureID)>;
+        void setOnSceneTextureRecreation(OnSceneTextureRecreation&& callback);
 
     private:
         static constexpr std::string_view s_VertexShaderPath = "shaders/vertex_shader.spv";
@@ -91,6 +95,7 @@ namespace kailux
         void createMeshRegistry();
         void createTextureRegistry();
         void createImGui(Window& window);
+        void createSceneTexture();
         void createScene();
         void createSceneEntities(const Window &window);
 
@@ -258,6 +263,8 @@ namespace kailux
         OnEditorRender                             m_OnEditorRender;
         SkyboxPass                                 m_Skybox;
 
+        Texture                                    m_SceneTexture;
+
         Queue<PendingMeshData>                     m_PendingMeshData;
         std::unordered_map<std::string, MeshCache> m_MeshCache;
 
@@ -273,5 +280,7 @@ namespace kailux
         OnLog                                      m_OnInfoLog;
         OnLog                                      m_OnWarningLog;
         OnLog                                      m_OnErrorLog;
+
+        OnSceneTextureRecreation                   m_OnSceneTextureRecreation;
     };
 }
