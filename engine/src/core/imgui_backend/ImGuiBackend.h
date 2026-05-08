@@ -24,6 +24,8 @@ namespace kailux
         static ImTextureID get_texture_id_from_texture(const Texture &texture);
 
     private:
+        static constexpr std::string_view s_FontPath = "assets/fonts/JetBrainsMonoNL-Bold.ttf";
+
         void createImGuiContext();
         void createDescriptorPool(const Context& context);
         void createImGuiVulkanContext(Window& window, const Context& context, const Swapchain& swapchain, vk::SampleCountFlagBits sampleCount);

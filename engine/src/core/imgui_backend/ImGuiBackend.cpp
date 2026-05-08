@@ -182,6 +182,9 @@ namespace kailux
 
     void ImGuiBackend::applyStyle()
     {
+        //load font
+        p_IO->Fonts->AddFontFromFileTTF(s_FontPath.data(), 22.f);
+
         auto &style = ImGui::GetStyle();
         // Borders
         style.WindowBorderSize = 3.0f;
