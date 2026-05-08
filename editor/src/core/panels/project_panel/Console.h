@@ -14,8 +14,6 @@ namespace kailux
     class Console
     {
     public:
-        Console();
-
         template<LogSeverity severity>
         void log(std::string_view message)
         {
@@ -34,10 +32,12 @@ namespace kailux
 
     private:
         static constexpr std::array s_SeverityColors = {
-            ImVec4(0, 1, 0, 1), // info
+            ImVec4(0, 0, 1, 1), // info
             ImVec4(1, 1, 0, 1), // warning
             ImVec4(1, 0, 0, 1), // error
         };
+
+        static std::string_view get_non_formated_message(std::string_view message);
 
         struct Log
         {
