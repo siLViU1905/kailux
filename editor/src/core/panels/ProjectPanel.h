@@ -32,6 +32,7 @@ namespace kailux
                                                                     ImGuiDragDropFlags_SourceNoPreviewTooltip;
 
         void renderAssetBrowser();
+        void renderConsole();
 
         using Path = std::filesystem::path;
 

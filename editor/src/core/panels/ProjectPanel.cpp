@@ -63,7 +63,22 @@ namespace kailux
         if (ImGui::Begin(m_Name.c_str(), &m_Open,
                          ImGuiWindowFlags_NoMove))
         {
-            renderAssetBrowser();
+            if (ImGui::BeginTabBar("ProjectPanelTabs"))
+            {
+                if (ImGui::BeginTabItem("Asset Browser"))
+                {
+                    renderAssetBrowser();
+                    ImGui::EndTabItem();
+                }
+
+                if (ImGui::BeginTabItem("Console"))
+                {
+                    renderConsole();
+                    ImGui::EndTabItem();
+                }
+
+                ImGui::EndTabBar();
+            }
         }
         ImGui::End();
         ImGui::PopStyleColor();
@@ -195,5 +210,19 @@ namespace kailux
 
                 ImGui::EndPopup();
             }
+    }
+
+    void ProjectPanel::renderConsole()
+    {
+        ImGui::BeginChild("ConsoleLogRegion", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+
+        ImGui::TextColored(ImVec4(0, 1, 0, 1), "[INFO]: This is an info log.");
+        ImGui::TextColored(ImVec4(1, 1, 0, 1), "[WARN]: This is a warn log.");
+        ImGui::TextColored(ImVec4(1, 0, 0, 1), "[ERROR]: SThis is an error log.");
+
+        if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
+            ImGui::SetScrollHereY(1.f);
+
+        ImGui::EndChild();
     }
 }
