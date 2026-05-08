@@ -4,7 +4,7 @@
 
 #include "core/components/entt/MeshComponent.h"
 #include "core/components/entt/TagComponent.h"
-#include "AssetBrowserPanel.h"
+#include "ProjectPanel.h"
 
 namespace kailux
 {
@@ -98,7 +98,7 @@ namespace kailux
             ImGui::GetID(m_Name.c_str())
         ))
         {
-            if (const auto *payload = ImGui::AcceptDragDropPayload(AssetBrowserPanel::s_DragDropPayloadType.data()))
+            if (const auto *payload = ImGui::AcceptDragDropPayload(ProjectPanel::s_DragDropPayloadType.data()))
             {
                 std::string path = static_cast<const char *>(payload->Data);
                 m_OnDragDrop(path);

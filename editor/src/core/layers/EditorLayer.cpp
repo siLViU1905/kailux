@@ -37,7 +37,7 @@ namespace kailux
 
     void EditorLayer::update()
     {
-        m_Layer.getPanel<AssetBrowserPanel>().useFullWidth(!m_Layer.getPanel<EntityEditorPanel>().isOpen());
+        m_Layer.getPanel<ProjectPanel>().useFullWidth(!m_Layer.getPanel<EntityEditorPanel>().isOpen());
     }
 
     void EditorLayer::addPanels(ImTextureID directoryTextureId, ImTextureID fileTextureId)
@@ -56,10 +56,10 @@ namespace kailux
                                       s_EntityEditorSize,
                                       s_PanelsBackgroundColor
                                   };
-        auto& assetBrowser = std::get<AssetBrowserPanel>(panels) = {
-            s_AssetBrowserName,
-            s_AssetBrowserPosition,
-            s_AssetBrowserSize,
+        auto& assetBrowser = std::get<ProjectPanel>(panels) = {
+            s_ProjectPanelName,
+            s_ProjectPanelPosition,
+            s_ProjectPanelSize,
             s_PanelsBackgroundColor
         };
 

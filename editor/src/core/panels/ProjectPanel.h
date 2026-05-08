@@ -5,11 +5,11 @@
 
 namespace kailux
 {
-    class AssetBrowserPanel : public Panel
+    class ProjectPanel : public Panel
     {
     public:
-        AssetBrowserPanel();
-        AssetBrowserPanel(std::string_view name, ImVec2 position, ImVec2 size, ImVec4 backgroundColor);
+        ProjectPanel();
+        ProjectPanel(std::string_view name, ImVec2 position, ImVec2 size, ImVec4 backgroundColor);
 
         void render(Scene &scene) override;
 
@@ -30,6 +30,8 @@ namespace kailux
         static constexpr ImGuiDragDropFlags s_DragDropSourceFlags = ImGuiDragDropFlags_SourceNoDisableHover |
                                                                     ImGuiDragDropFlags_SourceNoHoldToOpenOthers |
                                                                     ImGuiDragDropFlags_SourceNoPreviewTooltip;
+
+        void renderAssetBrowser();
 
         using Path = std::filesystem::path;
 

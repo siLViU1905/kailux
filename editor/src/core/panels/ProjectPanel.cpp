@@ -1,10 +1,10 @@
-#include "AssetBrowserPanel.h"
+#include "ProjectPanel.h"
 
 #include <imgui_internal.h>
 
 namespace kailux
 {
-    AssetBrowserPanel::AssetBrowserPanel() : m_CurrentPath(s_DefaultPath),
+    ProjectPanel::ProjectPanel() : m_CurrentPath(s_DefaultPath),
                                              m_UseFullWidth(true),
                                              m_DirectoryTextureId(0),
                                              m_FileTextureId(0),
@@ -17,7 +17,7 @@ namespace kailux
             std::filesystem::create_directory(m_CurrentPath);
     }
 
-    AssetBrowserPanel::AssetBrowserPanel(std::string_view name, ImVec2 position, ImVec2 size, ImVec4 backgroundColor)
+    ProjectPanel::ProjectPanel(std::string_view name, ImVec2 position, ImVec2 size, ImVec4 backgroundColor)
         : Panel(name, position, size, backgroundColor),
           m_CurrentPath(s_DefaultPath),
           m_UseFullWidth(true),
@@ -31,7 +31,7 @@ namespace kailux
             std::filesystem::create_directory(m_CurrentPath);
     }
 
-    void AssetBrowserPanel::render(Scene &scene)
+    void ProjectPanel::render(Scene &scene)
     {
         const ImGuiViewport *viewport = ImGui::GetMainViewport();
 
@@ -63,7 +63,30 @@ namespace kailux
         if (ImGui::Begin(m_Name.c_str(), &m_Open,
                          ImGuiWindowFlags_NoMove))
         {
-            if (m_CurrentPath != s_DefaultPath)
+            renderAssetBrowser();
+        }
+        ImGui::End();
+        ImGui::PopStyleColor();
+    }
+
+    void ProjectPanel::useFullWidth(bool use)
+    {
+        m_UseFullWidth = use;
+    }
+
+    void ProjectPanel::setDirectoryTextureId(ImTextureID id)
+    {
+        m_DirectoryTextureId = id;
+    }
+
+    void ProjectPanel::setFileTextureId(ImTextureID id)
+    {
+        m_FileTextureId = id;
+    }
+
+    void ProjectPanel::renderAssetBrowser()
+    {
+        if (m_CurrentPath != s_DefaultPath)
             {
                 if (ImGui::Button("<- Back"))
                     m_CurrentPath = m_CurrentPath.parent_path();
@@ -73,21 +96,18 @@ namespace kailux
             ImGui::Text("%s", m_CurrentPath.string().c_str());
 
             float availableWidth = ImGui::GetContentRegionAvail().x;
-            float cellWidthPixels = size.x * s_RelativeCellSize;
+            float cellWidthPixels = ImGui::GetWindowWidth() * s_RelativeCellSize;
             int columnCount = static_cast<int>(availableWidth / cellWidthPixels);
             if (columnCount < 1)
                 columnCount = 1;
             if (ImGui::BeginTable("AssetBrowserTable", columnCount))
             {
-                float iconSizePixels = size.x * s_RelativeIconSize;
+                float iconSizePixels = ImGui::GetWindowWidth() * s_RelativeIconSize;
                 for (const auto &entry: std::filesystem::directory_iterator(m_CurrentPath))
                 {
                     ImGui::TableNextColumn();
 
-                    std::error_code ec;
-                    bool isDirectory = std::filesystem::is_directory(entry.path(), ec);
-                    if (ec)
-                        continue;
+                    bool isDirectory = std::filesystem::is_directory(entry.path());
                     auto iconId = isDirectory ? m_DirectoryTextureId : m_FileTextureId;
 
                     auto name = entry.path().filename().string();
@@ -111,10 +131,8 @@ namespace kailux
                             std::strncpy(m_RenameBuffer.data(), name.c_str(), m_RenameBuffer.size());
                         }
                         if (ImGui::MenuItem("Delete"))
-                        {
-                            std::error_code ec;
-                            std::filesystem::remove_all(entry.path(), ec);
-                        }
+                            std::filesystem::remove_all(entry.path());
+
                         ImGui::EndPopup();
                     }
 
@@ -137,10 +155,7 @@ namespace kailux
                             std::filesystem::path newPath = entry.path().parent_path() / std::string(m_RenameBuffer.begin(), m_RenameBuffer.end());
 
                             if (!std::filesystem::exists(newPath))
-                            {
-                                std::error_code ec;
-                                std::filesystem::rename(entry.path(), newPath, ec);
-                            }
+                                std::filesystem::rename(entry.path(), newPath);
 
                             m_IsRenaming = false;
                             m_ItemToRenamePath = "";
@@ -173,36 +188,12 @@ namespace kailux
                         newFolderPath = m_CurrentPath / ("New Folder (" + std::to_string(counter) + ")");
                         counter++;
                     }
-
-                    std::error_code ec;
-                    if (std::filesystem::create_directory(newFolderPath, ec))
-                    {
-                    } else
-                    {
-                    }
+                    std::filesystem::create_directory(newFolderPath);
 
                     ImGui::CloseCurrentPopup();
                 }
 
                 ImGui::EndPopup();
             }
-        }
-        ImGui::End();
-        ImGui::PopStyleColor();
-    }
-
-    void AssetBrowserPanel::useFullWidth(bool use)
-    {
-        m_UseFullWidth = use;
-    }
-
-    void AssetBrowserPanel::setDirectoryTextureId(ImTextureID id)
-    {
-        m_DirectoryTextureId = id;
-    }
-
-    void AssetBrowserPanel::setFileTextureId(ImTextureID id)
-    {
-        m_FileTextureId = id;
     }
 }
