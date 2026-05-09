@@ -19,7 +19,7 @@ namespace kailux
         float pitch = 0.f;
         float speed = 2.f;
         float sensitivity = 1.f;
-        float exposure = 0.0001f;
+        float exposure = 0.00015f;
 
         double lastMousePosX = 0.0;
         double lastMousePosY = 0.0;
