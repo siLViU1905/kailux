@@ -8,7 +8,7 @@ namespace kailux
     {
     public:
         EntityEditorPanel();
-        EntityEditorPanel(std::string_view name, ImVec2 position, ImVec2 size, ImVec4 backgroundColor);
+        EntityEditorPanel(std::string_view name, ImVec4 backgroundColor);
 
         void render(Scene &scene) override;
 

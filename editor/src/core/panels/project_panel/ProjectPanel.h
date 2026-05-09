@@ -10,7 +10,7 @@ namespace kailux
     {
     public:
         ProjectPanel();
-        ProjectPanel(std::string_view name, ImVec2 position, ImVec2 size, ImVec4 backgroundColor);
+        ProjectPanel(std::string_view name, ImVec4 backgroundColor);
 
         void render(Scene &scene) override;
 

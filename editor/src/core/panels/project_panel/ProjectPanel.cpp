@@ -8,8 +8,8 @@ namespace kailux
     {
     }
 
-    ProjectPanel::ProjectPanel(std::string_view name, ImVec2 position, ImVec2 size, ImVec4 backgroundColor)
-        : Panel(name, position, size, backgroundColor), m_UseFullWidth(true)
+    ProjectPanel::ProjectPanel(std::string_view name, ImVec4 backgroundColor)
+        : Panel(name, backgroundColor), m_UseFullWidth(true)
     {
     }
 
