@@ -69,20 +69,14 @@ namespace kailux
         std::get<MenuPanel>(panels) = {};
         auto &hierarchyPanel = std::get<HierarchyPanel>(panels) = {
                                    s_HierarchyPanelName,
-                                   s_HierarchyPanelPosition,
-                                   s_HierarchyPanelSize,
                                    s_PanelsBackgroundColor
                                };
         auto &entityEditorPanel = std::get<EntityEditorPanel>(panels) = {
                                       s_EntityEditorName,
-                                      s_EntityEditorPosition,
-                                      s_EntityEditorSize,
                                       s_PanelsBackgroundColor
                                   };
         auto &projectPanel = std::get<ProjectPanel>(panels) = {
                                  s_ProjectPanelName,
-                                 s_ProjectPanelPosition,
-                                 s_ProjectPanelSize,
                                  s_PanelsBackgroundColor
                              };
 

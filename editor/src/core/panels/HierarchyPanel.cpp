@@ -12,8 +12,8 @@ namespace kailux
     {
     }
 
-    HierarchyPanel::HierarchyPanel(std::string_view name, ImVec2 position, ImVec2 size, ImVec4 backgroundColor)
-        : Panel(name, position, size, backgroundColor), m_SelectedEntity(entt::null)
+    HierarchyPanel::HierarchyPanel(std::string_view name, ImVec4 backgroundColor)
+        : Panel(name, backgroundColor), m_SelectedEntity(entt::null)
     {
     }
 

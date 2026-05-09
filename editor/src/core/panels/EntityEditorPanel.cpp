@@ -17,8 +17,8 @@ namespace kailux
         m_Open = false;
     }
 
-    EntityEditorPanel::EntityEditorPanel(std::string_view name, ImVec2 position, ImVec2 size, ImVec4 backgroundColor)
-        : Panel(name, position, size, backgroundColor),
+    EntityEditorPanel::EntityEditorPanel(std::string_view name, ImVec4 backgroundColor)
+        : Panel(name, backgroundColor),
           m_SelectedEntity(entt::null),
           m_RotationDegrees({}),
           m_CurrentGizmoOperation(ImGuizmo::TRANSLATE),
