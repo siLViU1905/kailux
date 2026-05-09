@@ -79,12 +79,13 @@ layout (std430, set = 0, binding = 2) readonly buffer SceneBuffer {
 
 layout (set = 0, binding = 3) uniform samplerCube skyboxSampler;
 layout (set = 0, binding = 4) uniform samplerCube irradianceSampler;
-layout (set = 0, binding = 5) uniform sampler2D brdfLutSampler;
-layout (set = 0, binding = 6) uniform sampler2D albedoSampler[];
-layout (set = 0, binding = 7) uniform sampler2D normalSampler[];
-layout (set = 0, binding = 8) uniform sampler2D roughnessSampler[];
-layout (set = 0, binding = 9) uniform sampler2D metallicSampler[];
-layout (set = 0, binding = 10) uniform sampler2D aoSampler[];
+layout (set = 0, binding = 5) uniform samplerCube prefilteredEnvSampler;
+layout (set = 0, binding = 6) uniform sampler2D brdfLutSampler;
+layout (set = 0, binding = 7) uniform sampler2D albedoSampler[];
+layout (set = 0, binding = 8) uniform sampler2D normalSampler[];
+layout (set = 0, binding = 9) uniform sampler2D roughnessSampler[];
+layout (set = 0, binding = 10) uniform sampler2D metallicSampler[];
+layout (set = 0, binding = 11) uniform sampler2D aoSampler[];
 
 
 void main()
@@ -96,7 +97,7 @@ void main()
     float texAO        = texture(aoSampler[fragMaterialIdx], fragTexCoord).r;
 
     vec3  albedo    = texAlbedo * fragAlbedo;
-    float roughness = texRoughness * fragRoughness;
+    float roughness = max(texRoughness * fragRoughness, 0.05);
     float metallic  = texMetallic * fragMetallic;
     float ao        = texAO * fragAO;
 
@@ -111,11 +112,12 @@ void main()
     vec3 kS_env = F_env;
     vec3 kD_env = (1.0 - kS_env) * (1.0 - metallic);
 
-    vec3 irradiance = texture(irradianceSampler, N).rgb * 1.5;
+    const float ENV_SCALE_FACTOR = 10000.0;
+    vec3 irradiance = texture(irradianceSampler, N).rgb * ENV_SCALE_FACTOR;
     vec3 diffuseIBL = irradiance * albedo;
 
-    const float MAX_REFLECTION_LOD = 10.0;
-    vec3 prefilteredColor = textureLod(skyboxSampler, R, roughness * MAX_REFLECTION_LOD).rgb;
+    const float MAX_REFLECTION_LOD = 4.0;
+    vec3 prefilteredColor = textureLod(prefilteredEnvSampler, R, roughness * MAX_REFLECTION_LOD).rgb * ENV_SCALE_FACTOR;
     vec2 brdf = texture(brdfLutSampler, vec2(max(dot(N, V), 0.0), roughness)).rg;
     vec3 specularIBL = prefilteredColor * (F_env * brdf.x + brdf.y);
 
@@ -147,7 +149,7 @@ void main()
         Lo = (kD * albedo / PI + specular) * radiance * NdotL;
     }
 
-    vec3 color = Lo * fragExposure + ambient;
+    vec3 color = (Lo + ambient) * fragExposure;
 
     color = toneMapACES(color);
     color = pow(color, vec3(1.0 / 2.2));

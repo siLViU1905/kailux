@@ -81,7 +81,7 @@ namespace kailux
         imageInfo.arrayLayers = 6;
         imageInfo.flags = vk::ImageCreateFlagBits::eCubeCompatible;
         imageInfo.usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst
-                        | vk::ImageUsageFlagBits::eTransferSrc;
+                          | vk::ImageUsageFlagBits::eTransferSrc;
         imageInfo.tiling = vk::ImageTiling::eOptimal;
         imageInfo.sharingMode = vk::SharingMode::eExclusive;
         imageInfo.initialLayout = vk::ImageLayout::eUndefined;
@@ -155,9 +155,150 @@ namespace kailux
     }
 
     Texture TextureAllocator::create_empty(const Context &context, uint32_t width, uint32_t height, vk::Format format,
-        vk::ImageUsageFlags usage, vk::ImageAspectFlags aspect)
+                                           vk::ImageUsageFlags usage, vk::ImageAspectFlags aspect)
     {
         return alloc(context, width, height, 1, format, usage, aspect);
+    }
+
+    Texture TextureAllocator::create_cubemap_with_mips(const Context &context,
+                                                       std::span<const std::array<ImageLoader::ImageData, 6>> mips)
+    {
+        auto mipLevels = static_cast<uint32_t>(mips.size());
+        auto width = mips[0][0].width;
+        auto height = mips[0][0].height;
+
+        vk::DeviceSize totalSize = 0;
+        std::vector<vk::DeviceSize> offsets;
+        offsets.reserve(mipLevels * 6);
+
+        for (const auto &mipFaces: mips)
+            for (const auto &face: mipFaces)
+            {
+                offsets.push_back(totalSize);
+                totalSize += face.pixels.size() * sizeof(ImageLoader::ImageData::Pixel);
+            }
+
+        auto stagingBuffer = BufferAllocator::alloc_staging(context, totalSize);
+
+        for (uint32_t mip = 0; mip < mipLevels; mip++)
+            for (uint32_t face = 0; face < 6; face++)
+            {
+                const auto &faceData = mips[mip][face];
+                vk::DeviceSize faceSize = faceData.pixels.size() * sizeof(ImageLoader::ImageData::Pixel);
+                stagingBuffer.upload(faceData.pixels.data(), faceSize, offsets[mip * 6 + face]);
+            }
+
+        vk::ImageCreateInfo imageInfo{};
+        imageInfo.imageType = vk::ImageType::e2D;
+        imageInfo.format = vk::Format::eR8G8B8A8Unorm;
+        imageInfo.extent = vk::Extent3D(width, height, 1);
+        imageInfo.mipLevels = mipLevels;
+        imageInfo.arrayLayers = 6;
+        imageInfo.flags = vk::ImageCreateFlagBits::eCubeCompatible;
+        imageInfo.usage = vk::ImageUsageFlagBits::eSampled
+                          | vk::ImageUsageFlagBits::eTransferDst;
+        imageInfo.tiling = vk::ImageTiling::eOptimal;
+        imageInfo.sharingMode = vk::SharingMode::eExclusive;
+        imageInfo.initialLayout = vk::ImageLayout::eUndefined;
+
+        vk::raii::Image image(context.m_Device, imageInfo);
+
+        auto memRequirements = image.getMemoryRequirements();
+        vk::MemoryAllocateInfo allocInfo{
+            memRequirements.size,
+            context.findMemoryType(memRequirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)
+        };
+        vk::raii::DeviceMemory memory(context.m_Device, allocInfo);
+        image.bindMemory(*memory, 0);
+
+        auto otc = OneTimeCommand::create(context);
+
+        transition_layout(
+            otc.getCommandBuffer(),
+            *image,
+            mipLevels,
+            6,
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eTransferDstOptimal
+        );
+
+        std::vector<vk::BufferImageCopy> regions;
+        regions.reserve(mipLevels * 6);
+
+        uint32_t mipWidth = width;
+        uint32_t mipHeight = height;
+        for (uint32_t mip = 0; mip < mipLevels; mip++)
+        {
+            for (uint32_t face = 0; face < 6; face++)
+            {
+                vk::BufferImageCopy region{};
+                region.bufferOffset = offsets[mip * 6 + face];
+                region.bufferRowLength = 0;
+                region.bufferImageHeight = 0;
+                region.imageSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+                region.imageSubresource.mipLevel = mip;
+                region.imageSubresource.baseArrayLayer = face;
+                region.imageSubresource.layerCount = 1;
+                region.imageOffset = vk::Offset3D(0, 0, 0);
+                region.imageExtent = vk::Extent3D(mipWidth, mipHeight, 1);
+                regions.push_back(region);
+            }
+
+            if (mipWidth > 1)
+                mipWidth /= 2;
+            if (mipHeight > 1)
+                mipHeight /= 2;
+        }
+
+        otc.getCommandBuffer().copyBufferToImage(
+            stagingBuffer.getBuffer(),
+            *image,
+            vk::ImageLayout::eTransferDstOptimal,
+            regions
+        );
+
+        transition_layout(
+            otc.getCommandBuffer(),
+            *image,
+            mipLevels,
+            6,
+            vk::ImageLayout::eTransferDstOptimal,
+            vk::ImageLayout::eShaderReadOnlyOptimal
+        );
+
+        otc.submit(context);
+
+
+        vk::ImageViewCreateInfo viewInfo{};
+        viewInfo.image = *image;
+        viewInfo.viewType = vk::ImageViewType::eCube;
+        viewInfo.format = imageInfo.format;
+        viewInfo.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
+        viewInfo.subresourceRange.baseMipLevel = 0;
+        viewInfo.subresourceRange.levelCount = mipLevels;
+        viewInfo.subresourceRange.baseArrayLayer = 0;
+        viewInfo.subresourceRange.layerCount = 6;
+
+        vk::raii::ImageView imageView(context.m_Device, viewInfo);
+
+        vk::SamplerCreateInfo samplerInfo{};
+        samplerInfo.magFilter = vk::Filter::eLinear;
+        samplerInfo.minFilter = vk::Filter::eLinear;
+        samplerInfo.addressModeU = vk::SamplerAddressMode::eClampToEdge;
+        samplerInfo.addressModeV = vk::SamplerAddressMode::eClampToEdge;
+        samplerInfo.addressModeW = vk::SamplerAddressMode::eClampToEdge;
+        samplerInfo.mipmapMode = vk::SamplerMipmapMode::eLinear;
+        samplerInfo.minLod = 0.f;
+        samplerInfo.maxLod = static_cast<float>(mipLevels - 1);
+
+        vk::raii::Sampler sampler(context.m_Device, samplerInfo);
+
+        return {
+            std::move(image),
+            std::move(memory),
+            std::move(imageView),
+            std::move(sampler)
+        };
     }
 
     Texture TextureAllocator::alloc(
@@ -396,7 +537,7 @@ namespace kailux
         barrier.subresourceRange.layerCount = 1;
         barrier.subresourceRange.levelCount = 1;
 
-        auto mipWidth  = static_cast<int32_t>(width);
+        auto mipWidth = static_cast<int32_t>(width);
         auto mipHeight = static_cast<int32_t>(height);
 
         for (uint32_t i = 1; i < mipLevels; i++)
@@ -412,10 +553,10 @@ namespace kailux
             vk::ImageBlit blit{};
             blit.srcOffsets[0] = vk::Offset3D(0, 0, 0);
             blit.srcOffsets[1] = vk::Offset3D(mipWidth, mipHeight, 1);
-            blit.srcSubresource = { vk::ImageAspectFlagBits::eColor, i - 1, face, 1 };
+            blit.srcSubresource = {vk::ImageAspectFlagBits::eColor, i - 1, face, 1};
             blit.dstOffsets[0] = vk::Offset3D(0, 0, 0);
             blit.dstOffsets[1] = vk::Offset3D(mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1);
-            blit.dstSubresource = { vk::ImageAspectFlagBits::eColor, i, face, 1 };
+            blit.dstSubresource = {vk::ImageAspectFlagBits::eColor, i, face, 1};
 
             cmd.blitImage(image, vk::ImageLayout::eTransferSrcOptimal,
                           image, vk::ImageLayout::eTransferDstOptimal, blit, vk::Filter::eLinear);
@@ -427,7 +568,7 @@ namespace kailux
             cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader,
                                 {}, nullptr, nullptr, barrier);
 
-            if (mipWidth > 1)  mipWidth  /= 2;
+            if (mipWidth > 1) mipWidth /= 2;
             if (mipHeight > 1) mipHeight /= 2;
         }
 

@@ -299,6 +299,12 @@ namespace kailux
                 1
             ),
             DescriptorSetImageInfo(
+                skybox.getPrefilteredEnvTexture().getSampler(),
+                skybox.getPrefilteredEnvTexture().getImageView(),
+                vk::ImageLayout::eShaderReadOnlyOptimal,
+                1
+            ),
+            DescriptorSetImageInfo(
                 skybox.getBRDFLutTexture().getSampler(),
                 skybox.getBRDFLutTexture().getImageView(),
                 vk::ImageLayout::eShaderReadOnlyOptimal,

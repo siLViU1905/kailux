@@ -13,6 +13,7 @@ namespace kailux
                                                           m_DescriptorPool(std::move(other.m_DescriptorPool)),
                                                           m_Texture(std::move(other.m_Texture)),
                                                           m_IrradianceMapTexture(std::move(other.m_IrradianceMapTexture)),
+                                                          m_PrefilteredEnvTexture(std::move(other.m_PrefilteredEnvTexture)),
                                                           m_BRDFLutTexture(std::move(other.m_BRDFLutTexture))
     {
     }
@@ -26,6 +27,7 @@ namespace kailux
             m_DescriptorPool = std::move(other.m_DescriptorPool);
             m_Texture = std::move(other.m_Texture);
             m_IrradianceMapTexture = std::move(other.m_IrradianceMapTexture);
+            m_PrefilteredEnvTexture = std::move(other.m_PrefilteredEnvTexture);
             m_BRDFLutTexture = std::move(other.m_BRDFLutTexture);
         }
         return *this;
@@ -39,6 +41,7 @@ namespace kailux
         pass.createPipeline(context, swapchain);
         pass.createTexture(context, paths);
         pass.createIrradianceTexture(context);
+        pass.createPrefilteredEnvTexture(context);
         pass.createBRDFLutTexture(context);
         return pass;
     }
@@ -51,6 +54,11 @@ namespace kailux
     const Texture & SkyboxPass::getIrradianceMapTexture() const
     {
         return m_IrradianceMapTexture;
+    }
+
+    const Texture & SkyboxPass::getPrefilteredEnvTexture() const
+    {
+        return m_PrefilteredEnvTexture;
     }
 
     const Texture & SkyboxPass::getBRDFLutTexture() const
@@ -169,6 +177,33 @@ namespace kailux
         }
 
         m_IrradianceMapTexture = TextureAllocator::create_cubemap(context, faces);
+    }
+
+    void SkyboxPass::createPrefilteredEnvTexture(const Context &context)
+    {
+        static constexpr std::array<std::string_view, 6> faceNames = {
+            "px", "nx", "py", "ny", "pz", "nz"
+        };
+
+        std::vector<std::array<ImageLoader::ImageData, 6>> mips(s_PrefilteredMipLevels);
+
+        for (uint32_t mip = 0; mip < s_PrefilteredMipLevels; mip++)
+            for (uint32_t face = 0; face < 6; face++)
+            {
+                auto path = std::string(s_PrefilteredBasePath)
+                                 + std::to_string(mip)
+                                 + "_"
+                                 + std::string(faceNames[face])
+                                 + ".png";
+
+                auto result = ImageLoader::load_image(path);
+                if (!result)
+                    return;
+
+                mips[mip][face] = std::move(*result);
+            }
+
+        m_PrefilteredEnvTexture = TextureAllocator::create_cubemap_with_mips(context, mips);
     }
 
     void SkyboxPass::createBRDFLutTexture(const Context &context)

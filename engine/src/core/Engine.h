@@ -99,7 +99,7 @@ namespace kailux
         void createScene();
         void createSceneEntities(const Window &window);
 
-        static constexpr uint32_t   s_MeshTextureBindStart = 6;
+        static constexpr uint32_t   s_MeshTextureBindStart = 7;
         static constexpr std::array s_DescriptorLayoutBindings = {
             DescriptorLayoutBinding(
                 vk::DescriptorType::eUniformBuffer,
@@ -124,6 +124,11 @@ namespace kailux
             DescriptorLayoutBinding(
                 vk::DescriptorType::eCombinedImageSampler,
                 1, // irradiance map
+                vk::ShaderStageFlagBits::eFragment
+            ),
+            DescriptorLayoutBinding(
+                vk::DescriptorType::eCombinedImageSampler,
+                1, // prefiltered env
                 vk::ShaderStageFlagBits::eFragment
             ),
             DescriptorLayoutBinding(
@@ -177,6 +182,10 @@ namespace kailux
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
                 1 // irradiance map
+            ),
+            DescriptorPoolSize(
+                vk::DescriptorType::eCombinedImageSampler,
+                1 // prefiltered env
             ),
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
