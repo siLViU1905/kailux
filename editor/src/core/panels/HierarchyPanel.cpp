@@ -75,6 +75,31 @@ namespace kailux
                     ImGui::EndPopup();
                 }
             }
+
+            if (ImGui::BeginPopupContextWindow("##hierarchy_options", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+            {
+                if (ImGui::BeginMenu("New"))
+                {
+                    if (ImGui::BeginMenu("Mesh"))
+                    {
+                        if (ImGui::MenuItem("Cube"))
+                            m_OnNewMesh(MeshType::Cube);
+                        if (ImGui::MenuItem("Sphere"))
+                            m_OnNewMesh(MeshType::Sphere);
+
+                        ImGui::EndMenu();
+                    }
+
+                    if (ImGui::BeginMenu("Light"))
+                    {
+                        ImGui::EndMenu();
+                    }
+
+                    ImGui::EndMenu();
+                }
+
+                ImGui::EndPopup();
+            }
         }
 
 
@@ -108,6 +133,11 @@ namespace kailux
     void HierarchyPanel::setOnDragDrop(OnDragDrop &&callback)
     {
         m_OnDragDrop = std::move(callback);
+    }
+
+    void HierarchyPanel::setOnNewMesh(OnNewMesh &&callback)
+    {
+        m_OnNewMesh = std::move(callback);
     }
 
     bool HierarchyPanel::on_entity_rename(entt::entity entity, entt::registry &registry)

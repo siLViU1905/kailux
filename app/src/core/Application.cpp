@@ -101,6 +101,17 @@ namespace kailux
                     });
             }
         });
+        hierarchyPanel.setOnNewMesh([this](auto type)
+        {
+            m_Engine.getPendingMeshDataQueue().emplace(
+                                "",
+                                MeshLoader::LoadData(),
+                                "",
+                                MeshTransformData(),
+                                MeshMaterialData(),
+                                type
+                            );
+        });
 
         auto &menuPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<MenuPanel>();
         menuPanel.setOnSceneSave([this]()
