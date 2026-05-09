@@ -254,7 +254,7 @@ namespace kailux
         void                     cacheMesh(std::string_view path, MeshHandle meshHandle, TextureSetHandle materialHandle);
         std::optional<MeshCache> uncacheMesh(std::string_view path);
 
-        static constexpr uint32_t s_FramesInFlight = 2;
+        static constexpr uint32_t s_FramesInFlight = 3;
 
         Context                                    m_Context;
         vk::SampleCountFlagBits                    m_SampleCount;

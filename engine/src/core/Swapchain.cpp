@@ -73,21 +73,15 @@ namespace kailux
 
         m_ImageFormat = m_SurfaceFormat.format;
 
-        auto minImageCount = std::max(3u, surfaceCapabilities.minImageCount);
+        uint32_t requestedImageCount = surfaceCapabilities.minImageCount + 2;
 
-        minImageCount = (surfaceCapabilities.maxImageCount > 0 && minImageCount > surfaceCapabilities.maxImageCount)
-                            ? surfaceCapabilities.maxImageCount
-                            : minImageCount;
-
-        uint32_t imageCount = surfaceCapabilities.minImageCount + 1;
-
-        if (surfaceCapabilities.maxImageCount > 0 && imageCount > surfaceCapabilities.maxImageCount)
-            imageCount = surfaceCapabilities.maxImageCount;
+        if (surfaceCapabilities.maxImageCount > 0 && requestedImageCount > surfaceCapabilities.maxImageCount)
+            requestedImageCount = surfaceCapabilities.maxImageCount;
 
         vk::SwapchainCreateInfoKHR swapChainCreateInfo{
             vk::SwapchainCreateFlagsKHR(),
             context.getSurface(),
-            minImageCount,
+            requestedImageCount,
             m_SurfaceFormat.format,
             m_SurfaceFormat.colorSpace,
             m_Extent,
@@ -134,6 +128,12 @@ namespace kailux
     void Swapchain::recreate(const Window &window, const Context &context, vk::SampleCountFlagBits sampleCount)
     {
         int width = 0, height = 0;
+        window.getFramebufferSize(width, height);
+
+        if (static_cast<uint32_t>(width) == m_Extent.width &&
+            static_cast<uint32_t>(height) == m_Extent.height)
+            return;
+
         while (width == 0 || height == 0)
         {
             window.getFramebufferSize(width, height);
@@ -141,8 +141,6 @@ namespace kailux
         }
 
         context.getDevice().waitIdle();
-
-        // createSwapchain(window, context);
 
         m_ImageViews.clear();
         m_Images.clear();
@@ -214,7 +212,7 @@ namespace kailux
         auto semaphore = *m_AcquireSemaphores[m_SemaphoreIndex];
         try
         {
-            auto [result, imageIndex] = m_Swapchain.acquireNextImage(UINT64_MAX, semaphore, nullptr);
+            auto [result, imageIndex] = m_Swapchain.acquireNextImage(std::numeric_limits<uint64_t>::max(), semaphore, nullptr);
 
             m_SemaphoreIndex = (m_SemaphoreIndex + 1) % m_AcquireSemaphores.size();
 
@@ -281,9 +279,14 @@ namespace kailux
 
     vk::PresentModeKHR Swapchain::choose_swap_present_mode(const std::vector<vk::PresentModeKHR> &availablePresentModes)
     {
-        // for (auto presentMode: availablePresentModes)
-        //     if (presentMode == vk::PresentModeKHR::eMailbox)
-        //         return presentMode;
+        static constexpr std::array preferredPresentModes = {
+            vk::PresentModeKHR::eMailbox,
+            vk::PresentModeKHR::eFifoLatestReady
+        };
+
+        for (auto presentMode : availablePresentModes)
+            if (std::ranges::contains(preferredPresentModes, presentMode))
+                return presentMode;
 
         return vk::PresentModeKHR::eFifo;
     }

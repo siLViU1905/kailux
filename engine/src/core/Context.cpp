@@ -318,7 +318,8 @@ namespace kailux
             vk::PhysicalDeviceVulkan12Features,
             vk::PhysicalDeviceVulkan13Features,
             vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT,
-            vk::PhysicalDeviceMaintenance7FeaturesKHR
+            vk::PhysicalDeviceMaintenance7FeaturesKHR,
+            vk::PhysicalDevicePresentModeFifoLatestReadyFeaturesEXT
         > featureChain;
 
         auto &f2 = featureChain.get<vk::PhysicalDeviceFeatures2>();
@@ -327,6 +328,7 @@ namespace kailux
         auto &f13 = featureChain.get<vk::PhysicalDeviceVulkan13Features>();
         auto &fExt = featureChain.get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>();
         auto &fMaint7 = featureChain.get<vk::PhysicalDeviceMaintenance7FeaturesKHR>();
+        auto &fFifoLatest = featureChain.get<vk::PhysicalDevicePresentModeFifoLatestReadyFeaturesEXT>();
 
         f2.features.samplerAnisotropy = vk::True;
         f2.features.sampleRateShading = vk::True;
@@ -347,6 +349,8 @@ namespace kailux
 
         fExt.extendedDynamicState = vk::True;
         fMaint7.maintenance7 = vk::True;
+
+        fFifoLatest.presentModeFifoLatestReady = vk::True;
 
         float queuePriority = 0.f;
         vk::DeviceQueueCreateInfo deviceQueueCreateInfo{{}, queueIndex, 1, &queuePriority};
