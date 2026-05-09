@@ -29,12 +29,12 @@ namespace kailux
         static constexpr std::string_view s_FragmentShaderPath = "shaders/skybox_fragment_shader.spv";
 
         static constexpr std::array<std::string_view, 6> s_IrradianceTexturePaths = {
-            "assets/ibl/irradiance/px.png",
-            "assets/ibl/irradiance/nx.png",
-            "assets/ibl/irradiance/py.png",
-            "assets/ibl/irradiance/ny.png",
-            "assets/ibl/irradiance/pz.png",
-            "assets/ibl/irradiance/nz.png"
+            "assets/ibl/irradiance/i_px.png",
+            "assets/ibl/irradiance/i_nx.png",
+            "assets/ibl/irradiance/i_py.png",
+            "assets/ibl/irradiance/i_ny.png",
+            "assets/ibl/irradiance/i_pz.png",
+            "assets/ibl/irradiance/i_nz.png"
         };
         static constexpr std::string_view s_PrefilteredBasePath = "assets/ibl/prefiltered/m";
         static constexpr std::string_view s_BRDFLutPath = "assets/ibl/brdf_lut.png";
