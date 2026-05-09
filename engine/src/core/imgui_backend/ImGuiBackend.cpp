@@ -142,6 +142,8 @@ namespace kailux
 
         p_IO = &ImGui::GetIO();
         p_IO->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+        p_IO->IniFilename = "assets/ini/imgui.ini";
     }
 
     void ImGuiBackend::createImGuiVulkanContext(Window &window, const Context &context, const Swapchain &swapchain,
