@@ -64,6 +64,7 @@ namespace kailux
 #endif
         static constexpr std::array      s_DeviceExtensions = {
             vk::KHRSwapchainExtensionName,
+            vk::KHRPresentModeFifoLatestReadyExtensionName,
             vk::KHRSpirv14ExtensionName,
             vk::KHRSynchronization2ExtensionName,
             vk::KHRCreateRenderpass2ExtensionName,
