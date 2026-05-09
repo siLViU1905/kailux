@@ -27,6 +27,11 @@ namespace kailux
             vk::ImageAspectFlags aspect
         );
 
+        static Texture create_cubemap_with_mips(
+            const Context& context,
+            std::span<const std::array<ImageLoader::ImageData, 6>> mips
+            );
+
     private:
         static Texture alloc(
             const Context &context,

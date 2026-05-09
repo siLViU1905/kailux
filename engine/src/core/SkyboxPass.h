@@ -17,6 +17,7 @@ namespace kailux
 
         const Texture&          getTexture() const;
         const Texture&          getIrradianceMapTexture() const;
+        const Texture&          getPrefilteredEnvTexture() const;
         const Texture&          getBRDFLutTexture() const;
         const DescriptorLayout& getDescriptorLayout() const;
         const DescriptorPool&   getDescriptorPool() const;
@@ -35,7 +36,10 @@ namespace kailux
             "assets/ibl/irradiance/pz.png",
             "assets/ibl/irradiance/nz.png"
         };
+        static constexpr std::string_view s_PrefilteredBasePath = "assets/ibl/prefiltered/m";
         static constexpr std::string_view s_BRDFLutPath = "assets/ibl/brdf_lut.png";
+
+        static constexpr uint32_t         s_PrefilteredMipLevels = 5;
 
         static constexpr std::array s_DescriptorLayoutBindings = {
             DescriptorLayoutBinding(
@@ -66,6 +70,7 @@ namespace kailux
         void createPipeline(const Context& context, const Swapchain& swapchain);
         void createTexture(const Context& context, const std::array<std::string_view, 6> &paths);
         void createIrradianceTexture(const Context& context);
+        void createPrefilteredEnvTexture(const Context& context);
         void createBRDFLutTexture(const Context& context);
 
         DescriptorLayout m_DescriptorLayout;
@@ -73,6 +78,7 @@ namespace kailux
         DescriptorPool   m_DescriptorPool;
         Texture          m_Texture;
         Texture          m_IrradianceMapTexture;
+        Texture          m_PrefilteredEnvTexture;
         Texture          m_BRDFLutTexture;
     };
 }

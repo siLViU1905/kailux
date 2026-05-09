@@ -159,7 +159,7 @@ namespace kailux
             1,
             1,
             1,
-            {0, 0, 0, 255}
+            {255, 255, 255, 255}
         };
         m_DefaultSet.metallic = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data));
 
