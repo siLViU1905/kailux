@@ -28,28 +28,53 @@ namespace kailux
         return *this;
     }
 
-    Pipeline Pipeline::create(const Context &context, const Swapchain &swapchain,
-                              const DescriptorLayout &DescriptorLayout, const ShaderInfo &shaderInfo,
-                              const PipelineInfo &pipelineInfo)
+    Pipeline Pipeline::createGraphics(const Context &context, const Swapchain &swapchain,
+                                      const DescriptorLayout &descriptorSetLayout, const GraphicsShaderInfo &shaderInfo,
+                                      const PipelineInfo &pipelineInfo,
+                                      std::span<const PushConstantRangeInfo> pushConstantRanges)
     {
-        KAILUX_LOG_PARENT_CLR_YELLOW("[Pipeline]")
+        KAILUX_LOG_PARENT_CLR_YELLOW("[Graphics Pipeline]")
         Pipeline pipeline;
 
-        auto shaderModules = create_shader_modules(context, shaderInfo);
+        auto shaderModules = create_graphics_shader_modules(context, shaderInfo);
         KAILUX_LOG_CHILD_CLR_YELLOW("Created shader modules")
 
-        pipeline.createLayout(context, DescriptorLayout);
+        pipeline.createLayout(context, descriptorSetLayout, pushConstantRanges);
         KAILUX_LOG_CHILD_CLR_YELLOW("Created pipeline layout")
 
-        pipeline.createPipeline(context, swapchain, shaderModules, pipelineInfo);
-        KAILUX_LOG_CHILD_CLR_YELLOW("Created pipeline")
+        pipeline.createGraphicsPipeline(context, swapchain, shaderModules, pipelineInfo);
+        KAILUX_LOG_CHILD_CLR_YELLOW("Created graphics pipeline")
 
         return pipeline;
     }
 
-    void Pipeline::bind(vk::CommandBuffer cmd) const
+    Pipeline Pipeline::createCompute(const Context &context, const DescriptorLayout &descriptorSetLayout,
+                                     const ComputeShaderInfo &shaderInfo,
+                                     std::span<const PushConstantRangeInfo> pushConstantRanges)
+    {
+        KAILUX_LOG_PARENT_CLR_YELLOW("[Compute Pipeline]")
+        Pipeline pipeline;
+
+        auto shaderModule = create_shader_module(context, read_shader_from_file(shaderInfo.computeShaderPath));
+        KAILUX_LOG_CHILD_CLR_YELLOW("Created shader module")
+
+        pipeline.createLayout(context, descriptorSetLayout, pushConstantRanges);
+        KAILUX_LOG_CHILD_CLR_YELLOW("Created pipeline layout")
+
+        pipeline.createComputePipeline(context, shaderModule);
+        KAILUX_LOG_CHILD_CLR_YELLOW("Created compute pipeline")
+
+        return pipeline;
+    }
+
+    void Pipeline::bindGraphics(vk::CommandBuffer cmd) const
     {
         cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, m_Pipeline);
+    }
+
+    void Pipeline::bindCompute(vk::CommandBuffer cmd) const
+    {
+        cmd.bindPipeline(vk::PipelineBindPoint::eCompute, m_Pipeline);
     }
 
     vk::PipelineLayout Pipeline::getLayout() const
@@ -103,7 +128,8 @@ namespace kailux
         return {context.m_Device, createInfo};
     }
 
-    Pipeline::ShaderModules Pipeline::create_shader_modules(const Context &context, const ShaderInfo &info)
+    Pipeline::ShaderModules Pipeline::create_graphics_shader_modules(const Context &context,
+                                                                     const GraphicsShaderInfo &info)
     {
         auto vsModule = create_shader_module(context, read_shader_from_file(info.vertexShaderPath));
         auto fsModule = create_shader_module(context, read_shader_from_file(info.fragmentShaderPath));
@@ -111,21 +137,36 @@ namespace kailux
         return {std::move(vsModule), std::move(fsModule)};
     }
 
-    void Pipeline::createLayout(const Context &context, const DescriptorLayout &DescriptorLayout)
+    void Pipeline::createLayout(const Context &context, const DescriptorLayout &descriptorLayout,
+                                std::span<const PushConstantRangeInfo> pushConstantRanges)
     {
-        const auto dsLayout = DescriptorLayout.getLayout();
+        const auto dsLayout = descriptorLayout.getLayout();
+
+        std::vector<vk::PushConstantRange> ranges;
+        uint32_t offset = 0;
+        for (auto range: pushConstantRanges)
+        {
+            ranges.emplace_back(
+                range.shaderStage,
+                offset,
+                range.size
+            );
+            offset += range.size;
+        }
 
         vk::PipelineLayoutCreateInfo pipelineLayoutInfo(
             {},
             1,
-            &dsLayout
+            &dsLayout,
+            static_cast<uint32_t>(ranges.size()),
+            ranges.data()
         );
 
         m_Layout = vk::raii::PipelineLayout(context.m_Device, pipelineLayoutInfo);
     }
 
-    void Pipeline::createPipeline(const Context &context, const Swapchain &swapchain,
-                                  const ShaderModules &shaderModules, const PipelineInfo &info)
+    void Pipeline::createGraphicsPipeline(const Context &context, const Swapchain &swapchain,
+                                          const ShaderModules &shaderModules, const PipelineInfo &info)
     {
         constexpr std::array dynamicStates =
         {
@@ -150,20 +191,13 @@ namespace kailux
             attributeDescription.data()
         );
 
-        auto viewport = vk::Viewport(0.f, 0.f,
-                                     static_cast<float>(swapchain.getExtent().width),
-                                     static_cast<float>(swapchain.getExtent().height),
-                                     0.f, 1.f);
-
-        auto scissors = vk::Rect2D({0, 0}, swapchain.getExtent());
-
         vk::PipelineViewportStateCreateInfo viewportState({}, 1, {}, 1);
         vk::PipelineColorBlendStateCreateInfo colorBlending(
             {},
             vk::False,
             vk::LogicOp::eCopy,
-            1,
-            &info.colorBlendAttachment
+            static_cast<uint32_t>(info.colorBlendAttachments.size()),
+            info.colorBlendAttachments.data()
         );
 
         vk::PipelineMultisampleStateCreateInfo multisampling(
@@ -175,11 +209,10 @@ namespace kailux
 
         auto shaderStages = shaderModules.getStages();
 
-        auto format = swapchain.getFormat();
         vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo(
             {},
-            1,
-            &format,
+            static_cast<uint32_t>(info.colorFormats.size()),
+            info.colorFormats.data(),
             swapchain.getDepthFormat()
         );
 
@@ -207,5 +240,23 @@ namespace kailux
         pipelineInfo.pNext = &pipelineRenderingCreateInfo;
 
         m_Pipeline = vk::raii::Pipeline(context.m_Device, nullptr, pipelineInfo);
+    }
+
+    void Pipeline::createComputePipeline(const Context &context, const vk::raii::ShaderModule &shaderModule)
+    {
+        vk::PipelineShaderStageCreateInfo stageInfo(
+            {},
+            vk::ShaderStageFlagBits::eCompute,
+            *shaderModule,
+            "main"
+        );
+
+        vk::ComputePipelineCreateInfo computeInfo(
+            {},
+            stageInfo,
+            *m_Layout
+        );
+
+        m_Pipeline = vk::raii::Pipeline(context.m_Device, nullptr, computeInfo);
     };
 }

@@ -78,7 +78,7 @@ namespace kailux
 
     void SkyboxPass::render(vk::CommandBuffer cmd, const DescriptorSet &descriptorSet, MeshView cubeView) const
     {
-        m_Pipeline.bind(cmd);
+        m_Pipeline.bindGraphics(cmd);
         descriptorSet.bind(m_Pipeline, cmd);
         cmd.drawIndexed(
             cubeView.indexCount,
@@ -89,7 +89,7 @@ namespace kailux
         );
     }
 
-    PipelineInfo SkyboxPass::make_pipeline_info(vk::SampleCountFlagBits samples)
+    PipelineInfo SkyboxPass::make_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits samples)
     {
         PipelineInfo info;
 
@@ -113,10 +113,13 @@ namespace kailux
             1.f
         };
 
-        info.colorBlendAttachment.colorWriteMask =
+        vk::PipelineColorBlendAttachmentState colorAttachment;
+        colorAttachment.colorWriteMask =
                 vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
                 vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
-        info.colorBlendAttachment.blendEnable = vk::False;
+        colorAttachment.blendEnable = vk::False;
+        info.colorBlendAttachments.push_back(colorAttachment);
+        info.colorFormats.push_back(swapchain.getFormat());
 
         info.samples = samples;
 
@@ -138,7 +141,7 @@ namespace kailux
 
     void SkyboxPass::createPipeline(const Context &context, const Swapchain &swapchain)
     {
-        m_Pipeline = Pipeline::create(
+        m_Pipeline = Pipeline::createGraphics(
             context,
             swapchain,
             m_DescriptorLayout,
@@ -146,7 +149,7 @@ namespace kailux
                 s_VertexShaderPath.data(),
                 s_FragmentShaderPath.data()
             },
-            make_pipeline_info(context.getMaxUsableSampleCount()));
+            make_pipeline_info(swapchain, context.getMaxUsableSampleCount()));
     }
 
     void SkyboxPass::createTexture(const Context &context, const std::array<std::string_view, 6> &paths)

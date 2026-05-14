@@ -174,7 +174,7 @@ namespace kailux
 
     void Engine::createPipeline()
     {
-        m_Pipeline = Pipeline::create(
+        m_Pipeline = Pipeline::createGraphics(
             m_Context,
             m_Swapchain,
             m_DescriptorLayout,
@@ -182,7 +182,7 @@ namespace kailux
                 s_VertexShaderPath.data(),
                 s_FragmentShaderPath.data()
             },
-            make_pipeline_info(m_SampleCount)
+            make_pipeline_info(m_Swapchain, m_SampleCount)
         );
     }
 
@@ -274,7 +274,7 @@ namespace kailux
         );
     }
 
-    PipelineInfo Engine::make_pipeline_info(vk::SampleCountFlagBits sampleCount)
+    PipelineInfo Engine::make_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits sampleCount)
     {
         PipelineInfo info;
 
@@ -298,16 +298,19 @@ namespace kailux
             1.f
         };
 
-        info.colorBlendAttachment.colorWriteMask =
+        vk::PipelineColorBlendAttachmentState colorAttachment;
+        colorAttachment.colorWriteMask =
                 vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB |
                 vk::ColorComponentFlagBits::eA;
-        info.colorBlendAttachment.blendEnable = vk::True;
-        info.colorBlendAttachment.srcColorBlendFactor = vk::BlendFactor::eSrcAlpha;
-        info.colorBlendAttachment.dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
-        info.colorBlendAttachment.colorBlendOp = vk::BlendOp::eAdd;
-        info.colorBlendAttachment.srcAlphaBlendFactor = vk::BlendFactor::eOne;
-        info.colorBlendAttachment.dstAlphaBlendFactor = vk::BlendFactor::eZero;
-        info.colorBlendAttachment.alphaBlendOp = vk::BlendOp::eAdd;
+        colorAttachment.blendEnable = vk::True;
+        colorAttachment.srcColorBlendFactor = vk::BlendFactor::eSrcAlpha;
+        colorAttachment.dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
+        colorAttachment.colorBlendOp = vk::BlendOp::eAdd;
+        colorAttachment.srcAlphaBlendFactor = vk::BlendFactor::eOne;
+        colorAttachment.dstAlphaBlendFactor = vk::BlendFactor::eZero;
+        colorAttachment.alphaBlendOp = vk::BlendOp::eAdd;
+        info.colorBlendAttachments.push_back(colorAttachment);
+        info.colorFormats.push_back(swapchain.getFormat());
 
         info.samples = sampleCount;
 
@@ -661,7 +664,7 @@ namespace kailux
 
     void Engine::recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const
     {
-        m_Pipeline.bind(recorder.getCommandBuffer());
+        m_Pipeline.bindGraphics(recorder.getCommandBuffer());
         m_MeshRegistry.bind(recorder.getCommandBuffer());
         frame.getDescriptorSet().bind(m_Pipeline, recorder.getCommandBuffer());
 

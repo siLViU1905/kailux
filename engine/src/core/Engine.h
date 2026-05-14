@@ -224,7 +224,7 @@ namespace kailux
 
             return true;
         }
-        static PipelineInfo                                                                make_pipeline_info(vk::SampleCountFlagBits sampleCount);
+        static PipelineInfo                                                                make_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits sampleCount);
         static std::array<DescriptorSetUpdateInfo, TextureRegistry::s_TextureTypes.size()> make_descriptor_set_update_info_from_texture_set(TextureSetHandle handle, const TextureSet& set);
 
         void                                        submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
