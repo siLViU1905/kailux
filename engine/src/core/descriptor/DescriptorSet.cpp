@@ -92,7 +92,7 @@ namespace kailux
                             update.binding,
                             update.arrayIndex,
                             imageInfo.count,
-                            vk::DescriptorType::eCombinedImageSampler,
+                            imageInfo.type,
                             &imageInfos.back(),
                             nullptr
                         );
@@ -172,7 +172,7 @@ namespace kailux
                             i,
                             0,
                             imageInfo.count,
-                            vk::DescriptorType::eCombinedImageSampler,
+                            imageInfo.type,
                             &imageInfos[startIndex],
                             nullptr
                         );
