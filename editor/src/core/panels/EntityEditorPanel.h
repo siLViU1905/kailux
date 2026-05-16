@@ -14,6 +14,8 @@ namespace kailux
 
         void setSelectedEntity(entt::entity entity, const Scene &scene);
 
+        bool isGizmoInUse() const;
+
     private:
         entt::entity m_SelectedEntity;
         glm::vec3    m_RotationDegrees;
@@ -22,5 +24,6 @@ namespace kailux
         ImGuizmo::MODE      m_CurrentGizmoMode;
 
         bool                m_UniformScale;
+        bool                m_GizmoInUse;
     };
 }

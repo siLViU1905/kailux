@@ -54,7 +54,7 @@ namespace kailux
         ImTextureID getSceneTextureId() const;
 
         void update(float deltaTime, Window &window);
-        void render(Window &window);
+        void render(const Window &window);
 
         static bool is_mesh_type_supported(std::string_view path);
         static bool is_image_type_supported(std::string_view path);
@@ -97,6 +97,8 @@ namespace kailux
         void createMeshRegistry();
         void createTextureRegistry();
         void createImGui(Window& window);
+
+        void createSceneTextureIds();
 
         void createComputePicker();
 
@@ -274,6 +276,8 @@ namespace kailux
         TextureRegistry                            m_TextureRegistry;
         std::array<FrameData, s_FramesInFlight>    m_Frames;
         uint32_t                                   m_CurrentFrame;
+
+        std::array<ImTextureID, s_FramesInFlight>  m_SceneTextureIds;
 
         Scene                                      m_Scene;
         OnEditorRender                             m_OnEditorRender;

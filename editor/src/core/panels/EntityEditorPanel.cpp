@@ -12,7 +12,8 @@ namespace kailux
                                              m_RotationDegrees({}),
                                              m_CurrentGizmoOperation(ImGuizmo::TRANSLATE),
                                              m_CurrentGizmoMode(ImGuizmo::LOCAL),
-                                             m_UniformScale(true)
+                                             m_UniformScale(true),
+                                             m_GizmoInUse(false)
     {
         m_Open = false;
     }
@@ -23,7 +24,8 @@ namespace kailux
           m_RotationDegrees({}),
           m_CurrentGizmoOperation(ImGuizmo::TRANSLATE),
           m_CurrentGizmoMode(ImGuizmo::LOCAL),
-          m_UniformScale(true)
+          m_UniformScale(true),
+          m_GizmoInUse(false)
     {
         m_Open = false;
     }
@@ -150,6 +152,7 @@ namespace kailux
             glm::value_ptr(modelMatrix)
         );
 
+        m_GizmoInUse = ImGuizmo::IsUsing() || ImGuizmo::IsOver();
         if (ImGuizmo::IsUsing())
         {
             glm::vec3 translation, scale, skew;
@@ -182,5 +185,10 @@ namespace kailux
             const auto &transform = scene.getEntityRegistry().get<MeshTransformData>(m_SelectedEntity);
             m_RotationDegrees = glm::degrees(glm::eulerAngles(transform.rotation));
         }
+    }
+
+    bool EntityEditorPanel::isGizmoInUse() const
+    {
+        return m_GizmoInUse;
     }
 }
