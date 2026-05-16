@@ -70,9 +70,6 @@ namespace kailux
         void setOnWarningLog(OnLog&& callback);
         void setOnErrorLog(OnLog&& callback);
 
-        using OnSceneTextureRecreation = std::move_only_function<void(ImTextureID)>;
-        void setOnSceneTextureRecreation(OnSceneTextureRecreation&& callback);
-
         ComputePicker& getPicker();
         uint32_t       getPickedEntity() const;
 
@@ -100,7 +97,7 @@ namespace kailux
         void createMeshRegistry();
         void createTextureRegistry();
         void createImGui(Window& window);
-        void createSceneTexture();
+
         void createComputePicker();
 
         void createScene();
@@ -282,8 +279,6 @@ namespace kailux
         OnEditorRender                             m_OnEditorRender;
         SkyboxPass                                 m_Skybox;
 
-        Texture                                    m_SceneTexture;
-
         ComputePicker                              m_ComputePicker;
         uint32_t                                   m_PickedEntity;
 
@@ -302,7 +297,5 @@ namespace kailux
         OnLog                                      m_OnInfoLog;
         OnLog                                      m_OnWarningLog;
         OnLog                                      m_OnErrorLog;
-
-        OnSceneTextureRecreation                   m_OnSceneTextureRecreation;
     };
 }

@@ -33,6 +33,8 @@ namespace kailux
                                                        m_IndirectBuffer(std::move(other.m_IndirectBuffer)),
                                                        m_SceneBuffer(std::move(other.m_SceneBuffer)),
                                                        m_PickerBuffer(std::move(other.m_PickerBuffer)),
+                                                       m_Extent(other.m_Extent),
+                                                       m_SceneTexture(std::move(other.m_SceneTexture)),
                                                        m_OutIdTexture(std::move(other.m_OutIdTexture)),
                                                        m_ResolvedOutIdTexture(std::move(other.m_ResolvedOutIdTexture))
     {
@@ -55,6 +57,8 @@ namespace kailux
             m_IndirectBuffer = std::move(other.m_IndirectBuffer);
             m_SceneBuffer = std::move(other.m_SceneBuffer);
             m_PickerBuffer = std::move(other.m_PickerBuffer);
+            m_Extent = other.m_Extent;
+            m_SceneTexture = std::move(other.m_SceneTexture);
             m_OutIdTexture = std::move(other.m_OutIdTexture);
             m_ResolvedOutIdTexture = std::move(other.m_ResolvedOutIdTexture);
         }
@@ -73,6 +77,7 @@ namespace kailux
     )
     {
         FrameData frame;
+        frame.m_Extent = swapchain.getExtent();
         frame.createCommandPool(context);
         frame.createImGuiCommandPool(context);
         frame.createCommandBuffer(context);
@@ -83,7 +88,8 @@ namespace kailux
         frame.createIndirectBuffer(context, maxMeshCount);
         frame.createSceneBuffer(context);
         frame.createPickerBuffer(context);
-        frame.createOutIdTexture(context, swapchain);
+        frame.createSceneTexture(context, swapchain.getFormat());
+        frame.createOutIdTexture(context);
         auto descSetInfo = frame.makeDescriptorSetInfo(skybox, textureRegistry, maxMeshCount);
         frame.createDescriptorSet(context, descriptorLayout, descriptorPool, descSetInfo);
         auto skyboxDescInfo = frame.makeSkyboxDescriptorSetInfo(skybox.getTexture());
@@ -108,7 +114,11 @@ namespace kailux
 
     void FrameData::recreateTextures(const Context &context, const Swapchain &swapchain)
     {
-        createOutIdTexture(context, swapchain);
+        m_Extent = swapchain.getExtent();
+
+        createSceneTexture(context, swapchain.getFormat());
+
+        createOutIdTexture(context);
         std::array pickerInfo{
             DescriptorSetUpdateInfo(s_PickerResolvedViewDescriptorSetBinding,
                                     0,
@@ -181,6 +191,16 @@ namespace kailux
     const Buffer &FrameData::getPickerBuffer() const
     {
         return m_PickerBuffer;
+    }
+
+    vk::Extent2D FrameData::getExtent() const
+    {
+        return m_Extent;
+    }
+
+    const Texture &FrameData::getSceneTexture() const
+    {
+        return m_SceneTexture;
     }
 
     const Texture &FrameData::getOutIdTexture() const
@@ -346,12 +366,25 @@ namespace kailux
         m_PickerBuffer = BufferAllocator::alloc_storage(context, sizeof(uint32_t));
     }
 
-    void FrameData::createOutIdTexture(const Context &context, const Swapchain &swapchain)
+    void FrameData::createSceneTexture(const Context &context, vk::Format format)
+    {
+        m_SceneTexture = TextureAllocator::create_empty(
+            context,
+            m_Extent.width,
+            m_Extent.height,
+            format,
+            vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
+            vk::ImageAspectFlagBits::eColor,
+            vk::SampleCountFlagBits::e1
+        );
+    }
+
+    void FrameData::createOutIdTexture(const Context &context)
     {
         m_OutIdTexture = TextureAllocator::create_empty(
             context,
-            swapchain.getExtent().width,
-            swapchain.getExtent().height,
+            m_Extent.width,
+            m_Extent.height,
             vk::Format::eR32Uint,
             vk::ImageUsageFlagBits::eColorAttachment,
             vk::ImageAspectFlagBits::eColor,
@@ -359,8 +392,8 @@ namespace kailux
         );
         m_ResolvedOutIdTexture = TextureAllocator::create_empty(
             context,
-            swapchain.getExtent().width,
-            swapchain.getExtent().height,
+            m_Extent.width,
+            m_Extent.height,
             vk::Format::eR32Uint,
             vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eStorage,
             vk::ImageAspectFlagBits::eColor,
