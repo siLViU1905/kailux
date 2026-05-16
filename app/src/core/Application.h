@@ -25,7 +25,7 @@ namespace kailux
     private:
         void setCallbacks();
 
-        void pollSceneDialog();
+        void pollDialogs();
 
         void updateEditor();
         void updateEngine(float deltaTime, Window& window);
@@ -39,6 +39,8 @@ namespace kailux
         static constexpr uint32_t s_ThreadCount = 2;
         Shared<ThreadDispatcher>  m_ThreadDispatcher;
 
-        FileDialog m_LoadSceneDialog;
+        FileDialog<DialogMode::SingleFile>    m_LoadSceneDialog;
+        FileDialog<DialogMode::MultipleFiles> m_ImportFilesDialog;
+        FileDialog<DialogMode::Folder>        m_ImportFolderDialog;
     };
 }
