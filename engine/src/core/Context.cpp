@@ -318,7 +318,6 @@ namespace kailux
             vk::PhysicalDeviceVulkan12Features,
             vk::PhysicalDeviceVulkan13Features,
             vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT,
-            vk::PhysicalDeviceMultisampledRenderToSingleSampledFeaturesEXT,
             vk::PhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT,
             vk::PhysicalDeviceMaintenance7FeaturesKHR,
             vk::PhysicalDevicePresentModeFifoLatestReadyFeaturesEXT
@@ -329,7 +328,6 @@ namespace kailux
         auto &f12 = featureChain.get<vk::PhysicalDeviceVulkan12Features>();
         auto &f13 = featureChain.get<vk::PhysicalDeviceVulkan13Features>();
         auto &fExt = featureChain.get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>();
-        auto &fMultiToSingle = featureChain.get<vk::PhysicalDeviceMultisampledRenderToSingleSampledFeaturesEXT>();
         auto &fUnusedAtt = featureChain.get<vk::PhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT>();
         auto &fMaint7 = featureChain.get<vk::PhysicalDeviceMaintenance7FeaturesKHR>();
         auto &fFifoLatest = featureChain.get<vk::PhysicalDevicePresentModeFifoLatestReadyFeaturesEXT>();
@@ -353,8 +351,6 @@ namespace kailux
         f13.synchronization2 = vk::True;
 
         fExt.extendedDynamicState = vk::True;
-
-        fMultiToSingle.multisampledRenderToSingleSampled = vk::True;
 
         fUnusedAtt.dynamicRenderingUnusedAttachments = vk::True;
 

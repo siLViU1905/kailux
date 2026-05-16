@@ -30,7 +30,7 @@ namespace kailux
             {
                 const auto &tag = view.get<TagComponent>(entity);
                 bool isSelected = (m_SelectedEntity == entity);
-                if (ImGui::Selectable(tag.name.c_str(), isSelected))
+                if (ImGui::Selectable(tag.name.c_str(), isSelected) || isSelected)
                 {
                     m_SelectedEntity = entity;
                     m_OnEntitySelected(m_SelectedEntity, scene);
@@ -138,6 +138,11 @@ namespace kailux
     void HierarchyPanel::setOnNewMesh(OnNewMesh &&callback)
     {
         m_OnNewMesh = std::move(callback);
+    }
+
+    void HierarchyPanel::selectEntity(entt::entity entity)
+    {
+        m_SelectedEntity = entity;
     }
 
     bool HierarchyPanel::on_entity_rename(entt::entity entity, entt::registry &registry)

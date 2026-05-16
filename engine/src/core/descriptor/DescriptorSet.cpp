@@ -41,9 +41,9 @@ namespace kailux
         return *m_Set;
     }
 
-    void DescriptorSet::bind(const Pipeline &pipeline, vk::CommandBuffer cmd) const
+    void DescriptorSet::bind(const Pipeline &pipeline, vk::CommandBuffer cmd, vk::PipelineBindPoint bindPoint) const
     {
-        cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline.getLayout(), 0, *m_Set, {});
+        cmd.bindDescriptorSets(bindPoint, pipeline.getLayout(), 0, *m_Set, {});
     }
 
     void DescriptorSet::updateInfo(const Context &context, std::span<const DescriptorSetUpdateInfo> updateInfos) const

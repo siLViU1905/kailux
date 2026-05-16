@@ -7,6 +7,7 @@
 #include "components/gpu/MeshMaterialData.h"
 #include "components/gpu/MeshTransformData.h"
 #include "components/gpu/SceneData.h"
+#include  "texture/TextureAllocator.h"
 
 namespace kailux
 {
@@ -26,10 +27,14 @@ namespace kailux
                                                        m_FenceInFlight(std::move(other.m_FenceInFlight)),
                                                        m_DescriptorSet(std::move(other.m_DescriptorSet)),
                                                        m_SkyboxDescriptorSet(std::move(other.m_SkyboxDescriptorSet)),
+                                                       m_PickerDescriptorSet(std::move(other.m_PickerDescriptorSet)),
                                                        m_CameraBuffer(std::move(other.m_CameraBuffer)),
                                                        m_MeshDataBuffer(std::move(other.m_MeshDataBuffer)),
                                                        m_IndirectBuffer(std::move(other.m_IndirectBuffer)),
-                                                       m_SceneBuffer(std::move(other.m_SceneBuffer))
+                                                       m_SceneBuffer(std::move(other.m_SceneBuffer)),
+                                                       m_PickerBuffer(std::move(other.m_PickerBuffer)),
+                                                       m_OutIdTexture(std::move(other.m_OutIdTexture)),
+                                                       m_ResolvedOutIdTexture(std::move(other.m_ResolvedOutIdTexture))
     {
     }
 
@@ -44,19 +49,25 @@ namespace kailux
             m_FenceInFlight = std::move(other.m_FenceInFlight);
             m_DescriptorSet = std::move(other.m_DescriptorSet);
             m_SkyboxDescriptorSet = std::move(other.m_SkyboxDescriptorSet);
+            m_PickerDescriptorSet = std::move(other.m_PickerDescriptorSet);
             m_CameraBuffer = std::move(other.m_CameraBuffer);
             m_MeshDataBuffer = std::move(other.m_MeshDataBuffer);
             m_IndirectBuffer = std::move(other.m_IndirectBuffer);
             m_SceneBuffer = std::move(other.m_SceneBuffer);
+            m_PickerBuffer = std::move(other.m_PickerBuffer);
+            m_OutIdTexture = std::move(other.m_OutIdTexture);
+            m_ResolvedOutIdTexture = std::move(other.m_ResolvedOutIdTexture);
         }
         return *this;
     }
 
     FrameData FrameData::create(
         const Context &context,
+        const Swapchain &swapchain,
         const DescriptorLayout &descriptorLayout,
         const DescriptorPool &descriptorPool,
         const SkyboxPass &skybox,
+        const ComputePicker &picker,
         const TextureRegistry &textureRegistry,
         uint32_t maxMeshCount
     )
@@ -71,11 +82,16 @@ namespace kailux
         frame.createMeshDataBuffer(context, maxMeshCount);
         frame.createIndirectBuffer(context, maxMeshCount);
         frame.createSceneBuffer(context);
+        frame.createPickerBuffer(context);
+        frame.createOutIdTexture(context, swapchain);
         auto descSetInfo = frame.makeDescriptorSetInfo(skybox, textureRegistry, maxMeshCount);
         frame.createDescriptorSet(context, descriptorLayout, descriptorPool, descSetInfo);
         auto skyboxDescInfo = frame.makeSkyboxDescriptorSetInfo(skybox.getTexture());
-        frame.createSkyboxDescriptorSet(context, skybox.getDescriptorLayout(), skybox.getDescriptorPool(), skyboxDescInfo);
-
+        frame.createSkyboxDescriptorSet(context, skybox.getDescriptorLayout(), skybox.getDescriptorPool(),
+                                        skyboxDescInfo);
+        auto pickerDescInfo = frame.makePickerDescriptorSetInfo();
+        frame.createPickerDescriptorSet(context, picker.getDescriptorLayout(), picker.getDescriptorPool(),
+                                        pickerDescInfo);
         return frame;
     }
 
@@ -88,6 +104,23 @@ namespace kailux
         context.getDevice().resetFences(*m_FenceInFlight);
 
         m_CommandPool.reset();
+    }
+
+    void FrameData::recreateTextures(const Context &context, const Swapchain &swapchain)
+    {
+        createOutIdTexture(context, swapchain);
+        std::array pickerInfo{
+            DescriptorSetUpdateInfo(s_PickerResolvedViewDescriptorSetBinding,
+                                    0,
+                                    DescriptorSetImageInfo(
+                                        nullptr,
+                                        m_ResolvedOutIdTexture.getImageView(),
+                                        vk::ImageLayout::eGeneral,
+                                        1,
+                                        vk::DescriptorType::eStorageImage
+                                    ))
+        };
+        m_PickerDescriptorSet.updateInfo(context, pickerInfo);
     }
 
     vk::CommandBuffer FrameData::getCommandBuffer() const
@@ -110,9 +143,14 @@ namespace kailux
         return m_DescriptorSet;
     }
 
-    const DescriptorSet & FrameData::getSkyboxDescriptorSet() const
+    const DescriptorSet &FrameData::getSkyboxDescriptorSet() const
     {
         return m_SkyboxDescriptorSet;
+    }
+
+    const DescriptorSet &FrameData::getPickerDescriptorSet() const
+    {
+        return m_PickerDescriptorSet;
     }
 
     Buffer &FrameData::getCameraBuffer()
@@ -138,6 +176,21 @@ namespace kailux
     Buffer &FrameData::getSceneBuffer()
     {
         return m_SceneBuffer;
+    }
+
+    const Buffer &FrameData::getPickerBuffer() const
+    {
+        return m_PickerBuffer;
+    }
+
+    const Texture &FrameData::getOutIdTexture() const
+    {
+        return m_OutIdTexture;
+    }
+
+    const Texture &FrameData::getResolvedOutIdTexture() const
+    {
+        return m_ResolvedOutIdTexture;
     }
 
     std::array<vk::BufferMemoryBarrier2, FrameData::s_BufferMemoryBarriersCount>
@@ -191,6 +244,21 @@ namespace kailux
         };
     }
 
+    vk::BufferMemoryBarrier2 FrameData::getPickerBufferMemoryBarrier() const
+    {
+        return {
+            vk::PipelineStageFlagBits2::eComputeShader,
+            vk::AccessFlagBits2::eShaderWrite,
+            vk::PipelineStageFlagBits2::eHost,
+            vk::AccessFlagBits2::eHostRead,
+            vk::QueueFamilyIgnored,
+            vk::QueueFamilyIgnored,
+            m_PickerBuffer.getBuffer(),
+            {},
+            sizeof(uint32_t)
+        };
+    }
+
     void FrameData::createCommandPool(const Context &context)
     {
         vk::CommandPoolCreateInfo poolInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
@@ -239,9 +307,17 @@ namespace kailux
     }
 
     void FrameData::createSkyboxDescriptorSet(const Context &context, const DescriptorLayout &descriptorLayout,
-                                              const DescriptorPool &descriptorPool, std::span<const DescriptorSetInfo> infos)
+                                              const DescriptorPool &descriptorPool,
+                                              std::span<const DescriptorSetInfo> infos)
     {
         m_SkyboxDescriptorSet = DescriptorSet::create(context, descriptorLayout, descriptorPool, infos);
+    }
+
+    void FrameData::createPickerDescriptorSet(const Context &context, const DescriptorLayout &descriptorLayout,
+                                              const DescriptorPool &descriptorPool,
+                                              std::span<const DescriptorSetInfo> infos)
+    {
+        m_PickerDescriptorSet = DescriptorSet::create(context, descriptorLayout, descriptorPool, infos);
     }
 
     void FrameData::createCameraBuffer(const Context &context)
@@ -265,26 +341,54 @@ namespace kailux
         m_SceneBuffer = BufferAllocator::alloc_storage(context, sizeof(SceneData));
     }
 
-    std::array<DescriptorSetInfo, FrameData::s_DescriptorSetInfoCount> FrameData::makeDescriptorSetInfo(const SkyboxPass &skybox, const TextureRegistry& textureRegistry, uint32_t meshCount) const
+    void FrameData::createPickerBuffer(const Context &context)
+    {
+        m_PickerBuffer = BufferAllocator::alloc_storage(context, sizeof(uint32_t));
+    }
+
+    void FrameData::createOutIdTexture(const Context &context, const Swapchain &swapchain)
+    {
+        m_OutIdTexture = TextureAllocator::create_empty(
+            context,
+            swapchain.getExtent().width,
+            swapchain.getExtent().height,
+            vk::Format::eR32Uint,
+            vk::ImageUsageFlagBits::eColorAttachment,
+            vk::ImageAspectFlagBits::eColor,
+            context.getMaxUsableSampleCount()
+        );
+        m_ResolvedOutIdTexture = TextureAllocator::create_empty(
+            context,
+            swapchain.getExtent().width,
+            swapchain.getExtent().height,
+            vk::Format::eR32Uint,
+            vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eStorage,
+            vk::ImageAspectFlagBits::eColor,
+            vk::SampleCountFlagBits::e1
+        );
+    }
+
+    std::array<DescriptorSetInfo, FrameData::s_DescriptorSetInfoCount> FrameData::makeDescriptorSetInfo(
+        const SkyboxPass &skybox, const TextureRegistry &textureRegistry, uint32_t meshCount) const
     {
         return {
             DescriptorSetBufferInfo(
-                vk::DescriptorType::eUniformBuffer,
                 m_CameraBuffer.getBuffer(),
                 m_CameraBuffer.getSize(),
-                1
+                1,
+                vk::DescriptorType::eUniformBuffer
             ),
             DescriptorSetBufferInfo(
-                vk::DescriptorType::eStorageBuffer,
                 m_MeshDataBuffer.getBuffer(),
                 m_MeshDataBuffer.getSize(),
-                1
+                1,
+                vk::DescriptorType::eStorageBuffer
             ),
             DescriptorSetBufferInfo(
-                vk::DescriptorType::eStorageBuffer,
                 m_SceneBuffer.getBuffer(),
                 m_SceneBuffer.getSize(),
-                1
+                1,
+                vk::DescriptorType::eStorageBuffer
             ),
             DescriptorSetImageInfo(
                 skybox.getTexture().getSampler(),
@@ -348,16 +452,36 @@ namespace kailux
     {
         return {
             DescriptorSetBufferInfo(
-                vk::DescriptorType::eUniformBuffer,
                 m_CameraBuffer.getBuffer(),
                 m_CameraBuffer.getSize(),
-                1
+                1,
+                vk::DescriptorType::eUniformBuffer
             ),
             DescriptorSetImageInfo(
                 skyboxTexture.getSampler(),
                 skyboxTexture.getImageView(),
                 vk::ImageLayout::eShaderReadOnlyOptimal,
                 1
+            )
+        };
+    }
+
+    std::array<DescriptorSetInfo, FrameData::s_PickerDescriptorSetInfoCount>
+    FrameData::makePickerDescriptorSetInfo() const
+    {
+        return {
+            DescriptorSetImageInfo(
+                nullptr,
+                m_ResolvedOutIdTexture.getImageView(),
+                vk::ImageLayout::eGeneral,
+                1,
+                vk::DescriptorType::eStorageImage
+            ),
+            DescriptorSetBufferInfo(
+                m_PickerBuffer.getBuffer(),
+                m_PickerBuffer.getSize(),
+                1,
+                vk::DescriptorType::eStorageBuffer
             )
         };
     }

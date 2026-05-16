@@ -8,6 +8,8 @@ namespace kailux
     {
         ModelMatrixType   modelMatrix{1.f};
         MeshMaterialData  material;
+        uint32_t          id{~0u};
+        std::array<uint32_t, 3> _padding{};
     };
 
     KAILUX_CHECK_DATA_STRUCTURE_SIZE(MeshData)

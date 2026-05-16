@@ -13,6 +13,7 @@
 #include "mesh/MeshRegistry.h"
 #include <entt/entt.hpp>
 
+#include "ComputePicker.h"
 #include "Scene.h"
 #include "mesh/MeshLoader.h"
 #include "utilities/Queue.h"
@@ -72,9 +73,13 @@ namespace kailux
         using OnSceneTextureRecreation = std::move_only_function<void(ImTextureID)>;
         void setOnSceneTextureRecreation(OnSceneTextureRecreation&& callback);
 
+        ComputePicker& getPicker();
+        uint32_t       getPickedEntity() const;
+
     private:
         static constexpr std::string_view s_VertexShaderPath = "shaders/vertex_shader.spv";
         static constexpr std::string_view s_FragmentShaderPath = "shaders/fragment_shader.spv";
+        static constexpr std::string_view s_PickerComputeShaderPath = "shaders/entity_picker_compute_shader.spv";
         static constexpr uint32_t         s_MaxMeshCount = 1'000;
         static constexpr std::array<std::string_view, 6> s_SkyboxTexturePaths = {
             "assets/cubemap/px.png",
@@ -96,6 +101,8 @@ namespace kailux
         void createTextureRegistry();
         void createImGui(Window& window);
         void createSceneTexture();
+        void createComputePicker();
+
         void createScene();
         void createSceneEntities(const Window &window);
 
@@ -230,12 +237,15 @@ namespace kailux
         void                                        submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
         void                                        recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const;
         void                                        recordImGuiData(const FrameData& frame);
+        void                                        recordPicker(const FrameData& frame, const CommandRecorder &recorder, const Window &window) const;
 
         void updateFrameBuffers(FrameData& frame, const CommandRecorder& recorder) const;
         void updateCameraBuffer(FrameData& frame) const;
         void updateMeshDataBuffer(FrameData& frame) const;
         void updateIndirectBuffer(FrameData& frame) const;
         void updateSceneBuffer(FrameData& frame) const;
+
+        void readOutputBuffers(const FrameData& frame);
 
         void handleEvent(Window &window);
 
@@ -254,7 +264,7 @@ namespace kailux
         void                     cacheMesh(std::string_view path, MeshHandle meshHandle, TextureSetHandle materialHandle);
         std::optional<MeshCache> uncacheMesh(std::string_view path);
 
-        static constexpr uint32_t s_FramesInFlight = 3;
+        static constexpr uint32_t s_FramesInFlight = 2;
 
         Context                                    m_Context;
         vk::SampleCountFlagBits                    m_SampleCount;
@@ -273,6 +283,9 @@ namespace kailux
         SkyboxPass                                 m_Skybox;
 
         Texture                                    m_SceneTexture;
+
+        ComputePicker                              m_ComputePicker;
+        uint32_t                                   m_PickedEntity;
 
         Queue<PendingMeshData>                     m_PendingMeshData;
         std::unordered_map<std::string, MeshCache> m_MeshCache;

@@ -142,6 +142,11 @@ namespace kailux
         return glfwGetKey(m_WindowHandle, static_cast<int>(key)) == GLFW_PRESS;
     }
 
+    bool Window::isButtonClicked(MouseButton button) const
+    {
+        return glfwGetMouseButton(m_WindowHandle, static_cast<int>(button)) == GLFW_PRESS;
+    }
+
     void Window::getMousePos(double &x, double &y) const
     {
         glfwGetCursorPos(m_WindowHandle, &x, &y);

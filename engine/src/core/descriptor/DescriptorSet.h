@@ -43,7 +43,7 @@ namespace kailux
 
         vk::DescriptorSet getDescriptorSet() const;
 
-        void bind(const Pipeline& pipeline, vk::CommandBuffer cmd) const;
+        void bind(const Pipeline& pipeline, vk::CommandBuffer cmd, vk::PipelineBindPoint bindPoint = vk::PipelineBindPoint::eGraphics) const;
         void updateInfo(const Context& context, std::span<const DescriptorSetUpdateInfo> updateInfos) const;
 
     private:

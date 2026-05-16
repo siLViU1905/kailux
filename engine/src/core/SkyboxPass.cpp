@@ -118,8 +118,16 @@ namespace kailux
                 vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
                 vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
         colorAttachment.blendEnable = vk::False;
+
         info.colorBlendAttachments.push_back(colorAttachment);
         info.colorFormats.push_back(swapchain.getFormat());
+
+        vk::PipelineColorBlendAttachmentState idAttachment;
+        idAttachment.blendEnable = vk::False;
+        idAttachment.colorWriteMask = vk::ColorComponentFlagBits::eR;
+
+        info.colorBlendAttachments.push_back(idAttachment);
+        info.colorFormats.push_back(vk::Format::eR32Uint);
 
         info.samples = samples;
 
