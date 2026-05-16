@@ -18,6 +18,12 @@ namespace kailux
 
         static constexpr std::string_view s_DragDropPayloadType = "CONTENT_BROWSER_ITEM";
 
+        using OnImport = std::move_only_function<void()>;
+        void setOnImportFiles(OnImport&& callback);
+        void setOnImportFolder(OnImport&& callback);
+
+        void import(std::string_view path) const;
+
     private:
         static constexpr float s_RelativeIconSize = 0.05f;
         static constexpr float s_RelativeIconPadding = 0.015f;
@@ -30,6 +36,9 @@ namespace kailux
         using Path = std::filesystem::path;
 
         Path     m_CurrentPath;
+
+        OnImport m_OnImportFiles;
+        OnImport m_OnImportFolder;
 
         ImTextureID m_DirectoryTextureId;
         ImTextureID m_FileTextureId;

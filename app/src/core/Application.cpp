@@ -53,7 +53,7 @@ namespace kailux
             if (m_Window.isMinimized())
                 continue;
 
-            pollSceneDialog();
+            pollDialogs();
 
             auto deltaTime = m_Clock.getDeltaTime<float, TimeType::Seconds>();
             updateEditor();
@@ -124,6 +124,15 @@ namespace kailux
         });
 
         auto &projectPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<ProjectPanel>();
+        projectPanel.getAssetBrowser().setOnImportFiles([this]()
+        {
+            m_ImportFilesDialog.open("Choose what to copy to the workspace");
+        });
+        projectPanel.getAssetBrowser().setOnImportFolder([this]()
+        {
+            m_ImportFolderDialog.open("Choose what to copy to the workspace");
+        });
+
         m_Engine.setOnInfoLog([&projectPanel](auto message)
         {
             projectPanel.getConsole().log<LogSeverity::Info>(message);
@@ -155,11 +164,19 @@ namespace kailux
         });
     }
 
-    void Application::pollSceneDialog()
+    void Application::pollDialogs()
     {
         if (m_LoadSceneDialog.poll())
             if (auto path = m_LoadSceneDialog.tryPopPath())
                 m_Engine.loadScene(*path, m_Window.getWidth(), m_Window.getHeight());
+
+        if (m_ImportFilesDialog.poll())
+            while (auto path = m_ImportFilesDialog.tryPopPath())
+                m_Editor.getLayer<EditorLayer>().getLayer().getPanel<ProjectPanel>().getAssetBrowser().import(*path);
+
+        if (m_ImportFolderDialog.poll())
+            if (auto path = m_ImportFolderDialog.tryPopPath())
+                m_Editor.getLayer<EditorLayer>().getLayer().getPanel<ProjectPanel>().getAssetBrowser().import(*path);
     }
 
     void Application::updateEditor()
