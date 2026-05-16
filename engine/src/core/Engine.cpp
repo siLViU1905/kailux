@@ -34,9 +34,8 @@ namespace kailux
                                               m_CurrentFrame(other.m_CurrentFrame),
                                               m_Scene(std::move(other.m_Scene)),
                                               m_Skybox(std::move(other.m_Skybox)),
-                                              m_SceneTexture(std::move(other.m_SceneTexture)),
                                               m_ComputePicker(std::move(other.m_ComputePicker)),
-    m_PickedEntity(other.m_PickedEntity),
+                                              m_PickedEntity(other.m_PickedEntity),
                                               m_PendingMeshData(std::move(other.m_PendingMeshData)),
                                               m_MeshCache(std::move(other.m_MeshCache)),
                                               m_PendingFrameTasks(std::move(other.m_PendingFrameTasks)),
@@ -63,7 +62,6 @@ namespace kailux
             m_CurrentFrame = other.m_CurrentFrame;
             m_Scene = std::move(other.m_Scene);
             m_Skybox = std::move(other.m_Skybox);
-            m_SceneTexture = std::move(other.m_SceneTexture);
             m_ComputePicker = std::move(other.m_ComputePicker);
             m_PickedEntity = other.m_PickedEntity;
             m_PendingMeshData = std::move(other.m_PendingMeshData);
@@ -99,7 +97,6 @@ namespace kailux
         engine.createComputePicker();
         engine.createFrameResources();
         engine.createImGui(window);
-        engine.createSceneTexture();
         engine.createSceneEntities(window);
         return engine;
     }
@@ -157,7 +154,7 @@ namespace kailux
 
     ImTextureID Engine::getSceneTextureId() const
     {
-        return ImGuiBackend::get_texture_id_from_texture(m_SceneTexture);
+        return ImGuiBackend::get_texture_id_from_texture(m_Frames[m_CurrentFrame].getSceneTexture());
     }
 
     void Engine::createRenderingContext(Window &window)
@@ -237,21 +234,6 @@ namespace kailux
     void Engine::createImGui(Window &window)
     {
         m_ImGuiBackend = ImGuiBackend::create(window, m_Context, m_Swapchain, m_SampleCount);
-    }
-
-    void Engine::createSceneTexture()
-    {
-        m_SceneTexture = TextureAllocator::create_empty(
-            m_Context,
-            m_Swapchain.getExtent().width,
-            m_Swapchain.getExtent().height,
-            m_Swapchain.getFormat(),
-            vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
-            vk::ImageAspectFlagBits::eColor
-        );
-
-        if (m_OnSceneTextureRecreation)
-            m_OnSceneTextureRecreation(getSceneTextureId());
     }
 
     void Engine::createComputePicker()
@@ -416,9 +398,8 @@ namespace kailux
         if (!acquired)
         {
             m_Swapchain.recreate(window, m_Context, m_SampleCount);
-            createSceneTexture();
-            for (auto& f : m_Frames)
-            f.recreateTextures(m_Context, m_Swapchain);
+            for (auto &f: m_Frames)
+                f.recreateTextures(m_Context, m_Swapchain);
             return;
         }
 
@@ -435,7 +416,7 @@ namespace kailux
             );
 
             recorder.imageBarrier({
-                m_SceneTexture.getImage(),
+                frame.getSceneTexture().getImage(),
                 vk::ImageLayout::eUndefined,
                 vk::ImageLayout::eColorAttachmentOptimal,
                 vk::PipelineStageFlagBits2::eFragmentShader,
@@ -482,7 +463,7 @@ namespace kailux
 
             ColorAttachmentInfo mainColor{
                 m_Swapchain.getColorImageView(),
-                m_SceneTexture.getImageView(),
+                frame.getSceneTexture().getImageView(),
                 vk::ImageLayout::eColorAttachmentOptimal,
                 vk::AttachmentLoadOp::eClear,
                 vk::AttachmentStoreOp::eStore,
@@ -503,15 +484,15 @@ namespace kailux
             recorder.beginRendering(
                 {
                     {{mainColor, idPicking}},
-                    m_Swapchain.getExtent(),
+                    frame.getExtent(),
                     m_Swapchain.getDepthImageView(),
                     vk::ImageLayout::eDepthAttachmentOptimal,
                     {}
                 }
             );
 
-            recorder.setViewport(m_Swapchain.getExtent());
-            recorder.setScissor(m_Swapchain.getExtent());
+            recorder.setViewport(frame.getExtent());
+            recorder.setScissor(frame.getExtent());
 
             recordMeshData(frame, recorder);
 
@@ -524,7 +505,7 @@ namespace kailux
             recorder.endRendering();
 
             recorder.imageBarrier({
-                m_SceneTexture.getImage(),
+                frame.getSceneTexture().getImage(),
                 vk::ImageLayout::eColorAttachmentOptimal,
                 vk::ImageLayout::eShaderReadOnlyOptimal,
                 vk::PipelineStageFlagBits2::eColorAttachmentOutput,
@@ -593,8 +574,7 @@ namespace kailux
         if (!m_Swapchain.present(m_Context, acquired->imageIndex, renderFinishedSemaphore))
         {
             m_Swapchain.recreate(window, m_Context, m_SampleCount);
-            createSceneTexture();
-            for (auto& f : m_Frames)
+            for (auto &f: m_Frames)
                 f.recreateTextures(m_Context, m_Swapchain);
         }
 
@@ -717,12 +697,7 @@ namespace kailux
         m_OnErrorLog = std::move(callback);
     }
 
-    void Engine::setOnSceneTextureRecreation(OnSceneTextureRecreation &&callback)
-    {
-        m_OnSceneTextureRecreation = std::move(callback);
-    }
-
-    ComputePicker & Engine::getPicker()
+    ComputePicker &Engine::getPicker()
     {
         return m_ComputePicker;
     }
@@ -799,7 +774,8 @@ namespace kailux
     void Engine::recordPicker(const FrameData &frame, const CommandRecorder &recorder, const Window &window) const
     {
         m_ComputePicker.bind(recorder.getCommandBuffer());
-        frame.getPickerDescriptorSet().bind(m_ComputePicker.getPipeline(), recorder.getCommandBuffer(),vk::PipelineBindPoint::eCompute);
+        frame.getPickerDescriptorSet().bind(m_ComputePicker.getPipeline(), recorder.getCommandBuffer(),
+                                            vk::PipelineBindPoint::eCompute);
         double x, y;
         window.getMousePos(x, y);
         m_ComputePicker.execute(

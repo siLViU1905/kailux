@@ -56,7 +56,7 @@ namespace kailux
             pollSceneDialog();
 
             auto deltaTime = m_Clock.getDeltaTime<float, TimeType::Seconds>();
-            m_Editor.update();
+            updateEditor();
 
             updateEngine(deltaTime, m_Window);
             m_Engine.render(m_Window);
@@ -146,11 +146,6 @@ namespace kailux
             hierarchyPanel.selectEntity(entity);
         });
 
-        m_Engine.setOnSceneTextureRecreation([&viewportPanel](auto id)
-        {
-            viewportPanel.setSceneTextureId(id);
-        });
-
         m_Engine.setOnEditorRender([this](Scene &scene)
         {
             m_Editor.render(scene);
@@ -162,6 +157,13 @@ namespace kailux
         if (m_LoadSceneDialog.poll())
             if (auto path = m_LoadSceneDialog.tryPopPath())
                 m_Engine.loadScene(*path, m_Window.getWidth(), m_Window.getHeight());
+    }
+
+    void Application::updateEditor()
+    {
+        m_Editor.update();
+        auto& viewportPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<ViewportPanel>();
+        viewportPanel.setSceneTextureId(m_Engine.getSceneTextureId());
     }
 
     void Application::updateEngine(float deltaTime, Window& window)

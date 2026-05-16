@@ -44,6 +44,9 @@ namespace kailux
         Buffer&       getSceneBuffer();
         const Buffer& getPickerBuffer() const;
 
+        vk::Extent2D  getExtent() const;
+
+        const Texture& getSceneTexture() const;
         const Texture& getOutIdTexture() const;
         const Texture& getResolvedOutIdTexture() const;
 
@@ -70,7 +73,8 @@ namespace kailux
         void createSceneBuffer(const Context& context);
         void createPickerBuffer(const Context& context);
 
-        void createOutIdTexture(const Context& context, const Swapchain& swapchain);
+        void createSceneTexture(const Context& context, vk::Format format);
+        void createOutIdTexture(const Context &context);
 
         static constexpr uint32_t s_DescriptorSetInfoCount = 1 + 1 + 1 + 1 + 1 + 1 + 1 + TextureRegistry::s_TextureTypes.size(); // camera buffer + mesh data buffer + scene buffer + skybox sampler + irradiance map + prefiltered env + brdf lut + textures
         static constexpr uint32_t s_SkyboxDescriptorSetInfoCount = 1 + 1; // camera buffer + cube texture
@@ -96,6 +100,9 @@ namespace kailux
         Buffer                  m_SceneBuffer;
         Buffer                  m_PickerBuffer;
 
+        vk::Extent2D            m_Extent;
+
+        Texture                 m_SceneTexture;
         Texture                 m_OutIdTexture;
         Texture                 m_ResolvedOutIdTexture;
     };
