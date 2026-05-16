@@ -32,6 +32,7 @@ namespace kailux
                                               m_TextureRegistry(std::move(other.m_TextureRegistry)),
                                               m_Frames(std::move(other.m_Frames)),
                                               m_CurrentFrame(other.m_CurrentFrame),
+                                              m_SceneTextureIds(other.m_SceneTextureIds),
                                               m_Scene(std::move(other.m_Scene)),
                                               m_Skybox(std::move(other.m_Skybox)),
                                               m_ComputePicker(std::move(other.m_ComputePicker)),
@@ -60,6 +61,7 @@ namespace kailux
             m_TextureRegistry = std::move(other.m_TextureRegistry);
             m_Frames = std::move(other.m_Frames);
             m_CurrentFrame = other.m_CurrentFrame;
+            m_SceneTextureIds = other.m_SceneTextureIds;
             m_Scene = std::move(other.m_Scene);
             m_Skybox = std::move(other.m_Skybox);
             m_ComputePicker = std::move(other.m_ComputePicker);
@@ -97,6 +99,7 @@ namespace kailux
         engine.createComputePicker();
         engine.createFrameResources();
         engine.createImGui(window);
+        engine.createSceneTextureIds();
         engine.createSceneEntities(window);
         return engine;
     }
@@ -154,7 +157,7 @@ namespace kailux
 
     ImTextureID Engine::getSceneTextureId() const
     {
-        return ImGuiBackend::get_texture_id_from_texture(m_Frames[m_CurrentFrame].getSceneTexture());
+        return m_SceneTextureIds[m_CurrentFrame];
     }
 
     void Engine::createRenderingContext(Window &window)
@@ -234,6 +237,12 @@ namespace kailux
     void Engine::createImGui(Window &window)
     {
         m_ImGuiBackend = ImGuiBackend::create(window, m_Context, m_Swapchain, m_SampleCount);
+    }
+
+    void Engine::createSceneTextureIds()
+    {
+        for (uint32_t i = 0;i<s_FramesInFlight;i++)
+            m_SceneTextureIds[i] = ImGuiBackend::get_texture_id_from_texture(m_Frames[i].getSceneTexture());
     }
 
     void Engine::createComputePicker()
@@ -387,7 +396,7 @@ namespace kailux
         m_Context.getGraphicsQueue().submit2(submitInfo, frame.getFenceInFlight());
     }
 
-    void Engine::render(Window &window)
+    void Engine::render(const Window &window)
     {
         auto &frame = m_Frames[m_CurrentFrame];
         frame.reset(m_Context);
@@ -400,6 +409,7 @@ namespace kailux
             m_Swapchain.recreate(window, m_Context, m_SampleCount);
             for (auto &f: m_Frames)
                 f.recreateTextures(m_Context, m_Swapchain);
+            createSceneTextureIds();
             return;
         }
 
@@ -576,6 +586,7 @@ namespace kailux
             m_Swapchain.recreate(window, m_Context, m_SampleCount);
             for (auto &f: m_Frames)
                 f.recreateTextures(m_Context, m_Swapchain);
+            createSceneTextureIds();
         }
 
         m_CurrentFrame = (m_CurrentFrame + 1) % s_FramesInFlight;
@@ -786,8 +797,6 @@ namespace kailux
     void Engine::update(float deltaTime, Window &window)
     {
         handleEvent(window);
-        if (window.wasResized())
-            m_Swapchain.recreate(window, m_Context, m_SampleCount);
 
         pollPendingData();
         updatePendingFrameTasks();

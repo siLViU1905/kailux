@@ -280,8 +280,8 @@ namespace kailux
     vk::PresentModeKHR Swapchain::choose_swap_present_mode(const std::vector<vk::PresentModeKHR> &availablePresentModes)
     {
         static constexpr std::array preferredPresentModes = {
-            vk::PresentModeKHR::eMailbox,
-            vk::PresentModeKHR::eFifoLatestReady
+            vk::PresentModeKHR::eMailbox
+            // vk::PresentModeKHR::eFifoLatestReady
         };
 
         for (auto presentMode : availablePresentModes)

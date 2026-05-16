@@ -140,8 +140,11 @@ namespace kailux
         auto& viewportPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<ViewportPanel>();
         viewportPanel.setSceneTextureId(m_Engine.getSceneTextureId());
 
-        viewportPanel.setOnClick([this, &hierarchyPanel]()
+        const auto& entityEditor = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<EntityEditorPanel>();
+        viewportPanel.setOnClick([this, &hierarchyPanel, &entityEditor]()
         {
+            if (entityEditor.isGizmoInUse())
+                return;
             auto entity = static_cast<entt::entity>(m_Engine.getPickedEntity());
             hierarchyPanel.selectEntity(entity);
         });
