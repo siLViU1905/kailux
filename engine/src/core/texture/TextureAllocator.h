@@ -24,7 +24,8 @@ namespace kailux
             uint32_t height,
             vk::Format format,
             vk::ImageUsageFlags usage,
-            vk::ImageAspectFlags aspect
+            vk::ImageAspectFlags aspect,
+            vk::SampleCountFlagBits samples = vk::SampleCountFlagBits::e1
         );
 
         static Texture create_cubemap_with_mips(
@@ -40,7 +41,8 @@ namespace kailux
             uint32_t mipLevels,
             vk::Format format,
             vk::ImageUsageFlags usage,
-            vk::ImageAspectFlags aspect
+            vk::ImageAspectFlags aspect,
+            vk::SampleCountFlagBits samples = vk::SampleCountFlagBits::e1
         );
 
         static void transition_layout(

@@ -21,6 +21,17 @@ namespace kailux
             upload(data.data(), data.size_bytes(), offset);
         }
 
+        template<typename T>
+        T read() const
+        {
+            assert(m_Mapped && "Buffer is not host-visible");
+
+            T result;
+            memcpy(&result, m_Mapped, sizeof(T));
+
+            return result;
+        }
+
     private:
         vk::raii::Buffer       m_Buffer;
         vk::raii::DeviceMemory m_Memory;

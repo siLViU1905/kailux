@@ -154,10 +154,17 @@ namespace kailux
         };
     }
 
-    Texture TextureAllocator::create_empty(const Context &context, uint32_t width, uint32_t height, vk::Format format,
-                                           vk::ImageUsageFlags usage, vk::ImageAspectFlags aspect)
+    Texture TextureAllocator::create_empty(
+        const Context &context,
+        uint32_t width,
+        uint32_t height,
+        vk::Format format,
+        vk::ImageUsageFlags usage,
+        vk::ImageAspectFlags aspect,
+        vk::SampleCountFlagBits samples
+    )
     {
-        return alloc(context, width, height, 1, format, usage, aspect);
+        return alloc(context, width, height, 1, format, usage, aspect, samples);
     }
 
     Texture TextureAllocator::create_cubemap_with_mips(const Context &context,
@@ -308,7 +315,9 @@ namespace kailux
         uint32_t mipLevels,
         vk::Format format,
         vk::ImageUsageFlags usage,
-        vk::ImageAspectFlags aspect)
+        vk::ImageAspectFlags aspect,
+        vk::SampleCountFlagBits samples
+    )
     {
         vk::ImageCreateInfo imageInfo{};
         imageInfo.imageType = vk::ImageType::e2D;
@@ -316,7 +325,7 @@ namespace kailux
         imageInfo.extent = vk::Extent3D(width, height, 1);
         imageInfo.mipLevels = mipLevels;
         imageInfo.arrayLayers = 1;
-        imageInfo.samples = vk::SampleCountFlagBits::e1;
+        imageInfo.samples = samples;
         imageInfo.tiling = vk::ImageTiling::eOptimal;
         imageInfo.usage = usage;
         imageInfo.sharingMode = vk::SharingMode::eExclusive;

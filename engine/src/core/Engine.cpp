@@ -17,7 +17,7 @@
 
 namespace kailux
 {
-    Engine::Engine() : m_SampleCount(vk::SampleCountFlagBits::e1), m_CurrentFrame(0)
+    Engine::Engine() : m_SampleCount(vk::SampleCountFlagBits::e1), m_CurrentFrame(0), m_PickedEntity(~0u)
     {
     }
 
@@ -35,6 +35,8 @@ namespace kailux
                                               m_Scene(std::move(other.m_Scene)),
                                               m_Skybox(std::move(other.m_Skybox)),
                                               m_SceneTexture(std::move(other.m_SceneTexture)),
+                                              m_ComputePicker(std::move(other.m_ComputePicker)),
+    m_PickedEntity(other.m_PickedEntity),
                                               m_PendingMeshData(std::move(other.m_PendingMeshData)),
                                               m_MeshCache(std::move(other.m_MeshCache)),
                                               m_PendingFrameTasks(std::move(other.m_PendingFrameTasks)),
@@ -62,6 +64,8 @@ namespace kailux
             m_Scene = std::move(other.m_Scene);
             m_Skybox = std::move(other.m_Skybox);
             m_SceneTexture = std::move(other.m_SceneTexture);
+            m_ComputePicker = std::move(other.m_ComputePicker);
+            m_PickedEntity = other.m_PickedEntity;
             m_PendingMeshData = std::move(other.m_PendingMeshData);
             m_MeshCache = std::move(other.m_MeshCache);
             m_PendingFrameTasks = std::move(other.m_PendingFrameTasks);
@@ -92,6 +96,7 @@ namespace kailux
         engine.createSkybox();
         engine.createMeshRegistry();
         engine.createTextureRegistry();
+        engine.createComputePicker();
         engine.createFrameResources();
         engine.createImGui(window);
         engine.createSceneTexture();
@@ -174,7 +179,7 @@ namespace kailux
 
     void Engine::createPipeline()
     {
-        m_Pipeline = Pipeline::create(
+        m_Pipeline = Pipeline::createGraphics(
             m_Context,
             m_Swapchain,
             m_DescriptorLayout,
@@ -182,7 +187,7 @@ namespace kailux
                 s_VertexShaderPath.data(),
                 s_FragmentShaderPath.data()
             },
-            make_pipeline_info(m_SampleCount)
+            make_pipeline_info(m_Swapchain, m_SampleCount)
         );
     }
 
@@ -199,8 +204,16 @@ namespace kailux
     void Engine::createFrameResources()
     {
         for (auto &frame: m_Frames)
-            frame = FrameData::create(m_Context, m_DescriptorLayout, m_DescriptorPool, m_Skybox, m_TextureRegistry,
-                                      s_MaxMeshCount);
+            frame = FrameData::create(
+                m_Context,
+                m_Swapchain,
+                m_DescriptorLayout,
+                m_DescriptorPool,
+                m_Skybox,
+                m_ComputePicker,
+                m_TextureRegistry,
+                s_MaxMeshCount
+            );
     }
 
     void Engine::createMeshRegistry()
@@ -241,6 +254,11 @@ namespace kailux
             m_OnSceneTextureRecreation(getSceneTextureId());
     }
 
+    void Engine::createComputePicker()
+    {
+        m_ComputePicker = ComputePicker::create(m_Context, s_FramesInFlight, s_PickerComputeShaderPath);
+    }
+
     void Engine::createScene()
     {
         m_Scene = Scene::create("MainScene");
@@ -274,7 +292,7 @@ namespace kailux
         );
     }
 
-    PipelineInfo Engine::make_pipeline_info(vk::SampleCountFlagBits sampleCount)
+    PipelineInfo Engine::make_pipeline_info(const Swapchain &swapchain, vk::SampleCountFlagBits sampleCount)
     {
         PipelineInfo info;
 
@@ -298,16 +316,27 @@ namespace kailux
             1.f
         };
 
-        info.colorBlendAttachment.colorWriteMask =
+        vk::PipelineColorBlendAttachmentState colorAttachment{};
+        colorAttachment.colorWriteMask =
                 vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB |
                 vk::ColorComponentFlagBits::eA;
-        info.colorBlendAttachment.blendEnable = vk::True;
-        info.colorBlendAttachment.srcColorBlendFactor = vk::BlendFactor::eSrcAlpha;
-        info.colorBlendAttachment.dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
-        info.colorBlendAttachment.colorBlendOp = vk::BlendOp::eAdd;
-        info.colorBlendAttachment.srcAlphaBlendFactor = vk::BlendFactor::eOne;
-        info.colorBlendAttachment.dstAlphaBlendFactor = vk::BlendFactor::eZero;
-        info.colorBlendAttachment.alphaBlendOp = vk::BlendOp::eAdd;
+        colorAttachment.blendEnable = vk::True;
+        colorAttachment.srcColorBlendFactor = vk::BlendFactor::eSrcAlpha;
+        colorAttachment.dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
+        colorAttachment.colorBlendOp = vk::BlendOp::eAdd;
+        colorAttachment.srcAlphaBlendFactor = vk::BlendFactor::eOne;
+        colorAttachment.dstAlphaBlendFactor = vk::BlendFactor::eZero;
+        colorAttachment.alphaBlendOp = vk::BlendOp::eAdd;
+
+        info.colorBlendAttachments.push_back(colorAttachment);
+        info.colorFormats.push_back(swapchain.getFormat());
+
+        vk::PipelineColorBlendAttachmentState idAttachment{};
+        idAttachment.colorWriteMask = vk::ColorComponentFlagBits::eR;
+        idAttachment.blendEnable = vk::False;
+
+        info.colorBlendAttachments.push_back(idAttachment);
+        info.colorFormats.push_back(vk::Format::eR32Uint);
 
         info.samples = sampleCount;
 
@@ -381,11 +410,15 @@ namespace kailux
         auto &frame = m_Frames[m_CurrentFrame];
         frame.reset(m_Context);
 
+        readOutputBuffers(frame);
+
         auto acquired = m_Swapchain.acquire();
         if (!acquired)
         {
             m_Swapchain.recreate(window, m_Context, m_SampleCount);
             createSceneTexture();
+            for (auto& f : m_Frames)
+            f.recreateTextures(m_Context, m_Swapchain);
             return;
         }
 
@@ -423,17 +456,54 @@ namespace kailux
                     vk::ImageAspectFlagBits::eDepth
                 });
 
+            recorder.imageBarrier({
+                frame.getOutIdTexture().getImage(),
+                vk::ImageLayout::eUndefined,
+                vk::ImageLayout::eColorAttachmentOptimal,
+                vk::PipelineStageFlagBits2::eAllGraphics,
+                vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+                vk::AccessFlagBits2::eNone,
+                vk::AccessFlagBits2::eColorAttachmentWrite
+            });
+
+            recorder.imageBarrier({
+                frame.getResolvedOutIdTexture().getImage(),
+                vk::ImageLayout::eUndefined,
+                vk::ImageLayout::eColorAttachmentOptimal,
+                vk::PipelineStageFlagBits2::eAllGraphics,
+                vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+                vk::AccessFlagBits2::eNone,
+                vk::AccessFlagBits2::eColorAttachmentWrite
+            });
+
             const auto &ambient = m_Scene.getAmbient();
             vk::ClearColorValue clearColor(ambient.x, ambient.y, ambient.z, ambient.w);
+            vk::ClearColorValue idClear(std::array{0u, 0u, 0u, 0u});
+
+            ColorAttachmentInfo mainColor{
+                m_Swapchain.getColorImageView(),
+                m_SceneTexture.getImageView(),
+                vk::ImageLayout::eColorAttachmentOptimal,
+                vk::AttachmentLoadOp::eClear,
+                vk::AttachmentStoreOp::eStore,
+                clearColor,
+                vk::ResolveModeFlagBits::eAverage
+            };
+
+            ColorAttachmentInfo idPicking{
+                frame.getOutIdTexture().getImageView(),
+                frame.getResolvedOutIdTexture().getImageView(),
+                vk::ImageLayout::eColorAttachmentOptimal,
+                vk::AttachmentLoadOp::eClear,
+                vk::AttachmentStoreOp::eDontCare,
+                idClear,
+                vk::ResolveModeFlagBits::eSampleZero
+            };
+
             recorder.beginRendering(
                 {
-                    m_Swapchain.getColorImageView(),
-                    m_SceneTexture.getImageView(),
+                    {{mainColor, idPicking}},
                     m_Swapchain.getExtent(),
-                    vk::ImageLayout::eColorAttachmentOptimal,
-                    vk::AttachmentLoadOp::eClear,
-                    vk::AttachmentStoreOp::eStore,
-                    clearColor,
                     m_Swapchain.getDepthImageView(),
                     vk::ImageLayout::eDepthAttachmentOptimal,
                     {}
@@ -469,14 +539,32 @@ namespace kailux
                 vk::ImageLayout::eColorAttachmentOptimal
             });
 
-            recorder.beginRendering({
+            recorder.imageBarrier({
+                frame.getResolvedOutIdTexture().getImage(),
+                vk::ImageLayout::eColorAttachmentOptimal,
+                vk::ImageLayout::eGeneral,
+                vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+                vk::PipelineStageFlagBits2::eComputeShader,
+                vk::AccessFlagBits2::eColorAttachmentWrite,
+                vk::AccessFlagBits2::eShaderRead
+            });
+
+            recordPicker(frame, recorder, window);
+            std::array pickerMemBarrier{frame.getPickerBufferMemoryBarrier()};
+            recorder.bufferMemoryBarriers(pickerMemBarrier);
+
+            ColorAttachmentInfo imguiOverlay{
                 m_Swapchain.getImageView(acquired->imageIndex),
                 {},
-                m_Swapchain.getExtent(),
                 vk::ImageLayout::eColorAttachmentOptimal,
                 vk::AttachmentLoadOp::eLoad,
                 vk::AttachmentStoreOp::eStore,
-                vk::ClearColorValue{std::array{0.0f, 0.0f, 0.0f, 1.0f}},
+                vk::ClearColorValue{std::array{0.f, 0.f, 0.f, 1.f}}
+            };
+
+            recorder.beginRendering({
+                {imguiOverlay},
+                m_Swapchain.getExtent(),
                 {},
                 vk::ImageLayout::eUndefined,
                 vk::RenderingFlagBits::eContentsSecondaryCommandBuffers
@@ -506,6 +594,8 @@ namespace kailux
         {
             m_Swapchain.recreate(window, m_Context, m_SampleCount);
             createSceneTexture();
+            for (auto& f : m_Frames)
+                f.recreateTextures(m_Context, m_Swapchain);
         }
 
         m_CurrentFrame = (m_CurrentFrame + 1) % s_FramesInFlight;
@@ -632,6 +722,16 @@ namespace kailux
         m_OnSceneTextureRecreation = std::move(callback);
     }
 
+    ComputePicker & Engine::getPicker()
+    {
+        return m_ComputePicker;
+    }
+
+    uint32_t Engine::getPickedEntity() const
+    {
+        return m_PickedEntity;
+    }
+
     void Engine::cacheMesh(std::string_view path, MeshHandle meshHandle, TextureSetHandle materialHandle)
     {
         auto strPath = std::string(path);
@@ -661,7 +761,7 @@ namespace kailux
 
     void Engine::recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const
     {
-        m_Pipeline.bind(recorder.getCommandBuffer());
+        m_Pipeline.bindGraphics(recorder.getCommandBuffer());
         m_MeshRegistry.bind(recorder.getCommandBuffer());
         frame.getDescriptorSet().bind(m_Pipeline, recorder.getCommandBuffer());
 
@@ -686,7 +786,7 @@ namespace kailux
             vk::Format::eUndefined,
             vk::Format::eUndefined,
             vk::SampleCountFlagBits::e1
-            );
+        );
 
         m_ImGuiBackend.beginFrame();
         m_OnEditorRender(m_Scene);
@@ -694,6 +794,17 @@ namespace kailux
 
         CommandRecorder recorder(frame.getImGuiCommandBuffer(), inheritanceInfo);
         m_ImGuiBackend.recordDrawData(recorder.getCommandBuffer());
+    }
+
+    void Engine::recordPicker(const FrameData &frame, const CommandRecorder &recorder, const Window &window) const
+    {
+        m_ComputePicker.bind(recorder.getCommandBuffer());
+        frame.getPickerDescriptorSet().bind(m_ComputePicker.getPipeline(), recorder.getCommandBuffer(),vk::PipelineBindPoint::eCompute);
+        double x, y;
+        window.getMousePos(x, y);
+        m_ComputePicker.execute(
+            recorder.getCommandBuffer()
+        );
     }
 
     void Engine::update(float deltaTime, Window &window)
@@ -748,7 +859,8 @@ namespace kailux
             material.materialIdx = view.get<MaterialComponent>(entity).handle.index;
             data.emplace_back(
                 transform.getModelMatrix(),
-                material
+                material,
+                static_cast<uint32_t>(entity)
             );
         }
         frame.getModelBuffer().upload(data.data(), data.size() * sizeof(MeshData));
@@ -778,6 +890,11 @@ namespace kailux
     {
         auto data = m_Scene.getData();
         frame.getSceneBuffer().upload(&data, sizeof(SceneData));
+    }
+
+    void Engine::readOutputBuffers(const FrameData &frame)
+    {
+        m_PickedEntity = frame.getPickerBuffer().read<uint32_t>();
     }
 
     void Engine::handleEvent(Window &window)

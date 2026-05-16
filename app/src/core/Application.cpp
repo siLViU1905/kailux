@@ -58,7 +58,7 @@ namespace kailux
             auto deltaTime = m_Clock.getDeltaTime<float, TimeType::Seconds>();
             m_Editor.update();
 
-            m_Engine.update(deltaTime, m_Window);
+            updateEngine(deltaTime, m_Window);
             m_Engine.render(m_Window);
         }
         m_Engine.waitIdle();
@@ -139,6 +139,13 @@ namespace kailux
 
         auto& viewportPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<ViewportPanel>();
         viewportPanel.setSceneTextureId(m_Engine.getSceneTextureId());
+
+        viewportPanel.setOnClick([this, &hierarchyPanel]()
+        {
+            auto entity = static_cast<entt::entity>(m_Engine.getPickedEntity());
+            hierarchyPanel.selectEntity(entity);
+        });
+
         m_Engine.setOnSceneTextureRecreation([&viewportPanel](auto id)
         {
             viewportPanel.setSceneTextureId(id);
@@ -155,5 +162,12 @@ namespace kailux
         if (m_LoadSceneDialog.poll())
             if (auto path = m_LoadSceneDialog.tryPopPath())
                 m_Engine.loadScene(*path, m_Window.getWidth(), m_Window.getHeight());
+    }
+
+    void Application::updateEngine(float deltaTime, Window& window)
+    {
+        m_Engine.update(deltaTime, window);
+        auto sceneViewportMousePos = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<ViewportPanel>().getScaledMousePos();
+        m_Engine.getPicker().setCords(sceneViewportMousePos.x, sceneViewportMousePos.y);
     }
 }

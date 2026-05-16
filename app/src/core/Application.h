@@ -27,6 +27,8 @@ namespace kailux
 
         void pollSceneDialog();
 
+        void updateEngine(float deltaTime, Window& window);
+
         Window           m_Window;
         Engine           m_Engine;
         Editor           m_Editor;

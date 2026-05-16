@@ -34,6 +34,7 @@ namespace kailux
         bool isMinimized() const;
 
         bool       isKeyPressed(Key key) const;
+        bool       isButtonClicked(MouseButton button) const;
         void       getMousePos(double& x, double& y) const;
         void       setCursorMode(CursorMode mode);
         CursorMode getCursorMode() const;

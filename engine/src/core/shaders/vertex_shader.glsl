@@ -15,8 +15,9 @@ layout (location = 5) out flat float fragRoughness;
 layout (location = 6) out flat float fragMetallic;
 layout (location = 7) out flat float fragAO;
 layout (location = 8) out flat uint fragMaterialIdx;
-layout (location = 9) out vec2 fragTexCoord;
-layout (location = 10) out mat3 fragTBN;
+layout (location = 9) out flat uint fragIdx;
+layout (location = 10) out vec2 fragTexCoord;
+layout (location = 11) out mat3 fragTBN;
 
 layout (set = 0, binding = 0) uniform Camera
 {
@@ -28,10 +29,14 @@ layout (set = 0, binding = 0) uniform Camera
 struct MeshData
 {
     mat4 model;
+
     vec4 albedoAndRoughness;
     vec4 pbrParams;
     uint materialIdx;
     uint _padding[3];
+
+    uint idx;
+    uint __padding[3];
 };
 layout (std430, set = 0, binding = 1) readonly buffer TransformBuffer {
     MeshData data[];
@@ -50,7 +55,9 @@ void main()
     fragMetallic  = mData.pbrParams.x;
     fragAO        = mData.pbrParams.y;
 
-    fragMaterialIdx    = mData.materialIdx;
+    fragMaterialIdx = mData.materialIdx;
+
+    fragIdx = mData.idx;
 
     vec3 T = normalize(vec3(model * vec4(aTangent.xyz, 0.0)));
     vec3 N = normalize(vec3(model * vec4(aNormal, 0.0)));

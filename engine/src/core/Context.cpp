@@ -318,6 +318,7 @@ namespace kailux
             vk::PhysicalDeviceVulkan12Features,
             vk::PhysicalDeviceVulkan13Features,
             vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT,
+            vk::PhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT,
             vk::PhysicalDeviceMaintenance7FeaturesKHR,
             vk::PhysicalDevicePresentModeFifoLatestReadyFeaturesEXT
         > featureChain;
@@ -327,12 +328,14 @@ namespace kailux
         auto &f12 = featureChain.get<vk::PhysicalDeviceVulkan12Features>();
         auto &f13 = featureChain.get<vk::PhysicalDeviceVulkan13Features>();
         auto &fExt = featureChain.get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>();
+        auto &fUnusedAtt = featureChain.get<vk::PhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT>();
         auto &fMaint7 = featureChain.get<vk::PhysicalDeviceMaintenance7FeaturesKHR>();
         auto &fFifoLatest = featureChain.get<vk::PhysicalDevicePresentModeFifoLatestReadyFeaturesEXT>();
 
         f2.features.samplerAnisotropy = vk::True;
         f2.features.sampleRateShading = vk::True;
         f2.features.multiDrawIndirect = vk::True;
+        f2.features.independentBlend  = vk::True;
 
         f11.shaderDrawParameters = vk::True;
 
@@ -348,6 +351,9 @@ namespace kailux
         f13.synchronization2 = vk::True;
 
         fExt.extendedDynamicState = vk::True;
+
+        fUnusedAtt.dynamicRenderingUnusedAttachments = vk::True;
+
         fMaint7.maintenance7 = vk::True;
 
         fFifoLatest.presentModeFifoLatestReady = vk::True;

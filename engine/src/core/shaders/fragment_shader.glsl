@@ -59,10 +59,12 @@ layout (location = 5) in flat float fragRoughness;
 layout (location = 6) in flat float fragMetallic;
 layout (location = 7) in flat float fragAO;
 layout (location = 8) in flat uint fragMaterialIdx;
-layout (location = 9) in vec2 fragTexCoord;
-layout (location = 10) in mat3 fragTBN;
+layout (location = 9) in flat uint fragIdx;
+layout (location = 10) in vec2 fragTexCoord;
+layout (location = 11) in mat3 fragTBN;
 
 layout (location = 0) out vec4 outColor;
+layout (location = 1) out uint outEntityId;
 
 vec3 toneMapACES(vec3 color);
 
@@ -155,6 +157,8 @@ void main()
     color = pow(color, vec3(1.0 / 2.2));
 
     outColor = vec4(color, 1.0);
+
+    outEntityId = fragIdx;
 }
 
 vec3 toneMapACES(vec3 color)

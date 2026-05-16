@@ -64,7 +64,7 @@ namespace kailux
             )
         };
 
-        static PipelineInfo make_pipeline_info(vk::SampleCountFlagBits samples);
+        static PipelineInfo make_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits samples);
 
         void createDescriptorResources(const Context& context, uint32_t sets);
         void createPipeline(const Context& context, const Swapchain& swapchain);

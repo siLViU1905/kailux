@@ -9,10 +9,10 @@ namespace kailux
 {
     struct DescriptorSetBufferInfo
     {
-        vk::DescriptorType type{};
         vk::Buffer buffer{};
         vk::DeviceSize size{};
         uint32_t count{};
+        vk::DescriptorType type{};
     };
 
     struct DescriptorSetImageInfo
@@ -21,6 +21,7 @@ namespace kailux
         vk::ImageView view{};
         vk::ImageLayout layout{};
         uint32_t count{};
+        vk::DescriptorType type = vk::DescriptorType::eCombinedImageSampler;
     };
 
     using DescriptorSetInfo = std::variant<DescriptorSetBufferInfo, DescriptorSetImageInfo>;
@@ -42,7 +43,7 @@ namespace kailux
 
         vk::DescriptorSet getDescriptorSet() const;
 
-        void bind(const Pipeline& pipeline, vk::CommandBuffer cmd) const;
+        void bind(const Pipeline& pipeline, vk::CommandBuffer cmd, vk::PipelineBindPoint bindPoint = vk::PipelineBindPoint::eGraphics) const;
         void updateInfo(const Context& context, std::span<const DescriptorSetUpdateInfo> updateInfos) const;
 
     private:

@@ -72,35 +72,46 @@ namespace kailux
 
     void CommandRecorder::beginRendering(const RenderingInfo &info)
     {
-        if (m_IsSecondary)
+        std::vector<vk::RenderingAttachmentInfo> vkColorAttachments;
+        vkColorAttachments.reserve(info.colorAttachments.size());
+
+        for (const auto& color : info.colorAttachments)
         {
-            KAILUX_LOG_WARNING("[CommandRecorder]", "beginRendering() was called from a secondary buffer")
-            return;
+            vk::RenderingAttachmentInfo att(
+                color.view,
+                color.layout,
+                vk::ResolveModeFlagBits::eNone,
+                {},
+                {},
+                color.loadOp,
+                color.storeOp,
+                color.clearColor
+            );
+
+            if (color.resolveView)
+            {
+                att.resolveMode = color.resolveMode;
+                att.resolveImageView = color.resolveView;
+                att.resolveImageLayout = vk::ImageLayout::eColorAttachmentOptimal;
+            }
+            vkColorAttachments.push_back(att);
         }
 
-        vk::RenderingAttachmentInfo colorAttachment{
-            info.colorView,
-            info.colorLayout,
-            (info.resolveView ? vk::ResolveModeFlagBits::eAverage : vk::ResolveModeFlagBits::eNone),
-            info.resolveView,
-            vk::ImageLayout::eColorAttachmentOptimal,
-            info.loadOp,
-            info.storeOp,
-            vk::ClearValue{info.clearColor}
-        };
-
-        vk::RenderingInfo renderingInfo{
+        vk::RenderingInfo renderingInfo(
             info.renderFlags,
-            vk::Rect2D{{0, 0}, info.extent},
+            {{0, 0}, info.extent},
             1,
             0,
-            colorAttachment
-        };
+            static_cast<uint32_t>(vkColorAttachments.size()),
+            vkColorAttachments.data(),
+            nullptr,
+            nullptr
+        );
 
-        vk::RenderingAttachmentInfo depthAttachment{};
+        vk::RenderingAttachmentInfo depthAttachment;
         if (info.depthView)
         {
-            depthAttachment = vk::RenderingAttachmentInfo{
+            depthAttachment = {
                 info.depthView,
                 info.depthLayout,
                 vk::ResolveModeFlagBits::eNone,
@@ -110,7 +121,6 @@ namespace kailux
                 vk::AttachmentStoreOp::eStore,
                 vk::ClearValue{vk::ClearDepthStencilValue{1.0f, 0}}
             };
-
             renderingInfo.pDepthAttachment = &depthAttachment;
         }
 

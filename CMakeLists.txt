@@ -23,6 +23,7 @@ set(GLSL_SOURCES
         "engine/src/core/shaders/fragment_shader.glsl"
         "engine/src/core/shaders/skybox_vertex_shader.glsl"
         "engine/src/core/shaders/skybox_fragment_shader.glsl"
+        "engine/src/core/shaders/entity_picker_compute_shader.glsl"
 )
 
 set(SHADER_BINARY_DIR "${CMAKE_BINARY_DIR}/app/shaders")
@@ -40,8 +41,10 @@ foreach(GLSL_SRC ${GLSL_SOURCES})
 
     if(${GLSL_SRC} MATCHES "vertex")
         set(STAGE "vertex")
-    else()
+    elseif(${GLSL_SRC} MATCHES "fragment")
         set(STAGE "fragment")
+    elseif(${GLSL_SRC} MATCHES "compute")
+        set(STAGE "compute")
     endif()
 
     set(SPV_OUT "${SHADER_BINARY_DIR}/${FILE_NAME}.spv")

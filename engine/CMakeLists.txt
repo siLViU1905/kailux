@@ -31,6 +31,7 @@ add_library(kailux_engine STATIC
         src/core/FileDialog.cpp
         src/core/utilities/ThreadDispatcher.cpp
         src/core/texture/TextureRegistry.cpp
+        src/core/ComputePicker.cpp
 )
 
 target_compile_definitions(kailux_engine PUBLIC
