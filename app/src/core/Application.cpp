@@ -190,8 +190,9 @@ namespace kailux
     {
         m_Engine.update(deltaTime, window);
         auto sceneViewportMousePos = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<ViewportPanel>().getScaledMousePos();
+        auto outlineColor = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<MenuPanel>().getOutlineColor();
         auto selectedEntity = static_cast<uint32_t>(m_Editor.getLayer<EditorLayer>().getLayer().getPanel<HierarchyPanel>().getSelectedEntity());
-        m_Engine.getOutlinePass().setColorAndId({1.f, 0.f, 0.f}, selectedEntity);
+        m_Engine.getOutlinePass().setColorAndId(outlineColor, selectedEntity);
         m_Engine.getPicker().setCords(sceneViewportMousePos.x, sceneViewportMousePos.y);
     }
 }
