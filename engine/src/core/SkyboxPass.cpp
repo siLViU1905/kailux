@@ -93,9 +93,9 @@ namespace kailux
     {
         PipelineInfo info;
 
-        info.vertexInputBinding = Vertex::get_binding_description();
-        constexpr auto vertexAttribDesc = Vertex::get_attribute_description();
-        info.vertexInputAttribute = {vertexAttribDesc.cbegin(), vertexAttribDesc.cend()};
+        info.vertexInputBinding = {0, sizeof(Vertex), vk::VertexInputRate::eVertex};
+        constexpr auto vertexAttribDesc = vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, position));
+        info.vertexInputAttribute = {vertexAttribDesc};
 
         info.topology = vk::PrimitiveTopology::eTriangleList;
 
