@@ -32,6 +32,7 @@ add_library(kailux_engine STATIC
         src/core/texture/TextureRegistry.cpp
         src/core/passes/ComputePicker.cpp
         src/core/passes/OutlinePass.cpp
+        src/core/passes/GraphicsPass.cpp
 )
 
 target_compile_definitions(kailux_engine PUBLIC

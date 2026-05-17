@@ -2,25 +2,22 @@
 
 namespace kailux
 {
-    OutlinePass::OutlinePass()
-    {
-    }
+    OutlinePass::OutlinePass() = default;
 
-    OutlinePass::OutlinePass(OutlinePass &&other) noexcept : m_DescriptorLayout(std::move(other.m_DescriptorLayout)),
-                                                             m_DescriptorPool(std::move(other.m_DescriptorPool)),
-                                                             m_Pipeline(std::move(other.m_Pipeline)),
+    OutlinePass::OutlinePass(OutlinePass &&other) noexcept : GraphicsPass(std::move(other)),
                                                              m_Pc(other.m_Pc)
     {
+        other.m_Pc = {};
     }
 
     OutlinePass &OutlinePass::operator=(OutlinePass &&other) noexcept
     {
         if (this != &other)
         {
-            m_DescriptorLayout = std::move(other.m_DescriptorLayout);
-            m_DescriptorPool = std::move(other.m_DescriptorPool);
-            m_Pipeline = std::move(other.m_Pipeline);
+            GraphicsPass::operator=(std::move(other));
             m_Pc = other.m_Pc;
+
+            other.m_Pc = {};
         }
         return *this;
     }
@@ -28,15 +25,10 @@ namespace kailux
     OutlinePass OutlinePass::create(const Context &context, const Swapchain &swapchain, uint32_t frameCount, std::string_view vertShaderPath, std::string_view fragShaderPath)
     {
         OutlinePass pass;
-        pass.createDescriptorLayout(context);
-        pass.createDescriptorPool(context, frameCount);
-        pass.createPipeline(context, swapchain, vertShaderPath, fragShaderPath);
+        pass.createDescriptorLayout(context, s_DescriptorLayoutBindings);
+        pass.createDescriptorPool(context, frameCount, s_DescriptorLayoutSizes);
+        pass.createPipeline(context, swapchain, vertShaderPath, fragShaderPath, make_pipeline_info(swapchain), s_PushConstantRanges);
         return pass;
-    }
-
-    void OutlinePass::bind(vk::CommandBuffer cmd) const
-    {
-        m_Pipeline.bindGraphics(cmd);
     }
 
     void OutlinePass::push(vk::CommandBuffer cmd) const
@@ -48,21 +40,6 @@ namespace kailux
             sizeof(OutlinePushConstant),
             &m_Pc
             );
-    }
-
-    const DescriptorLayout &OutlinePass::getDescriptorLayout() const
-    {
-        return m_DescriptorLayout;
-    }
-
-    const DescriptorPool &OutlinePass::getDescriptorPool() const
-    {
-        return m_DescriptorPool;
-    }
-
-    const Pipeline &OutlinePass::getPipeline() const
-    {
-        return m_Pipeline;
     }
 
     void OutlinePass::setColorAndId(glm::vec3 color, uint32_t id)
@@ -111,28 +88,5 @@ namespace kailux
         info.depthStencilInfo.stencilTestEnable = vk::False;
 
         return info;
-    }
-
-    void OutlinePass::createDescriptorLayout(const Context &context)
-    {
-        m_DescriptorLayout = DescriptorLayout::create(context, s_DescriptorLayoutBindings);
-    }
-
-    void OutlinePass::createDescriptorPool(const Context &context, uint32_t frameCount)
-    {
-        m_DescriptorPool = DescriptorPool::create(context, frameCount, s_DescriptorLayoutSizes);
-    }
-
-    void OutlinePass::createPipeline(const Context &context, const Swapchain &swapchain,
-                                     std::string_view vertShaderPath, std::string_view fragShaderPath)
-    {
-        m_Pipeline = Pipeline::createGraphics(
-            context,
-            swapchain,
-            m_DescriptorLayout,
-            {vertShaderPath.data(), fragShaderPath.data()},
-            make_pipeline_info(swapchain),
-            s_PushConstantRanges
-        );
     }
 }
