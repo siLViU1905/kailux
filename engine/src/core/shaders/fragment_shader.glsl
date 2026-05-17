@@ -76,7 +76,6 @@ struct DirectionalLight
 
 layout (std430, set = 0, binding = 2) readonly buffer SceneBuffer {
     DirectionalLight sun;
-    vec4 ambient;
 } sceneData;
 
 layout (set = 0, binding = 3) uniform samplerCube skyboxSampler;

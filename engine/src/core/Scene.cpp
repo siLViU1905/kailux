@@ -12,7 +12,6 @@ namespace kailux
     Scene::Scene() : m_Name("Scene"),
                      m_MainCameraEntity(entt::null),
                      m_Sun(entt::null),
-                     m_Ambient(SceneData().ambient),
                      m_MeshEntityNameCount(0)
     {
         m_Sun = createSunEntity({});
@@ -22,7 +21,6 @@ namespace kailux
                                            m_EntityRegistry(std::move(other.m_EntityRegistry)),
                                            m_MainCameraEntity(other.m_MainCameraEntity),
                                            m_Sun(other.m_Sun),
-                                           m_Ambient(other.m_Ambient),
                                            m_MeshEntityNameCount(other.m_MeshEntityNameCount)
     {
     }
@@ -35,7 +33,6 @@ namespace kailux
             m_EntityRegistry = std::move(other.m_EntityRegistry);
             m_MainCameraEntity = other.m_MainCameraEntity;
             m_Sun = other.m_Sun;
-            m_Ambient = other.m_Ambient;
             m_MeshEntityNameCount = other.m_MeshEntityNameCount;
         }
         return *this;
@@ -125,17 +122,7 @@ namespace kailux
     SceneData Scene::getData() const
     {
         const auto &sunData = m_EntityRegistry.get<SunData>(m_Sun);
-        return {sunData, m_Ambient};
-    }
-
-    glm::vec4 &Scene::getAmbient()
-    {
-        return m_Ambient;
-    }
-
-    const glm::vec4 &Scene::getAmbient() const
-    {
-        return m_Ambient;
+        return {sunData};
     }
 
     std::string_view Scene::getName() const
@@ -156,7 +143,6 @@ namespace kailux
         const auto &cameraComponent = m_EntityRegistry.get<CameraComponent>(m_MainCameraEntity);
         js["Scene"] = {
             {"name", m_Name},
-            {"ambient", {m_Ambient.x, m_Ambient.y, m_Ambient.z, m_Ambient.w}},
             {"mesh_name_count", m_MeshEntityNameCount},
             {
                 "sun", {
@@ -253,14 +239,6 @@ namespace kailux
 
         m_Name = sceneJs.value("name", "Scene");
         m_MeshEntityNameCount = sceneJs.value("mesh_name_count", 0);
-
-        if (sceneJs.contains("ambient"))
-        {
-            m_Ambient.x = sceneJs["ambient"][0];
-            m_Ambient.y = sceneJs["ambient"][1];
-            m_Ambient.z = sceneJs["ambient"][2];
-            m_Ambient.w = sceneJs["ambient"][3];
-        }
 
         auto &sunJs = sceneJs["sun"];
         auto &sunData = m_EntityRegistry.get<SunData>(m_Sun);
