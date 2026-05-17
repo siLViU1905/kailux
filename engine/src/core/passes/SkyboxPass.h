@@ -1,28 +1,27 @@
 #pragma once
-#include "descriptor/DescriptorLayout.h"
-#include "Pipeline.h"
-#include "descriptor/DescriptorPool.h"
-#include "descriptor/DescriptorSet.h"
-#include "mesh/MeshRegistry.h"
-#include "texture/Texture.h"
+#include "GraphicsPass.h"
+#include "../descriptor/DescriptorLayout.h"
+#include "../Pipeline.h"
+#include "../descriptor/DescriptorPool.h"
+#include "../descriptor/DescriptorSet.h"
+#include "../mesh/MeshRegistry.h"
+#include "../texture/Texture.h"
 
 namespace kailux
 {
-    class SkyboxPass
+    class SkyboxPass : public GraphicsPass
     {
     public:
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(SkyboxPass)
 
         static SkyboxPass create(const Context& context, const Swapchain& swapchain, uint32_t sets, const std::array<std::string_view, 6> &paths);
 
+        void push(vk::CommandBuffer cmd) const override;
+
         const Texture&          getTexture() const;
         const Texture&          getIrradianceMapTexture() const;
         const Texture&          getPrefilteredEnvTexture() const;
         const Texture&          getBRDFLutTexture() const;
-        const DescriptorLayout& getDescriptorLayout() const;
-        const DescriptorPool&   getDescriptorPool() const;
-
-        void render(vk::CommandBuffer cmd, const DescriptorSet& descriptorSet, MeshView cubeView) const;
 
     private:
         static constexpr std::string_view s_VertexShaderPath = "shaders/skybox_vertex_shader.spv";
@@ -66,8 +65,6 @@ namespace kailux
 
         static PipelineInfo make_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits samples);
 
-        void createDescriptorResources(const Context& context, uint32_t sets);
-        void createPipeline(const Context& context, const Swapchain& swapchain);
         void createTexture(const Context& context, const std::array<std::string_view, 6> &paths);
         void createIrradianceTexture(const Context& context);
         void createPrefilteredEnvTexture(const Context& context);

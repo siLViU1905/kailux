@@ -34,7 +34,7 @@ namespace kailux
                                               m_CurrentFrame(other.m_CurrentFrame),
                                               m_SceneTextureIds(other.m_SceneTextureIds),
                                               m_Scene(std::move(other.m_Scene)),
-                                              m_Skybox(std::move(other.m_Skybox)),
+                                              m_SkyboxPass(std::move(other.m_SkyboxPass)),
                                               m_OutlinePass(std::move(other.m_OutlinePass)),
                                               m_ComputePicker(std::move(other.m_ComputePicker)),
                                               m_PickedEntity(other.m_PickedEntity),
@@ -64,7 +64,7 @@ namespace kailux
             m_CurrentFrame = other.m_CurrentFrame;
             m_SceneTextureIds = other.m_SceneTextureIds;
             m_Scene = std::move(other.m_Scene);
-            m_Skybox = std::move(other.m_Skybox);
+            m_SkyboxPass = std::move(other.m_SkyboxPass);
             m_OutlinePass = std::move(other.m_OutlinePass);
             m_ComputePicker = std::move(other.m_ComputePicker);
             m_PickedEntity = other.m_PickedEntity;
@@ -196,7 +196,7 @@ namespace kailux
 
     void Engine::createSkybox()
     {
-        m_Skybox = SkyboxPass::create(
+        m_SkyboxPass = SkyboxPass::create(
             m_Context,
             m_Swapchain,
             s_FramesInFlight,
@@ -223,7 +223,7 @@ namespace kailux
                 m_Swapchain,
                 m_DescriptorLayout,
                 m_DescriptorPool,
-                m_Skybox,
+                m_SkyboxPass,
                 m_ComputePicker,
                 m_OutlinePass,
                 m_TextureRegistry, s_MaxMeshCount
@@ -470,12 +470,7 @@ namespace kailux
             recorder.setScissor(frame.getExtent());
 
             recordMeshData(frame, recorder);
-
-            m_Skybox.render(
-                recorder.getCommandBuffer(),
-                frame.getSkyboxDescriptorSet(),
-                m_MeshRegistry.view(m_MeshRegistry.getBuiltins().cube)
-            );
+            recordSkybox(frame, recorder);
 
             recorder.endRendering();
 
@@ -668,7 +663,7 @@ namespace kailux
         return m_PickedEntity;
     }
 
-    OutlinePass & Engine::getOutlinePass()
+    OutlinePass &Engine::getOutlinePass()
     {
         return m_OutlinePass;
     }
@@ -703,10 +698,10 @@ namespace kailux
     void Engine::transitionForMainPass(const FrameData &frame, const CommandRecorder &recorder) const
     {
         recorder.imageBarrier({
-        m_Swapchain.getColorImage(),
-        vk::ImageLayout::eUndefined,
-        vk::ImageLayout::eColorAttachmentOptimal
-    });
+            m_Swapchain.getColorImage(),
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eColorAttachmentOptimal
+        });
 
         recorder.imageBarrier({
             frame.getSceneTexture().getImage(),
@@ -750,13 +745,14 @@ namespace kailux
         });
     }
 
-    void Engine::transitionForOutlinePass(const FrameData &frame, const CommandRecorder &recorder, uint32_t imageIndex) const
+    void Engine::transitionForOutlinePass(const FrameData &frame, const CommandRecorder &recorder,
+                                          uint32_t imageIndex) const
     {
         recorder.imageBarrier({
-        m_Swapchain.getImage(imageIndex),
-        vk::ImageLayout::eUndefined,
-        vk::ImageLayout::eColorAttachmentOptimal
-    });
+            m_Swapchain.getImage(imageIndex),
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eColorAttachmentOptimal
+        });
 
         recorder.imageBarrier({
             frame.getResolvedOutIdTexture().getImage(),
@@ -772,14 +768,14 @@ namespace kailux
     void Engine::transitionForPickerAndPostProcess(const FrameData &frame, const CommandRecorder &recorder) const
     {
         recorder.imageBarrier({
-        frame.getSceneTexture().getImage(),
-        vk::ImageLayout::eColorAttachmentOptimal,
-        vk::ImageLayout::eShaderReadOnlyOptimal,
-        vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-        vk::PipelineStageFlagBits2::eFragmentShader,
-        vk::AccessFlagBits2::eColorAttachmentWrite,
-        vk::AccessFlagBits2::eShaderRead
-    });
+            frame.getSceneTexture().getImage(),
+            vk::ImageLayout::eColorAttachmentOptimal,
+            vk::ImageLayout::eShaderReadOnlyOptimal,
+            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            vk::PipelineStageFlagBits2::eFragmentShader,
+            vk::AccessFlagBits2::eColorAttachmentWrite,
+            vk::AccessFlagBits2::eShaderRead
+        });
 
         recorder.imageBarrier({
             frame.getResolvedOutIdTexture().getImage(),
@@ -809,14 +805,14 @@ namespace kailux
     void Engine::transitionForPresent(const CommandRecorder &recorder, uint32_t imageIndex) const
     {
         recorder.imageBarrier({
-        m_Swapchain.getImage(imageIndex),
-        vk::ImageLayout::eColorAttachmentOptimal,
-        vk::ImageLayout::ePresentSrcKHR,
-        vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-        vk::PipelineStageFlagBits2::eBottomOfPipe,
-        vk::AccessFlagBits2::eColorAttachmentWrite,
-        vk::AccessFlagBits2::eNone
-    });
+            m_Swapchain.getImage(imageIndex),
+            vk::ImageLayout::eColorAttachmentOptimal,
+            vk::ImageLayout::ePresentSrcKHR,
+            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            vk::PipelineStageFlagBits2::eBottomOfPipe,
+            vk::AccessFlagBits2::eColorAttachmentWrite,
+            vk::AccessFlagBits2::eNone
+        });
     }
 
     void Engine::recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const
@@ -832,6 +828,21 @@ namespace kailux
         recorder.drawIndexedIndirect(
             frame.getIndirectBuffer(),
             meshCount
+        );
+    }
+
+    void Engine::recordSkybox(const FrameData &frame, const CommandRecorder &recorder) const
+    {
+        const auto cmd = recorder.getCommandBuffer();
+        m_SkyboxPass.bind(cmd);
+        frame.getSkyboxDescriptorSet().bind(m_SkyboxPass.getPipeline(), cmd);
+        auto cubeView = m_MeshRegistry.view(m_MeshRegistry.getBuiltins().cube);
+        cmd.drawIndexed(
+            cubeView.indexCount,
+            1,
+            cubeView.firstIndex,
+            cubeView.vertexOffset,
+            0
         );
     }
 

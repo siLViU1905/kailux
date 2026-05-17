@@ -26,7 +26,7 @@ add_library(kailux_engine STATIC
         src/core/texture/Texture.cpp
         src/core/texture/TextureAllocator.cpp
         src/core/texture/ImageLoader.cpp
-        src/core/SkyboxPass.cpp
+        src/core/passes/SkyboxPass.cpp
         src/core/mesh/MeshLoader.cpp
         src/core/utilities/ThreadDispatcher.cpp
         src/core/texture/TextureRegistry.cpp

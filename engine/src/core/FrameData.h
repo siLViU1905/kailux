@@ -1,6 +1,6 @@
 #pragma once
 #include "Context.h"
-#include "SkyboxPass.h"
+#include "passes/SkyboxPass.h"
 #include "buffer/Buffer.h"
 #include "command/CommandRecorder.h"
 #include "descriptor/DescriptorSet.h"
