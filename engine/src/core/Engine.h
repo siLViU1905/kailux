@@ -245,7 +245,7 @@ namespace kailux
         void                                        recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const;
         void                                        recordImGuiData(const FrameData& frame);
         void                                        recordPicker(const FrameData& frame, const CommandRecorder &recorder) const;
-        void                                        recordOutline(const FrameData& frame, const CommandRecorder &recorder);
+        void                                        recordOutline(const FrameData& frame, const CommandRecorder &recorder) const;
 
         void updateFrameBuffers(FrameData& frame, const CommandRecorder& recorder) const;
         void updateCameraBuffer(FrameData& frame) const;
@@ -271,6 +271,11 @@ namespace kailux
         };
         void                     cacheMesh(std::string_view path, MeshHandle meshHandle, TextureSetHandle materialHandle);
         std::optional<MeshCache> uncacheMesh(std::string_view path);
+
+        void transitionForMainPass(const FrameData& frame, const CommandRecorder& recorder) const;
+        void transitionForOutlinePass(const FrameData& frame, const CommandRecorder& recorder, uint32_t imageIndex) const;
+        void transitionForPickerAndPostProcess(const FrameData& frame, const CommandRecorder& recorder) const;
+        void transitionForPresent(const CommandRecorder& recorder, uint32_t imageIndex) const;
 
         static constexpr uint32_t s_FramesInFlight = 2;
 

@@ -431,55 +431,7 @@ namespace kailux
             CommandRecorder recorder(frame.getCommandBuffer());
             updateFrameBuffers(frame, recorder);
 
-            recorder.imageBarrier(
-                {
-                    m_Swapchain.getColorImage(),
-                    vk::ImageLayout::eUndefined,
-                    vk::ImageLayout::eColorAttachmentOptimal
-                }
-            );
-
-            recorder.imageBarrier({
-                frame.getSceneTexture().getImage(),
-                vk::ImageLayout::eUndefined,
-                vk::ImageLayout::eColorAttachmentOptimal,
-                vk::PipelineStageFlagBits2::eFragmentShader,
-                vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-                vk::AccessFlagBits2::eShaderRead,
-                vk::AccessFlagBits2::eColorAttachmentWrite
-            });
-
-            recorder.imageBarrier(
-                {
-                    m_Swapchain.getDepthImage(),
-                    vk::ImageLayout::eUndefined,
-                    vk::ImageLayout::eDepthAttachmentOptimal,
-                    vk::PipelineStageFlagBits2::eTopOfPipe,
-                    vk::PipelineStageFlagBits2::eEarlyFragmentTests,
-                    vk::AccessFlagBits2::eNone,
-                    vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
-                    vk::ImageAspectFlagBits::eDepth
-                });
-
-            recorder.imageBarrier({
-                frame.getOutIdTexture().getImage(),
-                vk::ImageLayout::eUndefined,
-                vk::ImageLayout::eColorAttachmentOptimal,
-                vk::PipelineStageFlagBits2::eAllGraphics,
-                vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-                vk::AccessFlagBits2::eNone,
-                vk::AccessFlagBits2::eColorAttachmentWrite
-            });
-
-            recorder.imageBarrier({
-                frame.getResolvedOutIdTexture().getImage(),
-                vk::ImageLayout::eUndefined,
-                vk::ImageLayout::eColorAttachmentOptimal,
-                vk::PipelineStageFlagBits2::eAllGraphics,
-                vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-                vk::AccessFlagBits2::eNone,
-                vk::AccessFlagBits2::eColorAttachmentWrite
-            });
+            transitionForMainPass(frame, recorder);
 
             vk::ClearColorValue clearColor(std::array{0u, 0u, 0u, 0u});
             vk::ClearColorValue idClear(std::array{~0u, ~0u, ~0u, ~0u});
@@ -527,21 +479,7 @@ namespace kailux
 
             recorder.endRendering();
 
-            recorder.imageBarrier({
-                m_Swapchain.getImage(acquired->imageIndex),
-                vk::ImageLayout::eUndefined,
-                vk::ImageLayout::eColorAttachmentOptimal
-            });
-
-            recorder.imageBarrier({
-                frame.getResolvedOutIdTexture().getImage(),
-                vk::ImageLayout::eColorAttachmentOptimal,
-                vk::ImageLayout::eShaderReadOnlyOptimal,
-                vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-                vk::PipelineStageFlagBits2::eComputeShader,
-                vk::AccessFlagBits2::eColorAttachmentWrite,
-                vk::AccessFlagBits2::eShaderRead
-            });
+            transitionForOutlinePass(frame, recorder, acquired->imageIndex);
 
             ColorAttachmentInfo outlineAttachment{
                 frame.getSceneTexture().getImageView(),
@@ -564,39 +502,7 @@ namespace kailux
             recordOutline(frame, recorder);
             recorder.endRendering();
 
-            recorder.imageBarrier({
-                frame.getSceneTexture().getImage(),
-                vk::ImageLayout::eColorAttachmentOptimal,
-                vk::ImageLayout::eShaderReadOnlyOptimal,
-                vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-                vk::PipelineStageFlagBits2::eFragmentShader,
-                vk::AccessFlagBits2::eColorAttachmentWrite,
-                vk::AccessFlagBits2::eShaderRead
-            });
-
-            recorder.imageBarrier({
-                frame.getResolvedOutIdTexture().getImage(),
-                vk::ImageLayout::eShaderReadOnlyOptimal,
-                vk::ImageLayout::eGeneral,
-                vk::PipelineStageFlagBits2::eFragmentShader,
-                vk::PipelineStageFlagBits2::eComputeShader,
-                vk::AccessFlagBits2::eShaderRead,
-                vk::AccessFlagBits2::eShaderRead
-            });
-
-            recordPicker(frame, recorder);
-            std::array pickerMemBarrier{frame.getPickerBufferMemoryBarrier()};
-            recorder.bufferMemoryBarriers(pickerMemBarrier);
-
-            recorder.imageBarrier({
-                frame.getResolvedOutIdTexture().getImage(),
-                vk::ImageLayout::eGeneral,
-                vk::ImageLayout::eColorAttachmentOptimal,
-                vk::PipelineStageFlagBits2::eComputeShader,
-                vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-                vk::AccessFlagBits2::eShaderRead,
-                vk::AccessFlagBits2::eColorAttachmentWrite
-            });
+            transitionForPickerAndPostProcess(frame, recorder);
 
             ColorAttachmentInfo imguiOverlay{
                 m_Swapchain.getImageView(acquired->imageIndex),
@@ -620,17 +526,7 @@ namespace kailux
 
             recorder.endRendering();
 
-            recorder.imageBarrier(
-                {
-                    m_Swapchain.getImage(acquired->imageIndex),
-                    vk::ImageLayout::eColorAttachmentOptimal,
-                    vk::ImageLayout::ePresentSrcKHR,
-                    vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-                    vk::PipelineStageFlagBits2::eBottomOfPipe,
-                    vk::AccessFlagBits2::eColorAttachmentWrite,
-                    vk::AccessFlagBits2::eNone
-                }
-            );
+            transitionForPresent(recorder, acquired->imageIndex);
         }
 
         submit(m_Frames[m_CurrentFrame], acquired->imageAvailableSemaphore, renderFinishedSemaphore);
@@ -804,6 +700,125 @@ namespace kailux
         return cache;
     }
 
+    void Engine::transitionForMainPass(const FrameData &frame, const CommandRecorder &recorder) const
+    {
+        recorder.imageBarrier({
+        m_Swapchain.getColorImage(),
+        vk::ImageLayout::eUndefined,
+        vk::ImageLayout::eColorAttachmentOptimal
+    });
+
+        recorder.imageBarrier({
+            frame.getSceneTexture().getImage(),
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eColorAttachmentOptimal,
+            vk::PipelineStageFlagBits2::eFragmentShader,
+            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            vk::AccessFlagBits2::eShaderRead,
+            vk::AccessFlagBits2::eColorAttachmentWrite
+        });
+
+        recorder.imageBarrier({
+            m_Swapchain.getDepthImage(),
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eDepthAttachmentOptimal,
+            vk::PipelineStageFlagBits2::eTopOfPipe,
+            vk::PipelineStageFlagBits2::eEarlyFragmentTests,
+            vk::AccessFlagBits2::eNone,
+            vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+            vk::ImageAspectFlagBits::eDepth
+        });
+
+        recorder.imageBarrier({
+            frame.getOutIdTexture().getImage(),
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eColorAttachmentOptimal,
+            vk::PipelineStageFlagBits2::eAllGraphics,
+            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            vk::AccessFlagBits2::eNone,
+            vk::AccessFlagBits2::eColorAttachmentWrite
+        });
+
+        recorder.imageBarrier({
+            frame.getResolvedOutIdTexture().getImage(),
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eColorAttachmentOptimal,
+            vk::PipelineStageFlagBits2::eAllGraphics,
+            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            vk::AccessFlagBits2::eNone,
+            vk::AccessFlagBits2::eColorAttachmentWrite
+        });
+    }
+
+    void Engine::transitionForOutlinePass(const FrameData &frame, const CommandRecorder &recorder, uint32_t imageIndex) const
+    {
+        recorder.imageBarrier({
+        m_Swapchain.getImage(imageIndex),
+        vk::ImageLayout::eUndefined,
+        vk::ImageLayout::eColorAttachmentOptimal
+    });
+
+        recorder.imageBarrier({
+            frame.getResolvedOutIdTexture().getImage(),
+            vk::ImageLayout::eColorAttachmentOptimal,
+            vk::ImageLayout::eShaderReadOnlyOptimal,
+            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            vk::PipelineStageFlagBits2::eComputeShader,
+            vk::AccessFlagBits2::eColorAttachmentWrite,
+            vk::AccessFlagBits2::eShaderRead
+        });
+    }
+
+    void Engine::transitionForPickerAndPostProcess(const FrameData &frame, const CommandRecorder &recorder) const
+    {
+        recorder.imageBarrier({
+        frame.getSceneTexture().getImage(),
+        vk::ImageLayout::eColorAttachmentOptimal,
+        vk::ImageLayout::eShaderReadOnlyOptimal,
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+        vk::PipelineStageFlagBits2::eFragmentShader,
+        vk::AccessFlagBits2::eColorAttachmentWrite,
+        vk::AccessFlagBits2::eShaderRead
+    });
+
+        recorder.imageBarrier({
+            frame.getResolvedOutIdTexture().getImage(),
+            vk::ImageLayout::eShaderReadOnlyOptimal,
+            vk::ImageLayout::eGeneral,
+            vk::PipelineStageFlagBits2::eFragmentShader,
+            vk::PipelineStageFlagBits2::eComputeShader,
+            vk::AccessFlagBits2::eShaderRead,
+            vk::AccessFlagBits2::eShaderRead
+        });
+
+        recordPicker(frame, recorder);
+        std::array pickerMemBarrier{frame.getPickerBufferMemoryBarrier()};
+        recorder.bufferMemoryBarriers(pickerMemBarrier);
+
+        recorder.imageBarrier({
+            frame.getResolvedOutIdTexture().getImage(),
+            vk::ImageLayout::eGeneral,
+            vk::ImageLayout::eColorAttachmentOptimal,
+            vk::PipelineStageFlagBits2::eComputeShader,
+            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            vk::AccessFlagBits2::eShaderRead,
+            vk::AccessFlagBits2::eColorAttachmentWrite
+        });
+    }
+
+    void Engine::transitionForPresent(const CommandRecorder &recorder, uint32_t imageIndex) const
+    {
+        recorder.imageBarrier({
+        m_Swapchain.getImage(imageIndex),
+        vk::ImageLayout::eColorAttachmentOptimal,
+        vk::ImageLayout::ePresentSrcKHR,
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+        vk::PipelineStageFlagBits2::eBottomOfPipe,
+        vk::AccessFlagBits2::eColorAttachmentWrite,
+        vk::AccessFlagBits2::eNone
+    });
+    }
+
     void Engine::recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const
     {
         m_Pipeline.bindGraphics(recorder.getCommandBuffer());
@@ -852,12 +867,11 @@ namespace kailux
         );
     }
 
-    void Engine::recordOutline(const FrameData &frame, const CommandRecorder &recorder)
+    void Engine::recordOutline(const FrameData &frame, const CommandRecorder &recorder) const
     {
         const auto cmd = recorder.getCommandBuffer();
         m_OutlinePass.bind(cmd);
         frame.getOutlineDescriptorSet().bind(m_OutlinePass.getPipeline(), cmd);
-        //m_OutlinePass.setColorAndId({1.f, 0.f, 0.f}, m_PickedEntity);
         m_OutlinePass.push(cmd);
         cmd.draw(3, 1, 0, 0);
     }
