@@ -1,16 +1,14 @@
 #include "SkyboxPass.h"
 
-#include "descriptor/DescriptorSet.h"
-#include "texture/ImageLoader.h"
-#include "texture/TextureAllocator.h"
+#include "../descriptor/DescriptorSet.h"
+#include "../texture/ImageLoader.h"
+#include "../texture/TextureAllocator.h"
 
 namespace kailux
 {
     SkyboxPass::SkyboxPass() = default;
 
-    SkyboxPass::SkyboxPass(SkyboxPass &&other) noexcept : m_DescriptorLayout(std::move(other.m_DescriptorLayout)),
-                                                          m_Pipeline(std::move(other.m_Pipeline)),
-                                                          m_DescriptorPool(std::move(other.m_DescriptorPool)),
+    SkyboxPass::SkyboxPass(SkyboxPass &&other) noexcept : GraphicsPass(std::move(other)),
                                                           m_Texture(std::move(other.m_Texture)),
                                                           m_IrradianceMapTexture(std::move(other.m_IrradianceMapTexture)),
                                                           m_PrefilteredEnvTexture(std::move(other.m_PrefilteredEnvTexture)),
@@ -22,9 +20,7 @@ namespace kailux
     {
         if (this != &other)
         {
-            m_DescriptorLayout = std::move(other.m_DescriptorLayout);
-            m_Pipeline = std::move(other.m_Pipeline);
-            m_DescriptorPool = std::move(other.m_DescriptorPool);
+            GraphicsPass::operator=(std::move(other));
             m_Texture = std::move(other.m_Texture);
             m_IrradianceMapTexture = std::move(other.m_IrradianceMapTexture);
             m_PrefilteredEnvTexture = std::move(other.m_PrefilteredEnvTexture);
@@ -37,13 +33,26 @@ namespace kailux
                                   const std::array<std::string_view, 6> &paths)
     {
         SkyboxPass pass;
-        pass.createDescriptorResources(context, sets);
-        pass.createPipeline(context, swapchain);
+        pass.createDescriptorLayout(context, s_DescriptorLayoutBindings);
+        pass.createDescriptorPool(context, sets, s_DescriptorPoolSizes);
+        pass.createPipeline(
+            context,
+            swapchain,
+            s_VertexShaderPath,
+            s_FragmentShaderPath,
+            make_pipeline_info(swapchain, context.getMaxUsableSampleCount()),
+            {}
+            );
         pass.createTexture(context, paths);
         pass.createIrradianceTexture(context);
         pass.createPrefilteredEnvTexture(context);
         pass.createBRDFLutTexture(context);
         return pass;
+    }
+
+    void SkyboxPass::push(vk::CommandBuffer cmd) const
+    {
+        return;
     }
 
     const Texture &SkyboxPass::getTexture() const
@@ -64,29 +73,6 @@ namespace kailux
     const Texture & SkyboxPass::getBRDFLutTexture() const
     {
         return m_BRDFLutTexture;
-    }
-
-    const DescriptorLayout &SkyboxPass::getDescriptorLayout() const
-    {
-        return m_DescriptorLayout;
-    }
-
-    const DescriptorPool &SkyboxPass::getDescriptorPool() const
-    {
-        return m_DescriptorPool;
-    }
-
-    void SkyboxPass::render(vk::CommandBuffer cmd, const DescriptorSet &descriptorSet, MeshView cubeView) const
-    {
-        m_Pipeline.bindGraphics(cmd);
-        descriptorSet.bind(m_Pipeline, cmd);
-        cmd.drawIndexed(
-            cubeView.indexCount,
-            1,
-            cubeView.firstIndex,
-            cubeView.vertexOffset,
-            0
-        );
     }
 
     PipelineInfo SkyboxPass::make_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits samples)
@@ -139,25 +125,6 @@ namespace kailux
         info.depthStencilInfo.stencilTestEnable = vk::False;
 
         return info;
-    }
-
-    void SkyboxPass::createDescriptorResources(const Context &context, uint32_t sets)
-    {
-        m_DescriptorLayout = DescriptorLayout::create(context, s_DescriptorLayoutBindings);
-        m_DescriptorPool = DescriptorPool::create(context, sets, s_DescriptorPoolSizes);
-    }
-
-    void SkyboxPass::createPipeline(const Context &context, const Swapchain &swapchain)
-    {
-        m_Pipeline = Pipeline::createGraphics(
-            context,
-            swapchain,
-            m_DescriptorLayout,
-            {
-                s_VertexShaderPath.data(),
-                s_FragmentShaderPath.data()
-            },
-            make_pipeline_info(swapchain, context.getMaxUsableSampleCount()));
     }
 
     void SkyboxPass::createTexture(const Context &context, const std::array<std::string_view, 6> &paths)

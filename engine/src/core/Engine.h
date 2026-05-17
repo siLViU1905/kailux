@@ -243,6 +243,7 @@ namespace kailux
 
         void                                        submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
         void                                        recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const;
+        void                                        recordSkybox(const FrameData &frame, const CommandRecorder &recorder) const;
         void                                        recordImGuiData(const FrameData& frame);
         void                                        recordPicker(const FrameData& frame, const CommandRecorder &recorder) const;
         void                                        recordOutline(const FrameData& frame, const CommandRecorder &recorder) const;
@@ -296,7 +297,7 @@ namespace kailux
         Scene                                      m_Scene;
         OnEditorRender                             m_OnEditorRender;
 
-        SkyboxPass                                 m_Skybox;
+        SkyboxPass                                 m_SkyboxPass;
         OutlinePass                                m_OutlinePass;
         ComputePicker                              m_ComputePicker;
         uint32_t                                   m_PickedEntity;
