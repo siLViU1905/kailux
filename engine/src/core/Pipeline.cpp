@@ -180,15 +180,12 @@ namespace kailux
             dynamicStates.data()
         );
 
-        constexpr auto bindingDescription = Vertex::get_binding_description();
-        constexpr auto attributeDescription = Vertex::get_attribute_description();
-
         vk::PipelineVertexInputStateCreateInfo vertexInputInfo(
             {},
             1,
-            &bindingDescription,
-            static_cast<uint32_t>(attributeDescription.size()),
-            attributeDescription.data()
+            &info.vertexInputBinding,
+            static_cast<uint32_t>(info.vertexInputAttribute.size()),
+            info.vertexInputAttribute.data()
         );
 
         vk::PipelineViewportStateCreateInfo viewportState({}, 1, {}, 1);
