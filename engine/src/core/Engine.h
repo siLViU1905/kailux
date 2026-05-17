@@ -73,10 +73,17 @@ namespace kailux
         ComputePicker& getPicker();
         uint32_t       getPickedEntity() const;
 
+        OutlinePass&   getOutlinePass();
+
     private:
         static constexpr std::string_view s_VertexShaderPath = "shaders/vertex_shader.spv";
         static constexpr std::string_view s_FragmentShaderPath = "shaders/fragment_shader.spv";
+
         static constexpr std::string_view s_PickerComputeShaderPath = "shaders/entity_picker_compute_shader.spv";
+
+        static constexpr std::string_view s_OutlineVertexShaderPath = "shaders/outline_vertex_shader.spv";
+        static constexpr std::string_view s_OutlineFragmentShaderPath = "shaders/outline_fragment_shader.spv";
+
         static constexpr uint32_t         s_MaxMeshCount = 1'000;
         static constexpr std::array<std::string_view, 6> s_SkyboxTexturePaths = {
             "assets/cubemap/px.png",
@@ -93,6 +100,7 @@ namespace kailux
         void createDescriptorResources();
         void createPipeline();
         void createSkybox();
+        void createOutlinePass();
         void createFrameResources();
         void createMeshRegistry();
         void createTextureRegistry();
@@ -236,7 +244,8 @@ namespace kailux
         void                                        submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
         void                                        recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const;
         void                                        recordImGuiData(const FrameData& frame);
-        void                                        recordPicker(const FrameData& frame, const CommandRecorder &recorder, const Window &window) const;
+        void                                        recordPicker(const FrameData& frame, const CommandRecorder &recorder) const;
+        void                                        recordOutline(const FrameData& frame, const CommandRecorder &recorder);
 
         void updateFrameBuffers(FrameData& frame, const CommandRecorder& recorder) const;
         void updateCameraBuffer(FrameData& frame) const;
@@ -281,8 +290,9 @@ namespace kailux
 
         Scene                                      m_Scene;
         OnEditorRender                             m_OnEditorRender;
-        SkyboxPass                                 m_Skybox;
 
+        SkyboxPass                                 m_Skybox;
+        OutlinePass                                m_OutlinePass;
         ComputePicker                              m_ComputePicker;
         uint32_t                                   m_PickedEntity;
 

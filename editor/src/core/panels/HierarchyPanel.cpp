@@ -145,6 +145,11 @@ namespace kailux
         m_SelectedEntity = entity;
     }
 
+    entt::entity HierarchyPanel::getSelectedEntity() const
+    {
+        return m_SelectedEntity;
+    }
+
     bool HierarchyPanel::on_entity_rename(entt::entity entity, entt::registry &registry)
     {
         static char nameBuffer[64]{};

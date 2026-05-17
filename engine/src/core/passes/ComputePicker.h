@@ -22,8 +22,6 @@ namespace kailux
 
         void setCords(uint32_t x, uint32_t y);
 
-        friend class Engine;
-
     private:
         static constexpr std::array s_DescriptorLayoutBindings = {
             DescriptorLayoutBinding(
@@ -56,9 +54,7 @@ namespace kailux
         };
 
         void createDescriptorLayout(const Context &context);
-
         void createDescriptorPool(const Context &context, uint32_t frameCount);
-
         void createPipeline(const Context &context, std::string_view shaderPath);
 
         DescriptorLayout m_DescriptorLayout;

@@ -7,6 +7,7 @@
 #include "texture/Texture.h"
 #include "texture/TextureRegistry.h"
 #include "passes/ComputePicker.h"
+#include "passes/OutlinePass.h"
 
 namespace kailux
 {
@@ -21,8 +22,8 @@ namespace kailux
                                 const DescriptorPool &descriptorPool,
                                 const SkyboxPass &skybox,
                                 const ComputePicker& picker,
-                                const TextureRegistry &textureRegistry,
-                                uint32_t maxMeshCount
+                                const OutlinePass& outlinePass,
+                                const TextureRegistry &textureRegistry, uint32_t maxMeshCount
         );
 
         void reset(const Context& context) const;
@@ -36,6 +37,7 @@ namespace kailux
         const DescriptorSet& getDescriptorSet() const;
         const DescriptorSet& getSkyboxDescriptorSet() const;
         const DescriptorSet& getPickerDescriptorSet() const;
+        const DescriptorSet& getOutlineDescriptorSet() const;
 
         Buffer&       getCameraBuffer();
         Buffer&       getModelBuffer();
@@ -67,6 +69,8 @@ namespace kailux
                                        DescriptorSetInfo> infos);
         void createPickerDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
                                        DescriptorSetInfo> infos);
+        void createOutlineDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
+                                       DescriptorSetInfo> infos);
         void createCameraBuffer(const Context& context);
         void createMeshDataBuffer(const Context& context, uint32_t meshCount);
         void createIndirectBuffer(const Context& context, uint32_t count);
@@ -79,10 +83,13 @@ namespace kailux
         static constexpr uint32_t s_DescriptorSetInfoCount = 1 + 1 + 1 + 1 + 1 + 1 + 1 + TextureRegistry::s_TextureTypes.size(); // camera buffer + mesh data buffer + scene buffer + skybox sampler + irradiance map + prefiltered env + brdf lut + textures
         static constexpr uint32_t s_SkyboxDescriptorSetInfoCount = 1 + 1; // camera buffer + cube texture
         static constexpr uint32_t s_PickerDescriptorSetInfoCount = 1 + 1; // id image + out buffer
-        std::array<DescriptorSetInfo, s_DescriptorSetInfoCount>       makeDescriptorSetInfo(const SkyboxPass &skybox, const TextureRegistry& textureRegistry, uint32_t meshCount) const;
-        std::array<DescriptorSetInfo, s_SkyboxDescriptorSetInfoCount> makeSkyboxDescriptorSetInfo(const Texture& skyboxTexture) const;
-        std::array<DescriptorSetInfo, s_PickerDescriptorSetInfoCount> makePickerDescriptorSetInfo() const;
+        static constexpr uint32_t s_OutlineDescriptorSetInfoCount = 1; // id image
+        std::array<DescriptorSetInfo, s_DescriptorSetInfoCount>        makeDescriptorSetInfo(const SkyboxPass &skybox, const TextureRegistry& textureRegistry, uint32_t meshCount) const;
+        std::array<DescriptorSetInfo, s_SkyboxDescriptorSetInfoCount>  makeSkyboxDescriptorSetInfo(const Texture& skyboxTexture) const;
+        std::array<DescriptorSetInfo, s_PickerDescriptorSetInfoCount>  makePickerDescriptorSetInfo() const;
+        std::array<DescriptorSetInfo, s_OutlineDescriptorSetInfoCount> makeOutlineDescriptorSetInfo() const;
         static constexpr uint32_t s_PickerResolvedViewDescriptorSetBinding = 0;
+        static constexpr uint32_t s_OutlineIdResolvedViewDescriptorSetBinding = 0;
 
         vk::raii::CommandPool   m_CommandPool;
         vk::raii::CommandPool   m_ImGuiCommandPool;
@@ -93,6 +100,7 @@ namespace kailux
         DescriptorSet           m_DescriptorSet;
         DescriptorSet           m_SkyboxDescriptorSet;
         DescriptorSet           m_PickerDescriptorSet;
+        DescriptorSet           m_OutlineDescriptorSet;
 
         Buffer                  m_CameraBuffer;
         Buffer                  m_MeshDataBuffer;

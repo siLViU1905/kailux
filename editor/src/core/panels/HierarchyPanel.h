@@ -25,7 +25,8 @@ namespace kailux
         using OnNewMesh = std::move_only_function<void(MeshType)>;
         void  setOnNewMesh(OnNewMesh&& callback);
 
-        void selectEntity(entt::entity entity);
+        void         selectEntity(entt::entity entity);
+        entt::entity getSelectedEntity() const;
 
     private:
         static bool on_entity_rename(entt::entity entity, entt::registry &registry);
