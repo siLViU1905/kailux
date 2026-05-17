@@ -43,13 +43,6 @@ namespace kailux
 
             if (ImGui::BeginMenu("Scene"))
             {
-                if (ImGui::BeginMenu("Ambient Light"))
-                {
-                    ImGui::ColorEdit3("Color", glm::value_ptr(scene.getAmbient()));
-                    ImGui::SliderFloat("Intensity", &scene.getAmbient().w, 0.f, 1.f);
-
-                    ImGui::EndMenu();
-                }
                 ImGui::EndMenu();
             }
 

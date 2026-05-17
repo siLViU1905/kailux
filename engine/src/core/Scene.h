@@ -34,8 +34,7 @@ namespace kailux
         void                  setMainCamera(entt::entity camera);
         entt::entity          getSun() const;
         SceneData             getData() const;
-        glm::vec4&            getAmbient();
-        const glm::vec4&      getAmbient() const;
+
         std::string_view      getName() const;
 
         std::string           getMeshEntityName();
@@ -56,8 +55,6 @@ namespace kailux
         entt::registry m_EntityRegistry;
         entt::entity   m_MainCameraEntity;
         entt::entity   m_Sun;
-
-        glm::vec4      m_Ambient;
 
         uint32_t m_MeshEntityNameCount;
     };

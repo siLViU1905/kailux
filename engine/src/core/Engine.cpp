@@ -481,8 +481,7 @@ namespace kailux
                 vk::AccessFlagBits2::eColorAttachmentWrite
             });
 
-            const auto &ambient = m_Scene.getAmbient();
-            vk::ClearColorValue clearColor(ambient.x, ambient.y, ambient.z, ambient.w);
+            vk::ClearColorValue clearColor(std::array{0u, 0u, 0u, 0u});
             vk::ClearColorValue idClear(std::array{~0u, ~0u, ~0u, ~0u});
 
             ColorAttachmentInfo mainColor{
