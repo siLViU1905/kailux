@@ -13,7 +13,7 @@
 #include "mesh/MeshRegistry.h"
 #include <entt/entt.hpp>
 
-#include "ComputePicker.h"
+#include "passes/ComputePicker.h"
 #include "Scene.h"
 #include "mesh/MeshLoader.h"
 #include "utilities/Queue.h"

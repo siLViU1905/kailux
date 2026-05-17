@@ -30,7 +30,7 @@ add_library(kailux_engine STATIC
         src/core/mesh/MeshLoader.cpp
         src/core/utilities/ThreadDispatcher.cpp
         src/core/texture/TextureRegistry.cpp
-        src/core/ComputePicker.cpp
+        src/core/passes/ComputePicker.cpp
 )
 
 target_compile_definitions(kailux_engine PUBLIC

@@ -1,7 +1,7 @@
 #pragma once
-#include "Pipeline.h"
-#include "descriptor/DescriptorLayout.h"
-#include "descriptor/DescriptorPool.h"
+#include "../Pipeline.h"
+#include "../descriptor/DescriptorLayout.h"
+#include "../descriptor/DescriptorPool.h"
 
 namespace kailux
 {

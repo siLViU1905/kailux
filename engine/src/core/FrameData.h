@@ -6,7 +6,7 @@
 #include "descriptor/DescriptorSet.h"
 #include "texture/Texture.h"
 #include "texture/TextureRegistry.h"
-#include "ComputePicker.h"
+#include "passes/ComputePicker.h"
 
 namespace kailux
 {
