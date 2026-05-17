@@ -5,12 +5,12 @@
 
 namespace kailux
 {
-    MenuPanel::MenuPanel() : m_ShowProfiler(false)
+    MenuPanel::MenuPanel() : m_ShowProfiler(false), m_OutlineColor(1.f, 0.f, 0.f)
     {
     }
 
     MenuPanel::MenuPanel(std::string_view name, ImVec4 backgroundColor)
-        : Panel(name, backgroundColor), m_ShowProfiler(false)
+        : Panel(name, backgroundColor), m_ShowProfiler(false), m_OutlineColor(1.f, 0.f, 0.f)
     {
     }
 
@@ -46,6 +46,16 @@ namespace kailux
                 ImGui::EndMenu();
             }
 
+            if (ImGui::BeginMenu("Settings"))
+            {
+                if (ImGui::BeginMenu("Outline"))
+                {
+                    ImGui::ColorEdit3("Color", glm::value_ptr(m_OutlineColor));
+                    ImGui::EndMenu();
+                }
+                ImGui::EndMenu();
+            }
+
             ImGui::EndMainMenuBar();
 
             if (m_ShowProfiler)
@@ -61,6 +71,11 @@ namespace kailux
     void MenuPanel::setOnSceneSave(OnSceneSave &&callback)
     {
         m_OnSceneSave = std::move(callback);
+    }
+
+    glm::vec3 MenuPanel::getOutlineColor() const
+    {
+        return m_OutlineColor;
     }
 
     void MenuPanel::renderProfilerWindow()

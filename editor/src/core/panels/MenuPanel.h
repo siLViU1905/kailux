@@ -18,11 +18,15 @@ namespace kailux
         using OnSceneSave = std::move_only_function<void()>;
         void setOnSceneSave(OnSceneSave&& callback);
 
+        glm::vec3 getOutlineColor() const;
+
     private:
         void renderProfilerWindow();
 
         bool        m_ShowProfiler;
         OnSceneOpen m_OnSceneOpen;
         OnSceneSave m_OnSceneSave;
+
+        glm::vec3   m_OutlineColor;
     };
 }
