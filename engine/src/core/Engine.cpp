@@ -292,11 +292,11 @@ namespace kailux
         };
         uint32_t textureIndex = 0;
         std::array updateInfos = {
-            makeUpdateInfo(s_MeshTextureBindStart + textureIndex++, set.albedo),
-            makeUpdateInfo(s_MeshTextureBindStart + textureIndex++, set.normal),
-            makeUpdateInfo(s_MeshTextureBindStart + textureIndex++, set.roughness),
-            makeUpdateInfo(s_MeshTextureBindStart + textureIndex++, set.metallic),
-            makeUpdateInfo(s_MeshTextureBindStart + textureIndex++, set.ao)
+            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, set.albedo),
+            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, set.normal),
+            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, set.roughness),
+            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, set.metallic),
+            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, set.ao)
         };
         static_assert(TextureRegistry::s_TextureTypes.size() == updateInfos.size(),
                       "There is a missing texture in update info");
