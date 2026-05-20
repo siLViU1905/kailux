@@ -26,7 +26,7 @@ namespace kailux
     {
         OutlinePass pass;
         pass.createDescriptorLayout(context, s_DescriptorLayoutBindings);
-        pass.createDescriptorPool(context, frameCount, s_DescriptorLayoutSizes);
+        pass.createDescriptorPool(context, frameCount, s_DescriptorPoolSizes);
         pass.createPipeline(context, swapchain, s_OutlineVertexShaderPath, s_OutlineFragmentShaderPath, make_pipeline_info(swapchain), s_PushConstantRanges);
         return pass;
     }

@@ -28,12 +28,16 @@ namespace kailux
                 vk::ShaderStageFlagBits::eFragment
             )
         };
-        static constexpr std::array s_DescriptorLayoutSizes = {
+        static constexpr std::array s_DescriptorPoolSizes = {
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
                 1 // id's image
             )
         };
+        static_assert(
+            check_descriptor_layout_bindings_and_pool_sizes_match(s_DescriptorLayoutBindings, s_DescriptorPoolSizes),
+            "Descriptor layout bindings and pool sizes do not match"
+            );
 
         struct OutlinePushConstant
         {

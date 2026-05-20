@@ -130,6 +130,10 @@ namespace kailux
                 s_MaxMeshCount // ao
             )
         };
+        static_assert(
+            check_descriptor_layout_bindings_and_pool_sizes_match(s_DescriptorLayoutBindings, s_DescriptorPoolSizes),
+            "Descriptor layout bindings and pool sizes do not match"
+            );
 
     public:
         static constexpr uint32_t s_MeshTextureBindStart = []() constexpr -> uint32_t {
