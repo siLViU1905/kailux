@@ -3,6 +3,47 @@ project(kailux)
 
 set(CMAKE_CXX_STANDARD 23)
 
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
+endif()
+
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported OUTPUT error)
+
+if(ipo_supported)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+    message(STATUS "LTO was activated")
+else()
+    message(WARNING "LTO not supported: ${error}")
+endif()
+
+if(MSVC)
+    add_compile_options(/W3 /permissive-)
+else()
+    add_compile_options(
+            -Wall
+            -Wno-unused-parameter
+            -Wno-unused-variable
+            -Wno-missing-field-initializers
+    )
+endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    if(MSVC)
+        add_compile_options(/RTC1)
+    else()
+        add_compile_options(-fno-omit-frame-pointer -g3)
+    endif()
+endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    if(MSVC)
+        add_compile_options(/O2 /Oi /Ot /fp:fast)
+    else()
+        add_compile_options(-O2 -ffast-math)
+    endif()
+endif()
+
 find_package(Vulkan 1.4 REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(imgui REQUIRED)
