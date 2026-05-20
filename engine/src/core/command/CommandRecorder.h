@@ -31,7 +31,7 @@ namespace kailux
 
     struct RenderingInfo
     {
-        std::vector<ColorAttachmentInfo> colorAttachments;
+        std::span<const ColorAttachmentInfo> colorAttachments;
         vk::Extent2D extent;
 
         vk::ImageView depthView{};

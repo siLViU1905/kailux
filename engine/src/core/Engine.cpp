@@ -171,7 +171,7 @@ namespace kailux
             m_Context,
             m_Swapchain,
             s_FramesInFlight
-            );
+        );
     }
 
     void Engine::createSkybox()
@@ -353,32 +353,33 @@ namespace kailux
 
             transitionForMainPass(frame, recorder);
 
-            vk::ClearColorValue clearColor(std::array{0u, 0u, 0u, 0u});
-            vk::ClearColorValue idClear(std::array{~0u, ~0u, ~0u, ~0u});
+            constexpr vk::ClearColorValue clearColor(std::array{0u, 0u, 0u, 0u});
+            constexpr vk::ClearColorValue idClear(std::array{~0u, ~0u, ~0u, ~0u});
 
-            ColorAttachmentInfo mainColor{
-                m_Swapchain.getColorImageView(),
-                frame.getSceneTexture().getImageView(),
-                vk::ImageLayout::eColorAttachmentOptimal,
-                vk::AttachmentLoadOp::eClear,
-                vk::AttachmentStoreOp::eStore,
-                clearColor,
-                vk::ResolveModeFlagBits::eAverage
-            };
-
-            ColorAttachmentInfo idPicking{
-                frame.getOutIdTexture().getImageView(),
-                frame.getResolvedOutIdTexture().getImageView(),
-                vk::ImageLayout::eColorAttachmentOptimal,
-                vk::AttachmentLoadOp::eClear,
-                vk::AttachmentStoreOp::eDontCare,
-                idClear,
-                vk::ResolveModeFlagBits::eSampleZero
+            std::array mainAndPickerAttachments{
+                ColorAttachmentInfo(
+                    m_Swapchain.getColorImageView(),
+                    frame.getSceneTexture().getImageView(),
+                    vk::ImageLayout::eColorAttachmentOptimal,
+                    vk::AttachmentLoadOp::eClear,
+                    vk::AttachmentStoreOp::eStore,
+                    clearColor,
+                    vk::ResolveModeFlagBits::eAverage
+                ),
+                ColorAttachmentInfo(
+                    frame.getOutIdTexture().getImageView(),
+                    frame.getResolvedOutIdTexture().getImageView(),
+                    vk::ImageLayout::eColorAttachmentOptimal,
+                    vk::AttachmentLoadOp::eClear,
+                    vk::AttachmentStoreOp::eDontCare,
+                    idClear,
+                    vk::ResolveModeFlagBits::eSampleZero
+                )
             };
 
             recorder.beginRendering(
                 {
-                    {{mainColor, idPicking}},
+                    mainAndPickerAttachments,
                     frame.getExtent(),
                     m_Swapchain.getDepthImageView(),
                     vk::ImageLayout::eDepthAttachmentOptimal,
@@ -396,18 +397,21 @@ namespace kailux
 
             transitionForOutlinePass(frame, recorder, acquired->imageIndex);
 
-            ColorAttachmentInfo outlineAttachment{
-                frame.getSceneTexture().getImageView(),
-                {},
-                vk::ImageLayout::eColorAttachmentOptimal,
-                vk::AttachmentLoadOp::eLoad,
-                vk::AttachmentStoreOp::eStore,
-                {}
+
+            std::array outlineAttachment{
+                ColorAttachmentInfo(
+                    frame.getSceneTexture().getImageView(),
+                    {},
+                    vk::ImageLayout::eColorAttachmentOptimal,
+                    vk::AttachmentLoadOp::eLoad,
+                    vk::AttachmentStoreOp::eStore,
+                    {}
+                )
             };
 
             recorder.beginRendering(
                 {
-                    {outlineAttachment},
+                    outlineAttachment,
                     frame.getExtent(),
                     {},
                     vk::ImageLayout::eUndefined,
@@ -419,17 +423,19 @@ namespace kailux
 
             transitionForPickerAndPostProcess(frame, recorder);
 
-            ColorAttachmentInfo imguiOverlay{
-                m_Swapchain.getImageView(acquired->imageIndex),
-                {},
-                vk::ImageLayout::eColorAttachmentOptimal,
-                vk::AttachmentLoadOp::eLoad,
-                vk::AttachmentStoreOp::eStore,
-                vk::ClearColorValue{std::array{0.f, 0.f, 0.f, 1.f}}
+            std::array imguiOverlay{
+                ColorAttachmentInfo
+                (m_Swapchain.getImageView(acquired->imageIndex),
+                 {},
+                 vk::ImageLayout::eColorAttachmentOptimal,
+                 vk::AttachmentLoadOp::eLoad,
+                 vk::AttachmentStoreOp::eStore,
+                 vk::ClearColorValue{std::array{0.f, 0.f, 0.f, 1.f}}
+                )
             };
 
             recorder.beginRendering({
-                {imguiOverlay},
+                imguiOverlay,
                 m_Swapchain.getExtent(),
                 {},
                 vk::ImageLayout::eUndefined,
@@ -737,7 +743,7 @@ namespace kailux
 
     void Engine::recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const
     {
-       const auto cmd = recorder.getCommandBuffer();
+        const auto cmd = recorder.getCommandBuffer();
         m_MainPass.bind(cmd);
         m_MeshRegistry.bind(recorder.getCommandBuffer());
         frame.getDescriptorSet().bind(m_MainPass.getPipeline(), cmd);
