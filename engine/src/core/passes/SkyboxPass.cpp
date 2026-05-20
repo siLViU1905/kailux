@@ -78,7 +78,7 @@ namespace kailux
     {
         PipelineInfo info;
 
-        info.vertexInputBinding = {0, sizeof(Vertex), vk::VertexInputRate::eVertex};
+        info.vertexInputBinding = Vertex::get_binding_description();
         constexpr auto vertexAttribDesc = vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, position));
         info.vertexInputAttribute = {vertexAttribDesc};
 
