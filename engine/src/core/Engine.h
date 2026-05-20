@@ -78,14 +78,7 @@ namespace kailux
 
     private:
         static constexpr uint32_t         s_MaxMeshCount = MainPass::s_MaxMeshCount;
-        static constexpr std::array<std::string_view, 6> s_SkyboxTexturePaths = {
-            "assets/cubemap/px.png",
-            "assets/cubemap/nx.png",
-            "assets/cubemap/py.png",
-            "assets/cubemap/ny.png",
-            "assets/cubemap/pz.png",
-            "assets/cubemap/nz.png"
-        };
+
         static constexpr std::string_view s_DirectoryIconPath = "assets/icons/directory_icon.png";
         static constexpr std::string_view s_FileIconPath = "assets/icons/file_icon.png";
 
