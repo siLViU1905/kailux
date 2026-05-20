@@ -55,8 +55,8 @@ namespace kailux
             std::lock_guard lock(*m_Mutex);
             if (m_Queue.empty())
                 return std::nullopt;
-            auto val = std::move(m_Queue.front());
-            m_Queue.pop_front();
+            auto val = std::move(m_Queue.back());
+            m_Queue.pop_back();
             return val;
         }
 
