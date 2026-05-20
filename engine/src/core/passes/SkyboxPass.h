@@ -70,6 +70,10 @@ namespace kailux
                 1 // cube sampler
             )
         };
+        static_assert(
+            check_descriptor_layout_bindings_and_pool_sizes_match(s_DescriptorLayoutBindings, s_DescriptorPoolSizes),
+            "Descriptor layout bindings and pool sizes do not match"
+            );
 
         static PipelineInfo make_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits samples);
 
