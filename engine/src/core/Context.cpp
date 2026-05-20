@@ -309,7 +309,7 @@ namespace kailux
 
         m_GraphicsQueueFamilyIndex = queueIndex;
 
-        if (queueIndex == ~0)
+        if (queueIndex == ~0u)
             throw std::runtime_error("Could not find a queue for graphics and present -> terminating");
 
         vk::StructureChain<

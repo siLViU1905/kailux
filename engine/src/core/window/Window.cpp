@@ -10,9 +10,9 @@ namespace kailux
     }
 
     Window::Window(Window &&other) noexcept : m_WindowHandle(other.m_WindowHandle),
-                                              m_FramebufferResized(other.m_FramebufferResized),
                                               m_Width(other.m_Width),
                                               m_Height(other.m_Height),
+                                              m_FramebufferResized(other.m_FramebufferResized),
                                               m_EventQueue(std::move(other.m_EventQueue))
     {
         other.m_WindowHandle = nullptr;
