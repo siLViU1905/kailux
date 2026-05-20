@@ -795,7 +795,8 @@ namespace kailux
         frame.getPickerDescriptorSet().bind(m_ComputePicker.getPipeline(), cmd,
                                             vk::PipelineBindPoint::eCompute);
         m_ComputePicker.execute(
-            cmd
+            cmd,
+            {1, 1, 1}
         );
     }
 

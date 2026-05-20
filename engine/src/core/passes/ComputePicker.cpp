@@ -2,15 +2,10 @@
 
 namespace kailux
 {
-    ComputePicker::ComputePicker() : m_CordX(0), m_CordY(0)
-    {
-    }
+    ComputePicker::ComputePicker() = default;
 
-    ComputePicker::ComputePicker(ComputePicker &&other) noexcept : m_DescriptorLayout(std::move(other.m_DescriptorLayout)),
-                                                                   m_DescriptorPool(std::move(other.m_DescriptorPool)),
-                                                                   m_Pipeline(std::move(other.m_Pipeline)),
-                                                                   m_CordX(other.m_CordX),
-                                                                   m_CordY(other.m_CordY)
+    ComputePicker::ComputePicker(ComputePicker &&other) noexcept : ComputePass(std::move(other)),
+                                                                   m_Cords(other.m_Cords)
     {
     }
 
@@ -18,11 +13,8 @@ namespace kailux
     {
         if (this != &other)
         {
-            m_DescriptorLayout = std::move(other.m_DescriptorLayout);
-            m_DescriptorPool = std::move(other.m_DescriptorPool);
-            m_Pipeline = std::move(other.m_Pipeline);
-            m_CordX = other.m_CordX;
-            m_CordY = other.m_CordY;
+            ComputePass::operator=(std::move(other));
+            m_Cords = other.m_Cords;
         }
         return *this;
     }
@@ -30,63 +22,27 @@ namespace kailux
     ComputePicker ComputePicker::create(const Context &context, uint32_t frameCount)
     {
         ComputePicker picker;
-        picker.createDescriptorLayout(context);
-        picker.createDescriptorPool(context, frameCount);
-        picker.createPipeline(context, s_PickerComputeShaderPath);
+        picker.createDescriptorLayout(context, s_DescriptorLayoutBindings);
+        picker.createDescriptorPool(context, frameCount, s_DescriptorPoolSizes);
+        picker.createPipeline(context, {s_PickerComputeShaderPath.data()}, s_PushConstantRanges);
         return picker;
     }
 
-    void ComputePicker::bind(vk::CommandBuffer cmd) const
+    void ComputePicker::execute(vk::CommandBuffer cmd, ComputeWorkgroup group) const
     {
-        m_Pipeline.bindCompute(cmd);
-    }
-
-    void ComputePicker::execute(vk::CommandBuffer cmd) const
-    {
-        std::array cords = {m_CordX, m_CordY};
         cmd.pushConstants(
             m_Pipeline.getLayout(),
             vk::ShaderStageFlagBits::eCompute,
             0,
-            sizeof(uint32_t) * 2,
-            cords.data()
+            sizeof(MouseCords),
+            &m_Cords
         );
-        cmd.dispatch(1, 1, 1);
-    }
-
-    const DescriptorLayout &ComputePicker::getDescriptorLayout() const
-    {
-        return m_DescriptorLayout;
-    }
-
-    const DescriptorPool &ComputePicker::getDescriptorPool() const
-    {
-        return m_DescriptorPool;
-    }
-
-    const Pipeline &ComputePicker::getPipeline() const
-    {
-        return m_Pipeline;
+        cmd.dispatch(group.x, group.y, group.z);
     }
 
     void ComputePicker::setCords(uint32_t x, uint32_t y)
     {
-        m_CordX = x;
-        m_CordY = y;
-    }
-
-    void ComputePicker::createDescriptorLayout(const Context &context)
-    {
-        m_DescriptorLayout = DescriptorLayout::create(context, s_DescriptorLayoutBindings);
-    }
-
-    void ComputePicker::createDescriptorPool(const Context &context, uint32_t frameCount)
-    {
-        m_DescriptorPool = DescriptorPool::create(context, frameCount, s_DescriptorLayoutSizes);
-    }
-
-    void ComputePicker::createPipeline(const Context &context, std::string_view shaderPath)
-    {
-        m_Pipeline = Pipeline::createCompute(context, m_DescriptorLayout, {shaderPath.data()}, s_PushConstantRanges);
+        m_Cords.x = x;
+        m_Cords.y = y;
     }
 }

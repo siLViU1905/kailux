@@ -1,24 +1,19 @@
 #pragma once
+#include "ComputePass.h"
 #include "../Pipeline.h"
 #include "../descriptor/DescriptorLayout.h"
 #include "../descriptor/DescriptorPool.h"
 
 namespace kailux
 {
-    class ComputePicker
+    class ComputePicker : public ComputePass
     {
     public:
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(ComputePicker)
 
         static ComputePicker create(const Context &context, uint32_t frameCount);
 
-        void bind(vk::CommandBuffer cmd) const;
-
-        void execute(vk::CommandBuffer cmd) const;
-
-        const DescriptorLayout& getDescriptorLayout() const;
-        const DescriptorPool&   getDescriptorPool() const;
-        const Pipeline&         getPipeline() const;
+        void execute(vk::CommandBuffer cmd, ComputeWorkgroup group) const override;
 
         void setCords(uint32_t x, uint32_t y);
 
@@ -37,7 +32,7 @@ namespace kailux
                 vk::ShaderStageFlagBits::eCompute
             )
         };
-        static constexpr std::array s_DescriptorLayoutSizes = {
+        static constexpr std::array s_DescriptorPoolSizes = {
             DescriptorPoolSize(
                 vk::DescriptorType::eStorageImage,
                 1 // id's image
@@ -47,23 +42,24 @@ namespace kailux
                 1 // out id
             )
         };
+        static_assert(
+            check_descriptor_layout_bindings_and_pool_sizes_match(s_DescriptorLayoutBindings, s_DescriptorPoolSizes),
+            "Descriptor layout bindings and pool sizes do not match"
+            );
+
+        struct MouseCords
+        {
+            uint32_t x{};
+            uint32_t y{};
+        };
 
         static constexpr std::array s_PushConstantRanges = {
             PushConstantRangeInfo(
                 vk::ShaderStageFlagBits::eCompute,
-                sizeof(uint32_t) * 2
+                sizeof(MouseCords)
             )
         };
 
-        void createDescriptorLayout(const Context &context);
-        void createDescriptorPool(const Context &context, uint32_t frameCount);
-        void createPipeline(const Context &context, std::string_view shaderPath);
-
-        DescriptorLayout m_DescriptorLayout;
-        DescriptorPool   m_DescriptorPool;
-        Pipeline         m_Pipeline;
-
-        uint32_t         m_CordX;
-        uint32_t         m_CordY;
+        MouseCords m_Cords;
     };
 }
