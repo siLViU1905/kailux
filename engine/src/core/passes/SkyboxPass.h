@@ -14,7 +14,7 @@ namespace kailux
     public:
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(SkyboxPass)
 
-        static SkyboxPass create(const Context& context, const Swapchain& swapchain, uint32_t maxFrames, const std::array<std::string_view, 6> &paths);
+        static SkyboxPass create(const Context& context, const Swapchain& swapchain, uint32_t maxFrames);
 
         void push(vk::CommandBuffer cmd) const override;
 
@@ -27,6 +27,14 @@ namespace kailux
         static constexpr std::string_view s_VertexShaderPath = "shaders/skybox_vertex_shader.spv";
         static constexpr std::string_view s_FragmentShaderPath = "shaders/skybox_fragment_shader.spv";
 
+        static constexpr std::array<std::string_view, 6> s_SkyboxTexturePaths = {
+            "assets/cubemap/px.png",
+            "assets/cubemap/nx.png",
+            "assets/cubemap/py.png",
+            "assets/cubemap/ny.png",
+            "assets/cubemap/pz.png",
+            "assets/cubemap/nz.png"
+        };
         static constexpr std::array<std::string_view, 6> s_IrradianceTexturePaths = {
             "assets/ibl/irradiance/i_px.png",
             "assets/ibl/irradiance/i_nx.png",
@@ -65,14 +73,11 @@ namespace kailux
 
         static PipelineInfo make_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits samples);
 
-        void createTexture(const Context& context, const std::array<std::string_view, 6> &paths);
+        void createTexture(const Context &context);
         void createIrradianceTexture(const Context& context);
         void createPrefilteredEnvTexture(const Context& context);
         void createBRDFLutTexture(const Context& context);
 
-        DescriptorLayout m_DescriptorLayout;
-        Pipeline         m_Pipeline;
-        DescriptorPool   m_DescriptorPool;
         Texture          m_Texture;
         Texture          m_IrradianceMapTexture;
         Texture          m_PrefilteredEnvTexture;

@@ -179,8 +179,7 @@ namespace kailux
         m_SkyboxPass = SkyboxPass::create(
             m_Context,
             m_Swapchain,
-            s_FramesInFlight,
-            s_SkyboxTexturePaths
+            s_FramesInFlight
         );
     }
 

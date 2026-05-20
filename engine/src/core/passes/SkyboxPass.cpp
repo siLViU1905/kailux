@@ -29,8 +29,7 @@ namespace kailux
         return *this;
     }
 
-    SkyboxPass SkyboxPass::create(const Context &context, const Swapchain &swapchain, uint32_t maxFrames,
-                                  const std::array<std::string_view, 6> &paths)
+    SkyboxPass SkyboxPass::create(const Context &context, const Swapchain &swapchain, uint32_t maxFrames)
     {
         SkyboxPass pass;
         pass.createDescriptorLayout(context, s_DescriptorLayoutBindings);
@@ -43,7 +42,7 @@ namespace kailux
             make_pipeline_info(swapchain, context.getMaxUsableSampleCount()),
             {}
             );
-        pass.createTexture(context, paths);
+        pass.createTexture(context);
         pass.createIrradianceTexture(context);
         pass.createPrefilteredEnvTexture(context);
         pass.createBRDFLutTexture(context);
@@ -127,11 +126,11 @@ namespace kailux
         return info;
     }
 
-    void SkyboxPass::createTexture(const Context &context, const std::array<std::string_view, 6> &paths)
+    void SkyboxPass::createTexture(const Context &context)
     {
         std::array<ImageLoader::ImageData, 6> faces;
         int i = 0;
-        for (auto path: paths)
+        for (auto path: s_SkyboxTexturePaths)
         {
             auto result = ImageLoader::load_image(path);
             if (!result)
