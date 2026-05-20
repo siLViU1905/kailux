@@ -82,22 +82,21 @@ namespace kailux
         return *m_Layout;
     }
 
-    std::array<vk::PipelineShaderStageCreateInfo, 2> Pipeline::ShaderModules::getStages() const
+    std::vector<vk::PipelineShaderStageCreateInfo> Pipeline::ShaderModules::makeVkStages() const
     {
-        return {
-            vk::PipelineShaderStageCreateInfo(
-                {},
-                vk::ShaderStageFlagBits::eVertex,
-                vertex,
+        std::vector<vk::PipelineShaderStageCreateInfo> stages;
+        stages.reserve(modules.size());
+
+        for (const auto &instance: modules)
+        {
+            stages.emplace_back(
+                vk::PipelineShaderStageCreateFlags{},
+                instance.stage,
+                *instance.module,
                 "main"
-            ),
-            vk::PipelineShaderStageCreateInfo(
-                {},
-                vk::ShaderStageFlagBits::eFragment,
-                fragment,
-                "main"
-            )
-        };
+            );
+        }
+        return stages;
     }
 
     std::vector<char> Pipeline::read_shader_from_file(std::string_view path)
@@ -129,12 +128,20 @@ namespace kailux
     }
 
     Pipeline::ShaderModules Pipeline::create_graphics_shader_modules(const Context &context,
-                                                                     const GraphicsShaderInfo &info)
+                                                                     const GraphicsShaderInfo &stages)
     {
-        auto vsModule = create_shader_module(context, read_shader_from_file(info.vertexShaderPath));
-        auto fsModule = create_shader_module(context, read_shader_from_file(info.fragmentShaderPath));
+        ShaderModules result;
+        result.modules.reserve(stages.size());
 
-        return {std::move(vsModule), std::move(fsModule)};
+        for (const auto &[stage, path]: stages)
+        {
+            auto code = read_shader_from_file(path);
+            auto module = create_shader_module(context, code);
+
+            result.modules.emplace_back(stage, std::move(module));
+        }
+
+        return result;
     }
 
     void Pipeline::createLayout(const Context &context, const DescriptorLayout &descriptorLayout,
@@ -204,8 +211,6 @@ namespace kailux
             1.f
         );
 
-        auto shaderStages = shaderModules.getStages();
-
         vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo(
             {},
             static_cast<uint32_t>(info.colorFormats.size()),
@@ -217,6 +222,8 @@ namespace kailux
             {},
             info.topology
         );
+
+        auto shaderStages = shaderModules.makeVkStages();
 
         vk::GraphicsPipelineCreateInfo pipelineInfo(
             {},

@@ -60,11 +60,17 @@ namespace kailux
                                       const PipelineInfo &info,
                                       std::span<const PushConstantRangeInfo> pushConstantRanges)
     {
+        GraphicsShaderInfo shaderInfo;
+        if (!vertShaderPath.empty())
+            shaderInfo.emplace_back(vk::ShaderStageFlagBits::eVertex, vertShaderPath.data());
+        if (!fragShaderPath.empty())
+            shaderInfo.emplace_back(vk::ShaderStageFlagBits::eFragment, fragShaderPath.data());
+
         m_Pipeline = Pipeline::createGraphics(
             context,
             swapchain,
             m_DescriptorLayout,
-            {vertShaderPath.data(), fragShaderPath.data()},
+            shaderInfo,
             info,
             pushConstantRanges
         );
