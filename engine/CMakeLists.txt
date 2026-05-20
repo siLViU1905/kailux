@@ -33,6 +33,7 @@ add_library(kailux_engine STATIC
         src/core/passes/ComputePicker.cpp
         src/core/passes/OutlinePass.cpp
         src/core/passes/GraphicsPass.cpp
+        src/core/passes/MainPass.cpp
 )
 
 target_compile_definitions(kailux_engine PUBLIC

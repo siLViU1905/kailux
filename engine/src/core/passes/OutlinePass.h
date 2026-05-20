@@ -11,13 +11,16 @@ namespace kailux
     public:
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(OutlinePass)
 
-        static OutlinePass create(const Context& context, const Swapchain& swapchain, uint32_t frameCount, std::string_view vertShaderPath, std::string_view fragShaderPath);
+        static OutlinePass create(const Context& context, const Swapchain& swapchain, uint32_t frameCount);
         
         void push(vk::CommandBuffer cmd) const override;
 
         void setColorAndId(glm::vec3 color, uint32_t id);
 
     private:
+        static constexpr std::string_view s_OutlineVertexShaderPath = "shaders/outline_vertex_shader.spv";
+        static constexpr std::string_view s_OutlineFragmentShaderPath = "shaders/outline_fragment_shader.spv";
+
         static constexpr std::array s_DescriptorLayoutBindings = {
             DescriptorLayoutBinding(
                 vk::DescriptorType::eCombinedImageSampler,

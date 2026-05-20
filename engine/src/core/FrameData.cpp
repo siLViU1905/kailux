@@ -70,8 +70,7 @@ namespace kailux
     FrameData FrameData::create(
         const Context &context,
         const Swapchain &swapchain,
-        const DescriptorLayout &descriptorLayout,
-        const DescriptorPool &descriptorPool,
+        const MainPass & mainPass,
         const SkyboxPass &skybox,
         const ComputePicker &picker,
         const OutlinePass &outlinePass,
@@ -93,7 +92,7 @@ namespace kailux
         frame.createSceneTexture(context, swapchain.getFormat());
         frame.createOutIdTexture(context);
         auto descSetInfo = frame.makeDescriptorSetInfo(skybox, textureRegistry, maxMeshCount);
-        frame.createDescriptorSet(context, descriptorLayout, descriptorPool, descSetInfo);
+        frame.createDescriptorSet(context, mainPass.getDescriptorLayout(), mainPass.getDescriptorPool(), descSetInfo);
         auto skyboxDescInfo = frame.makeSkyboxDescriptorSetInfo(skybox.getTexture());
         frame.createSkyboxDescriptorSet(context, skybox.getDescriptorLayout(), skybox.getDescriptorPool(),
                                         skyboxDescInfo);

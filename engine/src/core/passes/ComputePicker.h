@@ -10,7 +10,7 @@ namespace kailux
     public:
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(ComputePicker)
 
-        static ComputePicker create(const Context &context, uint32_t frameCount, std::string_view shaderPath);
+        static ComputePicker create(const Context &context, uint32_t frameCount);
 
         void bind(vk::CommandBuffer cmd) const;
 
@@ -23,6 +23,8 @@ namespace kailux
         void setCords(uint32_t x, uint32_t y);
 
     private:
+        static constexpr std::string_view s_PickerComputeShaderPath = "shaders/entity_picker_compute_shader.spv";
+
         static constexpr std::array s_DescriptorLayoutBindings = {
             DescriptorLayoutBinding(
                 vk::DescriptorType::eStorageImage,
