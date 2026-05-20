@@ -131,7 +131,22 @@ namespace kailux
             )
         };
 
-        static PipelineInfo make_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits sampleCount);
+    public:
+        static constexpr uint32_t s_MeshTextureBindStart = []() constexpr -> uint32_t {
+            for (uint32_t i = 0; i < s_DescriptorLayoutBindings.size(); ++i)
+            {
+                const auto [descriptor, count, stage] = s_DescriptorLayoutBindings[i];
 
+                if (descriptor == vk::DescriptorType::eCombinedImageSampler &&
+                    count == s_MaxMeshCount &&
+                    stage == vk::ShaderStageFlagBits::eFragment)
+                    return i;
+            }
+            return ~0u;
+        }();
+        static_assert(s_MeshTextureBindStart != ~0u, "Failed to find mesh texture bind start index");
+
+    private:
+        static PipelineInfo make_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits sampleCount);
     };
 }
