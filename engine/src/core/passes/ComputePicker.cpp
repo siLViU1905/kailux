@@ -27,12 +27,12 @@ namespace kailux
         return *this;
     }
 
-    ComputePicker ComputePicker::create(const Context &context, uint32_t frameCount, std::string_view shaderPath)
+    ComputePicker ComputePicker::create(const Context &context, uint32_t frameCount)
     {
         ComputePicker picker;
         picker.createDescriptorLayout(context);
         picker.createDescriptorPool(context, frameCount);
-        picker.createPipeline(context, shaderPath);
+        picker.createPipeline(context, s_PickerComputeShaderPath);
         return picker;
     }
 

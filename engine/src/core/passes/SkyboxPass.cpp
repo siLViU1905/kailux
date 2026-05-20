@@ -29,12 +29,12 @@ namespace kailux
         return *this;
     }
 
-    SkyboxPass SkyboxPass::create(const Context &context, const Swapchain &swapchain, uint32_t sets,
+    SkyboxPass SkyboxPass::create(const Context &context, const Swapchain &swapchain, uint32_t maxFrames,
                                   const std::array<std::string_view, 6> &paths)
     {
         SkyboxPass pass;
         pass.createDescriptorLayout(context, s_DescriptorLayoutBindings);
-        pass.createDescriptorPool(context, sets, s_DescriptorPoolSizes);
+        pass.createDescriptorPool(context, maxFrames, s_DescriptorPoolSizes);
         pass.createPipeline(
             context,
             swapchain,

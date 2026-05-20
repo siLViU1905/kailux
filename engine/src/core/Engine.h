@@ -16,6 +16,7 @@
 #include "passes/ComputePicker.h"
 #include "Scene.h"
 #include "mesh/MeshLoader.h"
+#include "passes/MainPass.h"
 #include "utilities/Queue.h"
 #include "utilities/ThreadDispatcher.h"
 
@@ -76,15 +77,7 @@ namespace kailux
         OutlinePass&   getOutlinePass();
 
     private:
-        static constexpr std::string_view s_VertexShaderPath = "shaders/vertex_shader.spv";
-        static constexpr std::string_view s_FragmentShaderPath = "shaders/fragment_shader.spv";
-
-        static constexpr std::string_view s_PickerComputeShaderPath = "shaders/entity_picker_compute_shader.spv";
-
-        static constexpr std::string_view s_OutlineVertexShaderPath = "shaders/outline_vertex_shader.spv";
-        static constexpr std::string_view s_OutlineFragmentShaderPath = "shaders/outline_fragment_shader.spv";
-
-        static constexpr uint32_t         s_MaxMeshCount = 1'000;
+        static constexpr uint32_t         s_MaxMeshCount = MainPass::s_MaxMeshCount;
         static constexpr std::array<std::string_view, 6> s_SkyboxTexturePaths = {
             "assets/cubemap/px.png",
             "assets/cubemap/nx.png",
@@ -97,8 +90,7 @@ namespace kailux
         static constexpr std::string_view s_FileIconPath = "assets/icons/file_icon.png";
 
         void createRenderingContext(Window& window);
-        void createDescriptorResources();
-        void createPipeline();
+        void createMainPass();
         void createSkybox();
         void createOutlinePass();
         void createFrameResources();
@@ -114,131 +106,7 @@ namespace kailux
         void createSceneEntities(const Window &window);
 
         static constexpr uint32_t   s_MeshTextureBindStart = 7;
-        static constexpr std::array s_DescriptorLayoutBindings = {
-            DescriptorLayoutBinding(
-                vk::DescriptorType::eUniformBuffer,
-                1, // camera
-                vk::ShaderStageFlagBits::eVertex
-            ),
-            DescriptorLayoutBinding(
-                vk::DescriptorType::eStorageBuffer,
-                1, // model
-                vk::ShaderStageFlagBits::eVertex
-            ),
-            DescriptorLayoutBinding(
-                vk::DescriptorType::eStorageBuffer,
-                1, // scene
-                vk::ShaderStageFlagBits::eFragment
-            ),
-            DescriptorLayoutBinding(
-                vk::DescriptorType::eCombinedImageSampler,
-                1, // skybox
-                vk::ShaderStageFlagBits::eFragment
-            ),
-            DescriptorLayoutBinding(
-                vk::DescriptorType::eCombinedImageSampler,
-                1, // irradiance map
-                vk::ShaderStageFlagBits::eFragment
-            ),
-            DescriptorLayoutBinding(
-                vk::DescriptorType::eCombinedImageSampler,
-                1, // prefiltered env
-                vk::ShaderStageFlagBits::eFragment
-            ),
-            DescriptorLayoutBinding(
-                vk::DescriptorType::eCombinedImageSampler,
-                1, // brdf lut
-                vk::ShaderStageFlagBits::eFragment
-            ),
-            DescriptorLayoutBinding(
-                vk::DescriptorType::eCombinedImageSampler,
-                s_MaxMeshCount, // albedo
-                vk::ShaderStageFlagBits::eFragment
-            ),
-            DescriptorLayoutBinding(
-                vk::DescriptorType::eCombinedImageSampler,
-                s_MaxMeshCount, // normal
-                vk::ShaderStageFlagBits::eFragment
-            ),
-            DescriptorLayoutBinding(
-                vk::DescriptorType::eCombinedImageSampler,
-                s_MaxMeshCount, // roughness
-                vk::ShaderStageFlagBits::eFragment
-            ),
-            DescriptorLayoutBinding(
-                vk::DescriptorType::eCombinedImageSampler,
-                s_MaxMeshCount, // metallic
-                vk::ShaderStageFlagBits::eFragment
-            ),
-            DescriptorLayoutBinding(
-                vk::DescriptorType::eCombinedImageSampler,
-                s_MaxMeshCount, // ao
-                vk::ShaderStageFlagBits::eFragment
-            )
-        };
-        static constexpr std::array s_DescriptorPoolSizes = {
-            DescriptorPoolSize(
-                vk::DescriptorType::eUniformBuffer,
-                1 // camera
-            ),
-            DescriptorPoolSize(
-                vk::DescriptorType::eStorageBuffer,
-                1 // model
-            ),
-            DescriptorPoolSize(
-                vk::DescriptorType::eStorageBuffer,
-                1 // scene
-            ),
-            DescriptorPoolSize(
-                vk::DescriptorType::eCombinedImageSampler,
-                1 // skybox
-            ),
-            DescriptorPoolSize(
-                vk::DescriptorType::eCombinedImageSampler,
-                1 // irradiance map
-            ),
-            DescriptorPoolSize(
-                vk::DescriptorType::eCombinedImageSampler,
-                1 // prefiltered env
-            ),
-            DescriptorPoolSize(
-                vk::DescriptorType::eCombinedImageSampler,
-                1 // brdf lut
-            ),
-            DescriptorPoolSize(
-                vk::DescriptorType::eCombinedImageSampler,
-                s_MaxMeshCount // albedo
-            ),
-            DescriptorPoolSize(
-                vk::DescriptorType::eCombinedImageSampler,
-                s_MaxMeshCount // normal
-            ),
-            DescriptorPoolSize(
-                vk::DescriptorType::eCombinedImageSampler,
-                s_MaxMeshCount // roughness
-            ),
-            DescriptorPoolSize(
-                vk::DescriptorType::eCombinedImageSampler,
-                s_MaxMeshCount // metallic
-            ),
-            DescriptorPoolSize(
-                vk::DescriptorType::eCombinedImageSampler,
-                s_MaxMeshCount // ao
-            )
-        };
-        static constexpr bool check_descriptor_layout_bindings_and_pool_sizes_match(std::span<const DescriptorLayoutBinding> bindings, std::span<const DescriptorPoolSize> sizes)
-        {
-            if (bindings.size() != sizes.size())
-                return false;
 
-            for (size_t i = 0; i < bindings.size(); i++)
-                if (bindings[i].type != sizes[i].type ||
-                    bindings[i].count != sizes[i].count)
-                    return false;
-
-            return true;
-        }
-        static PipelineInfo                                                                make_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits sampleCount);
         static std::array<DescriptorSetUpdateInfo, TextureRegistry::s_TextureTypes.size()> make_descriptor_set_update_info_from_texture_set(TextureSetHandle handle, const TextureSet& set);
 
         void                                        submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
@@ -284,9 +152,6 @@ namespace kailux
         vk::SampleCountFlagBits                    m_SampleCount;
         Swapchain                                  m_Swapchain;
         ImGuiBackend                               m_ImGuiBackend;
-        DescriptorLayout                           m_DescriptorLayout;
-        DescriptorPool                             m_DescriptorPool;
-        Pipeline                                   m_Pipeline;
         MeshRegistry                               m_MeshRegistry;
         TextureRegistry                            m_TextureRegistry;
         std::array<FrameData, s_FramesInFlight>    m_Frames;
@@ -297,6 +162,7 @@ namespace kailux
         Scene                                      m_Scene;
         OnEditorRender                             m_OnEditorRender;
 
+        MainPass                                   m_MainPass;
         SkyboxPass                                 m_SkyboxPass;
         OutlinePass                                m_OutlinePass;
         ComputePicker                              m_ComputePicker;

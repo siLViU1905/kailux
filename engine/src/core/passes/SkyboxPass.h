@@ -14,7 +14,7 @@ namespace kailux
     public:
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(SkyboxPass)
 
-        static SkyboxPass create(const Context& context, const Swapchain& swapchain, uint32_t sets, const std::array<std::string_view, 6> &paths);
+        static SkyboxPass create(const Context& context, const Swapchain& swapchain, uint32_t maxFrames, const std::array<std::string_view, 6> &paths);
 
         void push(vk::CommandBuffer cmd) const override;
 

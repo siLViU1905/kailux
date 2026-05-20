@@ -22,12 +22,12 @@ namespace kailux
         return *this;
     }
 
-    OutlinePass OutlinePass::create(const Context &context, const Swapchain &swapchain, uint32_t frameCount, std::string_view vertShaderPath, std::string_view fragShaderPath)
+    OutlinePass OutlinePass::create(const Context &context, const Swapchain &swapchain, uint32_t frameCount)
     {
         OutlinePass pass;
         pass.createDescriptorLayout(context, s_DescriptorLayoutBindings);
         pass.createDescriptorPool(context, frameCount, s_DescriptorLayoutSizes);
-        pass.createPipeline(context, swapchain, vertShaderPath, fragShaderPath, make_pipeline_info(swapchain), s_PushConstantRanges);
+        pass.createPipeline(context, swapchain, s_OutlineVertexShaderPath, s_OutlineFragmentShaderPath, make_pipeline_info(swapchain), s_PushConstantRanges);
         return pass;
     }
 

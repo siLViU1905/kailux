@@ -25,15 +25,13 @@ namespace kailux
                                               m_SampleCount(other.m_SampleCount),
                                               m_Swapchain(std::move(other.m_Swapchain)),
                                               m_ImGuiBackend(std::move(other.m_ImGuiBackend)),
-                                              m_DescriptorLayout(std::move(other.m_DescriptorLayout)),
-                                              m_DescriptorPool(std::move(other.m_DescriptorPool)),
-                                              m_Pipeline(std::move(other.m_Pipeline)),
                                               m_MeshRegistry(std::move(other.m_MeshRegistry)),
                                               m_TextureRegistry(std::move(other.m_TextureRegistry)),
                                               m_Frames(std::move(other.m_Frames)),
                                               m_CurrentFrame(other.m_CurrentFrame),
                                               m_SceneTextureIds(other.m_SceneTextureIds),
                                               m_Scene(std::move(other.m_Scene)),
+                                              m_MainPass(std::move(other.m_MainPass)),
                                               m_SkyboxPass(std::move(other.m_SkyboxPass)),
                                               m_OutlinePass(std::move(other.m_OutlinePass)),
                                               m_ComputePicker(std::move(other.m_ComputePicker)),
@@ -55,15 +53,13 @@ namespace kailux
             m_SampleCount = other.m_SampleCount;
             m_Swapchain = std::move(other.m_Swapchain);
             m_ImGuiBackend = std::move(other.m_ImGuiBackend);
-            m_DescriptorLayout = std::move(other.m_DescriptorLayout);
-            m_DescriptorPool = std::move(other.m_DescriptorPool);
-            m_Pipeline = std::move(other.m_Pipeline);
             m_MeshRegistry = std::move(other.m_MeshRegistry);
             m_TextureRegistry = std::move(other.m_TextureRegistry);
             m_Frames = std::move(other.m_Frames);
             m_CurrentFrame = other.m_CurrentFrame;
             m_SceneTextureIds = other.m_SceneTextureIds;
             m_Scene = std::move(other.m_Scene);
+            m_MainPass = std::move(other.m_MainPass);
             m_SkyboxPass = std::move(other.m_SkyboxPass);
             m_OutlinePass = std::move(other.m_OutlinePass);
             m_ComputePicker = std::move(other.m_ComputePicker);
@@ -93,8 +89,7 @@ namespace kailux
         Engine engine;
         engine.createRenderingContext(window);
         OneTimeCommand::create_command_pool(engine.m_Context);
-        engine.createDescriptorResources();
-        engine.createPipeline();
+        engine.createMainPass();
         engine.createSkybox();
         engine.createOutlinePass();
         engine.createMeshRegistry();
@@ -170,28 +165,13 @@ namespace kailux
         m_Swapchain = Swapchain::create(window, m_Context, m_SampleCount);
     }
 
-    void Engine::createDescriptorResources()
+    void Engine::createMainPass()
     {
-        static_assert(
-            check_descriptor_layout_bindings_and_pool_sizes_match(s_DescriptorLayoutBindings, s_DescriptorPoolSizes),
-            "Descriptor layout binding and pool sizes does not match");
-        m_DescriptorLayout = DescriptorLayout::create(m_Context, s_DescriptorLayoutBindings);
-
-        m_DescriptorPool = DescriptorPool::create(m_Context, s_FramesInFlight, s_DescriptorPoolSizes);
-    }
-
-    void Engine::createPipeline()
-    {
-        m_Pipeline = Pipeline::createGraphics(
+        m_MainPass = MainPass::create(
             m_Context,
             m_Swapchain,
-            m_DescriptorLayout,
-            {
-                s_VertexShaderPath.data(),
-                s_FragmentShaderPath.data()
-            },
-            make_pipeline_info(m_Swapchain, m_SampleCount)
-        );
+            s_FramesInFlight
+            );
     }
 
     void Engine::createSkybox()
@@ -209,9 +189,7 @@ namespace kailux
         m_OutlinePass = OutlinePass::create(
             m_Context,
             m_Swapchain,
-            s_FramesInFlight,
-            s_OutlineVertexShaderPath,
-            s_OutlineFragmentShaderPath
+            s_FramesInFlight
         );
     }
 
@@ -221,12 +199,12 @@ namespace kailux
             frame = FrameData::create(
                 m_Context,
                 m_Swapchain,
-                m_DescriptorLayout,
-                m_DescriptorPool,
+                m_MainPass,
                 m_SkyboxPass,
                 m_ComputePicker,
                 m_OutlinePass,
-                m_TextureRegistry, s_MaxMeshCount
+                m_TextureRegistry,
+                s_MaxMeshCount
             );
     }
 
@@ -261,7 +239,7 @@ namespace kailux
 
     void Engine::createComputePicker()
     {
-        m_ComputePicker = ComputePicker::create(m_Context, s_FramesInFlight, s_PickerComputeShaderPath);
+        m_ComputePicker = ComputePicker::create(m_Context, s_FramesInFlight);
     }
 
     void Engine::createScene()
@@ -295,63 +273,6 @@ namespace kailux
             MeshType::Sphere,
             m_TextureRegistry.getDefaultSetHandle(), MeshTransformData({1.5f, 0.f, 0.f}), {}
         );
-    }
-
-    PipelineInfo Engine::make_pipeline_info(const Swapchain &swapchain, vk::SampleCountFlagBits sampleCount)
-    {
-        PipelineInfo info;
-
-        info.vertexInputBinding = Vertex::get_binding_description();
-        constexpr auto vertexAttribDesc = Vertex::get_attribute_description();
-        info.vertexInputAttribute = {vertexAttribDesc.cbegin(), vertexAttribDesc.cend()};
-
-        info.topology = vk::PrimitiveTopology::eTriangleList;
-
-        info.rasterizer = {
-            {},
-            vk::False,
-            vk::False,
-            vk::PolygonMode::eFill,
-            vk::CullModeFlagBits::eBack,
-            vk::FrontFace::eCounterClockwise,
-            vk::False,
-            {},
-            {},
-            1.f,
-            1.f
-        };
-
-        vk::PipelineColorBlendAttachmentState colorAttachment{};
-        colorAttachment.colorWriteMask =
-                vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB |
-                vk::ColorComponentFlagBits::eA;
-        colorAttachment.blendEnable = vk::True;
-        colorAttachment.srcColorBlendFactor = vk::BlendFactor::eSrcAlpha;
-        colorAttachment.dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
-        colorAttachment.colorBlendOp = vk::BlendOp::eAdd;
-        colorAttachment.srcAlphaBlendFactor = vk::BlendFactor::eOne;
-        colorAttachment.dstAlphaBlendFactor = vk::BlendFactor::eZero;
-        colorAttachment.alphaBlendOp = vk::BlendOp::eAdd;
-
-        info.colorBlendAttachments.push_back(colorAttachment);
-        info.colorFormats.push_back(swapchain.getFormat());
-
-        vk::PipelineColorBlendAttachmentState idAttachment{};
-        idAttachment.colorWriteMask = vk::ColorComponentFlagBits::eR;
-        idAttachment.blendEnable = vk::False;
-
-        info.colorBlendAttachments.push_back(idAttachment);
-        info.colorFormats.push_back(vk::Format::eR32Uint);
-
-        info.samples = sampleCount;
-
-        info.depthStencilInfo.depthTestEnable = vk::True;
-        info.depthStencilInfo.depthWriteEnable = vk::True;
-        info.depthStencilInfo.depthCompareOp = vk::CompareOp::eLess;
-        info.depthStencilInfo.depthBoundsTestEnable = vk::False;
-        info.depthStencilInfo.stencilTestEnable = vk::False;
-
-        return info;
     }
 
     std::array<DescriptorSetUpdateInfo, TextureRegistry::s_TextureTypes.size()>
@@ -817,9 +738,10 @@ namespace kailux
 
     void Engine::recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const
     {
-        m_Pipeline.bindGraphics(recorder.getCommandBuffer());
+       const auto cmd = recorder.getCommandBuffer();
+        m_MainPass.bind(cmd);
         m_MeshRegistry.bind(recorder.getCommandBuffer());
-        frame.getDescriptorSet().bind(m_Pipeline, recorder.getCommandBuffer());
+        frame.getDescriptorSet().bind(m_MainPass.getPipeline(), cmd);
 
         auto meshCount = static_cast<uint32_t>(
             m_Scene.getEntityRegistry().view<MeshComponent>().size()

@@ -7,6 +7,7 @@
 #include "texture/Texture.h"
 #include "texture/TextureRegistry.h"
 #include "passes/ComputePicker.h"
+#include "passes/MainPass.h"
 #include "passes/OutlinePass.h"
 
 namespace kailux
@@ -18,8 +19,7 @@ namespace kailux
 
         static FrameData create(const Context &context,
                                 const Swapchain &swapchain,
-                                const DescriptorLayout &descriptorLayout,
-                                const DescriptorPool &descriptorPool,
+                                const MainPass & mainPass,
                                 const SkyboxPass &skybox,
                                 const ComputePicker& picker,
                                 const OutlinePass& outlinePass,
