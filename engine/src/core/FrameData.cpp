@@ -29,11 +29,15 @@ namespace kailux
                                                        m_SkyboxDescriptorSet(std::move(other.m_SkyboxDescriptorSet)),
                                                        m_PickerDescriptorSet(std::move(other.m_PickerDescriptorSet)),
                                                        m_OutlineDescriptorSet(std::move(other.m_OutlineDescriptorSet)),
+                                                       m_CullerDescriptorSet(std::move(other.m_CullerDescriptorSet)),
                                                        m_CameraBuffer(std::move(other.m_CameraBuffer)),
                                                        m_MeshDataBuffer(std::move(other.m_MeshDataBuffer)),
                                                        m_IndirectBuffer(std::move(other.m_IndirectBuffer)),
                                                        m_SceneBuffer(std::move(other.m_SceneBuffer)),
                                                        m_PickerBuffer(std::move(other.m_PickerBuffer)),
+                                                       m_CullerInputCommandsBuffer(
+                                                           std::move(other.m_CullerInputCommandsBuffer)),
+                                                       m_CullerCountBuffer(std::move(other.m_CullerCountBuffer)),
                                                        m_Extent(other.m_Extent),
                                                        m_SceneTexture(std::move(other.m_SceneTexture)),
                                                        m_OutIdTexture(std::move(other.m_OutIdTexture)),
@@ -54,11 +58,14 @@ namespace kailux
             m_SkyboxDescriptorSet = std::move(other.m_SkyboxDescriptorSet);
             m_PickerDescriptorSet = std::move(other.m_PickerDescriptorSet);
             m_OutlineDescriptorSet = std::move(other.m_OutlineDescriptorSet);
+            m_CullerDescriptorSet = std::move(other.m_CullerDescriptorSet);
             m_CameraBuffer = std::move(other.m_CameraBuffer);
             m_MeshDataBuffer = std::move(other.m_MeshDataBuffer);
             m_IndirectBuffer = std::move(other.m_IndirectBuffer);
             m_SceneBuffer = std::move(other.m_SceneBuffer);
             m_PickerBuffer = std::move(other.m_PickerBuffer);
+            m_CullerInputCommandsBuffer = std::move(other.m_CullerInputCommandsBuffer);
+            m_CullerCountBuffer = std::move(other.m_CullerCountBuffer);
             m_Extent = other.m_Extent;
             m_SceneTexture = std::move(other.m_SceneTexture);
             m_OutIdTexture = std::move(other.m_OutIdTexture);
@@ -70,11 +77,11 @@ namespace kailux
     FrameData FrameData::create(
         const Context &context,
         const Swapchain &swapchain,
-        const MainPass & mainPass,
+        const MainPass &mainPass,
         const SkyboxPass &skybox,
         const ComputePicker &picker,
         const OutlinePass &outlinePass,
-        const TextureRegistry &textureRegistry, uint32_t maxMeshCount
+        const ComputeCuller &culler, const TextureRegistry &textureRegistry, uint32_t maxMeshCount
     )
     {
         FrameData frame;
@@ -89,6 +96,7 @@ namespace kailux
         frame.createIndirectBuffer(context, maxMeshCount);
         frame.createSceneBuffer(context);
         frame.createPickerBuffer(context);
+        frame.createCullerBuffers(context, maxMeshCount);
         frame.createSceneTexture(context, swapchain.getFormat());
         frame.createOutIdTexture(context);
         auto descSetInfo = frame.makeDescriptorSetInfo(skybox, textureRegistry, maxMeshCount);
@@ -102,6 +110,9 @@ namespace kailux
         auto outlineDescInfo = frame.makeOutlineDescriptorSetInfo();
         frame.createOutlineDescriptorSet(context, outlinePass.getDescriptorLayout(), outlinePass.getDescriptorPool(),
                                          outlineDescInfo);
+        auto cullerDescInfo = frame.makeCullerDescriptorSetInfo();
+        frame.createCullerDescriptorSet(context, culler.getDescriptorLayout(), culler.getDescriptorPool(),
+                                        cullerDescInfo);
         return frame;
     }
 
@@ -185,6 +196,11 @@ namespace kailux
         return m_OutlineDescriptorSet;
     }
 
+    const DescriptorSet &FrameData::getCullerDescriptorSet() const
+    {
+        return m_CullerDescriptorSet;
+    }
+
     Buffer &FrameData::getCameraBuffer()
     {
         return m_CameraBuffer;
@@ -213,6 +229,16 @@ namespace kailux
     const Buffer &FrameData::getPickerBuffer() const
     {
         return m_PickerBuffer;
+    }
+
+    const Buffer &FrameData::getCullerInputCommandsBuffer() const
+    {
+        return m_CullerInputCommandsBuffer;
+    }
+
+    const Buffer &FrameData::getCullerCountBuffer() const
+    {
+        return m_CullerCountBuffer;
     }
 
     vk::Extent2D FrameData::getExtent() const
@@ -253,7 +279,7 @@ namespace kailux
             vk::BufferMemoryBarrier2( // model
                 vk::PipelineStageFlagBits2::eHost,
                 vk::AccessFlagBits2::eHostWrite,
-                vk::PipelineStageFlagBits2::eVertexShader,
+                vk::PipelineStageFlagBits2::eComputeShader | vk::PipelineStageFlagBits2::eVertexShader,
                 vk::AccessFlagBits2::eShaderStorageRead,
                 vk::QueueFamilyIgnored,
                 vk::QueueFamilyIgnored,
@@ -261,16 +287,16 @@ namespace kailux
                 {},
                 m_MeshDataBuffer.getSize()
             ),
-            vk::BufferMemoryBarrier2( // indirect
+            vk::BufferMemoryBarrier2( // culler input
                 vk::PipelineStageFlagBits2::eHost,
                 vk::AccessFlagBits2::eHostWrite,
-                vk::PipelineStageFlagBits2::eDrawIndirect,
-                vk::AccessFlagBits2::eIndirectCommandRead,
+                vk::PipelineStageFlagBits2::eComputeShader,
+                vk::AccessFlagBits2::eShaderStorageRead,
                 vk::QueueFamilyIgnored,
                 vk::QueueFamilyIgnored,
-                m_IndirectBuffer.getBuffer(),
+                m_CullerInputCommandsBuffer.getBuffer(),
                 {},
-                m_IndirectBuffer.getSize()
+                m_CullerInputCommandsBuffer.getSize()
             ),
             vk::BufferMemoryBarrier2( // scene
                 vk::PipelineStageFlagBits2::eHost,
@@ -298,6 +324,50 @@ namespace kailux
             m_PickerBuffer.getBuffer(),
             {},
             sizeof(uint32_t)
+        };
+    }
+
+    std::array<vk::BufferMemoryBarrier2, FrameData::s_CullerBufferMemoryBarriersCount> FrameData::
+    getCullerBufferMemoryBarriers() const
+    {
+        return {
+            vk::BufferMemoryBarrier2( // indirect buffer
+                vk::PipelineStageFlagBits2::eComputeShader,
+                vk::AccessFlagBits2::eShaderWrite,
+                vk::PipelineStageFlagBits2::eDrawIndirect,
+                vk::AccessFlagBits2::eIndirectCommandRead,
+                vk::QueueFamilyIgnored,
+                vk::QueueFamilyIgnored,
+                m_IndirectBuffer.getBuffer(),
+                {},
+                m_IndirectBuffer.getSize()
+            ),
+            vk::BufferMemoryBarrier2( // culler count
+                vk::PipelineStageFlagBits2::eComputeShader,
+                vk::AccessFlagBits2::eShaderWrite,
+                vk::PipelineStageFlagBits2::eDrawIndirect,
+                vk::AccessFlagBits2::eIndirectCommandRead,
+                vk::QueueFamilyIgnored,
+                vk::QueueFamilyIgnored,
+                m_CullerCountBuffer.getBuffer(),
+                {},
+                m_CullerCountBuffer.getSize()
+            )
+        };
+    }
+
+    vk::BufferMemoryBarrier2 FrameData::getCullerCountBufferFillMemoryBarrier() const
+    {
+        return {
+            vk::PipelineStageFlagBits2::eTransfer,
+            vk::AccessFlagBits2::eTransferWrite,
+            vk::PipelineStageFlagBits2::eComputeShader,
+            vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite,
+            vk::QueueFamilyIgnored,
+            vk::QueueFamilyIgnored,
+            m_CullerCountBuffer.getBuffer(),
+            {},
+            m_CullerCountBuffer.getSize()
         };
     }
 
@@ -369,6 +439,13 @@ namespace kailux
         m_OutlineDescriptorSet = DescriptorSet::create(context, descriptorLayout, descriptorPool, infos);
     }
 
+    void FrameData::createCullerDescriptorSet(const Context &context, const DescriptorLayout &descriptorLayout,
+                                              const DescriptorPool &descriptorPool,
+                                              std::span<const DescriptorSetInfo> infos)
+    {
+        m_CullerDescriptorSet = DescriptorSet::create(context, descriptorLayout, descriptorPool, infos);
+    }
+
     void FrameData::createCameraBuffer(const Context &context)
     {
         m_CameraBuffer = BufferAllocator::alloc_uniform(context, sizeof(CameraData));
@@ -382,7 +459,8 @@ namespace kailux
     void FrameData::createIndirectBuffer(const Context &context, uint32_t count)
     {
         m_IndirectBuffer = BufferAllocator::alloc_host(context, count * sizeof(vk::DrawIndexedIndirectCommand),
-                                                       vk::BufferUsageFlagBits::eIndirectBuffer);
+                                                       vk::BufferUsageFlagBits::eIndirectBuffer |
+                                                       vk::BufferUsageFlagBits::eStorageBuffer);
     }
 
     void FrameData::createSceneBuffer(const Context &context)
@@ -393,6 +471,15 @@ namespace kailux
     void FrameData::createPickerBuffer(const Context &context)
     {
         m_PickerBuffer = BufferAllocator::alloc_storage(context, sizeof(uint32_t));
+    }
+
+    void FrameData::createCullerBuffers(const Context &context, uint32_t count)
+    {
+        m_CullerInputCommandsBuffer = BufferAllocator::alloc_host(context, count * sizeof(vk::DrawIndexedIndirectCommand),
+                                                                  vk::BufferUsageFlagBits::eStorageBuffer);
+        m_CullerCountBuffer = BufferAllocator::alloc_local(context, sizeof(uint32_t),
+                                                           vk::BufferUsageFlagBits::eStorageBuffer |
+                                                           vk::BufferUsageFlagBits::eIndirectBuffer);
     }
 
     void FrameData::createSceneTexture(const Context &context, vk::Format format)
@@ -559,6 +646,37 @@ namespace kailux
                 vk::ImageLayout::eShaderReadOnlyOptimal,
                 1,
                 vk::DescriptorType::eCombinedImageSampler
+            )
+        };
+    }
+
+    std::array<DescriptorSetInfo, FrameData::s_CullerDescriptorSetInfoCount> FrameData::
+    makeCullerDescriptorSetInfo() const
+    {
+        return {
+            DescriptorSetBufferInfo(
+                m_MeshDataBuffer.getBuffer(),
+                m_MeshDataBuffer.getSize(),
+                1,
+                vk::DescriptorType::eStorageBuffer
+            ),
+            DescriptorSetBufferInfo(
+                m_CullerInputCommandsBuffer.getBuffer(),
+                m_CullerInputCommandsBuffer.getSize(),
+                1,
+                vk::DescriptorType::eStorageBuffer
+            ),
+            DescriptorSetBufferInfo(
+                m_IndirectBuffer.getBuffer(),
+                m_IndirectBuffer.getSize(),
+                1,
+                vk::DescriptorType::eStorageBuffer
+            ),
+            DescriptorSetBufferInfo(
+                m_CullerCountBuffer.getBuffer(),
+                m_CullerCountBuffer.getSize(),
+                1,
+                vk::DescriptorType::eStorageBuffer
             )
         };
     }

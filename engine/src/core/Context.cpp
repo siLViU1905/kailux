@@ -346,6 +346,7 @@ namespace kailux
         f12.descriptorBindingStorageBufferUpdateAfterBind = vk::True;
         f12.shaderSampledImageArrayNonUniformIndexing = vk::True;
         f12.descriptorIndexing = vk::True;
+        f12.drawIndirectCount = vk::True;
 
         f13.dynamicRendering = vk::True;
         f13.synchronization2 = vk::True;

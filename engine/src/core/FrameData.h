@@ -4,6 +4,7 @@
 #include "buffer/Buffer.h"
 #include "command/CommandRecorder.h"
 #include "descriptor/DescriptorSet.h"
+#include "passes/ComputeCuller.h"
 #include "texture/Texture.h"
 #include "texture/TextureRegistry.h"
 #include "passes/ComputePicker.h"
@@ -23,7 +24,7 @@ namespace kailux
                                 const SkyboxPass &skybox,
                                 const ComputePicker& picker,
                                 const OutlinePass& outlinePass,
-                                const TextureRegistry &textureRegistry, uint32_t maxMeshCount
+                                const ComputeCuller& culler, const TextureRegistry &textureRegistry, uint32_t maxMeshCount
         );
 
         void reset(const Context& context) const;
@@ -38,6 +39,7 @@ namespace kailux
         const DescriptorSet& getSkyboxDescriptorSet() const;
         const DescriptorSet& getPickerDescriptorSet() const;
         const DescriptorSet& getOutlineDescriptorSet() const;
+        const DescriptorSet& getCullerDescriptorSet() const;
 
         Buffer&       getCameraBuffer();
         Buffer&       getModelBuffer();
@@ -45,6 +47,8 @@ namespace kailux
         const Buffer& getIndirectBuffer() const;
         Buffer&       getSceneBuffer();
         const Buffer& getPickerBuffer() const;
+        const Buffer& getCullerInputCommandsBuffer() const;
+        const Buffer& getCullerCountBuffer() const;
 
         vk::Extent2D  getExtent() const;
 
@@ -52,9 +56,12 @@ namespace kailux
         const Texture& getOutIdTexture() const;
         const Texture& getResolvedOutIdTexture() const;
 
-        static constexpr uint32_t s_BufferMemoryBarriersCount = 1 + 1 + 1 + 1; // camera buffer + mesh data buffer + indirect buffer + scene buffer
-        std::array<vk::BufferMemoryBarrier2, s_BufferMemoryBarriersCount> getBufferMemoryBarriers() const;
-        vk::BufferMemoryBarrier2                                          getPickerBufferMemoryBarrier() const;
+        static constexpr uint32_t s_BufferMemoryBarriersCount = 1 + 1 + 1 + 1; // camera buffer + mesh data buffer + culler input buffer + scene buffer
+        std::array<vk::BufferMemoryBarrier2, s_BufferMemoryBarriersCount>       getBufferMemoryBarriers() const;
+        vk::BufferMemoryBarrier2                                                getPickerBufferMemoryBarrier() const;
+        static constexpr uint32_t s_CullerBufferMemoryBarriersCount = 1 + 1; // indirect buffer + culler count buffer
+        std::array<vk::BufferMemoryBarrier2, s_CullerBufferMemoryBarriersCount> getCullerBufferMemoryBarriers() const;
+        vk::BufferMemoryBarrier2                                                getCullerCountBufferFillMemoryBarrier() const;
 
     private:
         void createCommandPool(const Context& context);
@@ -71,11 +78,14 @@ namespace kailux
                                        DescriptorSetInfo> infos);
         void createOutlineDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
                                        DescriptorSetInfo> infos);
+        void createCullerDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
+                                       DescriptorSetInfo> infos);
         void createCameraBuffer(const Context& context);
         void createMeshDataBuffer(const Context& context, uint32_t meshCount);
         void createIndirectBuffer(const Context& context, uint32_t count);
         void createSceneBuffer(const Context& context);
         void createPickerBuffer(const Context& context);
+        void createCullerBuffers(const Context& context, uint32_t count);
 
         void createSceneTexture(const Context& context, vk::Format format);
         void createOutIdTexture(const Context &context);
@@ -84,10 +94,12 @@ namespace kailux
         static constexpr uint32_t s_SkyboxDescriptorSetInfoCount = 1 + 1; // camera buffer + cube texture
         static constexpr uint32_t s_PickerDescriptorSetInfoCount = 1 + 1; // id image + out buffer
         static constexpr uint32_t s_OutlineDescriptorSetInfoCount = 1; // id image
+        static constexpr uint32_t s_CullerDescriptorSetInfoCount = 4; // mesh data + template + out indirect + counter
         std::array<DescriptorSetInfo, s_DescriptorSetInfoCount>        makeDescriptorSetInfo(const SkyboxPass &skybox, const TextureRegistry& textureRegistry, uint32_t meshCount) const;
         std::array<DescriptorSetInfo, s_SkyboxDescriptorSetInfoCount>  makeSkyboxDescriptorSetInfo(const Texture& skyboxTexture) const;
         std::array<DescriptorSetInfo, s_PickerDescriptorSetInfoCount>  makePickerDescriptorSetInfo() const;
         std::array<DescriptorSetInfo, s_OutlineDescriptorSetInfoCount> makeOutlineDescriptorSetInfo() const;
+        std::array<DescriptorSetInfo, s_CullerDescriptorSetInfoCount>  makeCullerDescriptorSetInfo() const;
         static constexpr uint32_t s_PickerResolvedViewDescriptorSetBinding = 0;
         static constexpr uint32_t s_OutlineIdResolvedViewDescriptorSetBinding = 0;
 
@@ -101,12 +113,15 @@ namespace kailux
         DescriptorSet           m_SkyboxDescriptorSet;
         DescriptorSet           m_PickerDescriptorSet;
         DescriptorSet           m_OutlineDescriptorSet;
+        DescriptorSet           m_CullerDescriptorSet;
 
         Buffer                  m_CameraBuffer;
         Buffer                  m_MeshDataBuffer;
         Buffer                  m_IndirectBuffer;
         Buffer                  m_SceneBuffer;
         Buffer                  m_PickerBuffer;
+        Buffer                  m_CullerInputCommandsBuffer;
+        Buffer                  m_CullerCountBuffer;
 
         vk::Extent2D            m_Extent;
 

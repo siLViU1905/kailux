@@ -44,7 +44,7 @@ layout (std430, set = 0, binding = 1) readonly buffer TransformBuffer {
 
 void main()
 {
-    MeshData mData =  meshData.data[gl_DrawID];
+    MeshData mData =  meshData.data[gl_InstanceIndex];
     mat4 model = mData.model;
     vec4 worldPos = model * vec4(aPos, 1.0);
     fragPos = worldPos.xyz;

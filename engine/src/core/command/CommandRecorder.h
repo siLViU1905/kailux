@@ -56,7 +56,7 @@ namespace kailux
 
         void beginRendering(const RenderingInfo& info);
         void endRendering();
-        void drawIndexedIndirect(const Buffer& indirectBuffer, uint32_t drawCount) const;
+        void drawIndexedIndirectCount(const Buffer& indirectBuffer, const Buffer &countBuffer, uint32_t maxDrawCount) const;
 
         void setViewport(vk::Extent2D extent);
         void setScissor(vk::Extent2D extent);
