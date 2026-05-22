@@ -67,6 +67,7 @@ set(GLSL_SOURCES
         "engine/src/core/shaders/entity_picker_compute_shader.glsl"
         "engine/src/core/shaders/outline_vertex_shader.glsl"
         "engine/src/core/shaders/outline_fragment_shader.glsl"
+        "engine/src/core/shaders/cull_compute_shader.glsl"
 )
 
 set(SHADER_BINARY_DIR "${CMAKE_BINARY_DIR}/app/shaders")
