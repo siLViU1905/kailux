@@ -14,9 +14,9 @@ namespace kailux
         vk::Buffer     getBuffer() const;
         vk::DeviceSize getSize() const;
 
-        void upload(const void* data, vk::DeviceSize byte_size, vk::DeviceSize offset = 0);
+        void upload(const void* data, vk::DeviceSize byte_size, vk::DeviceSize offset = 0) const;
         template<typename T>
-        void upload(std::span<const T> data, vk::DeviceSize offset = 0)
+        void upload(std::span<const T> data, vk::DeviceSize offset = 0) const
         {
             upload(data.data(), data.size_bytes(), offset);
         }

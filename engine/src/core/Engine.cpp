@@ -4,6 +4,7 @@
 #include <magic_enum/magic_enum.hpp>
 
 #include "FileDialog.h"
+#include "Geometry.h"
 #include "command/CommandRecorder.h"
 #include "Log.h"
 #include "command/OneTimeCommand.h"
@@ -36,6 +37,7 @@ namespace kailux
                                               m_OutlinePass(std::move(other.m_OutlinePass)),
                                               m_ComputePicker(std::move(other.m_ComputePicker)),
                                               m_PickedEntity(other.m_PickedEntity),
+                                              m_ComputeCuller(std::move(other.m_ComputeCuller)),
                                               m_PendingMeshData(std::move(other.m_PendingMeshData)),
                                               m_MeshCache(std::move(other.m_MeshCache)),
                                               m_PendingFrameTasks(std::move(other.m_PendingFrameTasks)),
@@ -64,6 +66,7 @@ namespace kailux
             m_OutlinePass = std::move(other.m_OutlinePass);
             m_ComputePicker = std::move(other.m_ComputePicker);
             m_PickedEntity = other.m_PickedEntity;
+            m_ComputeCuller = std::move(other.m_ComputeCuller);
             m_PendingMeshData = std::move(other.m_PendingMeshData);
             m_MeshCache = std::move(other.m_MeshCache);
             m_PendingFrameTasks = std::move(other.m_PendingFrameTasks);
@@ -95,6 +98,7 @@ namespace kailux
         engine.createMeshRegistry();
         engine.createTextureRegistry();
         engine.createComputePicker();
+        engine.createComputeCuller();
         engine.createFrameResources();
         engine.createImGui(window);
         engine.createSceneTextureIds();
@@ -202,8 +206,8 @@ namespace kailux
                 m_SkyboxPass,
                 m_ComputePicker,
                 m_OutlinePass,
-                m_TextureRegistry,
-                s_MaxMeshCount
+                m_ComputeCuller,
+                m_TextureRegistry, s_MaxMeshCount
             );
     }
 
@@ -241,6 +245,11 @@ namespace kailux
         m_ComputePicker = ComputePicker::create(m_Context, s_FramesInFlight);
     }
 
+    void Engine::createComputeCuller()
+    {
+        m_ComputeCuller = ComputeCuller::create(m_Context, s_FramesInFlight);
+    }
+
     void Engine::createScene()
     {
         m_Scene = Scene::create("MainScene");
@@ -260,17 +269,27 @@ namespace kailux
 
         m_Scene.createMeshEntity(
             "Cube",
-            m_MeshRegistry.getBuiltins().cube,
-            "",
-            MeshType::Cube,
-            m_TextureRegistry.getDefaultSetHandle(), {}, {}
+            {
+                m_MeshRegistry.getBuiltins().cube,
+                "",
+                MeshType::Cube,
+                Geometry::computeBoundingSphere(MeshRegistry::generate_cube().vertices)
+            },
+            m_TextureRegistry.getDefaultSetHandle(),
+            {},
+            {}
         );
         m_Scene.createMeshEntity(
             "Sphere",
-            m_MeshRegistry.getBuiltins().sphere,
-            "",
-            MeshType::Sphere,
-            m_TextureRegistry.getDefaultSetHandle(), MeshTransformData({1.5f, 0.f, 0.f}), {}
+            {
+                m_MeshRegistry.getBuiltins().sphere,
+                "",
+                MeshType::Cube,
+                Geometry::computeBoundingSphere(MeshRegistry::generate_sphere().vertices)
+            },
+            m_TextureRegistry.getDefaultSetHandle(),
+            MeshTransformData({1.5f, 0.f, 0.f}),
+            {}
         );
     }
 
@@ -350,6 +369,8 @@ namespace kailux
         vk::Semaphore renderFinishedSemaphore = m_Swapchain.getPresentSemaphore(acquired->imageIndex); {
             CommandRecorder recorder(frame.getCommandBuffer());
             updateFrameBuffers(frame, recorder);
+
+            executeCulling(frame, recorder);
 
             transitionForMainPass(frame, recorder);
 
@@ -621,6 +642,36 @@ namespace kailux
         return cache;
     }
 
+    void Engine::executeCulling(const FrameData &frame, const CommandRecorder &recorder)
+    {
+        const auto cmd = recorder.getCommandBuffer();
+        auto totalObjects = static_cast<uint32_t>(m_Scene.getEntityRegistry().view<MeshComponent>().size());
+        if (totalObjects == 0)
+            return;
+
+        const auto &camera = m_Scene.getEntityRegistry().get<CameraData>(m_Scene.getMainCamera());
+        auto planes = Camera::get_frustum_planes(camera.projection, camera.view);
+        m_ComputeCuller.setFrustum(planes, totalObjects);
+
+        recorder.getCommandBuffer().fillBuffer(
+            frame.getCullerCountBuffer().getBuffer(),
+            0,
+            frame.getCullerCountBuffer().getSize(),
+            0
+        );
+
+        std::array countBufferBarrier = {frame.getCullerCountBufferFillMemoryBarrier()};
+        recorder.bufferMemoryBarriers(countBufferBarrier);
+
+        m_ComputeCuller.bind(cmd);
+        frame.getCullerDescriptorSet().bind(m_ComputeCuller.getPipeline(), cmd, vk::PipelineBindPoint::eCompute);
+
+        uint32_t groupX = (totalObjects + 255) / 256;
+        m_ComputeCuller.execute(cmd, {groupX, 1, 1});
+
+        recorder.bufferMemoryBarriers(frame.getCullerBufferMemoryBarriers());
+    }
+
     void Engine::transitionForMainPass(const FrameData &frame, const CommandRecorder &recorder) const
     {
         recorder.imageBarrier({
@@ -748,13 +799,10 @@ namespace kailux
         m_MeshRegistry.bind(recorder.getCommandBuffer());
         frame.getDescriptorSet().bind(m_MainPass.getPipeline(), cmd);
 
-        auto meshCount = static_cast<uint32_t>(
-            m_Scene.getEntityRegistry().view<MeshComponent>().size()
-        );
-
-        recorder.drawIndexedIndirect(
+        recorder.drawIndexedIndirectCount(
             frame.getIndirectBuffer(),
-            meshCount
+            frame.getCullerCountBuffer(),
+            MainPass::s_MaxMeshCount
         );
     }
 
@@ -826,20 +874,21 @@ namespace kailux
         for (auto entity: view)
         {
             auto &camera = view.get<CameraComponent>(entity);
-            Camera::updateMovement(camera, window, deltaTime);
-            Camera::updateLookAt(camera, window, deltaTime);
+            Camera::update_movement(camera, window, deltaTime);
+            Camera::update_look_at(camera, window, deltaTime);
             auto &data = view.get<CameraData>(entity);
             data.view = Camera::get_view(camera);
             data.positionAndExposure = {camera.position, camera.exposure};
         }
     }
 
-    void Engine::updateFrameBuffers(FrameData &frame, const CommandRecorder &recorder) const
+    void Engine::updateFrameBuffers(FrameData &frame, const CommandRecorder &recorder)
     {
         updateCameraBuffer(frame);
         updateMeshDataBuffer(frame);
-        updateIndirectBuffer(frame);
         updateSceneBuffer(frame);
+        updateCullerBuffers(frame, recorder);
+
         recorder.bufferMemoryBarriers(frame.getBufferMemoryBarriers());
     }
 
@@ -861,10 +910,12 @@ namespace kailux
         for (auto entity: view)
         {
             const auto &transform = view.get<MeshTransformData>(entity);
+            auto boundingSphere = view.get<MeshComponent>(entity).boundingSphere;
             auto material = view.get<MeshMaterialData>(entity);
             material.materialIdx = view.get<MaterialComponent>(entity).handle.index;
             data.emplace_back(
                 transform.getModelMatrix(),
+                boundingSphere,
                 material,
                 static_cast<uint32_t>(entity)
             );
@@ -872,12 +923,18 @@ namespace kailux
         frame.getModelBuffer().upload(data.data(), data.size() * sizeof(MeshData));
     }
 
-    void Engine::updateIndirectBuffer(FrameData &frame) const
+    void Engine::updateSceneBuffer(FrameData &frame) const
+    {
+        const auto &data = m_Scene.getData();
+        frame.getSceneBuffer().upload(&data, sizeof(SceneData));
+    }
+
+    void Engine::updateCullerBuffers(const FrameData &frame, const CommandRecorder &recorder)
     {
         std::vector<vk::DrawIndexedIndirectCommand> indirectCommands;
         auto view = m_Scene.getEntityRegistry().view<MeshComponent>();
         indirectCommands.reserve(view.size());
-        view.each([this, &indirectCommands](auto mesh)
+        view.each([this, &indirectCommands](const auto &mesh)
         {
             auto meshView = m_MeshRegistry.view(mesh.handle);
             indirectCommands.emplace_back(
@@ -888,14 +945,11 @@ namespace kailux
                 0
             );
         });
-        frame.getIndirectBuffer().upload(indirectCommands.data(),
-                                         indirectCommands.size() * sizeof(vk::DrawIndexedIndirectCommand));
-    }
+        if (indirectCommands.empty())
+            return;
 
-    void Engine::updateSceneBuffer(FrameData &frame) const
-    {
-        auto data = m_Scene.getData();
-        frame.getSceneBuffer().upload(&data, sizeof(SceneData));
+        frame.getCullerInputCommandsBuffer().upload(indirectCommands.data(),
+                                                    indirectCommands.size() * sizeof(vk::DrawIndexedIndirectCommand));
     }
 
     void Engine::readOutputBuffers(const FrameData &frame)
@@ -954,25 +1008,36 @@ namespace kailux
                 return;
             if (data->type != MeshType::Loaded)
             {
-                auto createMeshEntity = [this, &data](auto meshHandle)
+                auto createMeshEntity = [this, &data](auto meshHandle, const auto &vertices)
                 {
                     const auto &material = m_TextureRegistry.view(m_TextureRegistry.getDefaultSetHandle());
                     auto textureHandle = m_TextureRegistry.registerTextureSet(material);
-                    m_Scene.createMeshEntity(data->name.empty() ? m_Scene.getMeshEntityName() : data->name,
-                                             meshHandle,
-                                             data->path,
-                                             data->type,
-                                             textureHandle,
-                                             data->transform, data->material
+                    m_Scene.createMeshEntity(
+                        data->name.empty() ? m_Scene.getMeshEntityName() : data->name,
+                        {
+                            meshHandle,
+                            data->path,
+                            data->type,
+                            Geometry::computeBoundingSphere(vertices)
+                        },
+                        textureHandle,
+                        data->transform,
+                        data->material
                     );
                 };
                 switch (data->type)
                 {
                     case MeshType::Cube:
-                        createMeshEntity(m_MeshRegistry.getBuiltins().cube);
+                        createMeshEntity(
+                            m_MeshRegistry.getBuiltins().cube,
+                            MeshRegistry::generate_cube().vertices
+                            );
                         break;
                     case MeshType::Sphere:
-                        createMeshEntity(m_MeshRegistry.getBuiltins().sphere);
+                        createMeshEntity(
+                            m_MeshRegistry.getBuiltins().sphere,
+                            MeshRegistry::generate_sphere().vertices
+                            );
                         break;
                     default:
                         break;
@@ -1005,11 +1070,15 @@ namespace kailux
             }
             cacheMesh(data->path, meshHandle, textureHandle);
             m_Scene.createMeshEntity(data->name.empty() ? m_Scene.getMeshEntityName() : data->name,
-                                     meshHandle,
-                                     data->path,
-                                     data->type,
+                                     {
+                                         meshHandle,
+                                         data->path,
+                                         data->type,
+                                         data->data.boundingSphere
+                                     },
                                      textureHandle,
-                                     data->transform, data->material
+                                     data->transform,
+                                     data->material
             );
             m_OnInfoLog(std::format("Loaded {} successfully", data->path));
         }

@@ -94,6 +94,7 @@ namespace kailux
         void createSceneTextureIds();
 
         void createComputePicker();
+        void createComputeCuller();
 
         void createScene();
         void createSceneEntities(const Window &window);
@@ -107,11 +108,12 @@ namespace kailux
         void                                        recordPicker(const FrameData& frame, const CommandRecorder &recorder) const;
         void                                        recordOutline(const FrameData& frame, const CommandRecorder &recorder) const;
 
-        void updateFrameBuffers(FrameData& frame, const CommandRecorder& recorder) const;
+        void updateFrameBuffers(FrameData& frame, const CommandRecorder& recorder);
         void updateCameraBuffer(FrameData& frame) const;
         void updateMeshDataBuffer(FrameData& frame) const;
-        void updateIndirectBuffer(FrameData& frame) const;
+
         void updateSceneBuffer(FrameData& frame) const;
+        void updateCullerBuffers(const FrameData& frame, const CommandRecorder &recorder);
 
         void readOutputBuffers(const FrameData& frame);
 
@@ -131,6 +133,8 @@ namespace kailux
         };
         void                     cacheMesh(std::string_view path, MeshHandle meshHandle, TextureSetHandle materialHandle);
         std::optional<MeshCache> uncacheMesh(std::string_view path);
+
+        void executeCulling(const FrameData& frame, const CommandRecorder& recorder);
 
         void transitionForMainPass(const FrameData& frame, const CommandRecorder& recorder) const;
         void transitionForOutlinePass(const FrameData& frame, const CommandRecorder& recorder, uint32_t imageIndex) const;
@@ -158,6 +162,7 @@ namespace kailux
         OutlinePass                                m_OutlinePass;
         ComputePicker                              m_ComputePicker;
         uint32_t                                   m_PickedEntity;
+        ComputeCuller                              m_ComputeCuller;
 
         Queue<PendingMeshData>                     m_PendingMeshData;
         std::unordered_map<std::string, MeshCache> m_MeshCache;

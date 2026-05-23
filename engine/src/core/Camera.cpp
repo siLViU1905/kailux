@@ -3,7 +3,7 @@
 
 namespace kailux
 {
-    void Camera::updateMovement(CameraComponent& component, const Window& window, float deltaTime)
+    void Camera::update_movement(CameraComponent& component, const Window& window, float deltaTime)
     {
         component.right = glm::normalize(glm::cross(component.forward, component.up));
 
@@ -23,7 +23,7 @@ namespace kailux
             component.position -= glm::vec3(0.f, 1.f, 0.f) * velocity;
     }
 
-    void Camera::updateLookAt(CameraComponent& component, const Window& window, float deltaTime)
+    void Camera::update_look_at(CameraComponent& component, const Window& window, float deltaTime)
     {
         if (!component.focused)
             return;
@@ -58,6 +58,27 @@ namespace kailux
                            component.position + component.forward,
                            component.up
         );
+    }
+
+    std::array<glm::vec4, 6> Camera::get_frustum_planes(const glm::mat4 &proj, const glm::mat4 &view)
+    {
+        std::array<glm::vec4, 6> planes;
+        auto m = glm::transpose(proj * view);
+
+        planes[0] = m[3] + m[0];
+        planes[1] = m[3] - m[0];
+        planes[2] = m[3] + m[1];
+        planes[3] = m[3] - m[1];
+        planes[4] = m[2];
+        planes[5] = m[3] - m[2];
+
+        for (auto& plane : planes)
+        {
+            float length = glm::length(glm::vec3(plane));
+            plane /= length;
+        }
+
+        return planes;
     }
 
     void Camera::update_vectors(CameraComponent &component)

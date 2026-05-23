@@ -16,6 +16,7 @@ namespace kailux
         struct LoadData
         {
             MeshRegistry::MeshData        meshData;
+            glm::vec4                     boundingSphere{};
             TextureRegistry::MaterialData materialData;
         };
         using LoadResult = std::expected<LoadData, std::string>;

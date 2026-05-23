@@ -3,6 +3,7 @@
 
 #include "Camera.h"
 #include "Core.h"
+#include "components/entt/MeshComponent.h"
 #include "components/gpu/MeshTransformData.h"
 #include "components/gpu/MeshMaterialData.h"
 #include "components/gpu/SceneData.h"
@@ -22,10 +23,8 @@ namespace kailux
         entt::entity createCameraEntity(std::string_view name, bool isPrimary, int width, int height);
         entt::entity createMeshEntity(
             std::string_view name,
-            MeshHandle meshHandle,
-            std::string_view path,
-            MeshType type,
-            TextureSetHandle textureSetHandle, const MeshTransformData &transform, const MeshMaterialData &material
+            const
+            MeshComponent &component, TextureSetHandle textureSetHandle, const MeshTransformData &transform, const MeshMaterialData &material
         );
 
         entt::registry&       getEntityRegistry();

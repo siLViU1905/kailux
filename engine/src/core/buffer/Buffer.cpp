@@ -54,7 +54,7 @@ namespace kailux
         return m_Size;
     }
 
-    void Buffer::upload(const void *data, vk::DeviceSize byte_size, vk::DeviceSize offset)
+    void Buffer::upload(const void *data, vk::DeviceSize byte_size, vk::DeviceSize offset) const
     {
         assert(m_Mapped && "Buffer is not host-visible");
         assert(offset + byte_size <= m_Size && "Upload exceeds buffer size");

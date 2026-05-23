@@ -141,12 +141,14 @@ namespace kailux
         m_InRendering = false;
     }
 
-    void CommandRecorder::drawIndexedIndirect(const Buffer &indirectBuffer, uint32_t drawCount) const
+    void CommandRecorder::drawIndexedIndirectCount(const Buffer &indirectBuffer, const Buffer &countBuffer, uint32_t maxDrawCount) const
     {
-        m_Cmd.drawIndexedIndirect(
+        m_Cmd.drawIndexedIndirectCount(
             indirectBuffer.getBuffer(),
             {},
-            drawCount,
+            countBuffer.getBuffer(),
+            {},
+            maxDrawCount,
             sizeof(vk::DrawIndexedIndirectCommand)
         );
     }

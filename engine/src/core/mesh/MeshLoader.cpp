@@ -4,6 +4,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <magic_enum/magic_enum.hpp>
 
+#include "core/Geometry.h"
+
 namespace kailux
 {
     MeshLoader::LoadResult MeshLoader::load(std::string_view path)
@@ -28,8 +30,11 @@ namespace kailux
         process_node(scene->mRootNode, scene, s_ParentMatrix, meshData, paths, meshDirectoryPath);
         auto materialData = process_material_paths(paths);
 
+        auto boundingSphere = Geometry::computeBoundingSphere(meshData.vertices);
+
         LoadData loadData(
             std::move(meshData),
+            boundingSphere,
             std::move(materialData)
         );
 
