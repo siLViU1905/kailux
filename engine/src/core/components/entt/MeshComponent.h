@@ -8,5 +8,6 @@ namespace kailux
         MeshHandle  handle;
         std::string path;
         MeshType    type;
+        glm::vec4   boundingSphere{};
     };
 }

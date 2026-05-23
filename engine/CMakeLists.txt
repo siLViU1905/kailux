@@ -36,6 +36,7 @@ add_library(kailux_engine STATIC
         src/core/passes/MainPass.cpp
         src/core/passes/ComputePass.cpp
         src/core/passes/ComputeCuller.cpp
+        src/core/Geometry.cpp
 )
 
 target_compile_definitions(kailux_engine PUBLIC

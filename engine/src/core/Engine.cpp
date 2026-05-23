@@ -4,6 +4,7 @@
 #include <magic_enum/magic_enum.hpp>
 
 #include "FileDialog.h"
+#include "Geometry.h"
 #include "command/CommandRecorder.h"
 #include "Log.h"
 #include "command/OneTimeCommand.h"
@@ -268,17 +269,27 @@ namespace kailux
 
         m_Scene.createMeshEntity(
             "Cube",
-            m_MeshRegistry.getBuiltins().cube,
-            "",
-            MeshType::Cube,
-            m_TextureRegistry.getDefaultSetHandle(), {}, {}
+            {
+                m_MeshRegistry.getBuiltins().cube,
+                "",
+                MeshType::Cube,
+                Geometry::computeBoundingSphere(MeshRegistry::generate_cube().vertices)
+            },
+            m_TextureRegistry.getDefaultSetHandle(),
+            {},
+            {}
         );
         m_Scene.createMeshEntity(
             "Sphere",
-            m_MeshRegistry.getBuiltins().sphere,
-            "",
-            MeshType::Sphere,
-            m_TextureRegistry.getDefaultSetHandle(), MeshTransformData({1.5f, 0.f, 0.f}), {}
+            {
+                m_MeshRegistry.getBuiltins().sphere,
+                "",
+                MeshType::Cube,
+                Geometry::computeBoundingSphere(MeshRegistry::generate_sphere().vertices)
+            },
+            m_TextureRegistry.getDefaultSetHandle(),
+            MeshTransformData({1.5f, 0.f, 0.f}),
+            {}
         );
     }
 
@@ -631,15 +642,15 @@ namespace kailux
         return cache;
     }
 
-    void Engine::executeCulling(const FrameData &frame, const CommandRecorder& recorder)
+    void Engine::executeCulling(const FrameData &frame, const CommandRecorder &recorder)
     {
         const auto cmd = recorder.getCommandBuffer();
         auto totalObjects = static_cast<uint32_t>(m_Scene.getEntityRegistry().view<MeshComponent>().size());
         if (totalObjects == 0)
             return;
 
-        const auto& camera = m_Scene.getEntityRegistry().get<CameraData>(m_Scene.getMainCamera());
-        auto planes = Camera::get_frustum_planes(camera.projection,camera.view);
+        const auto &camera = m_Scene.getEntityRegistry().get<CameraData>(m_Scene.getMainCamera());
+        auto planes = Camera::get_frustum_planes(camera.projection, camera.view);
         m_ComputeCuller.setFrustum(planes, totalObjects);
 
         recorder.getCommandBuffer().fillBuffer(
@@ -647,7 +658,7 @@ namespace kailux
             0,
             frame.getCullerCountBuffer().getSize(),
             0
-            );
+        );
 
         std::array countBufferBarrier = {frame.getCullerCountBufferFillMemoryBarrier()};
         recorder.bufferMemoryBarriers(countBufferBarrier);
@@ -899,10 +910,12 @@ namespace kailux
         for (auto entity: view)
         {
             const auto &transform = view.get<MeshTransformData>(entity);
+            auto boundingSphere = view.get<MeshComponent>(entity).boundingSphere;
             auto material = view.get<MeshMaterialData>(entity);
             material.materialIdx = view.get<MaterialComponent>(entity).handle.index;
             data.emplace_back(
                 transform.getModelMatrix(),
+                boundingSphere,
                 material,
                 static_cast<uint32_t>(entity)
             );
@@ -912,7 +925,7 @@ namespace kailux
 
     void Engine::updateSceneBuffer(FrameData &frame) const
     {
-        const auto& data = m_Scene.getData();
+        const auto &data = m_Scene.getData();
         frame.getSceneBuffer().upload(&data, sizeof(SceneData));
     }
 
@@ -921,7 +934,7 @@ namespace kailux
         std::vector<vk::DrawIndexedIndirectCommand> indirectCommands;
         auto view = m_Scene.getEntityRegistry().view<MeshComponent>();
         indirectCommands.reserve(view.size());
-        view.each([this, &indirectCommands](const auto& mesh)
+        view.each([this, &indirectCommands](const auto &mesh)
         {
             auto meshView = m_MeshRegistry.view(mesh.handle);
             indirectCommands.emplace_back(
@@ -935,7 +948,8 @@ namespace kailux
         if (indirectCommands.empty())
             return;
 
-        frame.getCullerInputCommandsBuffer().upload(indirectCommands.data(),indirectCommands.size() * sizeof(vk::DrawIndexedIndirectCommand));
+        frame.getCullerInputCommandsBuffer().upload(indirectCommands.data(),
+                                                    indirectCommands.size() * sizeof(vk::DrawIndexedIndirectCommand));
     }
 
     void Engine::readOutputBuffers(const FrameData &frame)
@@ -994,25 +1008,36 @@ namespace kailux
                 return;
             if (data->type != MeshType::Loaded)
             {
-                auto createMeshEntity = [this, &data](auto meshHandle)
+                auto createMeshEntity = [this, &data](auto meshHandle, const auto &vertices)
                 {
                     const auto &material = m_TextureRegistry.view(m_TextureRegistry.getDefaultSetHandle());
                     auto textureHandle = m_TextureRegistry.registerTextureSet(material);
-                    m_Scene.createMeshEntity(data->name.empty() ? m_Scene.getMeshEntityName() : data->name,
-                                             meshHandle,
-                                             data->path,
-                                             data->type,
-                                             textureHandle,
-                                             data->transform, data->material
+                    m_Scene.createMeshEntity(
+                        data->name.empty() ? m_Scene.getMeshEntityName() : data->name,
+                        {
+                            meshHandle,
+                            data->path,
+                            data->type,
+                            Geometry::computeBoundingSphere(vertices)
+                        },
+                        textureHandle,
+                        data->transform,
+                        data->material
                     );
                 };
                 switch (data->type)
                 {
                     case MeshType::Cube:
-                        createMeshEntity(m_MeshRegistry.getBuiltins().cube);
+                        createMeshEntity(
+                            m_MeshRegistry.getBuiltins().cube,
+                            MeshRegistry::generate_cube().vertices
+                            );
                         break;
                     case MeshType::Sphere:
-                        createMeshEntity(m_MeshRegistry.getBuiltins().sphere);
+                        createMeshEntity(
+                            m_MeshRegistry.getBuiltins().sphere,
+                            MeshRegistry::generate_sphere().vertices
+                            );
                         break;
                     default:
                         break;
@@ -1045,11 +1070,15 @@ namespace kailux
             }
             cacheMesh(data->path, meshHandle, textureHandle);
             m_Scene.createMeshEntity(data->name.empty() ? m_Scene.getMeshEntityName() : data->name,
-                                     meshHandle,
-                                     data->path,
-                                     data->type,
+                                     {
+                                         meshHandle,
+                                         data->path,
+                                         data->type,
+                                         data->data.boundingSphere
+                                     },
                                      textureHandle,
-                                     data->transform, data->material
+                                     data->transform,
+                                     data->material
             );
             m_OnInfoLog(std::format("Loaded {} successfully", data->path));
         }

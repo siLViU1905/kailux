@@ -26,14 +26,20 @@ layout (set = 0, binding = 0) uniform Camera
     vec4 positionAndExposure;
 } camera;
 
-struct MeshData
+struct MeshMaterialData
 {
-    mat4 model;
-
     vec4 albedoAndRoughness;
     vec4 pbrParams;
     uint materialIdx;
     uint _padding[3];
+};
+
+struct MeshData
+{
+    mat4 model;
+    vec4 boundingSphere;
+
+    MeshMaterialData material;
 
     uint idx;
     uint __padding[3];
@@ -50,12 +56,12 @@ void main()
     fragPos = worldPos.xyz;
     fragTexCoord = aUv;
 
-    fragAlbedo    = mData.albedoAndRoughness.xyz;
-    fragRoughness = mData.albedoAndRoughness.w;
-    fragMetallic  = mData.pbrParams.x;
-    fragAO        = mData.pbrParams.y;
+    fragAlbedo    = mData.material.albedoAndRoughness.xyz;
+    fragRoughness = mData.material.albedoAndRoughness.w;
+    fragMetallic  = mData.material.pbrParams.x;
+    fragAO        = mData.material.pbrParams.y;
 
-    fragMaterialIdx = mData.materialIdx;
+    fragMaterialIdx = mData.material.materialIdx;
 
     fragIdx = mData.idx;
 

@@ -20,7 +20,10 @@ struct MeshMaterialData
 struct MeshData
 {
     mat4 modelMatrix;
+    vec4 boundingSphere;
+
     MeshMaterialData material;
+
     uint id;
     uint _padding[3];
 };
@@ -69,17 +72,18 @@ void main() {
     if (gId >= totalObjects)
     return;
 
-    mat4 modelMatrix = objects[gId].modelMatrix;
+    mat4 modelMatrix   = objects[gId].modelMatrix;
+    vec4 localSphere   = objects[gId].boundingSphere;
+    vec3 localCenter   = localSphere.xyz;
+    float localRadius  = localSphere.w;
 
-    vec3 worldCenter = (modelMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
-
+    vec3 worldCenter = (modelMatrix * vec4(localCenter, 1.0)).xyz;
 
     float scaleX = length(modelMatrix[0].xyz);
     float scaleY = length(modelMatrix[1].xyz);
     float scaleZ = length(modelMatrix[2].xyz);
     float maxScale = max(scaleX, max(scaleY, max(scaleZ, 1.0)));
 
-    float localRadius = 2.5;
     float worldRadius = localRadius * maxScale;
 
     if (IsVisible(worldCenter, worldRadius))

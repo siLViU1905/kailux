@@ -7,6 +7,7 @@ namespace kailux
     struct MeshData
     {
         ModelMatrixType   modelMatrix{1.f};
+        glm::vec4         boundingSphere{};
         MeshMaterialData  material;
         uint32_t          id{~0u};
         std::array<uint32_t, 3> _padding{};
