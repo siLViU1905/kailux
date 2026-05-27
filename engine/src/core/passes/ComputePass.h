@@ -15,12 +15,11 @@ namespace kailux
     class ComputePass
     {
     public:
-        KAILUX_DECLARE_NON_COPYABLE_MOVABLE(ComputePass)
-        virtual ~ComputePass() = default;
+        KAILUX_DECLARE_NON_COPYABLE_MOVABLE(ComputePass);
 
         void bind(vk::CommandBuffer cmd) const;
 
-        virtual void execute(vk::CommandBuffer cmd, ComputeWorkgroup group) const = 0;
+        void execute(vk::CommandBuffer cmd, ComputeWorkgroup group) const;
 
         const DescriptorLayout& getDescriptorLayout() const;
         const DescriptorPool&   getDescriptorPool() const;
@@ -43,6 +42,31 @@ namespace kailux
                     return false;
 
             return true;
+        }
+
+        template<auto PcRanges, typename... Pcs>
+        void pushImpl(vk::CommandBuffer cmd, const Pcs &... pcs) const
+        {
+            static_assert(sizeof...(Pcs) == PcRanges.size(),
+                  "Number of push constants doesnt correspond with s_PushConstantRanges");
+
+            uint32_t currentOffset = 0;
+            size_t index = 0;
+
+            ([&]() {
+                assert(sizeof(Pcs) == PcRanges[index].size);
+
+                cmd.pushConstants(
+                    m_Pipeline.getLayout(),
+                    vk::ShaderStageFlagBits::eCompute,
+                    currentOffset,
+                    static_cast<uint32_t>(sizeof(Pcs)),
+                    &pcs
+                );
+
+                currentOffset += static_cast<uint32_t>(sizeof(Pcs));
+                ++index;
+            }(), ...);
         }
 
         DescriptorLayout    m_DescriptorLayout;

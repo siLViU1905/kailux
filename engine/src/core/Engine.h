@@ -71,10 +71,10 @@ namespace kailux
         void setOnWarningLog(OnLog&& callback);
         void setOnErrorLog(OnLog&& callback);
 
-        ComputePicker& getPicker();
-        uint32_t       getPickedEntity() const;
+        void setSceneViewportMousePos(uint32_t x, uint32_t y);
+        void setOutlineInfo(glm::vec3 color, uint32_t entity);
 
-        OutlinePass&   getOutlinePass();
+        uint32_t getPickedEntity() const;
 
     private:
         static constexpr uint32_t         s_MaxMeshCount = MainPass::s_MaxMeshCount;
@@ -156,6 +156,9 @@ namespace kailux
 
         Scene                                      m_Scene;
         OnEditorRender                             m_OnEditorRender;
+
+        ComputePassesPushConstants::MouseCords     m_SceneViewportMousePos;
+        GraphicsPassesPushConstants::Outline       m_OutlineInfo;
 
         MainPass                                   m_MainPass;
         SkyboxPass                                 m_SkyboxPass;

@@ -600,19 +600,19 @@ namespace kailux
         m_OnErrorLog = std::move(callback);
     }
 
-    ComputePicker &Engine::getPicker()
+    void Engine::setSceneViewportMousePos(uint32_t x, uint32_t y)
     {
-        return m_ComputePicker;
+        m_SceneViewportMousePos = {x, y};
+    }
+
+    void Engine::setOutlineInfo(glm::vec3 color, uint32_t entity)
+    {
+        m_OutlineInfo = {{color, 1.f}, entity};
     }
 
     uint32_t Engine::getPickedEntity() const
     {
         return m_PickedEntity;
-    }
-
-    OutlinePass &Engine::getOutlinePass()
-    {
-        return m_OutlinePass;
     }
 
     void Engine::cacheMesh(std::string_view path, MeshHandle meshHandle, TextureSetHandle materialHandle)
@@ -649,10 +649,6 @@ namespace kailux
         if (totalObjects == 0)
             return;
 
-        const auto &camera = m_Scene.getEntityRegistry().get<CameraData>(m_Scene.getMainCamera());
-        auto planes = Camera::get_frustum_planes(camera.projection, camera.view);
-        m_ComputeCuller.setFrustum(planes, totalObjects);
-
         recorder.getCommandBuffer().fillBuffer(
             frame.getCullerCountBuffer().getBuffer(),
             0,
@@ -665,6 +661,10 @@ namespace kailux
 
         m_ComputeCuller.bind(cmd);
         frame.getCullerDescriptorSet().bind(m_ComputeCuller.getPipeline(), cmd, vk::PipelineBindPoint::eCompute);
+
+        const auto &camera = m_Scene.getEntityRegistry().get<CameraData>(m_Scene.getMainCamera());
+        auto planes = Camera::get_frustum_planes(camera.projection, camera.view);
+        m_ComputeCuller.push<ComputePassesPushConstants::CameraFrustum>(cmd, {planes, totalObjects});
 
         uint32_t groupX = (totalObjects + 255) / 256;
         m_ComputeCuller.execute(cmd, {groupX, 1, 1});
@@ -848,6 +848,7 @@ namespace kailux
         m_ComputePicker.bind(cmd);
         frame.getPickerDescriptorSet().bind(m_ComputePicker.getPipeline(), cmd,
                                             vk::PipelineBindPoint::eCompute);
+        m_ComputePicker.push(cmd, m_SceneViewportMousePos);
         m_ComputePicker.execute(
             cmd,
             {1, 1, 1}
@@ -859,7 +860,7 @@ namespace kailux
         const auto cmd = recorder.getCommandBuffer();
         m_OutlinePass.bind(cmd);
         frame.getOutlineDescriptorSet().bind(m_OutlinePass.getPipeline(), cmd);
-        m_OutlinePass.push(cmd);
+        m_OutlinePass.push(cmd, m_OutlineInfo);
         cmd.draw(3, 1, 0, 0);
     }
 

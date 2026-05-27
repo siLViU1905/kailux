@@ -16,7 +16,11 @@ namespace kailux
 
         static SkyboxPass create(const Context& context, const Swapchain& swapchain, uint32_t maxFrames);
 
-        void push(vk::CommandBuffer cmd) const override;
+        template<typename... Pcs>
+        void push(vk::CommandBuffer cmd, const Pcs &... pcs) const
+        {
+            pushImpl<{}, Pcs...>(cmd, pcs...);
+        }
 
         const Texture&          getTexture() const;
         const Texture&          getIrradianceMapTexture() const;

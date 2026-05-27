@@ -10,7 +10,11 @@ namespace kailux
 
         static MainPass create(const Context& context, const Swapchain& swapchain, uint32_t maxFrames);
 
-        void push(vk::CommandBuffer cmd) const override;
+        template<typename... Pcs>
+        void push(vk::CommandBuffer cmd, const Pcs &... pcs) const
+        {
+            pushImpl<{}, Pcs...>(cmd, pcs...);
+        }
 
         static constexpr uint32_t s_MaxMeshCount = 1'000;
 

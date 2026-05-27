@@ -1,5 +1,6 @@
 #pragma once
 #include "ComputePass.h"
+#include "ComputePassesPushConstants.h"
 
 namespace kailux
 {
@@ -10,9 +11,11 @@ namespace kailux
 
         static ComputeCuller create(const Context &context, uint32_t frameCount);
 
-        void execute(vk::CommandBuffer cmd, ComputeWorkgroup group) const override;
-
-        void setFrustum(const std::array<glm::vec4, 6>& planes, uint32_t totalObjects);
+        template<typename... Pcs>
+        void push(vk::CommandBuffer cmd, const Pcs &... pcs) const
+        {
+            pushImpl<s_PushConstantRanges, Pcs...>(cmd, pcs...);
+        }
 
     private:
         static constexpr std::string_view s_ComputeShaderPath = "shaders/cull_compute_shader.spv";
@@ -62,19 +65,11 @@ namespace kailux
             "Descriptor layout bindings and pool sizes do not match"
             );
 
-        struct CullerPushConstant
-        {
-            std::array<glm::vec4, 6> frustumPlanes{};
-            uint32_t                 totalObjects{};
-        };
-
         static constexpr std::array s_PushConstantRanges = {
             PushConstantRangeInfo(
                 vk::ShaderStageFlagBits::eCompute,
-                sizeof(CullerPushConstant)
+                sizeof(ComputePassesPushConstants::CameraFrustum)
             )
         };
-
-        CullerPushConstant m_CullerPc;
     };
 }

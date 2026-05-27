@@ -1,5 +1,6 @@
 #pragma once
 #include "GraphicsPass.h"
+#include "GraphicsPassesPushConstants.h"
 #include "core/Core.h"
 #include "core/Pipeline.h"
 #include "core/descriptor/DescriptorPool.h"
@@ -13,9 +14,11 @@ namespace kailux
 
         static OutlinePass create(const Context& context, const Swapchain& swapchain, uint32_t frameCount);
         
-        void push(vk::CommandBuffer cmd) const override;
-
-        void setColorAndId(glm::vec3 color, uint32_t id);
+        template<typename... Pcs>
+        void push(vk::CommandBuffer cmd, const Pcs &... pcs) const
+        {
+            pushImpl<s_PushConstantRanges, Pcs...>(cmd, pcs...);
+        }
 
     private:
         static constexpr std::string_view s_OutlineVertexShaderPath = "shaders/outline_vertex_shader.spv";
@@ -39,24 +42,13 @@ namespace kailux
             "Descriptor layout bindings and pool sizes do not match"
             );
 
-        struct OutlinePushConstant
-        {
-            glm::vec4               color{};
-            uint32_t                id = ~0u;
-            std::array<uint32_t, 3> _padding;
-        };
-
-        KAILUX_CHECK_DATA_STRUCTURE_SIZE(OutlinePushConstant)
-
         static constexpr std::array s_PushConstantRanges = {
             PushConstantRangeInfo(
                 vk::ShaderStageFlagBits::eFragment,
-                sizeof(OutlinePushConstant)
+                sizeof(GraphicsPassesPushConstants::Outline)
             )
         };
 
         static PipelineInfo make_pipeline_info(const Swapchain &swapchain);
-
-        OutlinePushConstant m_Pc;
     };
 }

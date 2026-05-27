@@ -1,5 +1,6 @@
 #pragma once
 #include "ComputePass.h"
+#include "ComputePassesPushConstants.h"
 #include "../Pipeline.h"
 #include "../descriptor/DescriptorLayout.h"
 #include "../descriptor/DescriptorPool.h"
@@ -13,9 +14,11 @@ namespace kailux
 
         static ComputePicker create(const Context &context, uint32_t frameCount);
 
-        void execute(vk::CommandBuffer cmd, ComputeWorkgroup group) const override;
-
-        void setCords(uint32_t x, uint32_t y);
+        template<typename... Pcs>
+        void push(vk::CommandBuffer cmd, const Pcs &... pcs) const
+        {
+            pushImpl<s_PushConstantRanges, Pcs...>(cmd, pcs...);
+        }
 
     private:
         static constexpr std::string_view s_PickerComputeShaderPath = "shaders/entity_picker_compute_shader.spv";
@@ -47,19 +50,11 @@ namespace kailux
             "Descriptor layout bindings and pool sizes do not match"
             );
 
-        struct MouseCords
-        {
-            uint32_t x{};
-            uint32_t y{};
-        };
-
         static constexpr std::array s_PushConstantRanges = {
             PushConstantRangeInfo(
                 vk::ShaderStageFlagBits::eCompute,
-                sizeof(MouseCords)
+                sizeof(ComputePassesPushConstants::MouseCords)
             )
         };
-
-        MouseCords m_Cords;
     };
 }
