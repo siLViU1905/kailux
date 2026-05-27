@@ -49,11 +49,6 @@ namespace kailux
         return pass;
     }
 
-    void SkyboxPass::push(vk::CommandBuffer cmd) const
-    {
-        return;
-    }
-
     const Texture &SkyboxPass::getTexture() const
     {
         return m_Texture;

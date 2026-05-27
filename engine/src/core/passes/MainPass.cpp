@@ -35,11 +35,6 @@ namespace kailux
         return pass;
     }
 
-    void MainPass::push(vk::CommandBuffer cmd) const
-    {
-        return;
-    }
-
     PipelineInfo MainPass::make_pipeline_info(const Swapchain &swapchain, vk::SampleCountFlagBits sampleCount)
     {
         PipelineInfo info;

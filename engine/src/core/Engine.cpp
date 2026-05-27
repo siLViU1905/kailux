@@ -605,19 +605,14 @@ namespace kailux
         m_SceneViewportMousePos = {x, y};
     }
 
-    ComputePicker &Engine::getPicker()
+    void Engine::setOutlineInfo(glm::vec3 color, uint32_t entity)
     {
-        return m_ComputePicker;
+        m_OutlineInfo = {{color, 1.f}, entity};
     }
 
     uint32_t Engine::getPickedEntity() const
     {
         return m_PickedEntity;
-    }
-
-    OutlinePass &Engine::getOutlinePass()
-    {
-        return m_OutlinePass;
     }
 
     void Engine::cacheMesh(std::string_view path, MeshHandle meshHandle, TextureSetHandle materialHandle)
@@ -853,7 +848,7 @@ namespace kailux
         m_ComputePicker.bind(cmd);
         frame.getPickerDescriptorSet().bind(m_ComputePicker.getPipeline(), cmd,
                                             vk::PipelineBindPoint::eCompute);
-        m_ComputePicker.push<ComputePassesPushConstants::MouseCords>(cmd, {m_SceneViewportMousePos.x, m_SceneViewportMousePos.y});
+        m_ComputePicker.push(cmd, m_SceneViewportMousePos);
         m_ComputePicker.execute(
             cmd,
             {1, 1, 1}
@@ -865,7 +860,7 @@ namespace kailux
         const auto cmd = recorder.getCommandBuffer();
         m_OutlinePass.bind(cmd);
         frame.getOutlineDescriptorSet().bind(m_OutlinePass.getPipeline(), cmd);
-        m_OutlinePass.push(cmd);
+        m_OutlinePass.push(cmd, m_OutlineInfo);
         cmd.draw(3, 1, 0, 0);
     }
 

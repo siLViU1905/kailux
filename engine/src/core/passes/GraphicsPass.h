@@ -12,8 +12,6 @@ namespace kailux
 
         void bind(vk::CommandBuffer cmd) const;
 
-        virtual void push(vk::CommandBuffer cmd) const = 0;
-
         const DescriptorLayout& getDescriptorLayout() const;
         const DescriptorPool&   getDescriptorPool() const;
         const Pipeline&         getPipeline() const;
@@ -34,6 +32,31 @@ namespace kailux
                     return false;
 
             return true;
+        }
+
+        template<auto PcRanges, typename... Pcs>
+        void pushImpl(vk::CommandBuffer cmd, const Pcs &... pcs) const
+        {
+            static_assert(sizeof...(Pcs) == PcRanges.size(),
+                  "Number of push constants doesnt correspond with s_PushConstantRanges");
+
+            uint32_t currentOffset = 0;
+            size_t index = 0;
+
+            ([&]() {
+                assert(sizeof(Pcs) == PcRanges[index].size);
+
+                cmd.pushConstants(
+                    m_Pipeline.getLayout(),
+                    PcRanges[index].shaderStage,
+                    currentOffset,
+                    static_cast<uint32_t>(sizeof(Pcs)),
+                    &pcs
+                );
+
+                currentOffset += static_cast<uint32_t>(sizeof(Pcs));
+                ++index;
+            }(), ...);
         }
 
         DescriptorLayout    m_DescriptorLayout;
