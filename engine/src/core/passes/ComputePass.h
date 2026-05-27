@@ -19,40 +19,6 @@ namespace kailux
 
         void bind(vk::CommandBuffer cmd) const;
 
-        // for single push constant
-        template<typename Pc, typename... Args>
-        void push(vk::CommandBuffer cmd, Args&&... args) const
-        {
-            Pc pc{std::forward<Args>(args)...};
-
-            cmd.pushConstants(
-                    m_Pipeline.getLayout(),
-                    vk::ShaderStageFlagBits::eCompute,
-                    0,
-                    sizeof(Pc),
-                    &pc
-                );
-        }
-
-        // for multiple push constants
-        template<typename... Pc>
-        void push(vk::CommandBuffer cmd, const Pc &... pcs) const
-        {
-            uint32_t currentOffset{};
-
-            ([&]()
-            {
-                cmd.pushConstants(
-                    m_Pipeline.getLayout(),
-                    vk::ShaderStageFlagBits::eCompute,
-                    currentOffset,
-                    sizeof(Pc),
-                    &pcs
-                );
-                currentOffset += sizeof(Pc);
-            }(), ...);
-        }
-
         void execute(vk::CommandBuffer cmd, ComputeWorkgroup group) const;
 
         const DescriptorLayout& getDescriptorLayout() const;
@@ -76,6 +42,31 @@ namespace kailux
                     return false;
 
             return true;
+        }
+
+        template<auto PcRanges, typename... Pcs>
+        void pushImpl(vk::CommandBuffer cmd, const Pcs &... pcs) const
+        {
+            static_assert(sizeof...(Pcs) == PcRanges.size(),
+                  "Number of push constants doesnt correspond with s_PushConstantRanges");
+
+            uint32_t currentOffset = 0;
+            size_t index = 0;
+
+            ([&]() {
+                assert(sizeof(Pcs) == PcRanges[index].size);
+
+                cmd.pushConstants(
+                    m_Pipeline.getLayout(),
+                    vk::ShaderStageFlagBits::eCompute,
+                    currentOffset,
+                    static_cast<uint32_t>(sizeof(Pcs)),
+                    &pcs
+                );
+
+                currentOffset += static_cast<uint32_t>(sizeof(Pcs));
+                ++index;
+            }(), ...);
         }
 
         DescriptorLayout    m_DescriptorLayout;

@@ -14,6 +14,12 @@ namespace kailux
 
         static ComputePicker create(const Context &context, uint32_t frameCount);
 
+        template<typename... Pcs>
+        void push(vk::CommandBuffer cmd, const Pcs &... pcs) const
+        {
+            pushImpl<s_PushConstantRanges, Pcs...>(cmd, pcs...);
+        }
+
     private:
         static constexpr std::string_view s_PickerComputeShaderPath = "shaders/entity_picker_compute_shader.spv";
 

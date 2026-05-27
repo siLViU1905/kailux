@@ -669,7 +669,7 @@ namespace kailux
 
         const auto &camera = m_Scene.getEntityRegistry().get<CameraData>(m_Scene.getMainCamera());
         auto planes = Camera::get_frustum_planes(camera.projection, camera.view);
-        m_ComputeCuller.push<ComputePassesPushConstants::CameraFrustum>(cmd, planes, totalObjects);
+        m_ComputeCuller.push<ComputePassesPushConstants::CameraFrustum>(cmd, {planes, totalObjects});
 
         uint32_t groupX = (totalObjects + 255) / 256;
         m_ComputeCuller.execute(cmd, {groupX, 1, 1});
@@ -853,7 +853,7 @@ namespace kailux
         m_ComputePicker.bind(cmd);
         frame.getPickerDescriptorSet().bind(m_ComputePicker.getPipeline(), cmd,
                                             vk::PipelineBindPoint::eCompute);
-        m_ComputePicker.push<ComputePassesPushConstants::MouseCords>(cmd, m_SceneViewportMousePos.x, m_SceneViewportMousePos.y);
+        m_ComputePicker.push<ComputePassesPushConstants::MouseCords>(cmd, {m_SceneViewportMousePos.x, m_SceneViewportMousePos.y});
         m_ComputePicker.execute(
             cmd,
             {1, 1, 1}
