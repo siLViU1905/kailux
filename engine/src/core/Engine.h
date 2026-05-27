@@ -71,6 +71,8 @@ namespace kailux
         void setOnWarningLog(OnLog&& callback);
         void setOnErrorLog(OnLog&& callback);
 
+        void setSceneViewportMousePos(uint32_t x, uint32_t y);
+
         ComputePicker& getPicker();
         uint32_t       getPickedEntity() const;
 
@@ -156,6 +158,8 @@ namespace kailux
 
         Scene                                      m_Scene;
         OnEditorRender                             m_OnEditorRender;
+
+        ComputePassesPushConstants::MouseCords     m_SceneViewportMousePos;
 
         MainPass                                   m_MainPass;
         SkyboxPass                                 m_SkyboxPass;

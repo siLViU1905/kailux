@@ -600,6 +600,11 @@ namespace kailux
         m_OnErrorLog = std::move(callback);
     }
 
+    void Engine::setSceneViewportMousePos(uint32_t x, uint32_t y)
+    {
+        m_SceneViewportMousePos = {x, y};
+    }
+
     ComputePicker &Engine::getPicker()
     {
         return m_ComputePicker;
@@ -649,10 +654,6 @@ namespace kailux
         if (totalObjects == 0)
             return;
 
-        const auto &camera = m_Scene.getEntityRegistry().get<CameraData>(m_Scene.getMainCamera());
-        auto planes = Camera::get_frustum_planes(camera.projection, camera.view);
-        m_ComputeCuller.setFrustum(planes, totalObjects);
-
         recorder.getCommandBuffer().fillBuffer(
             frame.getCullerCountBuffer().getBuffer(),
             0,
@@ -665,6 +666,10 @@ namespace kailux
 
         m_ComputeCuller.bind(cmd);
         frame.getCullerDescriptorSet().bind(m_ComputeCuller.getPipeline(), cmd, vk::PipelineBindPoint::eCompute);
+
+        const auto &camera = m_Scene.getEntityRegistry().get<CameraData>(m_Scene.getMainCamera());
+        auto planes = Camera::get_frustum_planes(camera.projection, camera.view);
+        m_ComputeCuller.push<ComputePassesPushConstants::CameraFrustum>(cmd, planes, totalObjects);
 
         uint32_t groupX = (totalObjects + 255) / 256;
         m_ComputeCuller.execute(cmd, {groupX, 1, 1});
@@ -848,6 +853,7 @@ namespace kailux
         m_ComputePicker.bind(cmd);
         frame.getPickerDescriptorSet().bind(m_ComputePicker.getPipeline(), cmd,
                                             vk::PipelineBindPoint::eCompute);
+        m_ComputePicker.push<ComputePassesPushConstants::MouseCords>(cmd, m_SceneViewportMousePos.x, m_SceneViewportMousePos.y);
         m_ComputePicker.execute(
             cmd,
             {1, 1, 1}

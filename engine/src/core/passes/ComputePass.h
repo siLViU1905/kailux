@@ -15,12 +15,45 @@ namespace kailux
     class ComputePass
     {
     public:
-        KAILUX_DECLARE_NON_COPYABLE_MOVABLE(ComputePass)
-        virtual ~ComputePass() = default;
+        KAILUX_DECLARE_NON_COPYABLE_MOVABLE(ComputePass);
 
         void bind(vk::CommandBuffer cmd) const;
 
-        virtual void execute(vk::CommandBuffer cmd, ComputeWorkgroup group) const = 0;
+        // for single push constant
+        template<typename Pc, typename... Args>
+        void push(vk::CommandBuffer cmd, Args&&... args) const
+        {
+            Pc pc{std::forward<Args>(args)...};
+
+            cmd.pushConstants(
+                    m_Pipeline.getLayout(),
+                    vk::ShaderStageFlagBits::eCompute,
+                    0,
+                    sizeof(Pc),
+                    &pc
+                );
+        }
+
+        // for multiple push constants
+        template<typename... Pc>
+        void push(vk::CommandBuffer cmd, const Pc &... pcs) const
+        {
+            uint32_t currentOffset{};
+
+            ([&]()
+            {
+                cmd.pushConstants(
+                    m_Pipeline.getLayout(),
+                    vk::ShaderStageFlagBits::eCompute,
+                    currentOffset,
+                    sizeof(Pc),
+                    &pcs
+                );
+                currentOffset += sizeof(Pc);
+            }(), ...);
+        }
+
+        void execute(vk::CommandBuffer cmd, ComputeWorkgroup group) const;
 
         const DescriptorLayout& getDescriptorLayout() const;
         const DescriptorPool&   getDescriptorPool() const;

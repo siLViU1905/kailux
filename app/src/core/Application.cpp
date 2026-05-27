@@ -193,6 +193,6 @@ namespace kailux
         auto outlineColor = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<MenuPanel>().getOutlineColor();
         auto selectedEntity = static_cast<uint32_t>(m_Editor.getLayer<EditorLayer>().getLayer().getPanel<HierarchyPanel>().getSelectedEntity());
         m_Engine.getOutlinePass().setColorAndId(outlineColor, selectedEntity);
-        m_Engine.getPicker().setCords(sceneViewportMousePos.x, sceneViewportMousePos.y);
+        m_Engine.setSceneViewportMousePos(sceneViewportMousePos.x, sceneViewportMousePos.y);
     }
 }

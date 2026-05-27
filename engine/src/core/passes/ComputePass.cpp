@@ -29,6 +29,11 @@ namespace kailux
         m_Pipeline.bindCompute(cmd);
     }
 
+    void ComputePass::execute(vk::CommandBuffer cmd, ComputeWorkgroup group) const
+    {
+        cmd.dispatch(group.x, group.y, group.z);
+    }
+
     const DescriptorLayout &ComputePass::getDescriptorLayout() const
     {
         return m_DescriptorLayout;
