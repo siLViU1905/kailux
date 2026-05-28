@@ -110,7 +110,7 @@ namespace kailux
             set.albedo = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data.albedoData));
         if (checkSize(data.normalData))
             set.normal = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data.normalData));
-        if (checkSize(data.normalData))
+        if (checkSize(data.roughnessData))
             set.roughness = create_shared<Texture>(
                 TextureAllocator::create_from_image_data(context, data.roughnessData));
         if (checkSize(data.metallicData))
