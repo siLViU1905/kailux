@@ -19,7 +19,7 @@ namespace kailux
             [](const AABB& a, const AABB& b)
             {
                 return AABB(
-                    glm::min(a.min, b.max),
+                    glm::min(a.min, b.min),
                     glm::max(a.max, b.max)
                     );
             },
