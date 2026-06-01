@@ -24,19 +24,16 @@ namespace kailux
             return std::unexpected(std::format("Assimp failed to load '{}': {}", path, importer.GetErrorString()));
 
         auto meshDirectoryPath = path.substr(0, path.find_last_of('/'));
-        MeshRegistry::MeshData meshData;
-        MaterialPaths paths;
 
-        process_node(scene->mRootNode, scene, s_ParentMatrix, meshData, paths, meshDirectoryPath);
-        auto materialData = process_material_paths(paths);
+        LoadData loadData;
+        for (uint32_t i = 0; i < scene->mNumMaterials; i++)
+        {
+            MaterialPaths paths;
+            extract_material_paths(scene->mMaterials[i], paths, meshDirectoryPath);
+            loadData.materials.push_back(process_material_paths(paths));
+        }
 
-        auto boundingSphere = Geometry::computeBoundingSphere(meshData.vertices);
-
-        LoadData loadData(
-            std::move(meshData),
-            boundingSphere,
-            std::move(materialData)
-        );
+        process_node(scene->mRootNode, scene, s_ParentMatrix, loadData, meshDirectoryPath);
 
         return loadData;
     }
@@ -49,8 +46,7 @@ namespace kailux
     void MeshLoader::process_node(const aiNode *node,
                                   const aiScene *scene,
                                   const glm::mat4 &parentMatrix,
-                                  MeshRegistry::MeshData &outMeshData,
-                                  MaterialPaths &outPaths,
+                                  MeshLoader::LoadData &outLoadData,
                                   std::string_view directoryPath
     )
     {
@@ -59,79 +55,59 @@ namespace kailux
         for (uint32_t i = 0; i < node->mNumMeshes; i++)
         {
             const aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-            process_mesh(mesh, scene, worldMatrix, outMeshData, outPaths, directoryPath);
+            SubMeshData submesh;
+            submesh.name = mesh->mName.C_Str();
+            submesh.localTransform = worldMatrix;
+            submesh.materialIndex = mesh->mMaterialIndex;
+
+            process_mesh(mesh, submesh.meshData);
+
+            submesh.boundingSphere = Geometry::computeBoundingSphere(submesh.meshData.vertices);
+
+            outLoadData.submeshes.push_back(std::move(submesh));
         }
 
         for (uint32_t i = 0; i < node->mNumChildren; i++)
-            process_node(node->mChildren[i], scene, worldMatrix, outMeshData, outPaths, directoryPath);
+            process_node(node->mChildren[i], scene, worldMatrix, outLoadData, directoryPath);
     }
 
     void MeshLoader::process_mesh(const aiMesh *mesh,
-                                  const aiScene *scene,
-                                  const glm::mat4 &worldMatrix,
-                                  MeshRegistry::MeshData &outMeshData,
-                                  MaterialPaths &outPaths,
-                                  std::string_view directoryPath)
+                                  MeshRegistry::MeshData &outMeshData)
     {
-        auto normalMatrix = glm::mat3(glm::transpose(glm::inverse(worldMatrix)));
-
-        auto vertexOffset = static_cast<uint32_t>(outMeshData.vertices.size());
-        outMeshData.vertices.reserve(outMeshData.vertices.size() + mesh->mNumVertices);
+        outMeshData.vertices.reserve(mesh->mNumVertices);
 
         for (uint32_t i = 0; i < mesh->mNumVertices; i++)
         {
-            Vertex v;
+            Vertex v{};
 
-            glm::vec3 pos = {mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z};
-            v.position = glm::vec3(worldMatrix * glm::vec4(pos, 1.0f));
+            v.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
 
             if (mesh->HasNormals())
-            {
-                glm::vec3 norm = {mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z};
-                v.normal = glm::normalize(normalMatrix * norm);
-            }
+                v.normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
 
             if (mesh->mTextureCoords[0])
-                v.uv = {mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y};
+                v.uv = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
+            else
+                v.uv = glm::vec2(0.f, 0.f);
 
             if (mesh->HasTangentsAndBitangents())
-            {
-                glm::vec3 t = {mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z};
-                glm::vec3 b = {mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z};
-                glm::vec3 n = v.normal;
-
-                glm::vec3 tangent = glm::normalize(normalMatrix * t);
-
-                tangent = glm::normalize(tangent - glm::dot(tangent, n) * n);
-                float handedness = (glm::dot(glm::cross(n, tangent), glm::normalize(normalMatrix * b)) < 0.f)
-                                       ? -1.f
-                                       : 1.f;
-
-                v.tangent = glm::vec4(tangent, handedness);
-            }
+                v.tangent = glm::vec4(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z, 1.0f);
 
             outMeshData.vertices.push_back(v);
         }
 
-        outMeshData.indices.reserve(outMeshData.indices.size() + mesh->mNumFaces * 3);
+        outMeshData.indices.reserve(mesh->mNumFaces * 3);
         for (uint32_t i = 0; i < mesh->mNumFaces; i++)
         {
             const aiFace &face = mesh->mFaces[i];
             for (uint32_t j = 0; j < face.mNumIndices; j++)
-                outMeshData.indices.push_back(face.mIndices[j] + vertexOffset);
+                outMeshData.indices.push_back(face.mIndices[j]);
         }
-        process_mesh_material(mesh, scene, outPaths, directoryPath);
     }
 
-    void MeshLoader::process_mesh_material(const aiMesh *mesh,
-                                           const aiScene *scene,
-                                           MaterialPaths &outPaths,
-                                           std::string_view directoryPath)
+    void MeshLoader::extract_material_paths(const aiMaterial *material, MaterialPaths &outPaths,
+        std::string_view directoryPath)
     {
-        if (mesh->mMaterialIndex >= scene->mNumMaterials)
-            return;
-
-        const auto *material = scene->mMaterials[mesh->mMaterialIndex];
         auto getMaterialMemberPtr = [](TextureType type, MaterialPaths& paths) -> std::string* {
             switch (type) {
                 case TextureType::Albedo:    return &paths.albedoPath;

@@ -20,12 +20,18 @@ namespace kailux
 
         static Scene create(std::string_view name);
 
+        void update();
+
         entt::entity createCameraEntity(std::string_view name, bool isPrimary, int width, int height);
         entt::entity createMeshEntity(
             std::string_view name,
-            const
-            MeshComponent &component, TextureSetHandle textureSetHandle, const MeshTransformData &transform, const MeshMaterialData &material
+            const MeshComponent &component,
+            TextureSetHandle textureSetHandle,
+            const MeshTransformData &transform,
+            const MeshMaterialData &material,
+            entt::entity parent = entt::null
         );
+        entt::entity createParentEntity(std::string_view name);
 
         entt::registry&       getEntityRegistry();
         const entt::registry& getEntityRegistry() const;
@@ -48,6 +54,8 @@ namespace kailux
         entt::entity createEntity(std::string_view name);
         using        SunData = DirectionalLightData;
         entt::entity createSunEntity(const SunData& data);
+
+        void updateTransforms();
 
         std::string    m_Name;
 

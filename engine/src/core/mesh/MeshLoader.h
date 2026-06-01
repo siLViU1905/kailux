@@ -13,11 +13,19 @@ namespace kailux
     class MeshLoader
     {
     public:
-        struct LoadData
+        struct SubMeshData
         {
+            std::string                   name;
             MeshRegistry::MeshData        meshData;
             glm::vec4                     boundingSphere{};
-            TextureRegistry::MaterialData materialData;
+            uint32_t                      materialIndex{};
+            glm::mat4                     localTransform{1.0f};
+        };
+
+        struct LoadData
+        {
+            std::vector<SubMeshData> submeshes;
+            std::vector<TextureRegistry::MaterialData> materials;
         };
         using LoadResult = std::expected<LoadData, std::string>;
         static LoadResult load(std::string_view path);
@@ -40,22 +48,15 @@ namespace kailux
         static void process_node(const aiNode *node,
                                  const aiScene *scene,
                                  const glm::mat4 &parentMatrix,
-                                 MeshRegistry::MeshData &outMeshData,
-                                 MaterialPaths &outPaths,
+                                 LoadData &outLoadData,
                                  std::string_view directoryPath
         );
         static void process_mesh(const aiMesh *mesh,
-                                 const aiScene *scene,
-                                 const glm::mat4 &worldMatrix,
-                                 MeshRegistry::MeshData &outMeshData,
-                                 MaterialPaths &outPaths,
-                                 std::string_view directoryPath
+                                 MeshRegistry::MeshData &outMeshData
         );
-        static void process_mesh_material(const aiMesh *mesh,
-                                          const aiScene *scene,
-                                          MaterialPaths &outPaths,
-                                          std::string_view directoryPath
-        );
+        static void extract_material_paths(const aiMaterial *material,
+                                           MaterialPaths &outPaths,
+                                           std::string_view directoryPath);
         static TextureRegistry::MaterialData process_material_paths(const MaterialPaths& paths);
     };
 }
