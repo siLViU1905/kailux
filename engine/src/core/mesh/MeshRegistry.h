@@ -45,7 +45,7 @@ namespace kailux
     public:
         static constexpr vk::DeviceSize s_VertexAlignment  = sizeof(Vertex);
         static constexpr vk::DeviceSize s_BuiltinZoneSize  = (16 * 1024 * 1024 / s_VertexAlignment) * s_VertexAlignment;
-        static constexpr vk::DeviceSize s_AssetZoneSize    = (64 * 1024 * 1024 / s_VertexAlignment) * s_VertexAlignment;
+        static constexpr vk::DeviceSize s_AssetZoneSize    = (1000 * 1024 * 1024 / s_VertexAlignment) * s_VertexAlignment;
         static constexpr vk::DeviceSize s_TotalSize        = s_BuiltinZoneSize + s_AssetZoneSize;
 
         using IndexType = uint32_t;

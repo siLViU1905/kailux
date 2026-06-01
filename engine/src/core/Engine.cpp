@@ -9,11 +9,13 @@
 #include "Log.h"
 #include "command/OneTimeCommand.h"
 #include "components/entt/CameraComponent.h"
+#include "components/entt/HierarchyComponent.h"
 #include "components/entt/MaterialComponent.h"
 #include "components/entt/MeshComponent.h"
 #include "components/gpu/CameraData.h"
 #include "components/gpu/MeshData.h"
 #include "components/gpu/MeshTransformData.h"
+#include "components/gpu/TransformComponent.h"
 #include "texture/TextureAllocator.h"
 
 namespace kailux
@@ -645,9 +647,6 @@ namespace kailux
     void Engine::executeCulling(const FrameData &frame, const CommandRecorder &recorder)
     {
         const auto cmd = recorder.getCommandBuffer();
-        auto totalObjects = static_cast<uint32_t>(m_Scene.getEntityRegistry().view<MeshComponent>().size());
-        if (totalObjects == 0)
-            return;
 
         recorder.getCommandBuffer().fillBuffer(
             frame.getCullerCountBuffer().getBuffer(),
@@ -658,6 +657,10 @@ namespace kailux
 
         std::array countBufferBarrier = {frame.getCullerCountBufferFillMemoryBarrier()};
         recorder.bufferMemoryBarriers(countBufferBarrier);
+
+        auto totalObjects = static_cast<uint32_t>(m_Scene.getEntityRegistry().view<MeshComponent>().size());
+        if (totalObjects == 0)
+            return;
 
         m_ComputeCuller.bind(cmd);
         frame.getCullerDescriptorSet().bind(m_ComputeCuller.getPipeline(), cmd, vk::PipelineBindPoint::eCompute);
@@ -871,6 +874,8 @@ namespace kailux
         pollPendingData();
         updatePendingFrameTasks();
 
+        m_Scene.update();
+
         auto view = m_Scene.getEntityRegistry().view<CameraComponent, CameraData>();
         for (auto entity: view)
         {
@@ -905,17 +910,16 @@ namespace kailux
     void Engine::updateMeshDataBuffer(FrameData &frame) const
     {
         std::vector<MeshData> data;
-        auto view = m_Scene.getEntityRegistry().view<MeshTransformData, MeshMaterialData, MeshComponent,
-            MaterialComponent>();
+        auto view = m_Scene.getEntityRegistry().view<TransformComponent, MeshMaterialData, MeshComponent,MaterialComponent>();
         data.reserve(view.size_hint());
         for (auto entity: view)
         {
-            const auto &transform = view.get<MeshTransformData>(entity);
+            const auto &transform = view.get<TransformComponent>(entity);
             auto boundingSphere = view.get<MeshComponent>(entity).boundingSphere;
             auto material = view.get<MeshMaterialData>(entity);
             material.materialIdx = view.get<MaterialComponent>(entity).handle.index;
             data.emplace_back(
-                transform.getModelMatrix(),
+                transform.worldMatrix,
                 boundingSphere,
                 material,
                 static_cast<uint32_t>(entity)
@@ -1046,42 +1050,83 @@ namespace kailux
                 return;
             }
 
-            const auto &meshData = data->data;
-            MeshHandle meshHandle;
-            TextureSetHandle textureHandle;
-            if (isMeshCached(data->path))
-            {
-                auto cache = m_MeshCache.at(data->path);
-                const auto &material = m_TextureRegistry.view(cache.materialHandle);
-                auto newHandle = m_TextureRegistry.registerTextureSet(material);
+            const auto &loadData = data->data;
+            auto rootName = data->name.empty() ? m_Scene.getMeshEntityName() : data->name;
+            auto parentEntity = m_Scene.createParentEntity(rootName);
 
-                auto updateInfos = make_descriptor_set_update_info_from_texture_set(newHandle, material);
+            auto& entityReg = m_Scene.getEntityRegistry();
+            entityReg.emplace<HierarchyComponent>(parentEntity);
+            auto& parentTransform = entityReg.emplace<TransformComponent>(parentEntity);
+            parentTransform.transform.position = data->transform.position;
+            parentTransform.transform.rotation = data->transform.rotation;
+            parentTransform.transform.scale    = data->transform.scale;
+            entityReg.emplace<MeshMaterialData>(parentEntity, data->material);
 
-                for (const auto &frame: m_Frames)
-                    frame.getDescriptorSet().updateInfo(
-                        m_Context,
-                        updateInfos
-                    );
-                meshHandle = cache.meshHandle;
-                textureHandle = cache.materialHandle;
-            } else
+            std::vector<TextureSetHandle> loadedMaterialHandles;
+            loadedMaterialHandles.reserve(loadData.materials.size());
+
+            for (const auto & material : loadData.materials)
             {
-                meshHandle = uploadMeshDataToRegistry(meshData.meshData);
-                textureHandle = uploadMaterialDataToRegistry(meshData.materialData);
+                auto textureHandle = uploadMaterialDataToRegistry(material);
+
+                const auto &materialView = m_TextureRegistry.view(textureHandle);
+                auto updateInfos = make_descriptor_set_update_info_from_texture_set(textureHandle, materialView);
+
+                for (const auto &frame : m_Frames)
+                    frame.getDescriptorSet().updateInfo(m_Context, updateInfos);
+
+                loadedMaterialHandles.push_back(textureHandle);
             }
-            cacheMesh(data->path, meshHandle, textureHandle);
-            m_Scene.createMeshEntity(data->name.empty() ? m_Scene.getMeshEntityName() : data->name,
-                                     {
-                                         meshHandle,
-                                         data->path,
-                                         data->type,
-                                         data->data.boundingSphere
-                                     },
-                                     textureHandle,
-                                     data->transform,
-                                     data->material
-            );
-            m_OnInfoLog(std::format("Loaded {} successfully", data->path));
+
+            uint32_t submeshIndex = 0;
+            for (const auto& submesh : loadData.submeshes)
+            {
+                MeshHandle meshHandle;
+
+                auto cacheKey = std::format("{}_sub{}", data->path, submeshIndex++);
+                if (isMeshCached(cacheKey))
+                {
+                    auto cache = m_MeshCache.at(cacheKey);
+                    const auto &material = m_TextureRegistry.view(cache.materialHandle);
+                    auto newHandle = m_TextureRegistry.registerTextureSet(material);
+
+                    auto updateInfos = make_descriptor_set_update_info_from_texture_set(newHandle, material);
+
+                    for (const auto &frame: m_Frames)
+                        frame.getDescriptorSet().updateInfo(
+                            m_Context,
+                            updateInfos
+                        );
+                    meshHandle = cache.meshHandle;
+                } else
+                {
+                    meshHandle = uploadMeshDataToRegistry(submesh.meshData);
+                    cacheMesh(cacheKey, meshHandle, loadedMaterialHandles[submesh.materialIndex]);
+                }
+
+                auto textureHandle = loadedMaterialHandles[submesh.materialIndex];
+
+                auto submeshName = std::format("{}_{}", rootName, submesh.name.empty() ? std::to_string(submeshIndex) : submesh.name);
+
+                auto childEntity = m_Scene.createMeshEntity(
+                    submeshName,
+                    {
+                        meshHandle,
+                        data->path,
+                        data->type,
+                        submesh.boundingSphere
+                    },
+                    textureHandle,
+                    {},
+                    data->material,
+                    parentEntity
+                );
+
+                auto& childTransform = entityReg.get<TransformComponent>(childEntity);
+                childTransform.submeshLocalMatrix = submesh.localTransform;
+            }
+            m_OnInfoLog(std::format("Loaded '{}' successfully with {} submeshes and {} unique materials.",
+                                data->path, loadData.submeshes.size(), loadData.materials.size()));
         }
     }
 

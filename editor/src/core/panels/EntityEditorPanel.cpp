@@ -3,8 +3,10 @@
 #include <glm/gtx/matrix_decompose.hpp>
 
 #include "core/components/entt/CameraComponent.h"
+#include "core/components/entt/HierarchyComponent.h"
 #include "core/components/entt/TagComponent.h"
 #include "core/components/gpu/CameraData.h"
+#include "core/components/gpu/TransformComponent.h"
 
 namespace kailux
 {
@@ -40,11 +42,11 @@ namespace kailux
         auto &registry = scene.getEntityRegistry();
         if (ImGui::Begin(m_Name.c_str(), &m_Open))
         {
-            auto &tag = registry.get<TagComponent>(m_SelectedEntity);
+            const auto &tag = registry.get<TagComponent>(m_SelectedEntity);
             ImGui::Text("Entity: %s", tag.name.c_str());
             ImGui::Separator();
 
-            if (registry.all_of<MeshTransformData>(m_SelectedEntity))
+            if (registry.all_of<TransformComponent>(m_SelectedEntity))
             {
                 ImGui::Text("Gizmo Operation:");
                 if (ImGui::RadioButton("Translate", m_CurrentGizmoOperation == ImGuizmo::TRANSLATE))
@@ -65,7 +67,7 @@ namespace kailux
 
                 ImGui::Separator();
 
-                auto &transform = registry.get<MeshTransformData>(m_SelectedEntity);
+                auto &transform = registry.get<TransformComponent>(m_SelectedEntity).transform;
                 if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
                 {
                     ImGui::InputFloat3("Translation", glm::value_ptr(transform.position));
@@ -93,19 +95,26 @@ namespace kailux
                     if (ImGui::IsItemHovered())
                         ImGui::SetTooltip("Uniform Scale");
                 }
-                auto &material = registry.get<MeshMaterialData>(m_SelectedEntity);
+            } if (registry.all_of<MeshMaterialData>(m_SelectedEntity))
+            {
                 if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
                 {
+                    auto &material = registry.get<MeshMaterialData>(m_SelectedEntity);
+                    bool changed = false;
+
                     float &roughness = material.albedoAndRoughness.w;
-                    ImGui::SliderFloat("Roughness", &roughness, 0.f, 1.f);
+                    changed |= ImGui::SliderFloat("Roughness", &roughness, 0.f, 1.f);
 
                     float &metallic = material.pbrParams.x;
-                    ImGui::SliderFloat("Metallic", &metallic, 0.f, 1.f);
+                    changed |= ImGui::SliderFloat("Metallic", &metallic, 0.f, 1.f);
 
                     float &ao = material.pbrParams.y;
-                    ImGui::SliderFloat("AO", &ao, 0.f, 1.f);
+                    changed |= ImGui::SliderFloat("AO", &ao, 0.f, 1.f);
 
-                    ImGui::ColorPicker3("Albedo", glm::value_ptr(material.albedoAndRoughness));
+                    changed |= ImGui::ColorPicker3("Albedo", glm::value_ptr(material.albedoAndRoughness));
+
+                    if (changed)
+                        propagate_material_to_children(scene, m_SelectedEntity, material);
                 }
             } else if (registry.all_of<DirectionalLightData>(m_SelectedEntity))
             {
@@ -132,16 +141,39 @@ namespace kailux
         ImGui::End();
         ImGui::PopStyleColor();
 
-        if (!registry.all_of<MeshTransformData>(m_SelectedEntity))
+        m_GizmoInUse = ImGuizmo::IsUsing() || ImGuizmo::IsOver();
+        renderGizmo(scene);
+    }
+
+    void EntityEditorPanel::setSelectedEntity(entt::entity entity, const Scene &scene)
+    {
+        m_SelectedEntity = entity;
+        if (entity == entt::null)
+            m_Open = false;
+
+        if (scene.getEntityRegistry().all_of<TransformComponent>(m_SelectedEntity))
+        {
+            const auto &transform = scene.getEntityRegistry().get<TransformComponent>(m_SelectedEntity);
+            m_RotationDegrees = glm::degrees(glm::eulerAngles(transform.transform.rotation));
+        }
+    }
+
+    bool EntityEditorPanel::isGizmoInUse() const
+    {
+        return m_GizmoInUse;
+    }
+
+    void EntityEditorPanel::renderGizmo(Scene &scene)
+    {
+        auto &registry = scene.getEntityRegistry();
+
+        if (!registry.all_of<TransformComponent>(m_SelectedEntity))
             return;
 
-        auto &transform = registry.get<MeshTransformData>(m_SelectedEntity);
+        auto &transformComp = registry.get<TransformComponent>(m_SelectedEntity);
+        auto &transform = transformComp.transform;
 
-        auto modelMatrix = glm::mat4(1.f);
-        modelMatrix = glm::translate(modelMatrix, transform.position);
-        modelMatrix *= glm::mat4_cast(transform.rotation);
-        modelMatrix = glm::scale(modelMatrix, transform.scale);
-
+        auto modelMatrix = transformComp.worldMatrix;
         const auto &cameraData = registry.get<CameraData>(scene.getMainCamera());
 
         ImGuizmo::Manipulate(
@@ -159,7 +191,14 @@ namespace kailux
             glm::quat rotation;
             glm::vec4 perspective;
 
-            glm::decompose(modelMatrix, scale, rotation, translation, skew, perspective);
+            glm::mat4 parentWorld{1.0f};
+            if (auto* hierarchy = registry.try_get<HierarchyComponent>(m_SelectedEntity))
+                if (hierarchy->parent != entt::null)
+                    parentWorld = registry.get<TransformComponent>(hierarchy->parent).worldMatrix;
+
+            auto localMatrix = glm::inverse(parentWorld) * modelMatrix * glm::inverse(transformComp.submeshLocalMatrix);
+
+            glm::decompose(localMatrix, scale, rotation, translation, skew, perspective);
 
             transform.position = translation;
             transform.rotation = rotation;
@@ -174,21 +213,20 @@ namespace kailux
         }
     }
 
-    void EntityEditorPanel::setSelectedEntity(entt::entity entity, const Scene &scene)
+    void EntityEditorPanel::propagate_material_to_children(Scene &scene, entt::entity entity,
+        const MeshMaterialData &material)
     {
-        m_SelectedEntity = entity;
-        if (entity == entt::null)
-            m_Open = false;
+        auto& registry = scene.getEntityRegistry();
+        auto* hierarchy = registry.try_get<HierarchyComponent>(entity);
+        if (!hierarchy)
+            return;
 
-        if (scene.getEntityRegistry().all_of<MeshTransformData>(m_SelectedEntity))
+        for (auto child : hierarchy->children)
         {
-            const auto &transform = scene.getEntityRegistry().get<MeshTransformData>(m_SelectedEntity);
-            m_RotationDegrees = glm::degrees(glm::eulerAngles(transform.rotation));
-        }
-    }
+            if (auto* childMaterial = registry.try_get<MeshMaterialData>(child))
+                *childMaterial = material;
 
-    bool EntityEditorPanel::isGizmoInUse() const
-    {
-        return m_GizmoInUse;
+            propagate_material_to_children(scene, child, material);
+        }
     }
 }

@@ -6,6 +6,8 @@
 #include "components/entt/TagComponent.h"
 #include "components/gpu/CameraData.h"
 #include <nlohmann/json.hpp>
+#include "components/entt/HierarchyComponent.h"
+#include "components/gpu/TransformComponent.h"
 
 namespace kailux
 {
@@ -45,6 +47,11 @@ namespace kailux
         return scene;
     }
 
+    void Scene::update()
+    {
+        updateTransforms();
+    }
+
     entt::entity Scene::createCameraEntity(std::string_view name, bool isPrimary, int width, int height)
     {
         auto entity = createEntity(name);
@@ -65,7 +72,9 @@ namespace kailux
         std::string_view name,
         const MeshComponent &component,
         TextureSetHandle textureSetHandle,
-        const MeshTransformData &transform, const MeshMaterialData &material
+        const MeshTransformData &transform,
+        const MeshMaterialData &material,
+        entt::entity parent
     )
     {
         auto entity = createEntity(name);
@@ -77,16 +86,28 @@ namespace kailux
             entity,
             textureSetHandle
         );
-        m_EntityRegistry.emplace<MeshTransformData>(
+        m_EntityRegistry.emplace<TransformComponent>(
             entity,
-            transform
+            transform,
+            transform.getModelMatrix(),
+            glm::mat4(1.f)
         );
         m_EntityRegistry.emplace<MeshMaterialData>
         (
             entity,
             material
         );
+        m_EntityRegistry.emplace<HierarchyComponent>(entity, parent);
+
+        if (parent != entt::null)
+            m_EntityRegistry.get<HierarchyComponent>(parent).children.push_back(entity);
+
         return entity;
+    }
+
+    entt::entity Scene::createParentEntity(std::string_view name)
+    {
+        return createEntity(name);
     }
 
     entt::registry &Scene::getEntityRegistry()
@@ -289,5 +310,28 @@ namespace kailux
             data
         );
         return entity;
+    }
+
+    void Scene::updateTransforms()
+    {
+        auto updateHierarchy = [&](auto& self, auto entity, const glm::mat4& parentWorldMatrix)-> void
+        {
+            if (auto* transform = m_EntityRegistry.try_get<TransformComponent>(entity))
+            {
+                transform->worldMatrix = parentWorldMatrix * transform->transform.getModelMatrix() * transform->submeshLocalMatrix;
+
+                if (auto* hierarchy = m_EntityRegistry.try_get<HierarchyComponent>(entity))
+                    for (entt::entity child : hierarchy->children)
+                        self(self, child, transform->worldMatrix);
+            }
+        };
+
+        auto view = m_EntityRegistry.view<HierarchyComponent>();
+        for (auto entity : view)
+        {
+            const auto& hierarchy = view.get<HierarchyComponent>(entity);
+            if (hierarchy.parent == entt::null)
+                updateHierarchy(updateHierarchy, entity, {1.f});
+        }
     }
 }
