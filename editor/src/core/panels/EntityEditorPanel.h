@@ -2,6 +2,8 @@
 #include "Panel.h"
 #include <ImGuizmo.h>
 
+#include "core/components/gpu/CameraData.h"
+
 namespace kailux
 {
     class EntityEditorPanel : public Panel
@@ -17,6 +19,10 @@ namespace kailux
         bool isGizmoInUse() const;
 
     private:
+        void renderGizmo(Scene& scene);
+
+        static void propagate_material_to_children(Scene &scene, entt::entity entity, const MeshMaterialData& material);
+
         entt::entity m_SelectedEntity;
         glm::vec3    m_RotationDegrees;
 

@@ -2,6 +2,7 @@
 
 #include <imgui_internal.h>
 
+#include "core/components/entt/HierarchyComponent.h"
 #include "core/components/entt/MeshComponent.h"
 #include "core/components/entt/TagComponent.h"
 #include "project_panel/ProjectPanel.h"
@@ -19,6 +20,12 @@ namespace kailux
 
     void HierarchyPanel::render(Scene &scene)
     {
+        if (m_SelectedEntity != m_LastSelectedEntity)
+        {
+            m_LastSelectedEntity = m_SelectedEntity;
+            m_OnEntitySelected(m_SelectedEntity, scene);
+        }
+
         ImGui::PushStyleColor(ImGuiCol_WindowBg, m_BackgroundColor);
 
         if (ImGui::Begin(m_Name.c_str(), &m_Open))
@@ -28,55 +35,21 @@ namespace kailux
             auto view = registry.view<TagComponent>();
             for (auto entity: view)
             {
-                const auto &tag = view.get<TagComponent>(entity);
-                bool isSelected = (m_SelectedEntity == entity);
-                if (ImGui::Selectable(tag.name.c_str(), isSelected) || isSelected)
-                {
-                    m_SelectedEntity = entity;
-                    m_OnEntitySelected(m_SelectedEntity, scene);
-                }
+                auto *hierarchy = registry.try_get<HierarchyComponent>(entity);
 
-                if (ImGui::BeginPopupContextItem())
-                {
-                    static entt::entity lastEntity = entt::null;
-                    static bool nameExistsError = false;
-
-                    if (ImGui::IsWindowAppearing() || lastEntity != entity)
-                    {
-                        lastEntity = entity;
-                        nameExistsError = false;
-                    }
-                    nameExistsError = on_entity_rename(entity, registry);
-
-                    if (nameExistsError)
-                        ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Name already exists!");
-                    ImGui::Separator();
-
-                    if (on_entity_delete(entity, scene))
-                    {
-                        auto [meshComponent, materialComponent] = registry.get<MeshComponent, MaterialComponent>(entity);
-                        m_OnEntityDeleted(meshComponent, materialComponent);
-                        registry.destroy(entity);
-                        if (m_SelectedEntity == entity)
-                        {
-                            m_SelectedEntity = entt::null;
-                            m_OnEntitySelected(entt::null, scene);
-                        }
-                        ImGui::EndPopup();
-                        break;
-                    }
-
-                    if (ImGui::Button("Cancel"))
-                    {
-                        nameExistsError = false;
-                        ImGui::CloseCurrentPopup();
-                    }
-
-                    ImGui::EndPopup();
-                }
+                if (!hierarchy || hierarchy->parent == entt::null)
+                    renderEntityNode(entity, scene);
             }
 
-            if (ImGui::BeginPopupContextWindow("##hierarchy_options", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+            if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered())
+            {
+                m_SelectedEntity = entt::null;
+                if (m_OnEntitySelected)
+                    m_OnEntitySelected(m_SelectedEntity, scene);
+            }
+
+            if (ImGui::BeginPopupContextWindow("##hierarchy_options",
+                                               ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
             {
                 if (ImGui::BeginMenu("New"))
                 {
@@ -204,5 +177,76 @@ namespace kailux
             ImGui::CloseCurrentPopup();
         }
         return false;
+    }
+
+    void HierarchyPanel::renderEntityNode(entt::entity entity, Scene &scene)
+    {
+        auto &registry = scene.getEntityRegistry();
+        const auto &tag = registry.get<TagComponent>(entity);
+        auto *hierarchy = registry.try_get<HierarchyComponent>(entity);
+
+        ImGuiTreeNodeFlags flags = ((m_SelectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0);
+        flags |= ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+
+        if (!hierarchy || hierarchy->children.empty())
+            flags |= ImGuiTreeNodeFlags_Leaf;
+
+        bool opened = ImGui::TreeNodeEx(reinterpret_cast<void *>(static_cast<uintptr_t>(entity)), flags, "%s",
+                                        tag.name.c_str());
+
+        if (ImGui::IsItemClicked())
+            m_SelectedEntity = entity;
+
+        if (ImGui::BeginPopupContextItem())
+        {
+            static entt::entity lastEntity = entt::null;
+            static bool nameExistsError = false;
+
+            if (ImGui::IsWindowAppearing() || lastEntity != entity)
+            {
+                lastEntity = entity;
+                nameExistsError = false;
+            }
+
+            nameExistsError = on_entity_rename(entity, registry);
+
+            if (nameExistsError)
+                ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Name already exists!");
+
+            ImGui::Separator();
+
+            if (on_entity_delete(entity, scene))
+            {
+                auto *meshComponent = registry.try_get<MeshComponent>(entity);
+                auto *materialComponent = registry.try_get<MaterialComponent>(entity);
+
+                if (meshComponent && materialComponent)
+                    m_OnEntityDeleted(*meshComponent, *materialComponent);
+
+                registry.destroy(entity);
+
+                if (m_SelectedEntity == entity)
+                {
+                    m_SelectedEntity = entt::null;
+                    m_LastSelectedEntity = entt::null;
+                    m_OnEntitySelected(m_SelectedEntity, scene);
+                }
+                ImGui::EndPopup();
+
+                if (opened)
+                    ImGui::TreePop();
+                return;
+            }
+            ImGui::EndPopup();
+        }
+
+        if (opened)
+        {
+            if (hierarchy)
+                for (auto child: hierarchy->children)
+                    renderEntityNode(child, scene);
+
+            ImGui::TreePop();
+        }
     }
 }

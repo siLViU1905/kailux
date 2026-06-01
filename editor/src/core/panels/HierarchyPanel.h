@@ -32,10 +32,13 @@ namespace kailux
         static bool on_entity_rename(entt::entity entity, entt::registry &registry);
         static bool on_entity_delete(entt::entity entity, Scene &scene);
 
+        void renderEntityNode(entt::entity entity, Scene& scene);
+
         OnEntitySelected m_OnEntitySelected;
         OnEntityDeleted  m_OnEntityDeleted;
         OnDragDrop       m_OnDragDrop;
         OnNewMesh        m_OnNewMesh;
         entt::entity     m_SelectedEntity;
+        entt::entity     m_LastSelectedEntity{entt::null};
     };
 }
