@@ -67,9 +67,9 @@ namespace kailux
     void Application::setCallbacks()
     {
         auto &hierarchyPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<HierarchyPanel>();
-        hierarchyPanel.setOnEntityDeleted([this](auto meshComponent, auto materialComponent)
+        hierarchyPanel.setOnEntityDeleted([this](auto meshComponent, auto materialComponent, auto cacheKey)
         {
-            m_Engine.unregisterMesh(meshComponent.handle, meshComponent.path);
+            m_Engine.unregisterMesh(meshComponent.handle, cacheKey);
             m_Engine.unregisterTextureSet(materialComponent.handle);
         });
         hierarchyPanel.setOnDragDrop([this](std::string_view path)
