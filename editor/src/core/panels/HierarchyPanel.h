@@ -29,8 +29,9 @@ namespace kailux
         entt::entity getSelectedEntity() const;
 
     private:
-        static bool on_entity_rename(entt::entity entity, entt::registry &registry);
-        static bool on_entity_delete(entt::entity entity, Scene &scene);
+        static bool on_entity_rename(entt::registry &registry, entt::entity entity);
+        static bool on_entity_delete(Scene &scene, entt::entity entity);
+        static void on_hierarchy_delete(entt::registry &registry, entt::entity entity);
 
         void renderEntityNode(entt::entity entity, Scene& scene);
 

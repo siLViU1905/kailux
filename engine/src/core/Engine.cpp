@@ -133,7 +133,7 @@ namespace kailux
     {
         auto defaultHandle = m_TextureRegistry.getDefaultSetHandle();
         const auto &defaultSet = m_TextureRegistry.view(defaultHandle);
-        auto updateInfos = make_descriptor_set_update_info_from_texture_set(defaultHandle, defaultSet);
+        auto updateInfos = make_descriptor_set_update_info_from_texture_set(handle, defaultSet);
 
         for (const auto &frame: m_Frames)
             frame.getDescriptorSet().updateInfo(
@@ -296,13 +296,13 @@ namespace kailux
     }
 
     std::array<DescriptorSetUpdateInfo, TextureRegistry::s_TextureTypes.size()>
-    Engine::make_descriptor_set_update_info_from_texture_set(TextureSetHandle handle, const TextureSet &set)
+    Engine::make_descriptor_set_update_info_from_texture_set(TextureSetHandle slotToOverwrite, const TextureSet &replacementSet)
     {
-        auto makeUpdateInfo = [handle](uint32_t binding, const auto &texture)-> DescriptorSetUpdateInfo
+        auto makeUpdateInfo = [slotToOverwrite](uint32_t binding, const auto &texture)-> DescriptorSetUpdateInfo
         {
             return {
                 binding,
-                handle.index,
+                slotToOverwrite.index,
                 DescriptorSetImageInfo(
                     texture->getSampler(),
                     texture->getImageView(),
@@ -313,11 +313,11 @@ namespace kailux
         };
         uint32_t textureIndex = 0;
         std::array updateInfos = {
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, set.albedo),
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, set.normal),
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, set.roughness),
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, set.metallic),
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, set.ao)
+            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.albedo),
+            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.normal),
+            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.roughness),
+            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.metallic),
+            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.ao)
         };
         static_assert(TextureRegistry::s_TextureTypes.size() == updateInfos.size(),
                       "There is a missing texture in update info");
