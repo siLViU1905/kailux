@@ -259,13 +259,8 @@ namespace kailux
         if (opened)
         {
             if (hierarchy)
-            {
-                auto childrenCopy = hierarchy->children;
-
-                for (auto child: childrenCopy)
-                    if (registry.valid(child))
-                        renderEntityNode(child, scene);
-            }
+                for (auto child: hierarchy->children)
+                    renderEntityNode(child, scene);
 
             ImGui::TreePop();
         }
