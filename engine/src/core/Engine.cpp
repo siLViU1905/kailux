@@ -1063,34 +1063,40 @@ namespace kailux
             entityReg.emplace<MeshMaterialData>(parentEntity, data->material);
 
             std::vector<TextureSetHandle> loadedMaterialHandles;
-            loadedMaterialHandles.reserve(loadData.materials.size());
+            auto firstSubmeshKey = std::format("{}_sub0", data->path);
+            bool modelIsCached = isMeshCached(firstSubmeshKey);
 
-            for (const auto & material : loadData.materials)
+            if (!modelIsCached)
             {
-                auto textureHandle = uploadMaterialDataToRegistry(material);
+                loadedMaterialHandles.reserve(loadData.materials.size());
+                for (const auto & material : loadData.materials)
+                {
+                    auto textureHandle = uploadMaterialDataToRegistry(material);
 
-                const auto &materialView = m_TextureRegistry.view(textureHandle);
-                auto updateInfos = make_descriptor_set_update_info_from_texture_set(textureHandle, materialView);
+                    const auto &materialView = m_TextureRegistry.view(textureHandle);
+                    auto updateInfos = make_descriptor_set_update_info_from_texture_set(textureHandle, materialView);
 
-                for (const auto &frame : m_Frames)
-                    frame.getDescriptorSet().updateInfo(m_Context, updateInfos);
+                    for (const auto &frame : m_Frames)
+                        frame.getDescriptorSet().updateInfo(m_Context, updateInfos);
 
-                loadedMaterialHandles.push_back(textureHandle);
+                    loadedMaterialHandles.push_back(textureHandle);
+                }
             }
 
             uint32_t submeshIndex = 0;
             for (const auto& submesh : loadData.submeshes)
             {
                 MeshHandle meshHandle;
+                TextureSetHandle textureHandle;
 
                 auto cacheKey = std::format("{}_sub{}", data->path, submeshIndex++);
                 if (isMeshCached(cacheKey))
                 {
                     auto cache = m_MeshCache.at(cacheKey);
                     const auto &material = m_TextureRegistry.view(cache.materialHandle);
-                    auto newHandle = m_TextureRegistry.registerTextureSet(material);
+                    textureHandle = m_TextureRegistry.registerTextureSet(material);
 
-                    auto updateInfos = make_descriptor_set_update_info_from_texture_set(newHandle, material);
+                    auto updateInfos = make_descriptor_set_update_info_from_texture_set(textureHandle, material);
 
                     for (const auto &frame: m_Frames)
                         frame.getDescriptorSet().updateInfo(
@@ -1099,11 +1105,12 @@ namespace kailux
                         );
                     meshHandle = cache.meshHandle;
                 } else
+                {
                     meshHandle = uploadMeshDataToRegistry(submesh.meshData);
+                    textureHandle = loadedMaterialHandles[submesh.materialIndex];
+                }
 
-                cacheMesh(cacheKey, meshHandle, loadedMaterialHandles[submesh.materialIndex]);
-
-                auto textureHandle = loadedMaterialHandles[submesh.materialIndex];
+                cacheMesh(cacheKey, meshHandle, textureHandle);
 
                 auto submeshName = std::format("{}_{}", rootName, submesh.name.empty() ? std::to_string(submeshIndex) : submesh.name);
 
