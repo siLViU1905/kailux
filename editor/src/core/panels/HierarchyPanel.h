@@ -16,10 +16,10 @@ namespace kailux
         using OnEntitySelected = std::move_only_function<void(entt::entity, const Scene&)>;
         void  setOnEntitySelected(OnEntitySelected&& callback);
 
-        using OnEntityDeleted = std::move_only_function<void(MeshComponent meshComponent, MaterialComponent materialComponent)>;
+        using OnEntityDeleted = std::move_only_function<void(MeshComponent, MaterialComponent, std::string_view)>;
         void  setOnEntityDeleted(OnEntityDeleted&& callback);
 
-        using OnDragDrop = std::move_only_function<void(std::string_view path)>;
+        using OnDragDrop = std::move_only_function<void(std::string_view)>;
         void  setOnDragDrop(OnDragDrop&& callback);
 
         using OnNewMesh = std::move_only_function<void(MeshType)>;
@@ -30,10 +30,11 @@ namespace kailux
 
     private:
         static bool on_entity_rename(entt::registry &registry, entt::entity entity);
-        static bool on_entity_delete(Scene &scene, entt::entity entity);
-        static void on_hierarchy_delete(entt::registry &registry, entt::entity entity);
+        static bool on_entity_delete(const Scene &scene, entt::entity entity);
 
-        void renderEntityNode(entt::entity entity, Scene& scene);
+        void notifyAndDestroyHierarchy(entt::registry& registry, entt::entity entity);
+
+        void renderEntityNode(Scene& scene, entt::entity entity);
 
         OnEntitySelected m_OnEntitySelected;
         OnEntityDeleted  m_OnEntityDeleted;

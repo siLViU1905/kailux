@@ -1099,10 +1099,9 @@ namespace kailux
                         );
                     meshHandle = cache.meshHandle;
                 } else
-                {
                     meshHandle = uploadMeshDataToRegistry(submesh.meshData);
-                    cacheMesh(cacheKey, meshHandle, loadedMaterialHandles[submesh.materialIndex]);
-                }
+
+                cacheMesh(cacheKey, meshHandle, loadedMaterialHandles[submesh.materialIndex]);
 
                 auto textureHandle = loadedMaterialHandles[submesh.materialIndex];
 
