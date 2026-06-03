@@ -38,7 +38,7 @@ namespace kailux
                 auto *hierarchy = registry.try_get<HierarchyComponent>(entity);
 
                 if (!hierarchy || hierarchy->parent == entt::null)
-                    renderEntityNode(entity, scene);
+                    renderEntityNode(scene, entity);
             }
 
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered())
@@ -165,7 +165,7 @@ namespace kailux
         return nameExistsError;
     }
 
-    bool HierarchyPanel::on_entity_delete(Scene &scene, entt::entity entity)
+    bool HierarchyPanel::on_entity_delete(const Scene &scene, entt::entity entity)
     {
         if (ImGui::MenuItem("Delete"))
         {
@@ -179,20 +179,7 @@ namespace kailux
         return false;
     }
 
-    void HierarchyPanel::on_hierarchy_delete(entt::registry &registry, entt::entity entity)
-    {
-        const auto &hierarchy = registry.get<HierarchyComponent>(entity);
-
-        if (hierarchy.parent != entt::null)
-            if (auto *parentHierarchy = registry.try_get<HierarchyComponent>(hierarchy.parent))
-                std::erase(parentHierarchy->children, entity);
-
-        for (auto child: hierarchy.children)
-            if (registry.valid(child))
-                registry.destroy(child);
-    }
-
-    void HierarchyPanel::notify_and_destroy_hierarchy(entt::registry &registry, entt::entity entity)
+    void HierarchyPanel::notifyAndDestroyHierarchy(entt::registry &registry, entt::entity entity)
     {
         auto *hierarchy = registry.try_get<HierarchyComponent>(entity);
 
@@ -201,21 +188,17 @@ namespace kailux
 
         if (meshComponent && materialComponent)
         {
-            uint32_t submeshIndex = 0;
+            uint32_t submeshIndex{~0u};
 
             if (hierarchy && hierarchy->parent != entt::null)
-            {
                 if (auto *parentHierarchy = registry.try_get<HierarchyComponent>(hierarchy->parent))
                 {
-                    auto it = std::find(parentHierarchy->children.begin(), parentHierarchy->children.end(), entity);
+                    auto it = std::ranges::find(parentHierarchy->children, entity);
                     if (it != parentHierarchy->children.end())
-                    {
                         submeshIndex = static_cast<uint32_t>(std::distance(parentHierarchy->children.begin(), it));
-                    }
                 }
-            }
 
-            std::string submeshCacheKey = std::format("{}_sub{}", meshComponent->path, submeshIndex);
+            auto submeshCacheKey = std::format("{}_sub{}", meshComponent->path, submeshIndex);
 
             m_OnEntityDeleted(*meshComponent, *materialComponent, submeshCacheKey);
         }
@@ -223,12 +206,12 @@ namespace kailux
         if (hierarchy)
             for (auto child: hierarchy->children)
                 if (registry.valid(child))
-                    notify_and_destroy_hierarchy(registry, child);
+                    notifyAndDestroyHierarchy(registry, child);
 
         registry.destroy(entity);
     }
 
-    void HierarchyPanel::renderEntityNode(entt::entity entity, Scene &scene)
+    void HierarchyPanel::renderEntityNode(Scene &scene, entt::entity entity)
     {
         auto &registry = scene.getEntityRegistry();
         const auto &tag = registry.get<TagComponent>(entity);
@@ -266,7 +249,7 @@ namespace kailux
 
             if (on_entity_delete(scene, entity))
             {
-                notify_and_destroy_hierarchy(registry, entity);
+                notifyAndDestroyHierarchy(registry, entity);
 
                 if (m_SelectedEntity == entity)
                 {
@@ -288,7 +271,7 @@ namespace kailux
             if (hierarchy)
                 for (auto child: hierarchy->children)
                     if (registry.valid(child))
-                        renderEntityNode(child, scene);
+                        renderEntityNode(scene, child);
 
             ImGui::TreePop();
         }

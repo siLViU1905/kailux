@@ -30,11 +30,11 @@ namespace kailux
 
     private:
         static bool on_entity_rename(entt::registry &registry, entt::entity entity);
-        static bool on_entity_delete(Scene &scene, entt::entity entity);
-        static void on_hierarchy_delete(entt::registry &registry, entt::entity entity);
-        void notify_and_destroy_hierarchy(entt::registry& registry, entt::entity entity);
+        static bool on_entity_delete(const Scene &scene, entt::entity entity);
 
-        void renderEntityNode(entt::entity entity, Scene& scene);
+        void notifyAndDestroyHierarchy(entt::registry& registry, entt::entity entity);
+
+        void renderEntityNode(Scene& scene, entt::entity entity);
 
         OnEntitySelected m_OnEntitySelected;
         OnEntityDeleted  m_OnEntityDeleted;
