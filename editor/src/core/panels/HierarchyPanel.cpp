@@ -123,7 +123,7 @@ namespace kailux
         return m_SelectedEntity;
     }
 
-    bool HierarchyPanel::on_entity_rename(entt::entity entity, entt::registry &registry)
+    bool HierarchyPanel::on_entity_rename(entt::registry &registry, entt::entity entity)
     {
         static char nameBuffer[64]{};
         static bool nameExistsError = false;
@@ -165,7 +165,7 @@ namespace kailux
         return nameExistsError;
     }
 
-    bool HierarchyPanel::on_entity_delete(entt::entity entity, Scene &scene)
+    bool HierarchyPanel::on_entity_delete(Scene &scene, entt::entity entity)
     {
         if (ImGui::MenuItem("Delete"))
         {
@@ -177,6 +177,19 @@ namespace kailux
             ImGui::CloseCurrentPopup();
         }
         return false;
+    }
+
+    void HierarchyPanel::on_hierarchy_delete(entt::registry &registry, entt::entity entity)
+    {
+        const auto &hierarchy = registry.get<HierarchyComponent>(entity);
+
+        if (hierarchy.parent != entt::null)
+            if (auto *parentHierarchy = registry.try_get<HierarchyComponent>(hierarchy.parent))
+                std::erase(parentHierarchy->children, entity);
+
+        for (auto child : hierarchy.children)
+            if (registry.valid(child))
+                registry.destroy(child);
     }
 
     void HierarchyPanel::renderEntityNode(entt::entity entity, Scene &scene)
@@ -208,20 +221,23 @@ namespace kailux
                 nameExistsError = false;
             }
 
-            nameExistsError = on_entity_rename(entity, registry);
+            nameExistsError = on_entity_rename(registry, entity);
 
             if (nameExistsError)
                 ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Name already exists!");
 
             ImGui::Separator();
 
-            if (on_entity_delete(entity, scene))
+            if (on_entity_delete(scene, entity))
             {
                 auto *meshComponent = registry.try_get<MeshComponent>(entity);
                 auto *materialComponent = registry.try_get<MaterialComponent>(entity);
 
                 if (meshComponent && materialComponent)
                     m_OnEntityDeleted(*meshComponent, *materialComponent);
+
+                if (hierarchy)
+                    on_hierarchy_delete(registry, entity);
 
                 registry.destroy(entity);
 
@@ -243,8 +259,13 @@ namespace kailux
         if (opened)
         {
             if (hierarchy)
-                for (auto child: hierarchy->children)
-                    renderEntityNode(child, scene);
+            {
+                auto childrenCopy = hierarchy->children;
+
+                for (auto child: childrenCopy)
+                    if (registry.valid(child))
+                        renderEntityNode(child, scene);
+            }
 
             ImGui::TreePop();
         }

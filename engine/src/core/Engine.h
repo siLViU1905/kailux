@@ -99,7 +99,7 @@ namespace kailux
         void createScene();
         void createSceneEntities(const Window &window);
 
-        static std::array<DescriptorSetUpdateInfo, TextureRegistry::s_TextureTypes.size()> make_descriptor_set_update_info_from_texture_set(TextureSetHandle handle, const TextureSet& set);
+        static std::array<DescriptorSetUpdateInfo, TextureRegistry::s_TextureTypes.size()> make_descriptor_set_update_info_from_texture_set(TextureSetHandle slotToOverwrite, const TextureSet& replacementSet);
 
         void                                        submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
         void                                        recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const;
