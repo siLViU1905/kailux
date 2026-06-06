@@ -20,6 +20,16 @@
 
 namespace kailux
 {
+
+    struct Handle
+    {
+        static constexpr uint32_t s_InvalidIndex = ~0u;
+
+        uint32_t index = s_InvalidIndex;
+
+        constexpr bool valid() const { return index != s_InvalidIndex; }
+    };
+
     template<typename T>
     using Scoped = std::unique_ptr<T>;
     template<typename T>

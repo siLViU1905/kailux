@@ -9,14 +9,7 @@
 
 namespace kailux
 {
-    struct TextureSetHandle
-    {
-        static constexpr uint32_t s_InvalidIndex = ~0u;
-
-        uint32_t index = s_InvalidIndex;
-
-        constexpr bool valid() const { return index != s_InvalidIndex; }
-    };
+    using TextureSetHandle = Handle;
 
     struct TextureSet
     {
