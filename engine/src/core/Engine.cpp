@@ -1103,17 +1103,28 @@ namespace kailux
         std::vector<TextureSetHandle> handles;
         handles.reserve(materials.size());
 
+        std::vector<DescriptorSetUpdateInfo> allUpdateInfos;
+        allUpdateInfos.reserve(materials.size() * TextureRegistry::s_TextureTypes.size());
+
         for (const auto &material: materials)
         {
             auto textureHandle = uploadMaterialDataToRegistry(material);
             const auto &materialView = m_TextureRegistry.view(textureHandle);
-            auto updateInfos = make_descriptor_set_update_info_from_texture_set(textureHandle, materialView);
 
-            for (const auto &frame: m_Frames)
-                frame.getDescriptorSet().updateInfo(m_Context, updateInfos);
+            auto currentUpdateInfos = make_descriptor_set_update_info_from_texture_set(textureHandle, materialView);
+            allUpdateInfos.insert(
+                allUpdateInfos.end(),
+                currentUpdateInfos.begin(),
+                currentUpdateInfos.end()
+                );
 
             handles.push_back(textureHandle);
         }
+
+        if (!allUpdateInfos.empty())
+            for (const auto &frame: m_Frames)
+                frame.getDescriptorSet().updateInfo(m_Context, allUpdateInfos);
+
         return handles;
     }
 
