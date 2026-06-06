@@ -296,7 +296,8 @@ namespace kailux
     }
 
     std::array<DescriptorSetUpdateInfo, TextureRegistry::s_TextureTypes.size()>
-    Engine::make_descriptor_set_update_info_from_texture_set(TextureSetHandle slotToOverwrite, const TextureSet &replacementSet)
+    Engine::make_descriptor_set_update_info_from_texture_set(TextureSetHandle slotToOverwrite,
+                                                             const TextureSet &replacementSet)
     {
         auto makeUpdateInfo = [slotToOverwrite](uint32_t binding, const auto &texture)-> DescriptorSetUpdateInfo
         {
@@ -910,7 +911,8 @@ namespace kailux
     void Engine::updateMeshDataBuffer(FrameData &frame) const
     {
         std::vector<MeshData> data;
-        auto view = m_Scene.getEntityRegistry().view<TransformComponent, MeshMaterialData, MeshComponent,MaterialComponent>();
+        auto view = m_Scene.getEntityRegistry().view<TransformComponent, MeshMaterialData, MeshComponent,
+            MaterialComponent>();
         data.reserve(view.size_hint());
         for (auto entity: view)
         {
@@ -1012,128 +1014,152 @@ namespace kailux
             if (data->type == MeshType::Unknown)
                 return;
             if (data->type != MeshType::Loaded)
-            {
-                auto createMeshEntity = [this, &data](auto meshHandle, const auto &vertices)
-                {
-                    const auto &material = m_TextureRegistry.view(m_TextureRegistry.getDefaultSetHandle());
-                    auto textureHandle = m_TextureRegistry.registerTextureSet(material);
-                    m_Scene.createMeshEntity(
-                        data->name.empty() ? m_Scene.getMeshEntityName() : data->name,
-                        {
-                            meshHandle,
-                            data->path,
-                            data->type,
-                            Geometry::computeBoundingSphere(vertices)
-                        },
-                        textureHandle,
-                        data->transform,
-                        data->material
-                    );
-                };
-                switch (data->type)
-                {
-                    case MeshType::Cube:
-                        createMeshEntity(
-                            m_MeshRegistry.getBuiltins().cube,
-                            MeshRegistry::generate_cube().vertices
-                            );
-                        break;
-                    case MeshType::Sphere:
-                        createMeshEntity(
-                            m_MeshRegistry.getBuiltins().sphere,
-                            MeshRegistry::generate_sphere().vertices
-                            );
-                        break;
-                    default:
-                        break;
-                }
-                return;
-            }
-
-            const auto &loadData = data->data;
-            auto rootName = data->name.empty() ? m_Scene.getMeshEntityName() : data->name;
-            auto parentEntity = m_Scene.createParentEntity(rootName);
-
-            auto& entityReg = m_Scene.getEntityRegistry();
-            entityReg.emplace<HierarchyComponent>(parentEntity);
-            auto& parentTransform = entityReg.emplace<TransformComponent>(parentEntity);
-            parentTransform.transform.position = data->transform.position;
-            parentTransform.transform.rotation = data->transform.rotation;
-            parentTransform.transform.scale    = data->transform.scale;
-            entityReg.emplace<MeshMaterialData>(parentEntity, data->material);
-
-            std::vector<TextureSetHandle> loadedMaterialHandles;
-            auto firstSubmeshKey = std::format("{}_sub0", data->path);
-            bool modelIsCached = isMeshCached(firstSubmeshKey);
-
-            if (!modelIsCached)
-            {
-                loadedMaterialHandles.reserve(loadData.materials.size());
-                for (const auto & material : loadData.materials)
-                {
-                    auto textureHandle = uploadMaterialDataToRegistry(material);
-
-                    const auto &materialView = m_TextureRegistry.view(textureHandle);
-                    auto updateInfos = make_descriptor_set_update_info_from_texture_set(textureHandle, materialView);
-
-                    for (const auto &frame : m_Frames)
-                        frame.getDescriptorSet().updateInfo(m_Context, updateInfos);
-
-                    loadedMaterialHandles.push_back(textureHandle);
-                }
-            }
-
-            uint32_t submeshIndex = 0;
-            for (const auto& submesh : loadData.submeshes)
-            {
-                MeshHandle meshHandle;
-                TextureSetHandle textureHandle;
-
-                auto cacheKey = std::format("{}_sub{}", data->path, submeshIndex++);
-                if (isMeshCached(cacheKey))
-                {
-                    auto cache = m_MeshCache.at(cacheKey);
-                    const auto &material = m_TextureRegistry.view(cache.materialHandle);
-                    textureHandle = m_TextureRegistry.registerTextureSet(material);
-
-                    auto updateInfos = make_descriptor_set_update_info_from_texture_set(textureHandle, material);
-
-                    for (const auto &frame: m_Frames)
-                        frame.getDescriptorSet().updateInfo(
-                            m_Context,
-                            updateInfos
-                        );
-                    meshHandle = cache.meshHandle;
-                } else
-                {
-                    meshHandle = uploadMeshDataToRegistry(submesh.meshData);
-                    textureHandle = loadedMaterialHandles[submesh.materialIndex];
-                }
-
-                cacheMesh(cacheKey, meshHandle, textureHandle);
-
-                auto submeshName = std::format("{}_{}", rootName, submesh.name.empty() ? std::to_string(submeshIndex) : submesh.name);
-
-                auto childEntity = m_Scene.createMeshEntity(
-                    submeshName,
-                    {
-                        meshHandle,
-                        data->path,
-                        data->type,
-                        submesh.boundingSphere
-                    },
-                    textureHandle,
-                    {},
-                    data->material,
-                    parentEntity
-                );
-
-                auto& childTransform = entityReg.get<TransformComponent>(childEntity);
-                childTransform.submeshLocalMatrix = submesh.localTransform;
-            }
-            m_OnInfoLog(std::format("Loaded '{}' successfully with {} submeshes and {} unique materials.",
-                                data->path, loadData.submeshes.size(), loadData.materials.size()));
+                processBuiltinMesh(*data);
+            else
+                processLoadedMesh(*data);
         }
+    }
+
+    void Engine::processBuiltinMesh(const PendingMeshData &data)
+    {
+        auto createMeshEntity = [this, &data](auto meshHandle, const auto &vertices)
+        {
+            const auto &material = m_TextureRegistry.view(m_TextureRegistry.getDefaultSetHandle());
+            auto textureHandle = m_TextureRegistry.registerTextureSet(material);
+            m_Scene.createMeshEntity(
+                data.name.empty() ? m_Scene.getMeshEntityName() : data.name,
+                {
+                    meshHandle,
+                    data.path,
+                    data.type,
+                    Geometry::computeBoundingSphere(vertices)
+                },
+                textureHandle,
+                data.transform,
+                data.material
+            );
+        };
+        switch (data.type)
+        {
+            case MeshType::Cube:
+                createMeshEntity(
+                    m_MeshRegistry.getBuiltins().cube,
+                    MeshRegistry::generate_cube().vertices
+                );
+                break;
+            case MeshType::Sphere:
+                createMeshEntity(
+                    m_MeshRegistry.getBuiltins().sphere,
+                    MeshRegistry::generate_sphere().vertices
+                );
+                break;
+            default:
+                break;
+        }
+    }
+
+    void Engine::processLoadedMesh(const PendingMeshData &data)
+    {
+        const auto &loadData = data.data;
+
+        auto parentEntity = createParentMeshEntity(data);
+
+        auto firstSubmeshKey = std::format("{}_sub0", data.path);
+        bool modelIsCached = isMeshCached(firstSubmeshKey);
+
+        std::vector<TextureSetHandle> loadedMaterialHandles;
+        if (!modelIsCached)
+            loadedMaterialHandles = loadAndRegisterMaterials(loadData.materials);
+
+        uint32_t submeshIndex = 0;
+        for (const auto &submesh: loadData.submeshes)
+            processSubmesh(data, submesh, submeshIndex++, parentEntity, loadedMaterialHandles);
+
+        m_OnInfoLog(std::format("Loaded '{}' successfully with {} submeshes and {} unique materials.",
+                                data.path, loadData.submeshes.size(), loadData.materials.size()));
+    }
+
+    entt::entity Engine::createParentMeshEntity(const PendingMeshData &data)
+    {
+        auto rootName = data.name.empty() ? m_Scene.getMeshEntityName() : data.name;
+        auto parentEntity = m_Scene.createParentEntity(rootName);
+
+        auto &entityReg = m_Scene.getEntityRegistry();
+        entityReg.emplace<HierarchyComponent>(parentEntity);
+
+        auto &parentTransform = entityReg.emplace<TransformComponent>(parentEntity);
+        parentTransform.transform.position = data.transform.position;
+        parentTransform.transform.rotation = data.transform.rotation;
+        parentTransform.transform.scale = data.transform.scale;
+
+        entityReg.emplace<MeshMaterialData>(parentEntity, data.material);
+
+        return parentEntity;
+    }
+
+    std::vector<TextureSetHandle> Engine::loadAndRegisterMaterials(
+        std::span<const TextureRegistry::MaterialData> materials)
+    {
+        std::vector<TextureSetHandle> handles;
+        handles.reserve(materials.size());
+
+        for (const auto &material: materials)
+        {
+            auto textureHandle = uploadMaterialDataToRegistry(material);
+            const auto &materialView = m_TextureRegistry.view(textureHandle);
+            auto updateInfos = make_descriptor_set_update_info_from_texture_set(textureHandle, materialView);
+
+            for (const auto &frame: m_Frames)
+                frame.getDescriptorSet().updateInfo(m_Context, updateInfos);
+
+            handles.push_back(textureHandle);
+        }
+        return handles;
+    }
+
+    void Engine::processSubmesh(const PendingMeshData &data, const MeshLoader::SubMeshData &submesh,
+                                uint32_t submeshIndex, entt::entity parentEntity,
+                                std::span<const TextureSetHandle> materials)
+    {
+        MeshHandle meshHandle;
+        TextureSetHandle textureHandle;
+
+        auto cacheKey = std::format("{}_sub{}", data.path, submeshIndex);
+
+        if (isMeshCached(cacheKey))
+        {
+            auto cache = m_MeshCache.at(cacheKey);
+            const auto &material = m_TextureRegistry.view(cache.materialHandle);
+            textureHandle = m_TextureRegistry.registerTextureSet(material);
+
+            auto updateInfos = make_descriptor_set_update_info_from_texture_set(textureHandle, material);
+            for (const auto &frame: m_Frames)
+                frame.getDescriptorSet().updateInfo(m_Context, updateInfos);
+
+            meshHandle = cache.meshHandle;
+        } else
+        {
+            meshHandle = uploadMeshDataToRegistry(submesh.meshData);
+            textureHandle = materials[submesh.materialIndex];
+        }
+
+        cacheMesh(cacheKey, meshHandle, textureHandle);
+
+        auto rootName = data.name.empty() ? m_Scene.getMeshEntityName() : data.name;
+        auto submeshName = std::format("{}_{}", rootName,
+                                       submesh.name.empty() ? std::to_string(submeshIndex) : submesh.name);
+
+        auto childEntity = m_Scene.createMeshEntity(
+            submeshName,
+            {meshHandle, data.path, data.type, submesh.boundingSphere},
+            textureHandle,
+            {},
+            data.material,
+            parentEntity
+        );
+
+        auto &childTransform = m_Scene.getEntityRegistry().get<TransformComponent>(childEntity);
+        childTransform.submeshLocalMatrix = submesh.localTransform;
     }
 
     MeshHandle Engine::uploadMeshDataToRegistry(const MeshRegistry::MeshData &data)
