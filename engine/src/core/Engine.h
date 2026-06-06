@@ -119,7 +119,18 @@ namespace kailux
 
         void handleEvent(Window &window);
 
-        void             pollPendingData();
+        void                          pollPendingData();
+        void                          processBuiltinMesh(const PendingMeshData& data);
+        void                          processLoadedMesh(const PendingMeshData& data);
+        entt::entity                  createParentMeshEntity(const PendingMeshData &data);
+        std::vector<TextureSetHandle> loadAndRegisterMaterials(std::span<const TextureRegistry::MaterialData> materials);
+        void                          processSubmesh(
+                                          const PendingMeshData& data,
+                                          const MeshLoader::SubMeshData& submesh,
+                                          uint32_t submeshIndex,
+                                          entt::entity parentEntity,
+                                          std::span<const TextureSetHandle> materials
+                                          );
         MeshHandle       uploadMeshDataToRegistry(const MeshRegistry::MeshData& data);
         TextureSetHandle uploadMaterialDataToRegistry(const TextureRegistry::MaterialData &data);
 
