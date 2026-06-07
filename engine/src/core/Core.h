@@ -20,7 +20,23 @@
 
 namespace kailux
 {
+    enum class MeshType : uint8_t
+    {
+        Cube,
+        Sphere,
+        Loaded,
+        Unknown
+    };
 
+    enum class SimulationState : uint8_t
+    {
+        Paused,
+        Running
+    };
+}
+
+namespace kailux
+{
     struct Handle
     {
         static constexpr uint32_t s_InvalidIndex = ~0u;
@@ -29,7 +45,10 @@ namespace kailux
 
         constexpr bool valid() const { return index != s_InvalidIndex; }
     };
+}
 
+namespace kailux
+{
     template<typename T>
     using Scoped = std::unique_ptr<T>;
     template<typename T>
