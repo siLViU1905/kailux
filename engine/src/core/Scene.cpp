@@ -321,7 +321,7 @@ namespace kailux
                 transform->worldMatrix = parentWorldMatrix * transform->transform.getModelMatrix() * transform->submeshLocalMatrix;
 
                 if (auto* hierarchy = m_EntityRegistry.try_get<HierarchyComponent>(entity))
-                    for (entt::entity child : hierarchy->children)
+                    for (auto child : hierarchy->children)
                         self(self, child, transform->worldMatrix);
             }
         };

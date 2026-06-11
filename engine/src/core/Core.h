@@ -33,6 +33,8 @@ namespace kailux
         Paused,
         Running
     };
+
+    enum class PhysicsBodyType : uint8_t;
 }
 
 namespace kailux

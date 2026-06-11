@@ -17,6 +17,7 @@
 #include "Scene.h"
 #include "mesh/MeshLoader.h"
 #include "passes/MainPass.h"
+#include "physics/PhysicsRegistry.h"
 #include "utilities/Queue.h"
 #include "utilities/ThreadDispatcher.h"
 
@@ -76,6 +77,10 @@ namespace kailux
 
         uint32_t getPickedEntity() const;
 
+        void updateBodyType(BodyHandle handle, PhysicsBodyType type);
+        void updateBodyScale(BodyHandle handle, const glm::vec3& scale);
+        void setSimulationState(SimulationState state);
+
     private:
         static constexpr uint32_t         s_MaxMeshCount = MainPass::s_MaxMeshCount;
 
@@ -89,6 +94,7 @@ namespace kailux
         void createFrameResources();
         void createMeshRegistry();
         void createTextureRegistry();
+        void createPhysicsRegistry();
         void createImGui(Window& window);
 
         void createSceneTextureIds();
@@ -117,6 +123,10 @@ namespace kailux
 
         void readOutputBuffers(const FrameData& frame);
 
+        void onSimulationStart();
+        void updatePhysicsControls();
+        void updatePhysicsTransforms();
+
         void handleEvent(Window &window);
 
         void                          pollPendingData();
@@ -133,6 +143,7 @@ namespace kailux
                                           );
         MeshHandle       uploadMeshDataToRegistry(const MeshRegistry::MeshData& data);
         TextureSetHandle uploadMaterialDataToRegistry(const TextureRegistry::MaterialData &data);
+        BodyHandle       uploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo& data);
 
         void updatePendingFrameTasks();
 
@@ -158,8 +169,13 @@ namespace kailux
         vk::SampleCountFlagBits                    m_SampleCount;
         Swapchain                                  m_Swapchain;
         ImGuiBackend                               m_ImGuiBackend;
+
         MeshRegistry                               m_MeshRegistry;
         TextureRegistry                            m_TextureRegistry;
+        PhysicsRegistry                            m_PhysicsRegistry;
+
+        SimulationState                            m_SimulationState;
+
         std::array<FrameData, s_FramesInFlight>    m_Frames;
         uint32_t                                   m_CurrentFrame;
 
