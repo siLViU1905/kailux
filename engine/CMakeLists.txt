@@ -37,11 +37,23 @@ add_library(kailux_engine STATIC
         src/core/passes/ComputePass.cpp
         src/core/passes/ComputeCuller.cpp
         src/core/Geometry.cpp
+        src/core/physics/impl/BroadPhaseLayer.cpp
+        src/core/physics/impl/ObjectVsBroadPhaseLayerFilter.cpp
+        src/core/physics/impl/ObjectLayerPairFilter.cpp
+        src/core/physics/PhysicsRegistry.cpp
 )
 
 target_compile_definitions(kailux_engine PUBLIC
         IMGUI_DEFINE_MATH_OPERATORS
 )
+
+if(MSVC)
+    set(SIMD_FLAGS "/arch:AVX2")
+else()
+    set(SIMD_FLAGS -mavx2 -mfma -msse3)
+endif()
+
+target_compile_options(kailux_engine PRIVATE ${SIMD_FLAGS})
 
 target_include_directories(kailux_engine PUBLIC src)
 
