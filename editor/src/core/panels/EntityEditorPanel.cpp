@@ -4,6 +4,7 @@
 
 #include "core/components/entt/CameraComponent.h"
 #include "core/components/entt/HierarchyComponent.h"
+#include "core/components/entt/PhysicsControlComponent.h"
 #include "core/components/entt/TagComponent.h"
 #include "core/components/gpu/CameraData.h"
 #include "core/components/gpu/TransformComponent.h"
@@ -15,7 +16,9 @@ namespace kailux
                                              m_CurrentGizmoOperation(ImGuizmo::TRANSLATE),
                                              m_CurrentGizmoMode(ImGuizmo::LOCAL),
                                              m_UniformScale(true),
-                                             m_GizmoInUse(false)
+                                             m_GizmoInUse(false),
+                                             m_GizmoWasDragging(false),
+                                             m_SimulationRunning(false)
     {
         m_Open = false;
     }
@@ -27,7 +30,9 @@ namespace kailux
           m_CurrentGizmoOperation(ImGuizmo::TRANSLATE),
           m_CurrentGizmoMode(ImGuizmo::LOCAL),
           m_UniformScale(true),
-          m_GizmoInUse(false)
+          m_GizmoInUse(false),
+          m_GizmoWasDragging(false),
+          m_SimulationRunning(false)
     {
         m_Open = false;
     }
@@ -89,13 +94,43 @@ namespace kailux
                                 newValue = transform.scale.z;
                             transform.scale = glm::vec3(newValue);
                         }
+
                     }
+                    if (ImGui::IsItemDeactivatedAfterEdit() && registry.all_of<PhysicsComponent>(m_SelectedEntity))
+                        m_OnBodyScaleChange(registry.get<PhysicsComponent>(m_SelectedEntity), transform.scale);
                     ImGui::SameLine();
                     ImGui::Checkbox("##uniform", &m_UniformScale);
                     if (ImGui::IsItemHovered())
                         ImGui::SetTooltip("Uniform Scale");
                 }
-            } if (registry.all_of<MeshMaterialData>(m_SelectedEntity))
+            } if (registry.all_of<PhysicsComponent, PhysicsControlComponent>(m_SelectedEntity))
+            {
+                if (ImGui::CollapsingHeader("Physics", ImGuiTreeNodeFlags_DefaultOpen))
+                {
+                    auto &physics = registry.get<PhysicsComponent>(m_SelectedEntity);
+                    auto &control = registry.get<PhysicsControlComponent>(m_SelectedEntity);
+
+                    ImGui::BeginDisabled(m_SimulationRunning);
+
+                    int typeIndex = static_cast<int>(physics.type);
+                    if (ImGui::Combo("Body type", &typeIndex, s_BodyTypeOptions.data()))
+                    {
+                        physics.type = static_cast<PhysicsBodyType>(typeIndex);
+                        m_OnBodyTypeChange(physics, physics.type);
+                    }
+
+                    ImGui::InputFloat3("Velocity", glm::value_ptr(control.velocity));
+
+                    ImGui::EndDisabled();
+
+                    ImGui::InputFloat3("Force", glm::value_ptr(control.force));
+                    ImGui::Checkbox("Apply Force", &control.applyForce);
+
+                    ImGui::InputFloat3("Impulse", glm::value_ptr(control.impulse));
+                    control.applyImpulse = ImGui::Button("Apply Impulse");
+                }
+            }
+            if (registry.all_of<MeshMaterialData>(m_SelectedEntity))
             {
                 if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
                 {
@@ -141,7 +176,6 @@ namespace kailux
         ImGui::End();
         ImGui::PopStyleColor();
 
-        m_GizmoInUse = ImGuizmo::IsUsing() || ImGuizmo::IsOver();
         renderGizmo(scene);
     }
 
@@ -161,6 +195,21 @@ namespace kailux
     bool EntityEditorPanel::isGizmoInUse() const
     {
         return m_GizmoInUse;
+    }
+
+    void EntityEditorPanel::setSimulationState(bool running)
+    {
+        m_SimulationRunning = running;
+    }
+
+    void EntityEditorPanel::setOnBodyTypeChange(OnBodyTypeChange &&callback)
+    {
+        m_OnBodyTypeChange = std::move(callback);
+    }
+
+    void EntityEditorPanel::setOnBodyScaleChange(OnBodyScaleChange &&callback)
+    {
+        m_OnBodyScaleChange = std::move(callback);
     }
 
     void EntityEditorPanel::renderGizmo(Scene &scene)
@@ -184,8 +233,20 @@ namespace kailux
             glm::value_ptr(modelMatrix)
         );
 
-        m_GizmoInUse = ImGuizmo::IsUsing() || ImGuizmo::IsOver();
-        if (ImGuizmo::IsUsing())
+        bool isDragging = ImGuizmo::IsUsing();
+        if (m_GizmoWasDragging && !isDragging)
+            if (m_CurrentGizmoOperation == ImGuizmo::SCALE &&
+                registry.all_of<PhysicsComponent>(m_SelectedEntity) &&
+                registry.all_of<TransformComponent>(m_SelectedEntity))
+                m_OnBodyScaleChange(
+                    registry.get<PhysicsComponent>(m_SelectedEntity),
+                    registry.get<TransformComponent>(m_SelectedEntity).transform.scale
+                    );
+
+        m_GizmoWasDragging = isDragging;
+
+        m_GizmoInUse = isDragging || ImGuizmo::IsOver();
+        if (isDragging)
         {
             glm::vec3 translation, scale, skew;
             glm::quat rotation;

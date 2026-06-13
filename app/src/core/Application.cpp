@@ -28,7 +28,7 @@ namespace kailux
         return *this;
     }
 
-    Application Application::create(WindowInfo windowInfo)
+    Application Application::create(const WindowInfo &windowInfo)
     {
         Application app;
         app.m_Window = Window::create(windowInfo.width, windowInfo.height, windowInfo.title);
@@ -67,7 +67,7 @@ namespace kailux
     void Application::setCallbacks()
     {
         auto &hierarchyPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<HierarchyPanel>();
-        hierarchyPanel.setOnEntityDeleted([this](auto meshComponent, auto materialComponent, auto cacheKey)
+        hierarchyPanel.setOnEntityDeleted([this](const auto& meshComponent, auto materialComponent, auto cacheKey)
         {
             m_Engine.unregisterMesh(meshComponent.handle, cacheKey);
             m_Engine.unregisterTextureSet(materialComponent.handle);
@@ -146,16 +146,33 @@ namespace kailux
             projectPanel.getConsole().log<LogSeverity::Error>(message);
         });
 
+        auto& entityEditor = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<EntityEditorPanel>();
+        entityEditor.setOnBodyTypeChange([this](auto component, auto type)
+        {
+            m_Engine.updateBodyType(component.handle, type);
+        });
+        entityEditor.setOnBodyScaleChange([this](auto component, const auto& scale)
+        {
+            m_Engine.updateBodyScale(component.handle, scale);
+        });
+
         auto& viewportPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<ViewportPanel>();
         viewportPanel.setSceneTextureId(m_Engine.getSceneTextureId());
 
-        const auto& entityEditor = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<EntityEditorPanel>();
         viewportPanel.setOnClick([this, &hierarchyPanel, &entityEditor]()
         {
             if (entityEditor.isGizmoInUse())
                 return;
             auto entity = static_cast<entt::entity>(m_Engine.getPickedEntity());
             hierarchyPanel.selectEntity(entity);
+        });
+        viewportPanel.setOnSimulationStart([this]()
+        {
+            m_Engine.setSimulationState(SimulationState::Running);
+        });
+        viewportPanel.setOnSimulationPause([this]()
+        {
+            m_Engine.setSimulationState(SimulationState::Paused);
         });
 
         m_Engine.setOnEditorRender([this](Scene &scene)

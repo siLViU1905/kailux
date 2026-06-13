@@ -12,6 +12,8 @@
 #include "components/entt/HierarchyComponent.h"
 #include "components/entt/MaterialComponent.h"
 #include "components/entt/MeshComponent.h"
+#include "components/entt/PhysicsComponent.h"
+#include "components/entt/PhysicsControlComponent.h"
 #include "components/gpu/CameraData.h"
 #include "components/gpu/MeshData.h"
 #include "components/gpu/MeshTransformData.h"
@@ -20,7 +22,7 @@
 
 namespace kailux
 {
-    Engine::Engine() : m_SampleCount(vk::SampleCountFlagBits::e1), m_CurrentFrame(0), m_PickedEntity(~0u)
+    Engine::Engine() : m_SampleCount(vk::SampleCountFlagBits::e1), m_SimulationState(SimulationState::Paused), m_CurrentFrame(0), m_PickedEntity(~0u)
     {
     }
 
@@ -30,6 +32,8 @@ namespace kailux
                                               m_ImGuiBackend(std::move(other.m_ImGuiBackend)),
                                               m_MeshRegistry(std::move(other.m_MeshRegistry)),
                                               m_TextureRegistry(std::move(other.m_TextureRegistry)),
+                                              m_PhysicsRegistry(std::move(other.m_PhysicsRegistry)),
+                                              m_SimulationState(other.m_SimulationState),
                                               m_Frames(std::move(other.m_Frames)),
                                               m_CurrentFrame(other.m_CurrentFrame),
                                               m_SceneTextureIds(other.m_SceneTextureIds),
@@ -59,6 +63,8 @@ namespace kailux
             m_ImGuiBackend = std::move(other.m_ImGuiBackend);
             m_MeshRegistry = std::move(other.m_MeshRegistry);
             m_TextureRegistry = std::move(other.m_TextureRegistry);
+            m_PhysicsRegistry = std::move(other.m_PhysicsRegistry);
+            m_SimulationState = other.m_SimulationState;
             m_Frames = std::move(other.m_Frames);
             m_CurrentFrame = other.m_CurrentFrame;
             m_SceneTextureIds = other.m_SceneTextureIds;
@@ -99,6 +105,7 @@ namespace kailux
         engine.createOutlinePass();
         engine.createMeshRegistry();
         engine.createTextureRegistry();
+        engine.createPhysicsRegistry();
         engine.createComputePicker();
         engine.createComputeCuller();
         engine.createFrameResources();
@@ -231,6 +238,11 @@ namespace kailux
         );
     }
 
+    void Engine::createPhysicsRegistry()
+    {
+        m_PhysicsRegistry = PhysicsRegistry::create();
+    }
+
     void Engine::createImGui(Window &window)
     {
         m_ImGuiBackend = ImGuiBackend::create(window, m_Context, m_Swapchain, m_SampleCount);
@@ -269,30 +281,22 @@ namespace kailux
         );
         m_Scene.setMainCamera(cameraEntity);
 
-        m_Scene.createMeshEntity(
-            "Cube",
-            {
-                m_MeshRegistry.getBuiltins().cube,
-                "",
-                MeshType::Cube,
-                Geometry::computeBoundingSphere(MeshRegistry::generate_cube().vertices)
-            },
-            m_TextureRegistry.getDefaultSetHandle(),
-            {},
-            {}
-        );
-        m_Scene.createMeshEntity(
-            "Sphere",
-            {
-                m_MeshRegistry.getBuiltins().sphere,
-                "",
-                MeshType::Cube,
-                Geometry::computeBoundingSphere(MeshRegistry::generate_sphere().vertices)
-            },
-            m_TextureRegistry.getDefaultSetHandle(),
-            MeshTransformData({1.5f, 0.f, 0.f}),
-            {}
-        );
+        m_PendingMeshData.emplace(
+                    "",
+                    MeshLoader::LoadData(),
+                    "Cube",
+                    MeshTransformData(),
+                    MeshMaterialData(),
+                    MeshType::Cube
+            );
+        m_PendingMeshData.emplace(
+                    "",
+                    MeshLoader::LoadData(),
+                    "Sphere",
+                    MeshTransformData({1.f,0.f,0.f}),
+                    MeshMaterialData(),
+                    MeshType::Sphere
+            );
     }
 
     std::array<DescriptorSetUpdateInfo, TextureRegistry::s_TextureTypes.size()>
@@ -496,7 +500,7 @@ namespace kailux
             "obj"
         };
 
-        auto extension = path.substr(path.find_last_of(".") + 1);
+        auto extension = path.substr(path.find_last_of('.') + 1);
 
         return std::ranges::contains(supported, extension);
     }
@@ -509,7 +513,7 @@ namespace kailux
             "png"
         };
 
-        auto extension = path.substr(path.find_last_of(".") + 1);
+        auto extension = path.substr(path.find_last_of('.') + 1);
 
         return std::ranges::contains(supported, extension);
     }
@@ -616,6 +620,23 @@ namespace kailux
     uint32_t Engine::getPickedEntity() const
     {
         return m_PickedEntity;
+    }
+
+    void Engine::updateBodyType(BodyHandle handle, PhysicsBodyType type)
+    {
+        m_PhysicsRegistry.setBodyType(handle, type);
+    }
+
+    void Engine::updateBodyScale(BodyHandle handle, const glm::vec3 &scale)
+    {
+        m_PhysicsRegistry.updateBodyScale(handle, scale);
+    }
+
+    void Engine::setSimulationState(SimulationState state)
+    {
+        m_SimulationState = state;
+        if (m_SimulationState == SimulationState::Running)
+            onSimulationStart();
     }
 
     void Engine::cacheMesh(std::string_view path, MeshHandle meshHandle, TextureSetHandle materialHandle)
@@ -875,6 +896,13 @@ namespace kailux
         pollPendingData();
         updatePendingFrameTasks();
 
+        if (m_SimulationState == SimulationState::Running)
+        {
+            updatePhysicsControls();
+            updatePhysicsTransforms();
+            m_PhysicsRegistry.update(deltaTime);
+        }
+
         m_Scene.update();
 
         auto view = m_Scene.getEntityRegistry().view<CameraComponent, CameraData>();
@@ -964,6 +992,67 @@ namespace kailux
         m_PickedEntity = frame.getPickerBuffer().read<uint32_t>();
     }
 
+    void Engine::onSimulationStart()
+    {
+        auto view = m_Scene.getEntityRegistry().view<TransformComponent, PhysicsComponent>();
+
+        for (auto entity : view)
+        {
+            const auto& transformComp = view.get<TransformComponent>(entity);
+            const auto& physicsComp = view.get<PhysicsComponent>(entity);
+
+                m_PhysicsRegistry.setBodyTransform(
+                    physicsComp.handle,
+                    transformComp.transform.position,
+                    transformComp.transform.rotation
+                );
+
+                if (physicsComp.isDynamic())
+                    m_PhysicsRegistry.setLinearVelocity(physicsComp.handle, glm::vec3(0.f));
+        }
+    }
+
+    void Engine::updatePhysicsControls()
+    {
+        auto view = m_Scene.getEntityRegistry().view<PhysicsComponent, PhysicsControlComponent>();
+
+        for (auto entity:view)
+        {
+            auto phys = view.get<PhysicsComponent>(entity);
+            auto& control = view.get<PhysicsControlComponent>(entity);
+
+            control.velocity = m_PhysicsRegistry.getLinearVelocity(phys.handle);
+
+            if (control.applyForce)
+                m_PhysicsRegistry.addForce(phys.handle, control.force);
+
+            if (control.applyImpulse)
+                m_PhysicsRegistry.addImpulse(phys.handle, control.impulse);
+        }
+    }
+
+    void Engine::updatePhysicsTransforms()
+    {
+        auto view = m_Scene.getEntityRegistry().view<TransformComponent, PhysicsComponent>();
+
+        for (auto entity : view)
+        {
+            auto& transformComp = view.get<TransformComponent>(entity);
+            auto physics = view.get<PhysicsComponent>(entity);
+
+            if (physics.isDynamic())
+            {
+                m_PhysicsRegistry.getBodyTransform(
+                    physics.handle,
+                    transformComp.transform.position,
+                    transformComp.transform.rotation
+                    );
+
+                transformComp.worldMatrix = transformComp.transform.getModelMatrix();
+            }
+        }
+    }
+
     void Engine::handleEvent(Window &window)
     {
         if (auto event = window.getEvent())
@@ -1026,7 +1115,15 @@ namespace kailux
         {
             const auto &material = m_TextureRegistry.view(m_TextureRegistry.getDefaultSetHandle());
             auto textureHandle = m_TextureRegistry.registerTextureSet(material);
-            m_Scene.createMeshEntity(
+
+            auto bodyHandle = uploadPhysicsBodyDataToRegistry(
+                {
+                    {},
+                    data.type,
+                    data.transform
+                }
+            );
+            auto entity = m_Scene.createMeshEntity(
                 data.name.empty() ? m_Scene.getMeshEntityName() : data.name,
                 {
                     meshHandle,
@@ -1038,6 +1135,9 @@ namespace kailux
                 data.transform,
                 data.material
             );
+            auto& entityReg = m_Scene.getEntityRegistry();
+            entityReg.emplace<PhysicsComponent>(entity, bodyHandle);
+            entityReg.emplace<PhysicsControlComponent>(entity);
         };
         switch (data.type)
         {
@@ -1072,8 +1172,29 @@ namespace kailux
             loadedMaterialHandles = loadAndRegisterMaterials(loadData.materials);
 
         uint32_t submeshIndex = 0;
+        std::vector<SubmeshPhysicsInfo> submeshPhysicsInfo;
+        submeshPhysicsInfo.reserve(loadData.submeshes.size());
         for (const auto &submesh: loadData.submeshes)
+        {
             processSubmesh(data, submesh, submeshIndex++, parentEntity, loadedMaterialHandles);
+
+            submeshPhysicsInfo.emplace_back(
+                submesh.meshData.vertices,
+                submesh.meshData.indices,
+                submesh.localTransform
+                );
+        }
+
+        auto bodyHandle = uploadPhysicsBodyDataToRegistry(
+            {
+                std::move(submeshPhysicsInfo),
+                data.type,
+                data.transform
+            }
+            );
+        auto& entityReg = m_Scene.getEntityRegistry();
+        entityReg.emplace<PhysicsComponent>(parentEntity, bodyHandle);
+        entityReg.emplace<PhysicsControlComponent>(parentEntity);
 
         m_OnInfoLog(std::format("Loaded '{}' successfully with {} submeshes and {} unique materials.",
                                 data.path, loadData.submeshes.size(), loadData.materials.size()));
@@ -1196,6 +1317,11 @@ namespace kailux
             );
 
         return handle;
+    }
+
+    BodyHandle Engine::uploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo &data)
+    {
+        return m_PhysicsRegistry.createBody(data);
     }
 
     void Engine::updatePendingFrameTasks()

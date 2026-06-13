@@ -60,6 +60,9 @@ namespace kailux
     void EditorLayer::update()
     {
         m_Layer.getPanel<ProjectPanel>().useFullWidth(!m_Layer.getPanel<EntityEditorPanel>().isOpen());
+
+        bool isSimulationRunning = m_Layer.getPanel<ViewportPanel>().getSimulationState() != SimulationState::Paused;
+        m_Layer.getPanel<EntityEditorPanel>().setSimulationState(isSimulationRunning);
     }
 
     void EditorLayer::addPanels(ImTextureID directoryTextureId, ImTextureID fileTextureId)
