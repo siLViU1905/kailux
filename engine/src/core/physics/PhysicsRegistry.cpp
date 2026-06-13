@@ -250,16 +250,34 @@ namespace kailux
             baseShape = scaledShape->GetInnerShape();
         }
 
-        JPH::ShapeRefC newScaledShape = new JPH::ScaledShape(
-            baseShape,
-            {scale.x, scale.y, scale.z}
-        );
+        JPH::ShapeRefC newShape;
+        if (baseShape->GetSubType() == JPH::EShapeSubType::Sphere)
+        {
+            const auto* sphereShape = static_cast<const JPH::SphereShape*>(baseShape.GetPtr());
+
+            float maxScale = std::max({scale.x, scale.y, scale.z});
+            newShape = new JPH::SphereShape(sphereShape->GetRadius() * maxScale);
+        }
+        else if (baseShape->GetSubType() == JPH::EShapeSubType::Box)
+        {
+            const auto* boxShape = static_cast<const JPH::BoxShape*>(baseShape.GetPtr());
+            JPH::Vec3 originalHalfExtents = boxShape->GetHalfExtent();
+
+            newShape = new JPH::BoxShape(JPH::Vec3(
+                originalHalfExtents.GetX() * scale.x,
+                originalHalfExtents.GetY() * scale.y,
+                originalHalfExtents.GetZ() * scale.z
+            ));
+        }
+        else
+            newShape = new JPH::ScaledShape(baseShape, {scale.x, scale.y, scale.z});
+
         bodyInterface.SetShape(
             id,
-            newScaledShape,
+            newShape,
             true,
             JPH::EActivation::Activate
-        );
+            );
     }
 
     void PhysicsRegistry::update(float deltaTime)
@@ -341,7 +359,7 @@ namespace kailux
                     );
 
             JPH::ShapeRefC childShape;
-            if (info.bodyType == PhysicsBodyType::Static)
+            if (info.bodyType == PhysicsBodyType::Static && !info.canBecomeDynamic)
             {
                 JPH::IndexedTriangleList joltTriangles;
                 joltTriangles.reserve(submesh.indices.size() / 3);
@@ -353,8 +371,18 @@ namespace kailux
                         );
                 childShape = JPH::MeshShapeSettings(joltVertices, joltTriangles).Create().Get();
             }
-            // else
-                // childShape = JPH::ConvexHullShapeSettings(joltVertices.data(), joltVertices.size()).Create().Get();
+            else
+            {
+                JPH::Array<JPH::Vec3> hullVertices;
+                hullVertices.reserve(submesh.vertices.size());
+                for (const auto& vertex : submesh.vertices)
+                    hullVertices.emplace_back(
+                        vertex.position.x * lScale.x,
+                        vertex.position.y * lScale.y,
+                        vertex.position.z * lScale.z
+                    );
+                childShape = JPH::ConvexHullShapeSettings(hullVertices).Create().Get();
+            }
 
             if (childShape)
                 compoundSettings.AddShape(
