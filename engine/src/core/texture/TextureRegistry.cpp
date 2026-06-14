@@ -99,25 +99,41 @@ namespace kailux
         return m_AssetBrowserFileTexture;
     }
 
-    TextureSet TextureRegistry::createSetFromMaterialData(const Context &context, const MaterialData &data) const
+    AsyncMaterialResult TextureRegistry::createSetFromMaterialData(const Context &context, const MaterialData &data) const
     {
         auto checkSize = [](const ImageLoader::ImageData &data)-> bool
         {
             return data.width && data.height;
         };
-        auto set = m_DefaultSet;
-        if (checkSize(data.albedoData))
-            set.albedo = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data.albedoData));
-        if (checkSize(data.normalData))
-            set.normal = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data.normalData));
-        if (checkSize(data.roughnessData))
-            set.roughness = create_shared<Texture>(
-                TextureAllocator::create_from_image_data(context, data.roughnessData));
-        if (checkSize(data.metallicData))
-            set.metallic = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data.metallicData));
-        if (checkSize(data.aoData))
-            set.ao = create_shared<Texture>(TextureAllocator::create_from_image_data(context, data.aoData));
-        return set;
+
+        AsyncMaterialResult result;
+        result.set = m_DefaultSet;
+
+        auto process = [&](const auto &imgData, auto &target)
+        {
+            if (!checkSize(imgData))
+                return;
+
+            auto asyncTex = TextureAllocator::create_from_image_data_async(context, imgData);
+            target = create_shared<Texture>(std::move(asyncTex.texture));
+
+            result.uploads.emplace_back(
+                target->getImage(),
+                asyncTex.staging.getBuffer(),
+                asyncTex.width,
+                asyncTex.height,
+                asyncTex.mipLevels
+            );
+            result.staging.push_back(std::move(asyncTex.staging));
+        };
+
+        process(data.albedoData,    result.set.albedo);
+        process(data.normalData,    result.set.normal);
+        process(data.roughnessData, result.set.roughness);
+        process(data.metallicData,  result.set.metallic);
+        process(data.aoData,        result.set.ao);
+
+        return result;
     }
 
     void TextureRegistry::allocResources(uint32_t meshCount)

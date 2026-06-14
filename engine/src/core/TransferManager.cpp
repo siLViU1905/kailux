@@ -1,5 +1,7 @@
 #include "TransferManager.h"
 
+#include "texture/TextureAllocator.h"
+
 namespace kailux
 {
     TransferManager::TransferManager() = default;
@@ -23,7 +25,7 @@ namespace kailux
         return {};
     }
 
-    void TransferManager::enqueue(const Context &context, OnRecord record, OnComplete onComplete)
+    void TransferManager::enqueueBuffer(const Context &context, OnRecord &&record, OnComplete &&onComplete)
     {
         auto graphicsFamily = context.getGraphicsQueueFamilyIndex();
         auto transferFamily = context.getTransferQueueFamilyIndex();
@@ -57,17 +59,8 @@ namespace kailux
             tCmd.pipelineBarrier2(depInfo);
         }
 
-        vk::raii::Semaphore semaphore(context.m_Device, vk::SemaphoreCreateInfo{});
-        {
-            tCmd.end();
-            vk::SemaphoreSubmitInfo signalInfo(*semaphore, 0, vk::PipelineStageFlagBits2::eTransfer);
-            vk::CommandBufferSubmitInfo cmdInfo(tCmd);
-            vk::SubmitInfo2 submit({}, {}, cmdInfo, signalInfo);
-            context.getTransferQueue().submit2(submit, nullptr);
-        }
-
-        auto acquireOtc = OneTimeCommand::create(context, QueueType::Graphics);
-        auto aCmd = acquireOtc.getCommandBuffer();
+        auto graphicsOtc = OneTimeCommand::create(context, QueueType::Graphics);
+        auto gCmd = graphicsOtc.getCommandBuffer();
 
         if (needsOwnershipTransfer && !resources.empty())
         {
@@ -88,31 +81,115 @@ namespace kailux
 
             vk::DependencyInfo depInfo{};
             depInfo.setBufferMemoryBarriers(acquireBarriers);
-            aCmd.pipelineBarrier2(depInfo);
+            gCmd.pipelineBarrier2(depInfo);
         }
 
+        submitTransfer(
+            context,
+            std::move(transferOtc),
+            std::move(graphicsOtc),
+            std::move(recorded.staging),
+            std::move(onComplete)
+        );
+    }
+
+    void TransferManager::enqueueImages(
+        const Context &context,
+        std::vector<ImageUpload> &&images,
+        std::vector<Buffer> &&stagingOwnership,
+        OnComplete &&onComplete
+    )
+    {
+        if (images.empty())
+            return;
+
+        auto transferFamily = context.getTransferQueueFamilyIndex();
+        auto graphicsFamily = context.getGraphicsQueueFamilyIndex();
+        bool needsOwnershipTransfer = context.hasDedicatedTransferQueue();
+
+        auto transferOtc = OneTimeCommand::create(context, QueueType::Transfer);
+        auto tCmd = transferOtc.getCommandBuffer();
+
+        for (const auto &img : images)
+            TextureAllocator::record_texture_copy(
+                tCmd, img.image, img.staging, img.width, img.height, img.mipLevels);
+
+        if (needsOwnershipTransfer)
         {
-            aCmd.end();
-            vk::SemaphoreSubmitInfo waitInfo(*semaphore, 0, vk::PipelineStageFlagBits2::eAllCommands);
-            vk::CommandBufferSubmitInfo cmdInfo(aCmd);
-            vk::SubmitInfo2 submit({}, waitInfo, cmdInfo, {});
-            context.getGraphicsQueue().submit2(submit, acquireOtc.getFence());
+            std::vector<vk::ImageMemoryBarrier2> releaseBarriers;
+            releaseBarriers.reserve(images.size());
+            for (const auto &img: images)
+                releaseBarriers.emplace_back(
+                    vk::PipelineStageFlagBits2::eTransfer,
+                    vk::AccessFlagBits2::eTransferWrite,
+                    vk::PipelineStageFlagBits2::eNone,
+                    vk::AccessFlagBits2::eNone,
+                    vk::ImageLayout::eTransferDstOptimal,
+                    vk::ImageLayout::eTransferDstOptimal,
+                    transferFamily,
+                    graphicsFamily,
+                    img.image,
+                    vk::ImageSubresourceRange{
+                        vk::ImageAspectFlagBits::eColor,
+                        0,
+                        img.mipLevels,
+                    0,
+                    1
+                }
+            );
+            vk::DependencyInfo depInfo{};
+            depInfo.setImageMemoryBarriers(releaseBarriers);
+            tCmd.pipelineBarrier2(depInfo);
         }
 
-        m_Pending.emplace_back(
-           std::move(transferOtc),
-           std::move(acquireOtc),
-           std::move(semaphore),
-           std::move(recorded.staging),
-           std::move(onComplete)
-       );
+        auto graphicsOtc = OneTimeCommand::create(context, QueueType::Graphics);
+        auto gCmd = graphicsOtc.getCommandBuffer();
+
+        if (needsOwnershipTransfer)
+        {
+            std::vector<vk::ImageMemoryBarrier2> acquireBarriers;
+            acquireBarriers.reserve(images.size());
+            for (const auto &img: images)
+                acquireBarriers.emplace_back(
+                    vk::PipelineStageFlagBits2::eNone,
+                    vk::AccessFlagBits2::eNone,
+                    vk::PipelineStageFlagBits2::eTransfer,
+                    vk::AccessFlagBits2::eTransferRead | vk::AccessFlagBits2::eTransferWrite,
+                    vk::ImageLayout::eTransferDstOptimal,
+                    vk::ImageLayout::eTransferDstOptimal,
+                    transferFamily,
+                    graphicsFamily,
+                    img.image,
+                    vk::ImageSubresourceRange{
+                        vk::ImageAspectFlagBits::eColor,
+                        0,
+                        img.mipLevels,
+                        0,
+                        1
+                    }
+                );
+            vk::DependencyInfo depInfo{};
+            depInfo.setImageMemoryBarriers(acquireBarriers);
+            gCmd.pipelineBarrier2(depInfo);
+        }
+
+        for (const auto &img : images)
+            TextureAllocator::record_texture_mipmaps(gCmd, img.image, img.width, img.height, img.mipLevels);
+
+        submitTransfer(
+            context,
+            std::move(transferOtc),
+            std::move(graphicsOtc),
+            std::move(stagingOwnership),
+            std::move(onComplete)
+        );
     }
 
     void TransferManager::poll(const Context &context)
     {
         std::erase_if(m_Pending, [&](auto& pending)
         {
-            auto status = context.getDevice().getFenceStatus(pending.acquireCmd.getFence());
+            auto status = context.getDevice().getFenceStatus(pending.graphicsCmd.getFence());
             if (status == vk::Result::eSuccess)
             {
                 pending.onComplete();
@@ -126,7 +203,7 @@ namespace kailux
     {
         for (auto &pending : m_Pending)
         {
-            auto fence = pending.acquireCmd.getFence();
+            auto fence = pending.graphicsCmd.getFence();
             auto result = context.getDevice().waitForFences(fence, true, UINT64_MAX);
             if (result != vk::Result::eSuccess)
                 throw std::runtime_error("TransferManager::drain waitForFences failed");
@@ -144,5 +221,43 @@ namespace kailux
     void TransferManager::clear()
     {
         m_Pending.clear();
+    }
+
+    void TransferManager::submitTransfer(
+        const Context &context,
+        OneTimeCommand &&transferCmd,
+        OneTimeCommand &&graphicsCmd,
+        std::vector<Buffer> &&staging,
+        OnComplete &&onComplete
+    )
+    {
+        vk::raii::Semaphore semaphore(context.m_Device, vk::SemaphoreCreateInfo{});
+
+        auto tCmd = transferCmd.getCommandBuffer();
+        auto gCmd = graphicsCmd.getCommandBuffer();
+
+        {
+            tCmd.end();
+            vk::SemaphoreSubmitInfo signalInfo(*semaphore, 0, vk::PipelineStageFlagBits2::eTransfer);
+            vk::CommandBufferSubmitInfo cmdInfo(tCmd);
+            vk::SubmitInfo2 submit({}, {}, cmdInfo, signalInfo);
+            context.getTransferQueue().submit2(submit, nullptr);
+        }
+
+        {
+            gCmd.end();
+            vk::SemaphoreSubmitInfo waitInfo(*semaphore, 0, vk::PipelineStageFlagBits2::eAllCommands);
+            vk::CommandBufferSubmitInfo cmdInfo(gCmd);
+            vk::SubmitInfo2 submit({}, waitInfo, cmdInfo, {});
+            context.getGraphicsQueue().submit2(submit, graphicsCmd.getFence());
+        }
+
+        m_Pending.emplace_back(
+            std::move(transferCmd),
+            std::move(graphicsCmd),
+            std::move(semaphore),
+            std::move(staging),
+            std::move(onComplete)
+        );
     }
 }
