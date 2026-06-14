@@ -2,13 +2,28 @@
 #include "ImageLoader.h"
 #include "Texture.h"
 #include "core/Context.h"
+#include "core/buffer/Buffer.h"
 
 namespace kailux
 {
+    struct AsyncTextureResult
+    {
+        Texture        texture;
+        Buffer         staging;
+        uint32_t       width{};
+        uint32_t       height{};
+        uint32_t       mipLevels{};
+    };
+
     class TextureAllocator
     {
     public:
         static Texture create_from_image_data(
+            const Context &context,
+            const ImageLoader::ImageData &data
+        );
+
+        static AsyncTextureResult create_from_image_data_async(
             const Context &context,
             const ImageLoader::ImageData &data
         );
@@ -32,6 +47,23 @@ namespace kailux
             const Context& context,
             std::span<const std::array<ImageLoader::ImageData, 6>> mips
             );
+
+        static void record_texture_copy(
+            vk::CommandBuffer cmd,
+            vk::Image image,
+            vk::Buffer staging,
+            uint32_t width,
+            uint32_t height,
+            uint32_t mipLevels
+        );
+
+        static void record_texture_mipmaps(
+            vk::CommandBuffer cmd,
+            vk::Image image,
+            uint32_t width,
+            uint32_t height,
+            uint32_t mipLevels
+        );
 
     private:
         static Texture alloc(

@@ -1201,15 +1201,14 @@ namespace kailux
         auto t0 = Clock::now();
         if (!modelIsCached)
             loadedMaterialHandles = loadAndRegisterMaterials(loadData.materials);
-        KAILUX_LOG_INFO("[timing]", std::format("materials: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(t0)));
 
         auto pendingEntities = create_shared<std::vector<entt::entity>>();
 
         t0 = Clock::now();
-        m_TransferManager.enqueue(
+        m_TransferManager.enqueueBuffer(
             m_Context,
             [this, &data, &loadData, &loadedMaterialHandles, parentEntity, modelIsCached, pendingEntities]
-            (auto cmd) -> TransferManager::RecordResult
+    (auto cmd) -> TransferManager::RecordResult
             {
                 TransferManager::RecordResult result;
                 uint32_t submeshIndex = 0;
@@ -1285,8 +1284,7 @@ namespace kailux
                     if (registry.valid(entity))
                         registry.remove<PendingUploadComponent>(entity);
             }
-            );
-        KAILUX_LOG_INFO("[timing]", std::format("enqueue: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(t0)));
+        );
 
         t0 = Clock::now();
         uint32_t submeshIndex = 0;
@@ -1309,7 +1307,6 @@ namespace kailux
         auto& entityReg = m_Scene.getEntityRegistry();
         entityReg.emplace<PhysicsComponent>(parentEntity, bodyHandle);
         entityReg.emplace<PhysicsControlComponent>(parentEntity);
-        KAILUX_LOG_INFO("[timing]", std::format("physics: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(t0)));
 
         const auto& name = entityReg.get<TagComponent>(parentEntity).name;
         m_OnInfoLog(std::format("Loaded '{}' successfully with {} submeshes and {} unique materials in {}ms.",
@@ -1343,28 +1340,8 @@ namespace kailux
     {
         std::vector<TextureSetHandle> handles;
         handles.reserve(materials.size());
-
-        std::vector<DescriptorSetUpdateInfo> allUpdateInfos;
-        allUpdateInfos.reserve(materials.size() * TextureRegistry::s_TextureTypes.size());
-
         for (const auto &material: materials)
-        {
-            auto textureHandle = uploadMaterialDataToRegistry(material);
-            const auto &materialView = m_TextureRegistry.view(textureHandle);
-
-            auto currentUpdateInfos = make_descriptor_set_update_info_from_texture_set(textureHandle, materialView);
-            allUpdateInfos.insert(
-                allUpdateInfos.end(),
-                currentUpdateInfos.begin(),
-                currentUpdateInfos.end()
-                );
-
-            handles.push_back(textureHandle);
-        }
-
-        if (!allUpdateInfos.empty())
-            for (const auto &frame: m_Frames)
-                frame.getDescriptorSet().updateInfo(m_Context, allUpdateInfos);
+            handles.push_back(uploadMaterialDataToRegistry(material));
 
         return handles;
     }
@@ -1425,15 +1402,29 @@ namespace kailux
 
     TextureSetHandle Engine::uploadMaterialDataToRegistry(const TextureRegistry::MaterialData &data)
     {
-        auto set = m_TextureRegistry.createSetFromMaterialData(m_Context, data);
-        auto handle = m_TextureRegistry.registerTextureSet(set);
+        auto result = m_TextureRegistry.createSetFromMaterialData(m_Context, data);
+        auto handle = m_TextureRegistry.registerTextureSet(result.set);
 
-        auto updateInfos = make_descriptor_set_update_info_from_texture_set(handle, set);
+        auto updateInfos = make_descriptor_set_update_info_from_texture_set(handle, result.set);
 
         for (const auto &frame: m_Frames)
             frame.getDescriptorSet().updateInfo(
                 m_Context,
                 updateInfos
+            );
+
+        if (!result.uploads.empty())
+            m_TransferManager.enqueueImages(
+                m_Context,
+                std::move(result.uploads),
+                std::move(result.staging),
+                [this, handle]()
+                {
+                    const auto &set = m_TextureRegistry.view(handle);
+                    auto infos = make_descriptor_set_update_info_from_texture_set(handle, set);
+                    for (const auto &frame : m_Frames)
+                        frame.getDescriptorSet().updateInfo(m_Context, infos);
+                }
             );
 
         return handle;

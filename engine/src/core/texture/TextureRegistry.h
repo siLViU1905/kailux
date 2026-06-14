@@ -6,6 +6,8 @@
 #include "Texture.h"
 #include "core/Context.h"
 #include "core/Core.h"
+#include "core/TransferManager.h"
+#include "core/buffer/Buffer.h"
 
 namespace kailux
 {
@@ -27,6 +29,13 @@ namespace kailux
         Roughness = aiTextureType_DIFFUSE_ROUGHNESS,
         Metallic = aiTextureType_METALNESS,
         AO = aiTextureType_AMBIENT_OCCLUSION
+    };
+
+    struct AsyncMaterialResult
+    {
+        TextureSet               set;
+        std::vector<ImageUpload> uploads;
+        std::vector<Buffer>      staging;
     };
 
     class TextureRegistry
@@ -60,7 +69,7 @@ namespace kailux
             ImageLoader::ImageData aoData;
         };
 
-        TextureSet createSetFromMaterialData(const Context &context, const MaterialData& data) const;
+        AsyncMaterialResult createSetFromMaterialData(const Context &context, const MaterialData& data) const;
 
     private:
         void     allocResources(uint32_t meshCount);

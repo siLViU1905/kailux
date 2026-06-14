@@ -57,6 +57,34 @@ namespace kailux
         return texture;
     }
 
+    AsyncTextureResult TextureAllocator::create_from_image_data_async(const Context &context,
+                                                                      const ImageLoader::ImageData &data)
+    {
+        vk::DeviceSize imageSize = data.pixels.size() * sizeof(ImageLoader::ImageData::Pixel);
+        auto stagingBuffer = BufferAllocator::alloc_staging(context, imageSize);
+        stagingBuffer.upload(data.pixels.data(), imageSize);
+
+        auto texture = alloc(
+            context,
+            data.width,
+            data.height,
+            data.mipLevels,
+            vk::Format::eR8G8B8A8Unorm,
+            vk::ImageUsageFlagBits::eSampled |
+            vk::ImageUsageFlagBits::eTransferSrc |
+            vk::ImageUsageFlagBits::eTransferDst,
+            vk::ImageAspectFlagBits::eColor
+        );
+
+        return {
+            std::move(texture),
+            std::move(stagingBuffer),
+            data.width,
+            data.height,
+            data.mipLevels
+        };
+    }
+
     Texture TextureAllocator::create_cubemap(
         const Context &context,
         const std::array<ImageLoader::ImageData, 6> &faces
@@ -306,6 +334,38 @@ namespace kailux
             std::move(imageView),
             std::move(sampler)
         };
+    }
+
+    void TextureAllocator::record_texture_copy(vk::CommandBuffer cmd, vk::Image image, vk::Buffer staging,
+                                               uint32_t width, uint32_t height, uint32_t mipLevels)
+    {
+        transition_layout(
+            cmd,
+            image,
+            mipLevels,
+            1,
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eTransferDstOptimal
+        );
+
+        vk::BufferImageCopy region{};
+        region.imageSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+        region.imageSubresource.mipLevel = 0;
+        region.imageSubresource.layerCount = 1;
+        region.imageExtent = vk::Extent3D(width, height, 1);
+
+        cmd.copyBufferToImage(
+            staging,
+            image,
+            vk::ImageLayout::eTransferDstOptimal,
+            region
+        );
+    }
+
+    void TextureAllocator::record_texture_mipmaps(vk::CommandBuffer cmd, vk::Image image, uint32_t width,
+                                                  uint32_t height, uint32_t mipLevels)
+    {
+        generate_mipmaps(cmd, image, width, height, mipLevels);
     }
 
     Texture TextureAllocator::alloc(
