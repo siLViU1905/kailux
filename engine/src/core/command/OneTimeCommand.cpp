@@ -2,11 +2,11 @@
 
 namespace kailux
 {
-    OneTimeCommand::OneTimeCommand() : m_CommandBuffer({})
-    {
-    }
+    OneTimeCommand::OneTimeCommand() = default;
 
-    OneTimeCommand::OneTimeCommand(OneTimeCommand &&other) noexcept : m_CommandBuffer(std::move(other.m_CommandBuffer))
+    OneTimeCommand::OneTimeCommand(OneTimeCommand &&other) noexcept : m_QueueType(other.m_QueueType),
+                                                                      m_CommandBuffer(std::move(other.m_CommandBuffer)),
+                                                                      m_Fence(std::move(other.m_Fence))
     {
     }
 
@@ -14,33 +14,44 @@ namespace kailux
     {
         if (this != &other)
         {
+            m_QueueType = other.m_QueueType;
             m_CommandBuffer = std::move(other.m_CommandBuffer);
+            m_Fence = std::move(other.m_Fence);
         }
         return *this;
     }
 
-    vk::raii::CommandPool OneTimeCommand::s_CommandPool{nullptr};
-
-    void OneTimeCommand::create_command_pool(const Context &context)
+    void OneTimeCommand::create_command_pools(const Context &context)
     {
-        s_CommandPool = vk::raii::CommandPool(
+        s_GraphicsPool = vk::raii::CommandPool(
             context.m_Device,
             {
                 vk::CommandPoolCreateFlagBits::eTransient,
                 context.getGraphicsQueueFamilyIndex()
             }
         );
+
+        s_TransferPool = vk::raii::CommandPool(
+            context.m_Device,
+            {
+                vk::CommandPoolCreateFlagBits::eTransient,
+                context.getTransferQueueFamilyIndex()
+            }
+        );
     }
 
-    void OneTimeCommand::destroy_command_pool()
+    void OneTimeCommand::destroy_command_pools()
     {
-        s_CommandPool = {nullptr};
+        s_GraphicsPool = {nullptr};
+        s_TransferPool = {nullptr};
     }
 
-    OneTimeCommand OneTimeCommand::create(const Context &context)
+    OneTimeCommand OneTimeCommand::create(const Context &context, QueueType type)
     {
         OneTimeCommand otc;
+        otc.m_QueueType = type;
         otc.createBuffer(context);
+        otc.createFence(context);
         otc.m_CommandBuffer.begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
         return otc;
     }
@@ -49,6 +60,10 @@ namespace kailux
     {
         m_CommandBuffer.end();
 
+        const auto queue = (m_QueueType == QueueType::Transfer)
+                        ? context.getTransferQueue()
+                        : context.getGraphicsQueue();
+
         vk::CommandBufferSubmitInfo cmdInfo(getCommandBuffer());
         vk::SubmitInfo2 submitInfo(
             {},
@@ -56,8 +71,22 @@ namespace kailux
             cmdInfo,
             {}
         );
-        context.getGraphicsQueue().submit2(submitInfo, nullptr);
-        context.getGraphicsQueue().waitIdle();
+        queue.submit2(submitInfo, nullptr);
+        queue.waitIdle();
+    }
+
+    void OneTimeCommand::submitAsync(const Context &context) const
+    {
+        m_CommandBuffer.end();
+
+        auto queue = (m_QueueType == QueueType::Transfer)
+                        ? context.getTransferQueue()
+                        : context.getGraphicsQueue();
+
+        vk::CommandBufferSubmitInfo cmdInfo(getCommandBuffer());
+        vk::SubmitInfo2 submitInfo({}, {}, cmdInfo, {});
+
+        queue.submit2(submitInfo, *m_Fence);
     }
 
     vk::CommandBuffer OneTimeCommand::getCommandBuffer() const
@@ -65,15 +94,26 @@ namespace kailux
         return *m_CommandBuffer;
     }
 
+    vk::Fence OneTimeCommand::getFence() const
+    {
+        return *m_Fence;
+    }
+
     void OneTimeCommand::createBuffer(const Context &context)
     {
+        const auto &pool = (m_QueueType == QueueType::Transfer) ? s_TransferPool : s_GraphicsPool;
         m_CommandBuffer = std::move(vk::raii::CommandBuffers(
             context.m_Device,
             {
-                *s_CommandPool,
+                *pool,
                 vk::CommandBufferLevel::ePrimary,
                 1
             }
         ).front());
+    }
+
+    void OneTimeCommand::createFence(const Context &context)
+    {
+        m_Fence = vk::raii::Fence(context.m_Device, vk::FenceCreateInfo{});
     }
 }

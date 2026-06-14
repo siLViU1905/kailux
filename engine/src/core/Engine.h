@@ -15,6 +15,7 @@
 
 #include "passes/ComputePicker.h"
 #include "Scene.h"
+#include "TransferManager.h"
 #include "mesh/MeshLoader.h"
 #include "passes/MainPass.h"
 #include "physics/PhysicsRegistry.h"
@@ -93,6 +94,7 @@ namespace kailux
         void createSkybox();
         void createOutlinePass();
         void createFrameResources();
+        void createTransferManager();
         void createMeshRegistry();
         void createTextureRegistry();
         void createPhysicsRegistry();
@@ -170,6 +172,8 @@ namespace kailux
         vk::SampleCountFlagBits                    m_SampleCount;
         Swapchain                                  m_Swapchain;
         ImGuiBackend                               m_ImGuiBackend;
+
+        TransferManager                            m_TransferManager;
 
         MeshRegistry                               m_MeshRegistry;
         TextureRegistry                            m_TextureRegistry;
