@@ -19,6 +19,16 @@ namespace kailux
         int32_t vertexOffset{};
     };
 
+    struct MeshBufferRegions
+    {
+        vk::Buffer     vertexBuffer;
+        vk::DeviceSize vertexOffset{};
+        vk::DeviceSize vertexSize{};
+        vk::Buffer     indexBuffer;
+        vk::DeviceSize indexOffset{};
+        vk::DeviceSize indexSize{};
+    };
+
     struct BuiltinMeshes
     {
         MeshHandle cube;
@@ -47,6 +57,8 @@ namespace kailux
         uint32_t              getMeshCount() const;
 
         BuiltinMeshes getBuiltins() const;
+
+        MeshBufferRegions getRegions(MeshHandle handle) const;
 
     private:
         struct LinearZone

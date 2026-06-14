@@ -102,6 +102,20 @@ namespace kailux
         return m_Builtins;
     }
 
+    MeshBufferRegions MeshRegistry::getRegions(MeshHandle handle) const
+    {
+        assert(handle.valid());
+        const auto &alloc = m_Allocs[handle.index];
+        return {
+            m_VertexBuffer.getBuffer(),
+            alloc.vertexOffset,
+            static_cast<vk::DeviceSize>(alloc.vertexCount) * sizeof(Vertex),
+            m_IndexBuffer.getBuffer(),
+            alloc.indexOffset,
+            static_cast<vk::DeviceSize>(alloc.indexCount) * sizeof(IndexType)
+        };
+    }
+
     vk::DeviceSize MeshRegistry::LinearZone::alloc(vk::DeviceSize size, vk::DeviceSize alignment)
     {
         vk::DeviceSize aligned = ((cursor + alignment - 1) / alignment) * alignment;
@@ -235,20 +249,6 @@ namespace kailux
 
         vk::BufferCopy region(0, dstOffset, size);
         cmd.copyBuffer(staging.getBuffer(), dst.getBuffer(), region);
-
-        vk::BufferMemoryBarrier2 barrier{
-            vk::PipelineStageFlagBits2::eTransfer,
-            vk::AccessFlagBits2::eTransferWrite,
-            vk::PipelineStageFlagBits2::eVertexInput,
-            vk::AccessFlagBits2::eVertexAttributeRead | vk::AccessFlagBits2::eIndexRead,
-            vk::QueueFamilyIgnored,
-            vk::QueueFamilyIgnored,
-            dst.getBuffer(),
-            dstOffset,
-            size
-        };
-
-        cmd.pipelineBarrier2(vk::DependencyInfo{}.setBufferMemoryBarriers(barrier));
     }
 
     MeshRegistry::MeshData MeshRegistry::generate_cube()

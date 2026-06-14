@@ -12,6 +12,7 @@
 #include "components/entt/HierarchyComponent.h"
 #include "components/entt/MaterialComponent.h"
 #include "components/entt/MeshComponent.h"
+#include "components/entt/PendingUploadComponent.h"
 #include "components/entt/PhysicsComponent.h"
 #include "components/entt/PhysicsControlComponent.h"
 #include "components/entt/TagComponent.h"
@@ -31,6 +32,7 @@ namespace kailux
                                               m_SampleCount(other.m_SampleCount),
                                               m_Swapchain(std::move(other.m_Swapchain)),
                                               m_ImGuiBackend(std::move(other.m_ImGuiBackend)),
+                                              m_TransferManager(std::move(other.m_TransferManager)),
                                               m_MeshRegistry(std::move(other.m_MeshRegistry)),
                                               m_TextureRegistry(std::move(other.m_TextureRegistry)),
                                               m_PhysicsRegistry(std::move(other.m_PhysicsRegistry)),
@@ -62,6 +64,7 @@ namespace kailux
             m_SampleCount = other.m_SampleCount;
             m_Swapchain = std::move(other.m_Swapchain);
             m_ImGuiBackend = std::move(other.m_ImGuiBackend);
+            m_TransferManager = std::move(other.m_TransferManager);
             m_MeshRegistry = std::move(other.m_MeshRegistry);
             m_TextureRegistry = std::move(other.m_TextureRegistry);
             m_PhysicsRegistry = std::move(other.m_PhysicsRegistry);
@@ -91,8 +94,9 @@ namespace kailux
         if (m_Context.getDevice())
         {
             waitIdle();
+            m_TransferManager.clear();
             m_Frames = {};
-            OneTimeCommand::destroy_command_pool();
+            OneTimeCommand::destroy_command_pools();
         }
     }
 
@@ -100,10 +104,11 @@ namespace kailux
     {
         Engine engine;
         engine.createRenderingContext(window);
-        OneTimeCommand::create_command_pool(engine.m_Context);
+        OneTimeCommand::create_command_pools(engine.m_Context);
         engine.createMainPass();
         engine.createSkybox();
         engine.createOutlinePass();
+        engine.createTransferManager();
         engine.createMeshRegistry();
         engine.createTextureRegistry();
         engine.createPhysicsRegistry();
@@ -219,6 +224,11 @@ namespace kailux
                 m_ComputeCuller,
                 m_TextureRegistry, s_MaxMeshCount
             );
+    }
+
+    void Engine::createTransferManager()
+    {
+        m_TransferManager = TransferManager::create();
     }
 
     void Engine::createMeshRegistry()
@@ -687,7 +697,8 @@ namespace kailux
         std::array countBufferBarrier = {frame.getCullerCountBufferFillMemoryBarrier()};
         recorder.bufferMemoryBarriers(countBufferBarrier);
 
-        auto totalObjects = static_cast<uint32_t>(m_Scene.getEntityRegistry().view<MeshComponent>().size());
+        auto totalObjects = static_cast<uint32_t>(
+            m_Scene.getEntityRegistry().view<MeshComponent>(entt::exclude<PendingUploadComponent>).size_hint());
         if (totalObjects == 0)
             return;
 
@@ -901,6 +912,7 @@ namespace kailux
         handleEvent(window);
 
         pollPendingData();
+        m_TransferManager.poll(m_Context);
         updatePendingFrameTasks();
 
         if (m_SimulationState == SimulationState::Running)
@@ -946,8 +958,12 @@ namespace kailux
     void Engine::updateMeshDataBuffer(FrameData &frame) const
     {
         std::vector<MeshData> data;
-        auto view = m_Scene.getEntityRegistry().view<TransformComponent, MeshMaterialData, MeshComponent,
-            MaterialComponent>();
+        auto view = m_Scene.getEntityRegistry().view<
+            TransformComponent,
+            MeshMaterialData,
+            MeshComponent,
+            MaterialComponent>
+        (entt::exclude<PendingUploadComponent>);
         data.reserve(view.size_hint());
         for (auto entity: view)
         {
@@ -974,8 +990,8 @@ namespace kailux
     void Engine::updateCullerBuffers(const FrameData &frame, const CommandRecorder &recorder)
     {
         std::vector<vk::DrawIndexedIndirectCommand> indirectCommands;
-        auto view = m_Scene.getEntityRegistry().view<MeshComponent>();
-        indirectCommands.reserve(view.size());
+        auto view = m_Scene.getEntityRegistry().view<MeshComponent>(entt::exclude<PendingUploadComponent>);
+        indirectCommands.reserve(view.size_hint());
         view.each([this, &indirectCommands](const auto &mesh)
         {
             auto meshView = m_MeshRegistry.view(mesh.handle);
@@ -1182,22 +1198,106 @@ namespace kailux
         bool modelIsCached = isMeshCached(firstSubmeshKey);
 
         std::vector<TextureSetHandle> loadedMaterialHandles;
+        auto t0 = Clock::now();
         if (!modelIsCached)
             loadedMaterialHandles = loadAndRegisterMaterials(loadData.materials);
+        KAILUX_LOG_INFO("[timing]", std::format("materials: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(t0)));
 
+        auto pendingEntities = create_shared<std::vector<entt::entity>>();
+
+        t0 = Clock::now();
+        m_TransferManager.enqueue(
+            m_Context,
+            [this, &data, &loadData, &loadedMaterialHandles, parentEntity, modelIsCached, pendingEntities]
+            (auto cmd) -> TransferManager::RecordResult
+            {
+                TransferManager::RecordResult result;
+                uint32_t submeshIndex = 0;
+
+                for (const auto &submesh: loadData.submeshes)
+                {
+                    auto cacheKey = std::format("{}_sub{}", data.path, submeshIndex);
+
+                    MeshHandle meshHandle;
+                    TextureSetHandle textureHandle;
+
+                    if (isMeshCached(cacheKey))
+                    {
+                        auto cache = m_MeshCache.at(cacheKey);
+                        const auto &material = m_TextureRegistry.view(cache.materialHandle);
+                        textureHandle = m_TextureRegistry.registerTextureSet(material);
+                        auto updateInfos = make_descriptor_set_update_info_from_texture_set(textureHandle, material);
+                        for (const auto &frame: m_Frames)
+                            frame.getDescriptorSet().updateInfo(m_Context, updateInfos);
+                        meshHandle = cache.meshHandle;
+                    } else
+                    {
+                        meshHandle = m_MeshRegistry.upload(m_Context, cmd, submesh.meshData, result.staging);
+                        textureHandle = loadedMaterialHandles[submesh.materialIndex];
+
+                        auto regions = m_MeshRegistry.getRegions(meshHandle);
+                        result.resources.emplace_back(
+                            regions.vertexBuffer, regions.vertexOffset, regions.vertexSize,
+                            vk::PipelineStageFlagBits2::eVertexInput,
+                            vk::AccessFlagBits2::eVertexAttributeRead
+                        );
+                        result.resources.emplace_back(
+                            regions.indexBuffer, regions.indexOffset, regions.indexSize,
+                            vk::PipelineStageFlagBits2::eVertexInput,
+                            vk::AccessFlagBits2::eIndexRead
+                        );
+                    }
+
+                    cacheMesh(cacheKey, meshHandle, textureHandle);
+
+                    auto rootName = data.name.empty() ? m_Scene.getMeshEntityName() : data.name;
+                    auto submeshName = std::format("{}_{}", rootName,
+                                                   submesh.name.empty() ? std::to_string(submeshIndex) : submesh.name);
+
+                    auto childEntity = m_Scene.createMeshEntity(
+                        submeshName,
+                        {
+                            meshHandle,
+                            data.path,
+                            data.type,
+                            submesh.boundingSphere
+                        },
+                        textureHandle,
+                        {},
+                        data.material,
+                        parentEntity
+                    );
+
+                    auto &childTransform = m_Scene.getEntityRegistry().get<TransformComponent>(childEntity);
+                    childTransform.submeshLocalMatrix = submesh.localTransform;
+
+                    m_Scene.getEntityRegistry().emplace<PendingUploadComponent>(childEntity);
+                    pendingEntities->push_back(childEntity);
+
+                    ++submeshIndex;
+                }
+                return result;
+            },
+            [this, pendingEntities]()
+            {
+                auto &registry = m_Scene.getEntityRegistry();
+                for (auto entity: *pendingEntities)
+                    if (registry.valid(entity))
+                        registry.remove<PendingUploadComponent>(entity);
+            }
+            );
+        KAILUX_LOG_INFO("[timing]", std::format("enqueue: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(t0)));
+
+        t0 = Clock::now();
         uint32_t submeshIndex = 0;
         std::vector<SubmeshPhysicsInfo> submeshPhysicsInfo;
         submeshPhysicsInfo.reserve(loadData.submeshes.size());
         for (const auto &submesh: loadData.submeshes)
-        {
-            processSubmesh(data, submesh, submeshIndex++, parentEntity, loadedMaterialHandles);
-
             submeshPhysicsInfo.emplace_back(
                 submesh.meshData.vertices,
                 submesh.meshData.indices,
                 submesh.localTransform
                 );
-        }
 
         auto bodyHandle = uploadPhysicsBodyDataToRegistry(
             {
@@ -1209,6 +1309,7 @@ namespace kailux
         auto& entityReg = m_Scene.getEntityRegistry();
         entityReg.emplace<PhysicsComponent>(parentEntity, bodyHandle);
         entityReg.emplace<PhysicsControlComponent>(parentEntity);
+        KAILUX_LOG_INFO("[timing]", std::format("physics: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(t0)));
 
         const auto& name = entityReg.get<TagComponent>(parentEntity).name;
         m_OnInfoLog(std::format("Loaded '{}' successfully with {} submeshes and {} unique materials in {}ms.",
