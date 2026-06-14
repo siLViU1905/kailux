@@ -34,6 +34,7 @@ namespace kailux
         friend class DescriptorPool;
         friend class DescriptorSet;
         friend class OneTimeCommand;
+        friend class TransferManager;
 
     private:
         static std::vector<const char *> get_required_extensions();
