@@ -7,6 +7,7 @@
 #include "components/gpu/CameraData.h"
 #include <nlohmann/json.hpp>
 #include "components/entt/HierarchyComponent.h"
+#include "components/entt/PhysicsComponent.h"
 #include "components/gpu/TransformComponent.h"
 
 namespace kailux
@@ -213,8 +214,8 @@ namespace kailux
         };
 
         js["Mesh"] = nlohmann::json::array();
-        auto meshView = m_EntityRegistry.view<TagComponent, MeshComponent, MeshTransformData, MeshMaterialData>();
-        meshView.each([&js](const auto &tag, const auto &mesh, const auto &transform, const auto &material)
+        auto meshView = m_EntityRegistry.view<TagComponent, MeshComponent, TransformComponent, MeshMaterialData, PhysicsComponent>();
+        meshView.each([&js](const auto &tag, const auto &mesh, const auto &transformComponent, const auto &material, auto physics)
         {
             nlohmann::json meshEntry;
 
@@ -224,9 +225,9 @@ namespace kailux
             meshEntry["type"] = static_cast<uint8_t>(mesh.type);
 
             meshEntry["transform"] = {
-                {"position", {transform.position.x, transform.position.y, transform.position.z}},
-                {"rotation", {transform.rotation.x, transform.rotation.y, transform.rotation.z, transform.rotation.w}},
-                {"scale", {transform.scale.x, transform.scale.y, transform.scale.z}}
+                {"position", {transformComponent.transform.position.x, transformComponent.transform.position.y, transformComponent.transform.position.z}},
+                {"rotation", {transformComponent.transform.rotation.x, transformComponent.transform.rotation.y, transformComponent.transform.rotation.z, transformComponent.transform.rotation.w}},
+                {"scale", {transformComponent.transform.scale.x, transformComponent.transform.scale.y, transformComponent.transform.scale.z}}
             };
 
             meshEntry["material"] = {
@@ -237,6 +238,10 @@ namespace kailux
                 {"roughness", material.albedoAndRoughness.w},
                 {"metallic", material.pbrParams.x},
                 {"ao", material.pbrParams.y}
+            };
+
+            meshEntry["physics"] = {
+                {"body", static_cast<uint8_t>(physics.type)}
             };
 
             js["Mesh"].push_back(meshEntry);

@@ -582,6 +582,12 @@ namespace kailux
                         };
                     }
 
+                    if (meshJs.contains("physics"))
+                    {
+                        auto &p = meshJs["physics"];
+                        pending.bodyType = static_cast<PhysicsBodyType>(p["body"]);
+                    }
+
                     if (!isMeshCached(pending.path))
                         if (auto loadData = MeshLoader::load(pending.path))
                             pending.data = std::move(*loadData);
@@ -1120,7 +1126,8 @@ namespace kailux
                 {
                     {},
                     data.type,
-                    data.transform
+                    data.transform,
+                    data.bodyType
                 }
             );
             auto entity = m_Scene.createMeshEntity(
@@ -1136,7 +1143,7 @@ namespace kailux
                 data.material
             );
             auto& entityReg = m_Scene.getEntityRegistry();
-            entityReg.emplace<PhysicsComponent>(entity, bodyHandle);
+            entityReg.emplace<PhysicsComponent>(entity, bodyHandle, data.bodyType);
             entityReg.emplace<PhysicsControlComponent>(entity);
         };
         switch (data.type)

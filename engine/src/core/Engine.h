@@ -43,7 +43,8 @@ namespace kailux
             std::string          name;
             MeshTransformData    transform;
             MeshMaterialData     material;
-            MeshType             type = MeshType::Unknown;
+            MeshType             type{MeshType::Unknown};
+            PhysicsBodyType      bodyType{PhysicsBodyType::Static};
         };
 
         Queue<PendingMeshData> &getPendingMeshDataQueue();
