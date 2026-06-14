@@ -29,9 +29,20 @@ namespace kailux
             return convert<Ty, timeType>(std::chrono::steady_clock::now() - m_Start);
         }
 
+        static auto now()
+        {
+            return std::chrono::steady_clock::now();
+        }
+
+        template<typename Ty, TimeType timeType>
+        static auto get_elapsed(std::chrono::steady_clock::time_point timePoint)
+        {
+            return convert<Ty, timeType>(now() - timePoint);
+        }
+
     private:
         template<typename Ty, TimeType timeType>
-        static Ty convert(std::chrono::duration<double> duration)
+        static Ty convert(std::chrono::duration<float> duration)
         {
             if constexpr (timeType == TimeType::Milliseconds)
                 return static_cast<Ty>(
@@ -45,11 +56,13 @@ namespace kailux
                 return static_cast<Ty>(
                     std::chrono::duration_cast<std::chrono::duration<Ty, std::micro> >(duration).count()
                 );
+            else
+                static_assert(timeType == TimeType::Microseconds, "Unhandled TimeType");
             return {};
         }
 
         std::chrono::steady_clock::time_point m_Start;
         std::chrono::steady_clock::time_point m_LastTick;
-        std::chrono::duration<float>          m_DeltaTime;
+        std::chrono::duration<float>          m_DeltaTime{0.f};
     };
 }

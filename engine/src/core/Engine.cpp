@@ -14,6 +14,7 @@
 #include "components/entt/MeshComponent.h"
 #include "components/entt/PhysicsComponent.h"
 #include "components/entt/PhysicsControlComponent.h"
+#include "components/entt/TagComponent.h"
 #include "components/gpu/CameraData.h"
 #include "components/gpu/MeshData.h"
 #include "components/gpu/MeshTransformData.h"
@@ -1117,7 +1118,9 @@ namespace kailux
 
     void Engine::processBuiltinMesh(const PendingMeshData &data)
     {
-        auto createMeshEntity = [this, &data](auto meshHandle, const auto &vertices)
+        auto now = Clock::now();
+        std::string meshName;
+        auto createMeshEntity = [this, &data, &meshName](auto meshHandle, const auto &vertices)
         {
             const auto &material = m_TextureRegistry.view(m_TextureRegistry.getDefaultSetHandle());
             auto textureHandle = m_TextureRegistry.registerTextureSet(material);
@@ -1130,8 +1133,9 @@ namespace kailux
                     data.bodyType
                 }
             );
+            meshName = data.name.empty() ? m_Scene.getMeshEntityName() : data.name;
             auto entity = m_Scene.createMeshEntity(
-                data.name.empty() ? m_Scene.getMeshEntityName() : data.name,
+                meshName,
                 {
                     meshHandle,
                     data.path,
@@ -1163,10 +1167,13 @@ namespace kailux
             default:
                 break;
         }
+        m_OnInfoLog(std::format("Loaded '{}' successfully in {:.3f}ms.",
+                                meshName, Clock::get_elapsed<float, TimeType::Milliseconds>(now)));
     }
 
     void Engine::processLoadedMesh(const PendingMeshData &data)
     {
+        auto now = Clock::now();
         const auto &loadData = data.data;
 
         auto parentEntity = createParentMeshEntity(data);
@@ -1203,8 +1210,13 @@ namespace kailux
         entityReg.emplace<PhysicsComponent>(parentEntity, bodyHandle);
         entityReg.emplace<PhysicsControlComponent>(parentEntity);
 
-        m_OnInfoLog(std::format("Loaded '{}' successfully with {} submeshes and {} unique materials.",
-                                data.path, loadData.submeshes.size(), loadData.materials.size()));
+        const auto& name = entityReg.get<TagComponent>(parentEntity).name;
+        m_OnInfoLog(std::format("Loaded '{}' successfully with {} submeshes and {} unique materials in {}ms.",
+                                name,
+                                loadData.submeshes.size(),
+                                loadData.materials.size(),
+                                Clock::get_elapsed<float, TimeType::Milliseconds>(now)
+                                ));
     }
 
     entt::entity Engine::createParentMeshEntity(const PendingMeshData &data)
