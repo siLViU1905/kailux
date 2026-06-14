@@ -16,10 +16,13 @@ namespace kailux
         vk::Device         getDevice() const;
         vk::SurfaceKHR     getSurface() const;
         vk::Queue          getGraphicsQueue() const;
+        vk::Queue          getTransferQueue() const;
         uint32_t           getGraphicsQueueFamilyIndex() const;
+        uint32_t           getTransferQueueFamilyIndex() const;
 
         uint32_t                findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const;
         vk::SampleCountFlagBits getMaxUsableSampleCount() const;
+        bool                    hasDedicatedTransferQueue() const;
 
         friend class Swapchain;
         friend class FrameData;
@@ -45,6 +48,10 @@ namespace kailux
         void createSurface(Window& window);
         void pickPhysicalDevice();
         void createLogicalDevice();
+        void createQueues();
+
+        static std::optional<uint32_t> find_graphics_family(const vk::raii::PhysicalDevice& device, const vk::raii::SurfaceKHR &surface);
+        static std::optional<uint32_t> find_transfer_family(const vk::raii::PhysicalDevice& device);
 
         vk::raii::Context                m_Context;
         vk::raii::Instance               m_Instance;
@@ -52,8 +59,10 @@ namespace kailux
         vk::raii::PhysicalDevice         m_PhysicalDevice;
         vk::raii::Device                 m_Device;
         vk::raii::Queue                  m_GraphicsQueue;
+        vk::raii::Queue                  m_TransferQueue;
         vk::raii::SurfaceKHR             m_Surface;
         uint32_t                         m_GraphicsQueueFamilyIndex;
+        uint32_t                         m_TransferQueueFamilyIndex;
         static constexpr std::array      s_ValidationLayers = {
             "VK_LAYER_KHRONOS_validation"
             };

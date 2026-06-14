@@ -9,7 +9,7 @@
 namespace kailux
 {
     Context::Context() : m_Context({}), m_Instance({}), m_DebugMessenger({}), m_PhysicalDevice({}), m_Device({}),
-                         m_GraphicsQueue({}), m_Surface({}), m_GraphicsQueueFamilyIndex(~0)
+                         m_GraphicsQueue({}), m_TransferQueue({}), m_Surface({}), m_GraphicsQueueFamilyIndex(~0), m_TransferQueueFamilyIndex(~0)
     {
     }
 
@@ -19,8 +19,10 @@ namespace kailux
                                                  m_PhysicalDevice(std::move(other.m_PhysicalDevice)),
                                                  m_Device(std::move(other.m_Device)),
                                                  m_GraphicsQueue(std::move(other.m_GraphicsQueue)),
+                                                 m_TransferQueue(std::move(other.m_TransferQueue)),
                                                  m_Surface(std::move(other.m_Surface)),
-                                                 m_GraphicsQueueFamilyIndex(~0)
+                                                 m_GraphicsQueueFamilyIndex(other.m_GraphicsQueueFamilyIndex),
+                                                 m_TransferQueueFamilyIndex(other.m_TransferQueueFamilyIndex)
     {
     }
 
@@ -34,8 +36,10 @@ namespace kailux
             m_PhysicalDevice = std::move(other.m_PhysicalDevice);
             m_Device = std::move(other.m_Device);
             m_GraphicsQueue = std::move(other.m_GraphicsQueue);
+            m_TransferQueue = std::move(other.m_TransferQueue);
             m_Surface = std::move(other.m_Surface);
             m_GraphicsQueueFamilyIndex = other.m_GraphicsQueueFamilyIndex;
+            m_TransferQueueFamilyIndex = other.m_TransferQueueFamilyIndex;
         }
         return *this;
     }
@@ -60,6 +64,12 @@ namespace kailux
         context.createLogicalDevice();
         KAILUX_LOG_CHILD_CLR_YELLOW("Logical device created")
 
+        context.createQueues();
+        KAILUX_LOG_CHILD_CLR_YELLOW("Queues created")
+
+        KAILUX_LOG_CHILD_CLR_YELLOW(std::format("Transfer queue: dedicated={}, family={}",
+            context.hasDedicatedTransferQueue(), context.m_TransferQueueFamilyIndex))
+
         return context;
     }
 
@@ -83,9 +93,19 @@ namespace kailux
         return *m_GraphicsQueue;
     }
 
+    vk::Queue Context::getTransferQueue() const
+    {
+        return *m_TransferQueue;
+    }
+
     uint32_t Context::getGraphicsQueueFamilyIndex() const
     {
         return m_GraphicsQueueFamilyIndex;
+    }
+
+    uint32_t Context::getTransferQueueFamilyIndex() const
+    {
+        return m_TransferQueueFamilyIndex;
     }
 
     uint32_t Context::findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const
@@ -115,6 +135,11 @@ namespace kailux
         if (counts & vk::SampleCountFlagBits::e2) { return vk::SampleCountFlagBits::e2; }
 
         return vk::SampleCountFlagBits::e1;
+    }
+
+    bool Context::hasDedicatedTransferQueue() const
+    {
+        return m_TransferQueueFamilyIndex != m_GraphicsQueueFamilyIndex;
     }
 
     std::vector<const char *> Context::get_required_extensions()
@@ -193,7 +218,7 @@ namespace kailux
 
     void Context::setupDebugMessenger()
     {
-        if (!s_EnableValidationLayers)
+        if constexpr (!s_EnableValidationLayers)
             return;
 
         vk::DebugUtilsMessageSeverityFlagsEXT severityFlags(
@@ -293,25 +318,6 @@ namespace kailux
 
     void Context::createLogicalDevice()
     {
-        auto queueFamilyProperties = m_PhysicalDevice.getQueueFamilyProperties();
-
-        uint32_t queueIndex = ~0;
-
-        for (uint32_t qfpIndex = 0; qfpIndex < queueFamilyProperties.size(); qfpIndex++)
-        {
-            if ((queueFamilyProperties[qfpIndex].queueFlags & vk::QueueFlagBits::eGraphics) &&
-                m_PhysicalDevice.getSurfaceSupportKHR(qfpIndex, m_Surface))
-            {
-                queueIndex = qfpIndex;
-                break;
-            }
-        }
-
-        m_GraphicsQueueFamilyIndex = queueIndex;
-
-        if (queueIndex == ~0u)
-            throw std::runtime_error("Could not find a queue for graphics and present -> terminating");
-
         vk::StructureChain<
             vk::PhysicalDeviceFeatures2,
             vk::PhysicalDeviceVulkan11Features,
@@ -359,19 +365,70 @@ namespace kailux
 
         fFifoLatest.presentModeFifoLatestReady = vk::True;
 
-        float queuePriority = 0.f;
-        vk::DeviceQueueCreateInfo deviceQueueCreateInfo{{}, queueIndex, 1, &queuePriority};
+        std::vector<vk::DeviceQueueCreateInfo> queueInfos;
+        float queuePriority{};
+
+        auto qIndex = find_graphics_family(m_PhysicalDevice, m_Surface);
+        if (!qIndex)
+            throw std::runtime_error("Could not find a queue for graphics and present -> terminating");
+
+        m_GraphicsQueueFamilyIndex = *qIndex;
+        queueInfos.emplace_back(vk::DeviceQueueCreateFlags{}, m_GraphicsQueueFamilyIndex, 1, &queuePriority);
+
+        qIndex = find_transfer_family(m_PhysicalDevice);
+        if (qIndex)
+        {
+            m_TransferQueueFamilyIndex = *qIndex;
+            queueInfos.emplace_back(vk::DeviceQueueCreateFlags{}, m_TransferQueueFamilyIndex, 1, &queuePriority);
+        }
 
         vk::DeviceCreateInfo deviceCreateInfo{};
         deviceCreateInfo.pNext = &f2;
 
-        deviceCreateInfo.queueCreateInfoCount = 1;
-        deviceCreateInfo.pQueueCreateInfos = &deviceQueueCreateInfo;
+        deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueInfos.size());
+        deviceCreateInfo.pQueueCreateInfos = queueInfos.data();
         deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(s_DeviceExtensions.size());
         deviceCreateInfo.ppEnabledExtensionNames = s_DeviceExtensions.data();
 
         m_Device = vk::raii::Device(m_PhysicalDevice, deviceCreateInfo);
+    }
 
-        m_GraphicsQueue = vk::raii::Queue(m_Device, queueIndex, 0);
+    void Context::createQueues()
+    {
+        m_GraphicsQueue = vk::raii::Queue(m_Device, m_GraphicsQueueFamilyIndex, 0);
+
+        if (m_TransferQueueFamilyIndex == ~0u)
+            m_TransferQueueFamilyIndex = m_GraphicsQueueFamilyIndex;
+
+        m_TransferQueue = vk::raii::Queue(m_Device, m_TransferQueueFamilyIndex, 0);
+    }
+
+    std::optional<uint32_t> Context::find_graphics_family(const vk::raii::PhysicalDevice &device, const vk::raii::SurfaceKHR &surface)
+    {
+        auto families = device.getQueueFamilyProperties();
+        uint32_t i{};
+        for (const auto& family : families)
+        {
+            bool hasGraphics = static_cast<bool>(family.queueFlags & vk::QueueFlagBits::eGraphics);
+            if (hasGraphics && device.getSurfaceSupportKHR(i, surface))
+                return i;
+            ++i;
+        }
+        return std::nullopt;
+    }
+
+    std::optional<uint32_t> Context::find_transfer_family(const vk::raii::PhysicalDevice &device)
+    {
+        auto families = device.getQueueFamilyProperties();
+        uint32_t i{};
+        for (const auto& family : families)
+        {
+            bool hasTransfer = static_cast<bool>(family.queueFlags & vk::QueueFlagBits::eTransfer);
+            bool hasGraphics = static_cast<bool>(family.queueFlags & vk::QueueFlagBits::eGraphics);
+            if (hasTransfer && !hasGraphics)
+                return i;
+            ++i;
+        }
+        return std::nullopt;
     }
 }
