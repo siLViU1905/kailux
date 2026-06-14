@@ -7,6 +7,7 @@
 #include "components/gpu/CameraData.h"
 #include <nlohmann/json.hpp>
 #include "components/entt/HierarchyComponent.h"
+#include "components/entt/PhysicsComponent.h"
 #include "components/gpu/TransformComponent.h"
 
 namespace kailux
@@ -213,8 +214,8 @@ namespace kailux
         };
 
         js["Mesh"] = nlohmann::json::array();
-        auto meshView = m_EntityRegistry.view<TagComponent, MeshComponent, TransformComponent, MeshMaterialData>();
-        meshView.each([&js](const auto &tag, const auto &mesh, const auto &transformComponent, const auto &material)
+        auto meshView = m_EntityRegistry.view<TagComponent, MeshComponent, TransformComponent, MeshMaterialData, PhysicsComponent>();
+        meshView.each([&js](const auto &tag, const auto &mesh, const auto &transformComponent, const auto &material, auto physics)
         {
             nlohmann::json meshEntry;
 
@@ -237,6 +238,10 @@ namespace kailux
                 {"roughness", material.albedoAndRoughness.w},
                 {"metallic", material.pbrParams.x},
                 {"ao", material.pbrParams.y}
+            };
+
+            meshEntry["physics"] = {
+                {"body", static_cast<uint8_t>(physics.type)}
             };
 
             js["Mesh"].push_back(meshEntry);
