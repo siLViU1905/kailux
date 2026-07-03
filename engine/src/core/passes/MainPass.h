@@ -16,13 +16,13 @@ namespace kailux
             pushImpl<{}, Pcs...>(cmd, pcs...);
         }
 
-        static constexpr uint32_t s_MaxMeshCount = 1'000;
+        static constexpr uint32_t kMaxMeshCount = 1'000;
 
     private:
-        static constexpr std::string_view s_VertexShaderPath = "shaders/vertex_shader.spv";
-        static constexpr std::string_view s_FragmentShaderPath = "shaders/fragment_shader.spv";
+        static constexpr std::string_view kVertexShaderPath = "shaders/vertex_shader.spv";
+        static constexpr std::string_view kFragmentShaderPath = "shaders/fragment_shader.spv";
 
-        static constexpr std::array s_DescriptorLayoutBindings = {
+        static constexpr std::array kDescriptorLayoutBindings = {
             DescriptorLayoutBinding(
                 vk::DescriptorType::eUniformBuffer,
                 1, // camera
@@ -60,31 +60,31 @@ namespace kailux
             ),
             DescriptorLayoutBinding(
                 vk::DescriptorType::eCombinedImageSampler,
-                s_MaxMeshCount, // albedo
+                kMaxMeshCount, // albedo
                 vk::ShaderStageFlagBits::eFragment
             ),
             DescriptorLayoutBinding(
                 vk::DescriptorType::eCombinedImageSampler,
-                s_MaxMeshCount, // normal
+                kMaxMeshCount, // normal
                 vk::ShaderStageFlagBits::eFragment
             ),
             DescriptorLayoutBinding(
                 vk::DescriptorType::eCombinedImageSampler,
-                s_MaxMeshCount, // roughness
+                kMaxMeshCount, // roughness
                 vk::ShaderStageFlagBits::eFragment
             ),
             DescriptorLayoutBinding(
                 vk::DescriptorType::eCombinedImageSampler,
-                s_MaxMeshCount, // metallic
+                kMaxMeshCount, // metallic
                 vk::ShaderStageFlagBits::eFragment
             ),
             DescriptorLayoutBinding(
                 vk::DescriptorType::eCombinedImageSampler,
-                s_MaxMeshCount, // ao
+                kMaxMeshCount, // ao
                 vk::ShaderStageFlagBits::eFragment
             )
         };
-        static constexpr std::array s_DescriptorPoolSizes = {
+        static constexpr std::array kDescriptorPoolSizes = {
             DescriptorPoolSize(
                 vk::DescriptorType::eUniformBuffer,
                 1 // camera
@@ -115,44 +115,44 @@ namespace kailux
             ),
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
-                s_MaxMeshCount // albedo
+                kMaxMeshCount // albedo
             ),
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
-                s_MaxMeshCount // normal
+                kMaxMeshCount // normal
             ),
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
-                s_MaxMeshCount // roughness
+                kMaxMeshCount // roughness
             ),
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
-                s_MaxMeshCount // metallic
+                kMaxMeshCount // metallic
             ),
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
-                s_MaxMeshCount // ao
+                kMaxMeshCount // ao
             )
         };
         static_assert(
-            check_descriptor_layout_bindings_and_pool_sizes_match(s_DescriptorLayoutBindings, s_DescriptorPoolSizes),
+            check_descriptor_layout_bindings_and_pool_sizes_match(kDescriptorLayoutBindings, kDescriptorPoolSizes),
             "Descriptor layout bindings and pool sizes do not match"
             );
 
     public:
-        static constexpr uint32_t s_MeshTextureBindStart = []() constexpr -> uint32_t {
-            for (uint32_t i = 0; i < s_DescriptorLayoutBindings.size(); ++i)
+        static constexpr uint32_t kMeshTextureBindStart = []() constexpr -> uint32_t {
+            for (uint32_t i = 0; i < kDescriptorLayoutBindings.size(); ++i)
             {
-                const auto [descriptor, count, stage] = s_DescriptorLayoutBindings[i];
+                const auto [descriptor, count, stage] = kDescriptorLayoutBindings[i];
 
                 if (descriptor == vk::DescriptorType::eCombinedImageSampler &&
-                    count == s_MaxMeshCount &&
+                    count == kMaxMeshCount &&
                     stage == vk::ShaderStageFlagBits::eFragment)
                     return i;
             }
             return ~0u;
         }();
-        static_assert(s_MeshTextureBindStart != ~0u, "Failed to find mesh texture bind start index");
+        static_assert(kMeshTextureBindStart != ~0u, "Failed to find mesh texture bind start index");
 
     private:
         static PipelineInfo make_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits sampleCount);

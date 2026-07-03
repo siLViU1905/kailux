@@ -30,17 +30,17 @@ namespace kailux
         void updateEditor();
         void updateEngine(float deltaTime, Window& window);
 
-        Window           m_Window;
-        Engine           m_Engine;
-        Editor           m_Editor;
+        Window           mWindow;
+        Engine           mEngine;
+        Editor           mEditor;
 
-        Clock            m_Clock;
+        Clock            mClock;
 
-        static constexpr uint32_t s_ThreadCount = 2;
-        Shared<ThreadDispatcher>  m_ThreadDispatcher;
+        static constexpr uint32_t kThreadCount = 2;
+        Shared<ThreadDispatcher>  mThreadDispatcher;
 
-        FileDialog<DialogMode::SingleFile>    m_LoadSceneDialog;
-        FileDialog<DialogMode::MultipleFiles> m_ImportFilesDialog;
-        FileDialog<DialogMode::Folder>        m_ImportFolderDialog;
+        FileDialog<DialogMode::SingleFile>    mLoadSceneDialog;
+        FileDialog<DialogMode::MultipleFiles> mImportFilesDialog;
+        FileDialog<DialogMode::Folder>        mImportFolderDialog;
     };
 }

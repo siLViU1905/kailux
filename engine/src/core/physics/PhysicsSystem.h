@@ -30,11 +30,11 @@ namespace kailux
 
         BodyHandle uploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo& data);
 
-        std::reference_wrapper<Scene>           m_Scene;
-        std::reference_wrapper<PhysicsRegistry> m_PhysicsRegistry;
+        std::reference_wrapper<Scene>           mScene;
+        std::reference_wrapper<PhysicsRegistry> mPhysicsRegistry;
 
-        SimulationState m_SimulationState{SimulationState::Paused};
+        SimulationState mSimulationState{SimulationState::Paused};
 
-        OnLog m_OnWarningLog;
+        OnLog mOnWarningLog;
     };
 }

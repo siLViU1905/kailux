@@ -38,10 +38,10 @@ namespace kailux
     class MeshRegistry
     {
     public:
-        static constexpr vk::DeviceSize s_VertexAlignment  = sizeof(Vertex);
-        static constexpr vk::DeviceSize s_BuiltinZoneSize  = (16 * 1024 * 1024 / s_VertexAlignment) * s_VertexAlignment;
-        static constexpr vk::DeviceSize s_AssetZoneSize    = (1000 * 1024 * 1024 / s_VertexAlignment) * s_VertexAlignment;
-        static constexpr vk::DeviceSize s_TotalSize        = s_BuiltinZoneSize + s_AssetZoneSize;
+        static constexpr vk::DeviceSize kVertexAlignment  = sizeof(Vertex);
+        static constexpr vk::DeviceSize kBuiltinZoneSize  = (16 * 1024 * 1024 / kVertexAlignment) * kVertexAlignment;
+        static constexpr vk::DeviceSize kAssetZoneSize    = (1000 * 1024 * 1024 / kVertexAlignment) * kVertexAlignment;
+        static constexpr vk::DeviceSize kTotalSize        = kBuiltinZoneSize + kAssetZoneSize;
 
         using IndexType = uint32_t;
 
@@ -63,13 +63,13 @@ namespace kailux
     private:
         struct LinearZone
         {
-            static constexpr vk::DeviceSize s_DefaultAlignment = 16;
+            static constexpr vk::DeviceSize kDefaultAlignment = 16;
 
             vk::DeviceSize base{};
             vk::DeviceSize capacity{};
             vk::DeviceSize cursor{};
 
-            vk::DeviceSize alloc(vk::DeviceSize size, vk::DeviceSize alignment = s_DefaultAlignment);
+            vk::DeviceSize alloc(vk::DeviceSize size, vk::DeviceSize alignment = kDefaultAlignment);
         };
 
         struct Block
@@ -80,14 +80,14 @@ namespace kailux
 
         struct FreeListZone
         {
-            static constexpr vk::DeviceSize s_DefaultAlignment = 16;
+            static constexpr vk::DeviceSize kDefaultAlignment = 16;
 
             vk::DeviceSize base{};
             vk::DeviceSize capacity{};
             std::list<Block> freeBlocks;
             std::list<Block> usedBlocks;
 
-            vk::DeviceSize alloc(vk::DeviceSize size, vk::DeviceSize alignment = s_DefaultAlignment);
+            vk::DeviceSize alloc(vk::DeviceSize size, vk::DeviceSize alignment = kDefaultAlignment);
 
             void free(vk::DeviceSize offset);
         };
@@ -118,18 +118,18 @@ namespace kailux
                                          vk::CommandBuffer cmd,
                                          std::vector<Buffer> &stagingBuffers);
 
-        Buffer m_VertexBuffer;
-        Buffer m_IndexBuffer;
+        Buffer mVertexBuffer;
+        Buffer mIndexBuffer;
 
-        LinearZone m_BuiltinVertexZone;
-        LinearZone m_BuiltinIndexZone;
-        FreeListZone m_AssetVertexZone;
-        FreeListZone m_AssetIndexZone;
+        LinearZone mBuiltinVertexZone;
+        LinearZone mBuiltinIndexZone;
+        FreeListZone mAssetVertexZone;
+        FreeListZone mAssetIndexZone;
 
-        std::vector<MeshAlloc> m_Allocs;
-        std::deque<uint32_t> m_FreeSlots;
+        std::vector<MeshAlloc> mAllocs;
+        std::deque<uint32_t> mFreeSlots;
 
-        BuiltinMeshes m_Builtins;
+        BuiltinMeshes mBuiltins;
 
     public:
         struct MeshData

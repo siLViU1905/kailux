@@ -9,12 +9,12 @@
 
 namespace kailux
 {
-    Pipeline::Pipeline() : m_Layout({}), m_Pipeline({})
+    Pipeline::Pipeline() : mLayout({}), mPipeline({})
     {
     }
 
-    Pipeline::Pipeline(Pipeline &&other) noexcept : m_Layout(std::move(other.m_Layout)),
-                                                    m_Pipeline(std::move(other.m_Pipeline))
+    Pipeline::Pipeline(Pipeline &&other) noexcept : mLayout(std::move(other.mLayout)),
+                                                    mPipeline(std::move(other.mPipeline))
     {
     }
 
@@ -22,8 +22,8 @@ namespace kailux
     {
         if (this != &other)
         {
-            m_Layout = std::move(other.m_Layout);
-            m_Pipeline = std::move(other.m_Pipeline);
+            mLayout = std::move(other.mLayout);
+            mPipeline = std::move(other.mPipeline);
         }
         return *this;
     }
@@ -69,17 +69,17 @@ namespace kailux
 
     void Pipeline::bindGraphics(vk::CommandBuffer cmd) const
     {
-        cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, m_Pipeline);
+        cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, mPipeline);
     }
 
     void Pipeline::bindCompute(vk::CommandBuffer cmd) const
     {
-        cmd.bindPipeline(vk::PipelineBindPoint::eCompute, m_Pipeline);
+        cmd.bindPipeline(vk::PipelineBindPoint::eCompute, mPipeline);
     }
 
     vk::PipelineLayout Pipeline::getLayout() const
     {
-        return *m_Layout;
+        return *mLayout;
     }
 
     std::vector<vk::PipelineShaderStageCreateInfo> Pipeline::ShaderModules::makeVkStages() const
@@ -124,7 +124,7 @@ namespace kailux
         createInfo.codeSize = code.size() * sizeof(char);
         createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
 
-        return {context.m_Device, createInfo};
+        return {context.mDevice, createInfo};
     }
 
     Pipeline::ShaderModules Pipeline::create_graphics_shader_modules(const Context &context,
@@ -169,7 +169,7 @@ namespace kailux
             ranges.data()
         );
 
-        m_Layout = vk::raii::PipelineLayout(context.m_Device, pipelineLayoutInfo);
+        mLayout = vk::raii::PipelineLayout(context.mDevice, pipelineLayoutInfo);
     }
 
     void Pipeline::createGraphicsPipeline(const Context &context, const Swapchain &swapchain,
@@ -238,12 +238,12 @@ namespace kailux
             &info.depthStencilInfo,
             &colorBlending,
             &dynamicState,
-            *m_Layout,
+            *mLayout,
             {}
         );
         pipelineInfo.pNext = &pipelineRenderingCreateInfo;
 
-        m_Pipeline = vk::raii::Pipeline(context.m_Device, nullptr, pipelineInfo);
+        mPipeline = vk::raii::Pipeline(context.mDevice, nullptr, pipelineInfo);
     }
 
     void Pipeline::createComputePipeline(const Context &context, const vk::raii::ShaderModule &shaderModule)
@@ -258,9 +258,9 @@ namespace kailux
         vk::ComputePipelineCreateInfo computeInfo(
             {},
             stageInfo,
-            *m_Layout
+            *mLayout
         );
 
-        m_Pipeline = vk::raii::Pipeline(context.m_Device, nullptr, computeInfo);
+        mPipeline = vk::raii::Pipeline(context.mDevice, nullptr, computeInfo);
     };
 }

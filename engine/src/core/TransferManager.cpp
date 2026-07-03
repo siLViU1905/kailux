@@ -7,7 +7,7 @@ namespace kailux
     TransferManager::TransferManager() = default;
 
     TransferManager::TransferManager(TransferManager &&other) noexcept
-        : m_Pending(std::move(other.m_Pending))
+        : mPending(std::move(other.mPending))
     {
     }
 
@@ -15,7 +15,7 @@ namespace kailux
     {
         if (this != &other)
         {
-            m_Pending = std::move(other.m_Pending);
+            mPending = std::move(other.mPending);
         }
         return *this;
     }
@@ -187,7 +187,7 @@ namespace kailux
 
     void TransferManager::poll(const Context &context)
     {
-        std::erase_if(m_Pending, [&](auto& pending)
+        std::erase_if(mPending, [&](auto& pending)
         {
             auto status = context.getDevice().getFenceStatus(pending.graphicsCmd.getFence());
             if (status == vk::Result::eSuccess)
@@ -201,7 +201,7 @@ namespace kailux
 
     void TransferManager::drain(const Context &context)
     {
-        for (auto &pending : m_Pending)
+        for (auto &pending : mPending)
         {
             auto fence = pending.graphicsCmd.getFence();
             auto result = context.getDevice().waitForFences(fence, true, UINT64_MAX);
@@ -210,17 +210,17 @@ namespace kailux
 
             pending.onComplete();
         }
-        m_Pending.clear();
+        mPending.clear();
     }
 
     bool TransferManager::hasPending() const
     {
-        return !m_Pending.empty();
+        return !mPending.empty();
     }
 
     void TransferManager::clear()
     {
-        m_Pending.clear();
+        mPending.clear();
     }
 
     void TransferManager::submitTransfer(
@@ -231,7 +231,7 @@ namespace kailux
         OnComplete &&onComplete
     )
     {
-        vk::raii::Semaphore semaphore(context.m_Device, vk::SemaphoreCreateInfo{});
+        vk::raii::Semaphore semaphore(context.mDevice, vk::SemaphoreCreateInfo{});
 
         auto tCmd = transferCmd.getCommandBuffer();
         auto gCmd = graphicsCmd.getCommandBuffer();
@@ -252,7 +252,7 @@ namespace kailux
             context.getGraphicsQueue().submit2(submit, graphicsCmd.getFence());
         }
 
-        m_Pending.emplace_back(
+        mPending.emplace_back(
             std::move(transferCmd),
             std::move(graphicsCmd),
             std::move(semaphore),

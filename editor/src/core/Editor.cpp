@@ -8,7 +8,7 @@ namespace kailux
     {
     }
 
-    Editor::Editor(Editor &&other) noexcept : m_ActiveLayer(std::move(other.m_ActiveLayer))
+    Editor::Editor(Editor &&other) noexcept : mActiveLayer(std::move(other.mActiveLayer))
     {
     }
 
@@ -16,7 +16,7 @@ namespace kailux
     {
         if (this != &other)
         {
-            m_ActiveLayer = std::move(other.m_ActiveLayer);
+            mActiveLayer = std::move(other.mActiveLayer);
         }
         return *this;
     }
@@ -33,7 +33,7 @@ namespace kailux
         std::visit([&scene](auto& layer)
         {
             layer.render(scene);
-        }, *m_ActiveLayer);
+        }, *mActiveLayer);
     }
 
     void Editor::update()
@@ -41,12 +41,12 @@ namespace kailux
         std::visit([](auto& layer)
         {
             layer.update();
-        }, *m_ActiveLayer);
+        }, *mActiveLayer);
     }
 
     void Editor::createLayers(ImTextureID directoryTextureId, ImTextureID fileTextureId)
     {
-        m_ActiveLayer = create_scoped<LayerTypes>();
-        m_ActiveLayer->emplace<EditorLayer>(EditorLayer::create(directoryTextureId, fileTextureId));
+        mActiveLayer = create_scoped<LayerTypes>();
+        mActiveLayer->emplace<EditorLayer>(EditorLayer::create(directoryTextureId, fileTextureId));
     }
 }

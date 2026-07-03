@@ -7,15 +7,15 @@ namespace kailux
     {
     }
 
-    MeshRegistry::MeshRegistry(MeshRegistry &&other) noexcept : m_VertexBuffer(std::move(other.m_VertexBuffer)),
-                                                                m_IndexBuffer(std::move(other.m_IndexBuffer)),
-                                                                m_BuiltinVertexZone(other.m_BuiltinVertexZone),
-                                                                m_BuiltinIndexZone(other.m_BuiltinIndexZone),
-                                                                m_AssetVertexZone(std::move(other.m_AssetVertexZone)),
-                                                                m_AssetIndexZone(std::move(other.m_AssetIndexZone)),
-                                                                m_Allocs(std::move(other.m_Allocs)),
-                                                                m_FreeSlots(std::move(other.m_FreeSlots)),
-                                                                m_Builtins(other.m_Builtins)
+    MeshRegistry::MeshRegistry(MeshRegistry &&other) noexcept : mVertexBuffer(std::move(other.mVertexBuffer)),
+                                                                mIndexBuffer(std::move(other.mIndexBuffer)),
+                                                                mBuiltinVertexZone(other.mBuiltinVertexZone),
+                                                                mBuiltinIndexZone(other.mBuiltinIndexZone),
+                                                                mAssetVertexZone(std::move(other.mAssetVertexZone)),
+                                                                mAssetIndexZone(std::move(other.mAssetIndexZone)),
+                                                                mAllocs(std::move(other.mAllocs)),
+                                                                mFreeSlots(std::move(other.mFreeSlots)),
+                                                                mBuiltins(other.mBuiltins)
     {
     }
 
@@ -23,15 +23,15 @@ namespace kailux
     {
         if (this != &other)
         {
-            m_VertexBuffer = std::move(other.m_VertexBuffer);
-            m_IndexBuffer = std::move(other.m_IndexBuffer);
-            m_BuiltinVertexZone = other.m_BuiltinVertexZone;
-            m_BuiltinIndexZone = other.m_BuiltinIndexZone;
-            m_AssetVertexZone = std::move(other.m_AssetVertexZone);
-            m_AssetIndexZone = std::move(other.m_AssetIndexZone);
-            m_Allocs = std::move(other.m_Allocs);
-            m_FreeSlots = std::move(other.m_FreeSlots);
-            m_Builtins = other.m_Builtins;
+            mVertexBuffer = std::move(other.mVertexBuffer);
+            mIndexBuffer = std::move(other.mIndexBuffer);
+            mBuiltinVertexZone = other.mBuiltinVertexZone;
+            mBuiltinIndexZone = other.mBuiltinIndexZone;
+            mAssetVertexZone = std::move(other.mAssetVertexZone);
+            mAssetIndexZone = std::move(other.mAssetIndexZone);
+            mAllocs = std::move(other.mAllocs);
+            mFreeSlots = std::move(other.mFreeSlots);
+            mBuiltins = other.mBuiltins;
         }
         return *this;
     }
@@ -40,16 +40,16 @@ namespace kailux
                                       std::vector<Buffer> &stagingBuffers)
     {
         MeshRegistry registry;
-        registry.m_VertexBuffer = BufferAllocator::alloc_vertex(context, s_TotalSize);
-        registry.m_IndexBuffer = BufferAllocator::alloc_index(context, s_TotalSize / 2);
+        registry.mVertexBuffer = BufferAllocator::alloc_vertex(context, kTotalSize);
+        registry.mIndexBuffer = BufferAllocator::alloc_index(context, kTotalSize / 2);
 
-        registry.m_BuiltinVertexZone = {0, s_BuiltinZoneSize, 0};
-        registry.m_BuiltinIndexZone = {0, s_BuiltinZoneSize / 2, 0};
-        registry.m_AssetVertexZone = {s_BuiltinZoneSize, s_AssetZoneSize};
-        registry.m_AssetIndexZone = {s_BuiltinZoneSize / 2, s_AssetZoneSize / 2};
+        registry.mBuiltinVertexZone = {0, kBuiltinZoneSize, 0};
+        registry.mBuiltinIndexZone = {0, kBuiltinZoneSize / 2, 0};
+        registry.mAssetVertexZone = {kBuiltinZoneSize, kAssetZoneSize};
+        registry.mAssetIndexZone = {kBuiltinZoneSize / 2, kAssetZoneSize / 2};
 
-        registry.m_AssetVertexZone.freeBlocks.emplace_back(s_BuiltinZoneSize, s_AssetZoneSize);
-        registry.m_AssetIndexZone.freeBlocks.emplace_back(s_BuiltinZoneSize / 2, s_AssetZoneSize / 2);
+        registry.mAssetVertexZone.freeBlocks.emplace_back(kBuiltinZoneSize, kAssetZoneSize);
+        registry.mAssetIndexZone.freeBlocks.emplace_back(kBuiltinZoneSize / 2, kAssetZoneSize / 2);
 
         auto uploadShape = [&](auto genFn, MeshHandle &out)
         {
@@ -57,8 +57,8 @@ namespace kailux
             out = registry.uploadInternal(data.vertices, data.indices, context, cmd, stagingBuffers, true);
         };
 
-        uploadShape([]() { return generate_cube(); }, registry.m_Builtins.cube);
-        uploadShape([]() { return generate_sphere(); }, registry.m_Builtins.sphere);
+        uploadShape([]() { return generate_cube(); }, registry.mBuiltins.cube);
+        uploadShape([]() { return generate_sphere(); }, registry.mBuiltins.sphere);
 
         return registry;
     }
@@ -66,19 +66,19 @@ namespace kailux
     void MeshRegistry::destroy(MeshHandle handle)
     {
         assert(handle.valid());
-        auto &a = m_Allocs[handle.index];
+        auto &a = mAllocs[handle.index];
         assert(!a.is_builtin && "Cannot destroy built-in shapes");
 
-        m_AssetVertexZone.free(a.vertexOffset);
-        m_AssetIndexZone.free(a.indexOffset);
-        m_FreeSlots.push_back(handle.index);
+        mAssetVertexZone.free(a.vertexOffset);
+        mAssetIndexZone.free(a.indexOffset);
+        mFreeSlots.push_back(handle.index);
         a = {};
     }
 
     MeshView MeshRegistry::view(MeshHandle handle) const
     {
         assert(handle.valid());
-        const auto &alloc = m_Allocs[handle.index];
+        const auto &alloc = mAllocs[handle.index];
         return {
             static_cast<uint32_t>(alloc.indexOffset / sizeof(IndexType)),
             alloc.indexCount,
@@ -88,29 +88,29 @@ namespace kailux
 
     void MeshRegistry::bind(vk::CommandBuffer cmd) const
     {
-        cmd.bindVertexBuffers(0, m_VertexBuffer.getBuffer(), {0});
-        cmd.bindIndexBuffer(m_IndexBuffer.getBuffer(), 0, vk::IndexType::eUint32);
+        cmd.bindVertexBuffers(0, mVertexBuffer.getBuffer(), {0});
+        cmd.bindIndexBuffer(mIndexBuffer.getBuffer(), 0, vk::IndexType::eUint32);
     }
 
     uint32_t MeshRegistry::getMeshCount() const
     {
-        return static_cast<uint32_t>(m_Allocs.size());
+        return static_cast<uint32_t>(mAllocs.size());
     }
 
     BuiltinMeshes MeshRegistry::getBuiltins() const
     {
-        return m_Builtins;
+        return mBuiltins;
     }
 
     MeshBufferRegions MeshRegistry::getRegions(MeshHandle handle) const
     {
         assert(handle.valid());
-        const auto &alloc = m_Allocs[handle.index];
+        const auto &alloc = mAllocs[handle.index];
         return {
-            m_VertexBuffer.getBuffer(),
+            mVertexBuffer.getBuffer(),
             alloc.vertexOffset,
             static_cast<vk::DeviceSize>(alloc.vertexCount) * sizeof(Vertex),
-            m_IndexBuffer.getBuffer(),
+            mIndexBuffer.getBuffer(),
             alloc.indexOffset,
             static_cast<vk::DeviceSize>(alloc.indexCount) * sizeof(IndexType)
         };
@@ -196,15 +196,15 @@ namespace kailux
 
     MeshHandle MeshRegistry::allocSlot()
     {
-        if (!m_FreeSlots.empty())
+        if (!mFreeSlots.empty())
         {
-            auto id = m_FreeSlots.back();
-            m_FreeSlots.pop_back();
+            auto id = mFreeSlots.back();
+            mFreeSlots.pop_back();
             return {id};
         }
-        m_Allocs.emplace_back();
+        mAllocs.emplace_back();
 
-        return {static_cast<uint32_t>(m_Allocs.size() - 1)};
+        return {static_cast<uint32_t>(mAllocs.size() - 1)};
     }
 
     MeshHandle MeshRegistry::uploadInternal(std::span<const Vertex> vertices, std::span<const IndexType> indices,
@@ -218,19 +218,19 @@ namespace kailux
 
         if (isBuiltin)
         {
-            voffset = m_BuiltinVertexZone.alloc(vsize, sizeof(Vertex));
-            ioffset = m_BuiltinIndexZone.alloc(isize, sizeof(IndexType));
+            voffset = mBuiltinVertexZone.alloc(vsize, sizeof(Vertex));
+            ioffset = mBuiltinIndexZone.alloc(isize, sizeof(IndexType));
         } else
         {
-            voffset = m_AssetVertexZone.alloc(vsize, sizeof(Vertex));
-            ioffset = m_AssetIndexZone.alloc(isize, sizeof(IndexType));
+            voffset = mAssetVertexZone.alloc(vsize, sizeof(Vertex));
+            ioffset = mAssetIndexZone.alloc(isize, sizeof(IndexType));
         }
 
-        upload_buffer_region(vertices.data(), vsize, m_VertexBuffer, voffset, context, cmd, stagingBuffers);
-        upload_buffer_region(indices.data(), isize, m_IndexBuffer, ioffset, context, cmd, stagingBuffers);
+        upload_buffer_region(vertices.data(), vsize, mVertexBuffer, voffset, context, cmd, stagingBuffers);
+        upload_buffer_region(indices.data(), isize, mIndexBuffer, ioffset, context, cmd, stagingBuffers);
 
         auto handle = allocSlot();
-        m_Allocs[handle.index] = {
+        mAllocs[handle.index] = {
             voffset,
             static_cast<uint32_t>(vertices.size()),
             ioffset,

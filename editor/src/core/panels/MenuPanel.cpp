@@ -5,12 +5,12 @@
 
 namespace kailux
 {
-    MenuPanel::MenuPanel() : m_ShowProfiler(false), m_OutlineColor(1.f, 0.f, 0.f)
+    MenuPanel::MenuPanel() : mShowProfiler(false), mOutlineColor(1.f, 0.f, 0.f)
     {
     }
 
     MenuPanel::MenuPanel(std::string_view name, ImVec4 backgroundColor)
-        : Panel(name, backgroundColor), m_ShowProfiler(false), m_OutlineColor(1.f, 0.f, 0.f)
+        : Panel(name, backgroundColor), mShowProfiler(false), mOutlineColor(1.f, 0.f, 0.f)
     {
     }
 
@@ -25,11 +25,11 @@ namespace kailux
                 }
                 if (ImGui::MenuItem("Open..."))
                 {
-                    m_OnSceneOpen();
+                    mOnSceneOpen();
                 }
                 if (ImGui::MenuItem("Save"))
                 {
-                    m_OnSceneSave();
+                    mOnSceneSave();
                 }
                 ImGui::EndMenu();
             }
@@ -37,7 +37,7 @@ namespace kailux
             if (ImGui::BeginMenu("View"))
             {
                 if (ImGui::MenuItem("Profiler"))
-                    m_ShowProfiler = true;
+                    mShowProfiler = true;
                 ImGui::EndMenu();
             }
 
@@ -50,7 +50,7 @@ namespace kailux
             {
                 if (ImGui::BeginMenu("Outline"))
                 {
-                    ImGui::ColorEdit3("Color", glm::value_ptr(m_OutlineColor));
+                    ImGui::ColorEdit3("Color", glm::value_ptr(mOutlineColor));
                     ImGui::EndMenu();
                 }
                 ImGui::EndMenu();
@@ -58,29 +58,29 @@ namespace kailux
 
             ImGui::EndMainMenuBar();
 
-            if (m_ShowProfiler)
+            if (mShowProfiler)
                 renderProfilerWindow();
         }
     }
 
     void MenuPanel::setOnSceneOpen(OnSceneOpen &&callback)
     {
-        m_OnSceneOpen = std::move(callback);
+        mOnSceneOpen = std::move(callback);
     }
 
     void MenuPanel::setOnSceneSave(OnSceneSave &&callback)
     {
-        m_OnSceneSave = std::move(callback);
+        mOnSceneSave = std::move(callback);
     }
 
     glm::vec3 MenuPanel::getOutlineColor() const
     {
-        return m_OutlineColor;
+        return mOutlineColor;
     }
 
     void MenuPanel::renderProfilerWindow()
     {
-        ImGui::Begin("Profiler", &m_ShowProfiler);
+        ImGui::Begin("Profiler", &mShowProfiler);
 
         static std::array<float, 100> frameTimeHistory{};
         static int offset = 0;

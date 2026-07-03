@@ -10,7 +10,7 @@ namespace kailux
     class ThreadDispatcher
     {
     public:
-        inline static uint32_t s_MaxThreads = 0;
+        inline static uint32_t kMaxThreads = 0;
 
         KAILUX_DECLARE_SINGLETON(ThreadDispatcher)
         ~ThreadDispatcher();
@@ -27,13 +27,13 @@ namespace kailux
 
             auto result = task->get_future();
             {
-                std::lock_guard lock(m_WaitMutex);
-                m_Tasks.emplace_back([this, task]()
+                std::lock_guard lock(mWaitMutex);
+                mTasks.emplace_back([this, task]()
                 {
                     (*task)();
                 });
             }
-            m_Condition.notify_one();
+            mCondition.notify_one();
             return result;
         }
 
@@ -44,11 +44,11 @@ namespace kailux
 
         void workerLoop(std::stop_token stopToken);
 
-        uint32_t                  m_Threads;
+        uint32_t                  mThreads;
         using Task = std::move_only_function<void()>;
-        std::vector<std::jthread> m_Workers;
-        std::deque<Task>          m_Tasks;
-        std::mutex                m_WaitMutex;
-        std::condition_variable   m_Condition;
+        std::vector<std::jthread> mWorkers;
+        std::deque<Task>          mTasks;
+        std::mutex                mWaitMutex;
+        std::condition_variable   mCondition;
     };
 }

@@ -3,7 +3,7 @@
 
 namespace kailux
 {
-    ViewportPanel::ViewportPanel() : m_SceneTextureId(0), m_SimulationState(SimulationState::Paused)
+    ViewportPanel::ViewportPanel() : mSceneTextureId(0), mSimulationState(SimulationState::Paused)
     {
     }
 
@@ -18,13 +18,13 @@ namespace kailux
             ImVec2 minBound = {viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y};
             auto viewportSize = ImGui::GetContentRegionAvail();
 
-            ImGui::Image(m_SceneTextureId, viewportSize);
+            ImGui::Image(mSceneTextureId, viewportSize);
 
             if (ImGui::IsItemHovered())
             {
-                m_MousePos = compute_relative_mouse_pos(minBound, viewportSize);
+                mMousePos = compute_relative_mouse_pos(minBound, viewportSize);
                 if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-                    m_OnClick();
+                    mOnClick();
             }
 
             renderSimulationIndicator(minBound, viewportSize);
@@ -38,32 +38,32 @@ namespace kailux
 
     void ViewportPanel::setSceneTextureId(ImTextureID id)
     {
-        m_SceneTextureId = id;
+        mSceneTextureId = id;
     }
 
     ViewportPanel::MousePosition ViewportPanel::getScaledMousePos() const
     {
-        return m_MousePos;
+        return mMousePos;
     }
 
     void ViewportPanel::setOnClick(OnClick &&callback)
     {
-        m_OnClick = std::move(callback);
+        mOnClick = std::move(callback);
     }
 
     SimulationState ViewportPanel::getSimulationState() const
     {
-        return m_SimulationState;
+        return mSimulationState;
     }
 
     void ViewportPanel::setOnSimulationStart(OnSimulationStart &&callback)
     {
-        m_OnSimulationStart = std::move(callback);
+        mOnSimulationStart = std::move(callback);
     }
 
     void ViewportPanel::setOnSimulationPause(OnSimulationPause &&callback)
     {
-        m_OnSimulationPause = std::move(callback);
+        mOnSimulationPause = std::move(callback);
     }
 
     ViewportPanel::MousePosition ViewportPanel::compute_relative_mouse_pos(ImVec2 minBound, ImVec2 viewportSize)
@@ -96,7 +96,7 @@ namespace kailux
             4.f
         );
 
-        if (m_SimulationState == SimulationState::Paused)
+        if (mSimulationState == SimulationState::Paused)
         {
             float cx = pos.x + size.x * 0.5f + 1.f;
             float cy = pos.y + size.y * 0.5f;
@@ -129,15 +129,15 @@ namespace kailux
 
         ImGui::SetCursorScreenPos(pos);
         if (ImGui::InvisibleButton("##sim_indicator", size))
-            switch (m_SimulationState)
+            switch (mSimulationState)
             {
             case SimulationState::Paused:
-                    m_SimulationState = SimulationState::Running;
-                    m_OnSimulationStart();
+                    mSimulationState = SimulationState::Running;
+                    mOnSimulationStart();
                     break;
             case SimulationState::Running:
-                    m_SimulationState = SimulationState::Paused;
-                    m_OnSimulationPause();
+                    mSimulationState = SimulationState::Paused;
+                    mOnSimulationPause();
                     break;
             }
 

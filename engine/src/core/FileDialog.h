@@ -17,8 +17,8 @@ namespace kailux
     class FileDialog
     {
     public:
-        static constexpr std::string_view s_DefaultTitle = "Choose...";
-        static constexpr std::array<std::string_view, 2> s_DefaultFilters =
+        static constexpr std::string_view kDefaultTitle = "Choose...";
+        static constexpr std::array<std::string_view, 2> kDefaultFilters =
         {
             "All Files",
             "*"
@@ -27,32 +27,32 @@ namespace kailux
         using Filters = std::vector<std::string>;
 
         void open(
-            std::string_view title = s_DefaultTitle,
-            const Filters &filters = std::ranges::to<Filters>(s_DefaultFilters)
+            std::string_view title = kDefaultTitle,
+            const Filters &filters = std::ranges::to<Filters>(kDefaultFilters)
         )
         {
             if constexpr (Mode == DialogMode::SingleFile)
-                m_DiagHandle.emplace(title.data(), "", filters);
+                mDiagHandle.emplace(title.data(), "", filters);
             else if constexpr (Mode == DialogMode::MultipleFiles)
-                m_DiagHandle.emplace(title.data(), "", filters, pfd::opt::multiselect);
+                mDiagHandle.emplace(title.data(), "", filters, pfd::opt::multiselect);
             else if constexpr (Mode == DialogMode::Folder)
-                m_DiagHandle.emplace(title.data(), "");
+                mDiagHandle.emplace(title.data(), "");
         }
 
         bool poll()
         {
-            if (m_DiagHandle && m_DiagHandle->ready())
+            if (mDiagHandle && mDiagHandle->ready())
             {
                 if constexpr (Mode == DialogMode::Folder)
                 {
-                    auto result = m_DiagHandle->result();
+                    auto result = mDiagHandle->result();
                     if (!result.empty())
-                        m_PathsQueue.push(result);
+                        mPathsQueue.push(result);
                 } else
-                    for (const auto &path: m_DiagHandle->result())
-                        m_PathsQueue.push(clean_path(path));
+                    for (const auto &path: mDiagHandle->result())
+                        mPathsQueue.push(clean_path(path));
 
-                m_DiagHandle.reset();
+                mDiagHandle.reset();
                 return true;
             }
             return false;
@@ -61,7 +61,7 @@ namespace kailux
         using PopPathResult = std::optional<std::string>;
         PopPathResult tryPopPath()
         {
-            return m_PathsQueue.tryPop();
+            return mPathsQueue.tryPop();
         }
 
     private:
@@ -81,7 +81,7 @@ namespace kailux
             pfd::open_file
         >;
 
-        std::optional<HandleType> m_DiagHandle;
-        Queue<std::string>        m_PathsQueue;
+        std::optional<HandleType> mDiagHandle;
+        Queue<std::string>        mPathsQueue;
     };
 }

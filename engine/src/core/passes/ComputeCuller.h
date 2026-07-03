@@ -14,13 +14,13 @@ namespace kailux
         template<typename... Pcs>
         void push(vk::CommandBuffer cmd, const Pcs &... pcs) const
         {
-            pushImpl<s_PushConstantRanges, Pcs...>(cmd, pcs...);
+            pushImpl<kPushConstantRanges, Pcs...>(cmd, pcs...);
         }
 
     private:
-        static constexpr std::string_view s_ComputeShaderPath = "shaders/cull_compute_shader.spv";
+        static constexpr std::string_view kComputeShaderPath = "shaders/cull_compute_shader.spv";
 
-        static constexpr std::array s_DescriptorLayoutBindings = {
+        static constexpr std::array kDescriptorLayoutBindings = {
             DescriptorLayoutBinding(
                 vk::DescriptorType::eStorageBuffer,
                 1, // mesh data
@@ -42,7 +42,7 @@ namespace kailux
                 vk::ShaderStageFlagBits::eCompute
             )
         };
-        static constexpr std::array s_DescriptorPoolSizes = {
+        static constexpr std::array kDescriptorPoolSizes = {
             DescriptorPoolSize(
                 vk::DescriptorType::eStorageBuffer,
                 1 // mesh data
@@ -61,11 +61,11 @@ namespace kailux
             ),
         };
         static_assert(
-            check_descriptor_layout_bindings_and_pool_sizes_match(s_DescriptorLayoutBindings, s_DescriptorPoolSizes),
+            check_descriptor_layout_bindings_and_pool_sizes_match(kDescriptorLayoutBindings, kDescriptorPoolSizes),
             "Descriptor layout bindings and pool sizes do not match"
             );
 
-        static constexpr std::array s_PushConstantRanges = {
+        static constexpr std::array kPushConstantRanges = {
             PushConstantRangeInfo(
                 vk::ShaderStageFlagBits::eCompute,
                 sizeof(ComputePassesPushConstants::CameraFrustum)

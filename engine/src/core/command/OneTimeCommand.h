@@ -34,11 +34,11 @@ namespace kailux
         void createBuffer(const Context& context);
         void createFence(const Context& context);
 
-        inline static vk::raii::CommandPool   s_GraphicsPool{nullptr};
-        inline static vk::raii::CommandPool   s_TransferPool{nullptr};
+        inline static vk::raii::CommandPool   kGraphicsPool{nullptr};
+        inline static vk::raii::CommandPool   kTransferPool{nullptr};
 
-        QueueType                      m_QueueType{QueueType::Graphics};
-        vk::raii::CommandBuffer        m_CommandBuffer{nullptr};
-        vk::raii::Fence                m_Fence{nullptr};
+        QueueType                      mQueueType{QueueType::Graphics};
+        vk::raii::CommandBuffer        mCommandBuffer{nullptr};
+        vk::raii::Fence                mFence{nullptr};
     };
 }

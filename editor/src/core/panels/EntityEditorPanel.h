@@ -32,18 +32,18 @@ namespace kailux
 
         static void propagate_material_to_children(Scene &scene, entt::entity entity, const MeshMaterialData& material);
 
-        entt::entity m_SelectedEntity;
-        glm::vec3    m_RotationDegrees;
+        entt::entity mSelectedEntity;
+        glm::vec3    mRotationDegrees;
 
-        ImGuizmo::OPERATION m_CurrentGizmoOperation;
-        ImGuizmo::MODE      m_CurrentGizmoMode;
+        ImGuizmo::OPERATION mCurrentGizmoOperation;
+        ImGuizmo::MODE      mCurrentGizmoMode;
 
-        bool                m_UniformScale;
-        bool                m_GizmoInUse;
-        bool                m_GizmoWasDragging;
-        bool                m_SimulationRunning;
+        bool                mUniformScale;
+        bool                mGizmoInUse;
+        bool                mGizmoWasDragging;
+        bool                mSimulationRunning;
 
-        OnBodyTypeChange  m_OnBodyTypeChange;
-        OnBodyScaleChange m_OnBodyScaleChange;
+        OnBodyTypeChange  mOnBodyTypeChange;
+        OnBodyScaleChange mOnBodyScaleChange;
     };
 }

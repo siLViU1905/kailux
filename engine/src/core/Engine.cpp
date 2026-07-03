@@ -25,38 +25,38 @@
 
 namespace kailux
 {
-    Engine::Engine() : m_SampleCount(vk::SampleCountFlagBits::e1),
-                       m_AssetPipeline(m_Context, m_MeshRegistry, m_TextureRegistry, m_TransferManager, m_Scene,m_Frames),
-                       m_PhysicsSystem(m_Scene, m_PhysicsRegistry),
-                       m_CurrentFrame(0),
-                       m_PickedEntity(~0u)
+    Engine::Engine() : mSampleCount(vk::SampleCountFlagBits::e1),
+                       mAssetPipeline(mContext, mMeshRegistry, mTextureRegistry, mTransferManager, mScene,mFrames),
+                       mPhysicsSystem(mScene, mPhysicsRegistry),
+                       mCurrentFrame(0),
+                       mPickedEntity(~0u)
     {
     }
 
-    Engine::Engine(Engine &&other) noexcept : m_Context(std::move(other.m_Context)),
-                                              m_SampleCount(other.m_SampleCount),
-                                              m_Swapchain(std::move(other.m_Swapchain)),
-                                              m_ImGuiBackend(std::move(other.m_ImGuiBackend)),
-                                              m_TransferManager(std::move(other.m_TransferManager)),
-                                              m_MeshRegistry(std::move(other.m_MeshRegistry)),
-                                              m_TextureRegistry(std::move(other.m_TextureRegistry)),
-                                              m_PhysicsRegistry(std::move(other.m_PhysicsRegistry)),
-                                              m_AssetPipeline(std::move(other.m_AssetPipeline)),
-                                              m_PhysicsSystem(std::move(other.m_PhysicsSystem)),
-                                              m_DeferredResourceEraser(std::move(other.m_DeferredResourceEraser)),
-                                              m_Frames(std::move(other.m_Frames)),
-                                              m_CurrentFrame(other.m_CurrentFrame),
-                                              m_SceneTextureIds(other.m_SceneTextureIds),
-                                              m_Scene(std::move(other.m_Scene)),
-                                              m_MainPass(std::move(other.m_MainPass)),
-                                              m_SkyboxPass(std::move(other.m_SkyboxPass)),
-                                              m_OutlinePass(std::move(other.m_OutlinePass)),
-                                              m_ComputePicker(std::move(other.m_ComputePicker)),
-                                              m_PickedEntity(other.m_PickedEntity),
-                                              m_ComputeCuller(std::move(other.m_ComputeCuller)),
-                                              m_OnInfoLog(std::move(other.m_OnInfoLog)),
-                                              m_OnWarningLog(std::move(other.m_OnWarningLog)),
-                                              m_OnErrorLog(std::move(other.m_OnErrorLog))
+    Engine::Engine(Engine &&other) noexcept : mContext(std::move(other.mContext)),
+                                              mSampleCount(other.mSampleCount),
+                                              mSwapchain(std::move(other.mSwapchain)),
+                                              mImGuiBackend(std::move(other.mImGuiBackend)),
+                                              mTransferManager(std::move(other.mTransferManager)),
+                                              mMeshRegistry(std::move(other.mMeshRegistry)),
+                                              mTextureRegistry(std::move(other.mTextureRegistry)),
+                                              mPhysicsRegistry(std::move(other.mPhysicsRegistry)),
+                                              mAssetPipeline(std::move(other.mAssetPipeline)),
+                                              mPhysicsSystem(std::move(other.mPhysicsSystem)),
+                                              mDeferredResourceEraser(std::move(other.mDeferredResourceEraser)),
+                                              mFrames(std::move(other.mFrames)),
+                                              mCurrentFrame(other.mCurrentFrame),
+                                              mSceneTextureIds(other.mSceneTextureIds),
+                                              mScene(std::move(other.mScene)),
+                                              mMainPass(std::move(other.mMainPass)),
+                                              mSkyboxPass(std::move(other.mSkyboxPass)),
+                                              mOutlinePass(std::move(other.mOutlinePass)),
+                                              mComputePicker(std::move(other.mComputePicker)),
+                                              mPickedEntity(other.mPickedEntity),
+                                              mComputeCuller(std::move(other.mComputeCuller)),
+                                              mOnInfoLog(std::move(other.mOnInfoLog)),
+                                              mOnWarningLog(std::move(other.mOnWarningLog)),
+                                              mOnErrorLog(std::move(other.mOnErrorLog))
     {
         createAssetPipeline();
         createPhysicsSystem();
@@ -66,30 +66,30 @@ namespace kailux
     {
         if (this != &other)
         {
-            m_Context = std::move(other.m_Context);
-            m_SampleCount = other.m_SampleCount;
-            m_Swapchain = std::move(other.m_Swapchain);
-            m_ImGuiBackend = std::move(other.m_ImGuiBackend);
-            m_TransferManager = std::move(other.m_TransferManager);
-            m_MeshRegistry = std::move(other.m_MeshRegistry);
-            m_TextureRegistry = std::move(other.m_TextureRegistry);
-            m_PhysicsRegistry = std::move(other.m_PhysicsRegistry);
-            m_AssetPipeline = std::move(other.m_AssetPipeline);
-            m_PhysicsSystem = std::move(other.m_PhysicsSystem);
-            m_DeferredResourceEraser = std::move(other.m_DeferredResourceEraser);
-            m_Frames = std::move(other.m_Frames);
-            m_CurrentFrame = other.m_CurrentFrame;
-            m_SceneTextureIds = other.m_SceneTextureIds;
-            m_Scene = std::move(other.m_Scene);
-            m_MainPass = std::move(other.m_MainPass);
-            m_SkyboxPass = std::move(other.m_SkyboxPass);
-            m_OutlinePass = std::move(other.m_OutlinePass);
-            m_ComputePicker = std::move(other.m_ComputePicker);
-            m_PickedEntity = other.m_PickedEntity;
-            m_ComputeCuller = std::move(other.m_ComputeCuller);
-            m_OnInfoLog = std::move(other.m_OnInfoLog);
-            m_OnWarningLog = std::move(other.m_OnWarningLog);
-            m_OnErrorLog = std::move(other.m_OnErrorLog);
+            mContext = std::move(other.mContext);
+            mSampleCount = other.mSampleCount;
+            mSwapchain = std::move(other.mSwapchain);
+            mImGuiBackend = std::move(other.mImGuiBackend);
+            mTransferManager = std::move(other.mTransferManager);
+            mMeshRegistry = std::move(other.mMeshRegistry);
+            mTextureRegistry = std::move(other.mTextureRegistry);
+            mPhysicsRegistry = std::move(other.mPhysicsRegistry);
+            mAssetPipeline = std::move(other.mAssetPipeline);
+            mPhysicsSystem = std::move(other.mPhysicsSystem);
+            mDeferredResourceEraser = std::move(other.mDeferredResourceEraser);
+            mFrames = std::move(other.mFrames);
+            mCurrentFrame = other.mCurrentFrame;
+            mSceneTextureIds = other.mSceneTextureIds;
+            mScene = std::move(other.mScene);
+            mMainPass = std::move(other.mMainPass);
+            mSkyboxPass = std::move(other.mSkyboxPass);
+            mOutlinePass = std::move(other.mOutlinePass);
+            mComputePicker = std::move(other.mComputePicker);
+            mPickedEntity = other.mPickedEntity;
+            mComputeCuller = std::move(other.mComputeCuller);
+            mOnInfoLog = std::move(other.mOnInfoLog);
+            mOnWarningLog = std::move(other.mOnWarningLog);
+            mOnErrorLog = std::move(other.mOnErrorLog);
 
             createAssetPipeline();
             createPhysicsSystem();
@@ -99,11 +99,11 @@ namespace kailux
 
     Engine::~Engine()
     {
-        if (m_Context.getDevice())
+        if (mContext.getDevice())
         {
             waitIdle();
-            m_TransferManager.clear();
-            m_Frames = {};
+            mTransferManager.clear();
+            mFrames = {};
             OneTimeCommand::destroy_command_pools();
         }
     }
@@ -112,7 +112,7 @@ namespace kailux
     {
         Engine engine;
         engine.createRenderingContext(window);
-        OneTimeCommand::create_command_pools(engine.m_Context);
+        OneTimeCommand::create_command_pools(engine.mContext);
         engine.createMainPass();
         engine.createSkybox();
         engine.createOutlinePass();
@@ -133,193 +133,193 @@ namespace kailux
 
     void Engine::setOnEditorRender(OnEditorRender &&callback)
     {
-        m_OnEditorRender = std::move(callback);
+        mOnEditorRender = std::move(callback);
     }
 
     void Engine::waitIdle() const
     {
-        m_Context.getDevice().waitIdle();
+        mContext.getDevice().waitIdle();
     }
 
     Queue<AssetPipeline::PendingMeshData> &Engine::getPendingMeshDataQueue()
     {
-        return m_AssetPipeline.getPendingQueue();
+        return mAssetPipeline.getPendingQueue();
     }
 
     void Engine::unregisterMesh(MeshHandle handle, std::string_view path)
     {
-        if (m_AssetPipeline.uncache(path))
-            m_MeshRegistry.destroy(handle);
+        if (mAssetPipeline.uncache(path))
+            mMeshRegistry.destroy(handle);
     }
 
     void Engine::unregisterTextureSet(TextureSetHandle handle)
     {
-        auto defaultHandle = m_TextureRegistry.getDefaultSetHandle();
-        const auto &defaultSet = m_TextureRegistry.view(defaultHandle);
+        auto defaultHandle = mTextureRegistry.getDefaultSetHandle();
+        const auto &defaultSet = mTextureRegistry.view(defaultHandle);
         auto updateInfos = make_descriptor_set_update_info_from_texture_set(handle, defaultSet);
 
-        for (const auto &frame: m_Frames)
+        for (const auto &frame: mFrames)
             frame.getDescriptorSet().updateInfo(
-                m_Context,
+                mContext,
                 updateInfos
             );
 
-        m_DeferredResourceEraser.enqueue([this, handle]()
+        mDeferredResourceEraser.enqueue([this, handle]()
         {
-            m_TextureRegistry.unregisterTextureSet(handle);
+            mTextureRegistry.unregisterTextureSet(handle);
         });
     }
 
     ImTextureID Engine::getAssetBrowserDirectoryTextureId() const
     {
-        return ImGuiBackend::get_texture_id_from_texture(m_TextureRegistry.getAssetBrowserDirectoryIconTexture());
+        return ImGuiBackend::get_texture_id_from_texture(mTextureRegistry.getAssetBrowserDirectoryIconTexture());
     }
 
     ImTextureID Engine::getAssetBrowserFileTextureId() const
     {
-        return ImGuiBackend::get_texture_id_from_texture(m_TextureRegistry.getAssetBrowserFileIconTexture());
+        return ImGuiBackend::get_texture_id_from_texture(mTextureRegistry.getAssetBrowserFileIconTexture());
     }
 
     ImTextureID Engine::getSceneTextureId() const
     {
-        return m_SceneTextureIds[m_CurrentFrame];
+        return mSceneTextureIds[mCurrentFrame];
     }
 
     void Engine::createRenderingContext(Window &window)
     {
-        m_Context = Context::create(window);
-        m_SampleCount = m_Context.getMaxUsableSampleCount();
-        m_Swapchain = Swapchain::create(window, m_Context, m_SampleCount);
+        mContext = Context::create(window);
+        mSampleCount = mContext.getMaxUsableSampleCount();
+        mSwapchain = Swapchain::create(window, mContext, mSampleCount);
     }
 
     void Engine::createMainPass()
     {
-        m_MainPass = MainPass::create(
-            m_Context,
-            m_Swapchain,
-            s_FramesInFlight
+        mMainPass = MainPass::create(
+            mContext,
+            mSwapchain,
+            kFramesInFlight
         );
     }
 
     void Engine::createSkybox()
     {
-        m_SkyboxPass = SkyboxPass::create(
-            m_Context,
-            m_Swapchain,
-            s_FramesInFlight
+        mSkyboxPass = SkyboxPass::create(
+            mContext,
+            mSwapchain,
+            kFramesInFlight
         );
     }
 
     void Engine::createOutlinePass()
     {
-        m_OutlinePass = OutlinePass::create(
-            m_Context,
-            m_Swapchain,
-            s_FramesInFlight
+        mOutlinePass = OutlinePass::create(
+            mContext,
+            mSwapchain,
+            kFramesInFlight
         );
     }
 
     void Engine::createFrameResources()
     {
-        for (auto &frame: m_Frames)
+        for (auto &frame: mFrames)
             frame = FrameData::create(
-                m_Context,
-                m_Swapchain,
-                m_MainPass,
-                m_SkyboxPass,
-                m_ComputePicker,
-                m_OutlinePass,
-                m_ComputeCuller,
-                m_TextureRegistry, s_MaxMeshCount
+                mContext,
+                mSwapchain,
+                mMainPass,
+                mSkyboxPass,
+                mComputePicker,
+                mOutlinePass,
+                mComputeCuller,
+                mTextureRegistry, kMaxMeshCount
             );
     }
 
     void Engine::createTransferManager()
     {
-        m_TransferManager = TransferManager::create();
+        mTransferManager = TransferManager::create();
     }
 
     void Engine::createMeshRegistry()
     {
         std::vector<Buffer> stagingBuffers;
-        OneTimeCommand otc = OneTimeCommand::create(m_Context);
-        m_MeshRegistry = MeshRegistry::create(m_Context, otc.getCommandBuffer(), stagingBuffers);
-        otc.submit(m_Context);
+        OneTimeCommand otc = OneTimeCommand::create(mContext);
+        mMeshRegistry = MeshRegistry::create(mContext, otc.getCommandBuffer(), stagingBuffers);
+        otc.submit(mContext);
     }
 
     void Engine::createTextureRegistry()
     {
-        m_TextureRegistry = TextureRegistry::create(
-            m_Context,
-            s_MaxMeshCount,
-            s_DirectoryIconPath,
-            s_FileIconPath
+        mTextureRegistry = TextureRegistry::create(
+            mContext,
+            kMaxMeshCount,
+            kDirectoryIconPath,
+            kFileIconPath
         );
     }
 
     void Engine::createPhysicsRegistry()
     {
-        m_PhysicsRegistry = PhysicsRegistry::create();
+        mPhysicsRegistry = PhysicsRegistry::create();
     }
 
     void Engine::createAssetPipeline()
     {
-        m_AssetPipeline = AssetPipeline(m_Context, m_MeshRegistry, m_TextureRegistry, m_TransferManager, m_Scene, m_Frames);
-        m_AssetPipeline.setOnInfoLog([this](auto msg)
+        mAssetPipeline = AssetPipeline(mContext, mMeshRegistry, mTextureRegistry, mTransferManager, mScene, mFrames);
+        mAssetPipeline.setOnInfoLog([this](auto msg)
         {
-            m_OnInfoLog(msg);
+            mOnInfoLog(msg);
         });
     }
 
     void Engine::createPhysicsSystem()
     {
-        m_PhysicsSystem = PhysicsSystem(m_Scene, m_PhysicsRegistry);
-        m_PhysicsSystem.setOnWarningLog([this](auto msg)
+        mPhysicsSystem = PhysicsSystem(mScene, mPhysicsRegistry);
+        mPhysicsSystem.setOnWarningLog([this](auto msg)
         {
-            m_OnWarningLog(msg);
+            mOnWarningLog(msg);
         });
     }
 
     void Engine::createImGui(Window &window)
     {
-        m_ImGuiBackend = ImGuiBackend::create(window, m_Context, m_Swapchain, m_SampleCount);
+        mImGuiBackend = ImGuiBackend::create(window, mContext, mSwapchain, mSampleCount);
     }
 
     void Engine::createSceneTextureIds()
     {
-        for (uint32_t i = 0; i < s_FramesInFlight; i++)
-            m_SceneTextureIds[i] = ImGuiBackend::get_texture_id_from_texture(m_Frames[i].getSceneTexture());
+        for (uint32_t i = 0; i < kFramesInFlight; i++)
+            mSceneTextureIds[i] = ImGuiBackend::get_texture_id_from_texture(mFrames[i].getSceneTexture());
     }
 
     void Engine::createComputePicker()
     {
-        m_ComputePicker = ComputePicker::create(m_Context, s_FramesInFlight);
+        mComputePicker = ComputePicker::create(mContext, kFramesInFlight);
     }
 
     void Engine::createComputeCuller()
     {
-        m_ComputeCuller = ComputeCuller::create(m_Context, s_FramesInFlight);
+        mComputeCuller = ComputeCuller::create(mContext, kFramesInFlight);
     }
 
     void Engine::createScene()
     {
-        m_Scene = Scene::create("MainScene");
+        mScene = Scene::create("MainScene");
     }
 
     void Engine::createSceneEntities(const Window &window)
     {
         int windowWidth, windowHeight;
         window.getFramebufferSize(windowWidth, windowHeight);
-        auto cameraEntity = m_Scene.createCameraEntity(
+        auto cameraEntity = mScene.createCameraEntity(
             "MainCamera",
             true,
             windowWidth,
             windowHeight
         );
-        m_Scene.setMainCamera(cameraEntity);
+        mScene.setMainCamera(cameraEntity);
     }
 
-    std::array<DescriptorSetUpdateInfo, TextureRegistry::s_TextureTypes.size()>
+    std::array<DescriptorSetUpdateInfo, TextureRegistry::kTextureTypes.size()>
     Engine::make_descriptor_set_update_info_from_texture_set(TextureSetHandle slotToOverwrite,
                                                              const TextureSet &replacementSet)
     {
@@ -338,13 +338,13 @@ namespace kailux
         };
         uint32_t textureIndex = 0;
         std::array updateInfos = {
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.albedo),
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.normal),
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.roughness),
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.metallic),
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.ao)
+            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.albedo),
+            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.normal),
+            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.roughness),
+            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.metallic),
+            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.ao)
         };
-        static_assert(TextureRegistry::s_TextureTypes.size() == updateInfos.size(),
+        static_assert(TextureRegistry::kTextureTypes.size() == updateInfos.size(),
                       "There is a missing texture in update info");
         return updateInfos;
     }
@@ -373,27 +373,27 @@ namespace kailux
             signalInfo
         };
 
-        m_Context.getGraphicsQueue().submit2(submitInfo, frame.getFenceInFlight());
+        mContext.getGraphicsQueue().submit2(submitInfo, frame.getFenceInFlight());
     }
 
     void Engine::render(const Window &window)
     {
-        auto &frame = m_Frames[m_CurrentFrame];
-        frame.reset(m_Context);
+        auto &frame = mFrames[mCurrentFrame];
+        frame.reset(mContext);
 
         readOutputBuffers(frame);
 
-        auto acquired = m_Swapchain.acquire();
+        auto acquired = mSwapchain.acquire();
         if (!acquired)
         {
-            m_Swapchain.recreate(window, m_Context, m_SampleCount);
-            for (auto &f: m_Frames)
-                f.recreateTextures(m_Context, m_Swapchain);
+            mSwapchain.recreate(window, mContext, mSampleCount);
+            for (auto &f: mFrames)
+                f.recreateTextures(mContext, mSwapchain);
             createSceneTextureIds();
             return;
         }
 
-        vk::Semaphore renderFinishedSemaphore = m_Swapchain.getPresentSemaphore(acquired->imageIndex); {
+        vk::Semaphore renderFinishedSemaphore = mSwapchain.getPresentSemaphore(acquired->imageIndex); {
             CommandRecorder recorder(frame.getCommandBuffer());
             updateFrameBuffers(frame, recorder);
 
@@ -406,7 +406,7 @@ namespace kailux
 
             std::array mainAndPickerAttachments{
                 ColorAttachmentInfo(
-                    m_Swapchain.getColorImageView(),
+                    mSwapchain.getColorImageView(),
                     frame.getSceneTexture().getImageView(),
                     vk::ImageLayout::eColorAttachmentOptimal,
                     vk::AttachmentLoadOp::eClear,
@@ -429,7 +429,7 @@ namespace kailux
                 {
                     mainAndPickerAttachments,
                     frame.getExtent(),
-                    m_Swapchain.getDepthImageView(),
+                    mSwapchain.getDepthImageView(),
                     vk::ImageLayout::eDepthAttachmentOptimal,
                     {}
                 }
@@ -473,7 +473,7 @@ namespace kailux
 
             std::array imguiOverlay{
                 ColorAttachmentInfo
-                (m_Swapchain.getImageView(acquired->imageIndex),
+                (mSwapchain.getImageView(acquired->imageIndex),
                  {},
                  vk::ImageLayout::eColorAttachmentOptimal,
                  vk::AttachmentLoadOp::eLoad,
@@ -484,7 +484,7 @@ namespace kailux
 
             recorder.beginRendering({
                 imguiOverlay,
-                m_Swapchain.getExtent(),
+                mSwapchain.getExtent(),
                 {},
                 vk::ImageLayout::eUndefined,
                 vk::RenderingFlagBits::eContentsSecondaryCommandBuffers
@@ -498,17 +498,17 @@ namespace kailux
             transitionForPresent(recorder, acquired->imageIndex);
         }
 
-        submit(m_Frames[m_CurrentFrame], acquired->imageAvailableSemaphore, renderFinishedSemaphore);
+        submit(mFrames[mCurrentFrame], acquired->imageAvailableSemaphore, renderFinishedSemaphore);
 
-        if (!m_Swapchain.present(m_Context, acquired->imageIndex, renderFinishedSemaphore))
+        if (!mSwapchain.present(mContext, acquired->imageIndex, renderFinishedSemaphore))
         {
-            m_Swapchain.recreate(window, m_Context, m_SampleCount);
-            for (auto &f: m_Frames)
-                f.recreateTextures(m_Context, m_Swapchain);
+            mSwapchain.recreate(window, mContext, mSampleCount);
+            for (auto &f: mFrames)
+                f.recreateTextures(mContext, mSwapchain);
             createSceneTextureIds();
         }
 
-        m_CurrentFrame = (m_CurrentFrame + 1) % s_FramesInFlight;
+        mCurrentFrame = (mCurrentFrame + 1) % kFramesInFlight;
     }
 
     bool Engine::is_mesh_type_supported(std::string_view path)
@@ -540,20 +540,20 @@ namespace kailux
 
     bool Engine::isMeshCached(std::string_view path) const
     {
-        return m_AssetPipeline.isCached(path);
+        return mAssetPipeline.isCached(path);
     }
 
     void Engine::saveScene(std::string_view folder) const
     {
         std::filesystem::path savePath = folder;
-        savePath /= Scene::s_SaveFolder;
+        savePath /= Scene::kSaveFolder;
         if (!std::filesystem::exists(savePath))
             std::filesystem::create_directory(savePath);
-        savePath /= std::string(m_Scene.getName().data()) + "." + s_SceneFileExtension.data();
+        savePath /= std::string(mScene.getName().data()) + "." + kSceneFileExtension.data();
 
         std::ofstream saveFile(savePath);
         if (saveFile.is_open())
-            saveFile << m_Scene.serialize();
+            saveFile << mScene.serialize();
     }
 
     void Engine::loadScene(std::string_view path, int windowWidth, int windowHeight)
@@ -568,7 +568,7 @@ namespace kailux
             saveFile.seekg(0);
             saveFile.read(content.data(), fileSize);
 
-            auto js = m_Scene.deserialize(content, windowWidth, windowHeight);
+            auto js = mScene.deserialize(content, windowWidth, windowHeight);
             if (js.contains("Mesh") && js["Mesh"].is_array())
             {
                 for (const auto &meshJs: js["Mesh"])
@@ -618,51 +618,51 @@ namespace kailux
 
     void Engine::setOnInfoLog(OnLog &&callback)
     {
-        m_OnInfoLog = std::move(callback);
-        m_AssetPipeline.setOnInfoLog([this](auto msg)
+        mOnInfoLog = std::move(callback);
+        mAssetPipeline.setOnInfoLog([this](auto msg)
         {
-            m_OnInfoLog(msg);
+            mOnInfoLog(msg);
         });
     }
 
     void Engine::setOnWarningLog(OnLog &&callback)
     {
-        m_OnWarningLog = std::move(callback);
+        mOnWarningLog = std::move(callback);
     }
 
     void Engine::setOnErrorLog(OnLog &&callback)
     {
-        m_OnErrorLog = std::move(callback);
+        mOnErrorLog = std::move(callback);
     }
 
     void Engine::setSceneViewportMousePos(uint32_t x, uint32_t y)
     {
-        m_SceneViewportMousePos = {x, y};
+        mSceneViewportMousePos = {x, y};
     }
 
     void Engine::setOutlineInfo(glm::vec3 color, uint32_t entity)
     {
-        m_OutlineInfo = {{color, 1.f}, entity};
+        mOutlineInfo = {{color, 1.f}, entity};
     }
 
     uint32_t Engine::getPickedEntity() const
     {
-        return m_PickedEntity;
+        return mPickedEntity;
     }
 
     void Engine::updateBodyType(BodyHandle handle, PhysicsBodyType type)
     {
-        m_PhysicsRegistry.setBodyType(handle, type);
+        mPhysicsRegistry.setBodyType(handle, type);
     }
 
     void Engine::updateBodyScale(BodyHandle handle, const glm::vec3 &scale)
     {
-        m_PhysicsRegistry.updateBodyScale(handle, scale);
+        mPhysicsRegistry.updateBodyScale(handle, scale);
     }
 
     void Engine::setSimulationState(SimulationState state)
     {
-        m_PhysicsSystem.setSimulationState(state);
+        mPhysicsSystem.setSimulationState(state);
     }
 
     void Engine::executeCulling(const FrameData &frame, const CommandRecorder &recorder)
@@ -680,19 +680,19 @@ namespace kailux
         recorder.bufferMemoryBarriers(countBufferBarrier);
 
         auto totalObjects = static_cast<uint32_t>(
-            m_Scene.getEntityRegistry().view<MeshComponent>(entt::exclude<PendingUploadComponent>).size_hint());
+            mScene.getEntityRegistry().view<MeshComponent>(entt::exclude<PendingUploadComponent>).size_hint());
         if (totalObjects == 0)
             return;
 
-        m_ComputeCuller.bind(cmd);
-        frame.getCullerDescriptorSet().bind(m_ComputeCuller.getPipeline(), cmd, vk::PipelineBindPoint::eCompute);
+        mComputeCuller.bind(cmd);
+        frame.getCullerDescriptorSet().bind(mComputeCuller.getPipeline(), cmd, vk::PipelineBindPoint::eCompute);
 
-        const auto &camera = m_Scene.getEntityRegistry().get<CameraData>(m_Scene.getMainCamera());
+        const auto &camera = mScene.getEntityRegistry().get<CameraData>(mScene.getMainCamera());
         auto planes = Camera::get_frustum_planes(camera.projection, camera.view);
-        m_ComputeCuller.push<ComputePassesPushConstants::CameraFrustum>(cmd, {planes, totalObjects});
+        mComputeCuller.push<ComputePassesPushConstants::CameraFrustum>(cmd, {planes, totalObjects});
 
         uint32_t groupX = (totalObjects + 255) / 256;
-        m_ComputeCuller.execute(cmd, {groupX, 1, 1});
+        mComputeCuller.execute(cmd, {groupX, 1, 1});
 
         recorder.bufferMemoryBarriers(frame.getCullerBufferMemoryBarriers());
     }
@@ -700,7 +700,7 @@ namespace kailux
     void Engine::transitionForMainPass(const FrameData &frame, const CommandRecorder &recorder) const
     {
         recorder.imageBarrier({
-            m_Swapchain.getColorImage(),
+            mSwapchain.getColorImage(),
             vk::ImageLayout::eUndefined,
             vk::ImageLayout::eColorAttachmentOptimal
         });
@@ -716,7 +716,7 @@ namespace kailux
         });
 
         recorder.imageBarrier({
-            m_Swapchain.getDepthImage(),
+            mSwapchain.getDepthImage(),
             vk::ImageLayout::eUndefined,
             vk::ImageLayout::eDepthAttachmentOptimal,
             vk::PipelineStageFlagBits2::eTopOfPipe,
@@ -751,7 +751,7 @@ namespace kailux
                                           uint32_t imageIndex) const
     {
         recorder.imageBarrier({
-            m_Swapchain.getImage(imageIndex),
+            mSwapchain.getImage(imageIndex),
             vk::ImageLayout::eUndefined,
             vk::ImageLayout::eColorAttachmentOptimal
         });
@@ -807,7 +807,7 @@ namespace kailux
     void Engine::transitionForPresent(const CommandRecorder &recorder, uint32_t imageIndex) const
     {
         recorder.imageBarrier({
-            m_Swapchain.getImage(imageIndex),
+            mSwapchain.getImage(imageIndex),
             vk::ImageLayout::eColorAttachmentOptimal,
             vk::ImageLayout::ePresentSrcKHR,
             vk::PipelineStageFlagBits2::eColorAttachmentOutput,
@@ -820,23 +820,23 @@ namespace kailux
     void Engine::recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const
     {
         const auto cmd = recorder.getCommandBuffer();
-        m_MainPass.bind(cmd);
-        m_MeshRegistry.bind(recorder.getCommandBuffer());
-        frame.getDescriptorSet().bind(m_MainPass.getPipeline(), cmd);
+        mMainPass.bind(cmd);
+        mMeshRegistry.bind(recorder.getCommandBuffer());
+        frame.getDescriptorSet().bind(mMainPass.getPipeline(), cmd);
 
         recorder.drawIndexedIndirectCount(
             frame.getIndirectBuffer(),
             frame.getCullerCountBuffer(),
-            MainPass::s_MaxMeshCount
+            MainPass::kMaxMeshCount
         );
     }
 
     void Engine::recordSkybox(const FrameData &frame, const CommandRecorder &recorder) const
     {
         const auto cmd = recorder.getCommandBuffer();
-        m_SkyboxPass.bind(cmd);
-        frame.getSkyboxDescriptorSet().bind(m_SkyboxPass.getPipeline(), cmd);
-        auto cubeView = m_MeshRegistry.view(m_MeshRegistry.getBuiltins().cube);
+        mSkyboxPass.bind(cmd);
+        frame.getSkyboxDescriptorSet().bind(mSkyboxPass.getPipeline(), cmd);
+        auto cubeView = mMeshRegistry.view(mMeshRegistry.getBuiltins().cube);
         cmd.drawIndexed(
             cubeView.indexCount,
             1,
@@ -848,7 +848,7 @@ namespace kailux
 
     void Engine::recordImGuiData(const FrameData &frame)
     {
-        auto format = m_Swapchain.getFormat();
+        auto format = mSwapchain.getFormat();
         auto inheritanceInfo = vk::CommandBufferInheritanceRenderingInfo(
             {},
             {},
@@ -859,22 +859,22 @@ namespace kailux
             vk::SampleCountFlagBits::e1
         );
 
-        m_ImGuiBackend.beginFrame();
-        m_OnEditorRender(m_Scene);
-        m_ImGuiBackend.endFrame();
+        mImGuiBackend.beginFrame();
+        mOnEditorRender(mScene);
+        mImGuiBackend.endFrame();
 
         CommandRecorder recorder(frame.getImGuiCommandBuffer(), inheritanceInfo);
-        m_ImGuiBackend.recordDrawData(recorder.getCommandBuffer());
+        mImGuiBackend.recordDrawData(recorder.getCommandBuffer());
     }
 
     void Engine::recordPicker(const FrameData &frame, const CommandRecorder &recorder) const
     {
         const auto cmd = recorder.getCommandBuffer();
-        m_ComputePicker.bind(cmd);
-        frame.getPickerDescriptorSet().bind(m_ComputePicker.getPipeline(), cmd,
+        mComputePicker.bind(cmd);
+        frame.getPickerDescriptorSet().bind(mComputePicker.getPipeline(), cmd,
                                             vk::PipelineBindPoint::eCompute);
-        m_ComputePicker.push(cmd, m_SceneViewportMousePos);
-        m_ComputePicker.execute(
+        mComputePicker.push(cmd, mSceneViewportMousePos);
+        mComputePicker.execute(
             cmd,
             {1, 1, 1}
         );
@@ -883,9 +883,9 @@ namespace kailux
     void Engine::recordOutline(const FrameData &frame, const CommandRecorder &recorder) const
     {
         const auto cmd = recorder.getCommandBuffer();
-        m_OutlinePass.bind(cmd);
-        frame.getOutlineDescriptorSet().bind(m_OutlinePass.getPipeline(), cmd);
-        m_OutlinePass.push(cmd, m_OutlineInfo);
+        mOutlinePass.bind(cmd);
+        frame.getOutlineDescriptorSet().bind(mOutlinePass.getPipeline(), cmd);
+        mOutlinePass.push(cmd, mOutlineInfo);
         cmd.draw(3, 1, 0, 0);
     }
 
@@ -893,16 +893,16 @@ namespace kailux
     {
         handleEvent(window);
 
-        m_AssetPipeline.poll();
-        m_TransferManager.poll(m_Context);
-        m_DeferredResourceEraser.tick();
+        mAssetPipeline.poll();
+        mTransferManager.poll(mContext);
+        mDeferredResourceEraser.tick();
 
-        if (m_PhysicsSystem.getSimulationState() == SimulationState::Running)
-            m_PhysicsSystem.update(deltaTime);
+        if (mPhysicsSystem.getSimulationState() == SimulationState::Running)
+            mPhysicsSystem.update(deltaTime);
 
-        m_Scene.update();
+        mScene.update();
 
-        auto view = m_Scene.getEntityRegistry().view<CameraComponent, CameraData>();
+        auto view = mScene.getEntityRegistry().view<CameraComponent, CameraData>();
         for (auto entity: view)
         {
             auto &camera = view.get<CameraComponent>(entity);
@@ -926,7 +926,7 @@ namespace kailux
 
     void Engine::updateCameraBuffer(FrameData &frame) const
     {
-        const auto &data = m_Scene.getEntityRegistry().get<CameraData>(m_Scene.getMainCamera());
+        const auto &data = mScene.getEntityRegistry().get<CameraData>(mScene.getMainCamera());
         frame.getCameraBuffer().upload(
             &data,
             sizeof(CameraData)
@@ -936,7 +936,7 @@ namespace kailux
     void Engine::updateMeshDataBuffer(FrameData &frame) const
     {
         std::vector<MeshData> data;
-        auto view = m_Scene.getEntityRegistry().view<
+        auto view = mScene.getEntityRegistry().view<
             TransformComponent,
             MeshMaterialData,
             MeshComponent,
@@ -961,18 +961,18 @@ namespace kailux
 
     void Engine::updateSceneBuffer(FrameData &frame) const
     {
-        const auto &data = m_Scene.getData();
+        const auto &data = mScene.getData();
         frame.getSceneBuffer().upload(&data, sizeof(SceneData));
     }
 
     void Engine::updateCullerBuffers(const FrameData &frame, const CommandRecorder &recorder)
     {
         std::vector<vk::DrawIndexedIndirectCommand> indirectCommands;
-        auto view = m_Scene.getEntityRegistry().view<MeshComponent>(entt::exclude<PendingUploadComponent>);
+        auto view = mScene.getEntityRegistry().view<MeshComponent>(entt::exclude<PendingUploadComponent>);
         indirectCommands.reserve(view.size_hint());
         view.each([this, &indirectCommands](const auto &mesh)
         {
-            auto meshView = m_MeshRegistry.view(mesh.handle);
+            auto meshView = mMeshRegistry.view(mesh.handle);
             indirectCommands.emplace_back(
                 meshView.indexCount,
                 1,
@@ -990,7 +990,7 @@ namespace kailux
 
     void Engine::readOutputBuffers(const FrameData &frame)
     {
-        m_PickedEntity = frame.getPickerBuffer().read<uint32_t>();
+        mPickedEntity = frame.getPickerBuffer().read<uint32_t>();
     }
 
     void Engine::handleEvent(Window &window)
@@ -1019,7 +1019,7 @@ namespace kailux
                             (window.getCursorMode() == CursorMode::Normal)
                                 ? window.setCursorMode(CursorMode::Disabled)
                                 : window.setCursorMode(CursorMode::Normal);
-                            auto view = m_Scene.getEntityRegistry().view<CameraComponent>();
+                            auto view = mScene.getEntityRegistry().view<CameraComponent>();
                             for (auto entity: view)
                             {
                                 auto &focused = view.get<CameraComponent>(entity).focused;
@@ -1038,12 +1038,12 @@ namespace kailux
 
     BodyHandle Engine::uploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo &data)
     {
-        return m_PhysicsRegistry.createBody(data);
+        return mPhysicsRegistry.createBody(data);
     }
 
     void Engine::addPhysicsToEntity(entt::entity entity, PhysicsCreationOptions options)
     {
-        auto &reg = m_Scene.getEntityRegistry();
+        auto &reg = mScene.getEntityRegistry();
 
         const auto &transform = reg.get<TransformComponent>(entity).transform;
 
@@ -1077,7 +1077,7 @@ namespace kailux
             });
         } else
         {
-            m_OnWarningLog("Cannot add physics: entity has neither cached physics data nor a mesh component");
+            mOnWarningLog("Cannot add physics: entity has neither cached physics data nor a mesh component");
             return;
         }
 

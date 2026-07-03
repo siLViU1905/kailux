@@ -7,13 +7,13 @@
 
 namespace kailux
 {
-    ImGuiBackend::ImGuiBackend() : p_Context(nullptr), p_IO(nullptr), m_DescriptorPool({})
+    ImGuiBackend::ImGuiBackend() : p_Context(nullptr), p_IO(nullptr), mDescriptorPool({})
     {
     }
 
     ImGuiBackend::ImGuiBackend(ImGuiBackend &&other) noexcept : p_Context(other.p_Context),
                                                                 p_IO(other.p_IO),
-                                                                m_DescriptorPool(std::move(other.m_DescriptorPool))
+                                                                mDescriptorPool(std::move(other.mDescriptorPool))
     {
         other.p_Context = nullptr;
         other.p_IO = nullptr;
@@ -25,7 +25,7 @@ namespace kailux
         {
             p_Context = other.p_Context;
             p_IO = other.p_IO;
-            m_DescriptorPool = std::move(other.m_DescriptorPool);
+            mDescriptorPool = std::move(other.mDescriptorPool);
 
             other.p_Context = nullptr;
             other.p_IO = nullptr;
@@ -131,7 +131,7 @@ namespace kailux
             poolSizes.data()
         );
 
-        m_DescriptorPool = vk::raii::DescriptorPool(context.m_Device, poolInfo);
+        mDescriptorPool = vk::raii::DescriptorPool(context.mDevice, poolInfo);
     }
 
     void ImGuiBackend::createImGuiContext()
@@ -153,12 +153,12 @@ namespace kailux
 
         ImGui_ImplVulkan_InitInfo initInfo{};
 
-        initInfo.Instance = *context.m_Instance;
-        initInfo.PhysicalDevice = *context.m_PhysicalDevice;
-        initInfo.Device = *context.m_Device;
+        initInfo.Instance = *context.mInstance;
+        initInfo.PhysicalDevice = *context.mPhysicalDevice;
+        initInfo.Device = *context.mDevice;
         initInfo.QueueFamily = context.getGraphicsQueueFamilyIndex();
-        initInfo.Queue = *context.m_GraphicsQueue;
-        initInfo.DescriptorPool = *m_DescriptorPool;
+        initInfo.Queue = *context.mGraphicsQueue;
+        initInfo.DescriptorPool = *mDescriptorPool;
         initInfo.MinImageCount = swapchain.getImageCount();
         initInfo.ImageCount = swapchain.getImageCount();
         initInfo.PipelineInfoMain.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
@@ -185,7 +185,7 @@ namespace kailux
     void ImGuiBackend::applyStyle()
     {
         //load font
-        p_IO->Fonts->AddFontFromFileTTF(s_FontPath.data(), 22.f);
+        p_IO->Fonts->AddFontFromFileTTF(kFontPath.data(), 22.f);
 
         auto &style = ImGui::GetStyle();
         // Borders

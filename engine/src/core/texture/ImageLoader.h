@@ -8,7 +8,7 @@ namespace kailux
     public:
         struct ImageData
         {
-            static constexpr uint32_t s_Channels = 4;
+            static constexpr uint32_t kChannels = 4;
 
             uint32_t           width{};
             uint32_t           height{};

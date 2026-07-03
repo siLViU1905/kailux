@@ -2,27 +2,27 @@
 
 namespace kailux
 {
-    AssetBrowser::AssetBrowser() : m_CurrentPath(s_DefaultPath),
-                                   m_DirectoryTextureId(0),
-                                   m_FileTextureId(0),
-                                   m_ItemToRenamePath(""),
-                                   m_RenameBuffer(""),
-                                   m_IsRenaming(false)
+    AssetBrowser::AssetBrowser() : mCurrentPath(s_DefaultPath),
+                                   mDirectoryTextureId(0),
+                                   mFileTextureId(0),
+                                   mItemToRenamePath(""),
+                                   mRenameBuffer(""),
+                                   mIsRenaming(false)
     {
-        if (!std::filesystem::exists(m_CurrentPath))
-            std::filesystem::create_directory(m_CurrentPath);
+        if (!std::filesystem::exists(mCurrentPath))
+            std::filesystem::create_directory(mCurrentPath);
     }
 
     void AssetBrowser::render()
     {
-        if (m_CurrentPath != s_DefaultPath)
+        if (mCurrentPath != s_DefaultPath)
         {
             if (ImGui::Button("<- Back"))
-                m_CurrentPath = m_CurrentPath.parent_path();
+                mCurrentPath = mCurrentPath.parent_path();
             ImGui::SameLine();
         }
 
-        ImGui::Text("%s", m_CurrentPath.string().c_str());
+        ImGui::Text("%s", mCurrentPath.string().c_str());
 
         float availableWidth = ImGui::GetContentRegionAvail().x;
         float cellWidthPixels = ImGui::GetWindowWidth() * s_RelativeCellSize;
@@ -32,12 +32,12 @@ namespace kailux
         if (ImGui::BeginTable("AssetBrowserTable", columnCount))
         {
             float iconSizePixels = ImGui::GetWindowWidth() * s_RelativeIconSize;
-            for (const auto &entry: std::filesystem::directory_iterator(m_CurrentPath))
+            for (const auto &entry: std::filesystem::directory_iterator(mCurrentPath))
             {
                 ImGui::TableNextColumn();
 
                 bool isDirectory = std::filesystem::is_directory(entry.path());
-                auto iconId = isDirectory ? m_DirectoryTextureId : m_FileTextureId;
+                auto iconId = isDirectory ? mDirectoryTextureId : mFileTextureId;
 
                 auto name = entry.path().filename().string();
                 ImGui::PushID(name.c_str());
@@ -54,10 +54,10 @@ namespace kailux
                 {
                     if (ImGui::MenuItem("Rename"))
                     {
-                        m_IsRenaming = true;
-                        m_ItemToRenamePath = entry.path();
-                        m_RenameBuffer.fill(0);
-                        std::strncpy(m_RenameBuffer.data(), name.c_str(), m_RenameBuffer.size());
+                        mIsRenaming = true;
+                        mItemToRenamePath = entry.path();
+                        mRenameBuffer.fill(0);
+                        std::strncpy(mRenameBuffer.data(), name.c_str(), mRenameBuffer.size());
                     }
                     if (ImGui::MenuItem("Delete"))
                         std::filesystem::remove_all(entry.path());
@@ -76,29 +76,29 @@ namespace kailux
                         ImGui::EndDragDropSource();
                     }
 
-                if (m_IsRenaming && m_ItemToRenamePath == entry.path())
+                if (mIsRenaming && mItemToRenamePath == entry.path())
                 {
                     ImGui::SetKeyboardFocusHere();
-                    if (ImGui::InputText("##rename", m_RenameBuffer.data(), m_RenameBuffer.size(),
+                    if (ImGui::InputText("##rename", mRenameBuffer.data(), mRenameBuffer.size(),
                                          ImGuiInputTextFlags_EnterReturnsTrue))
                     {
                         std::filesystem::path newPath = entry.path().parent_path() / std::string(
-                                                            m_RenameBuffer.begin(), m_RenameBuffer.end());
+                                                            mRenameBuffer.begin(), mRenameBuffer.end());
 
                         if (!std::filesystem::exists(newPath))
                             std::filesystem::rename(entry.path(), newPath);
 
-                        m_IsRenaming = false;
-                        m_ItemToRenamePath = "";
+                        mIsRenaming = false;
+                        mItemToRenamePath = "";
                     }
 
                     if (!ImGui::IsItemActive() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-                        m_IsRenaming = false;
+                        mIsRenaming = false;
                 } else
                     ImGui::TextWrapped("%s", name.c_str());
 
                 if (iconDoubleClicked && isDirectory)
-                    m_CurrentPath /= entry.path().filename();
+                    mCurrentPath /= entry.path().filename();
 
                 ImGui::PopID();
             }
@@ -110,12 +110,12 @@ namespace kailux
         {
             if (ImGui::MenuItem("New Folder"))
             {
-                Path newFolderPath = m_CurrentPath / "New Folder";
+                Path newFolderPath = mCurrentPath / "New Folder";
                 int counter = 1;
 
                 while (std::filesystem::exists(newFolderPath))
                 {
-                    newFolderPath = m_CurrentPath / ("New Folder (" + std::to_string(counter) + ")");
+                    newFolderPath = mCurrentPath / ("New Folder (" + std::to_string(counter) + ")");
                     counter++;
                 }
                 std::filesystem::create_directory(newFolderPath);
@@ -123,9 +123,9 @@ namespace kailux
                 ImGui::CloseCurrentPopup();
             }
             if (ImGui::MenuItem("Import files"))
-                m_OnImportFiles();
+                mOnImportFiles();
             if (ImGui::MenuItem("Import folder"))
-                m_OnImportFolder();
+                mOnImportFolder();
 
             ImGui::EndPopup();
         }
@@ -133,22 +133,22 @@ namespace kailux
 
     void AssetBrowser::setDirectoryTextureId(ImTextureID id)
     {
-        m_DirectoryTextureId = id;
+        mDirectoryTextureId = id;
     }
 
     void AssetBrowser::setFileTextureId(ImTextureID id)
     {
-        m_FileTextureId = id;
+        mFileTextureId = id;
     }
 
     void AssetBrowser::setOnImportFiles(OnImport &&callback)
     {
-        m_OnImportFiles = std::move(callback);
+        mOnImportFiles = std::move(callback);
     }
 
     void AssetBrowser::setOnImportFolder(OnImport &&callback)
     {
-        m_OnImportFolder = std::move(callback);
+        mOnImportFolder = std::move(callback);
     }
 
     void AssetBrowser::import(std::string_view path) const
@@ -156,7 +156,7 @@ namespace kailux
         namespace fs = std::filesystem;
         if (fs::exists(path))
         {
-            auto dest = m_CurrentPath;
+            auto dest = mCurrentPath;
             if (fs::is_directory(path))
                 dest /= Path(path).filename();
             fs::copy(path, dest, fs::copy_options::recursive | fs::copy_options::overwrite_existing);

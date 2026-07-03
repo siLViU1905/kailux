@@ -22,13 +22,13 @@ namespace kailux
     MainPass MainPass::create(const Context &context, const Swapchain &swapchain, uint32_t maxFrames)
     {
         MainPass pass;
-        pass.createDescriptorLayout(context, s_DescriptorLayoutBindings);
-        pass.createDescriptorPool(context, maxFrames, s_DescriptorPoolSizes);
+        pass.createDescriptorLayout(context, kDescriptorLayoutBindings);
+        pass.createDescriptorPool(context, maxFrames, kDescriptorPoolSizes);
         pass.createPipeline(
             context,
             swapchain,
-            s_VertexShaderPath,
-            s_FragmentShaderPath,
+            kVertexShaderPath,
+            kFragmentShaderPath,
             make_pipeline_info(swapchain, context.getMaxUsableSampleCount()),
             {}
             );

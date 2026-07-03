@@ -9,10 +9,10 @@ namespace kailux
     {
     }
 
-    Application::Application(Application &&other) noexcept : m_Window(std::move(other.m_Window)),
-                                                             m_Engine(std::move(other.m_Engine)),
-                                                             m_Editor(std::move(other.m_Editor)),
-                                                             m_ThreadDispatcher(std::move(other.m_ThreadDispatcher))
+    Application::Application(Application &&other) noexcept : mWindow(std::move(other.mWindow)),
+                                                             mEngine(std::move(other.mEngine)),
+                                                             mEditor(std::move(other.mEditor)),
+                                                             mThreadDispatcher(std::move(other.mThreadDispatcher))
     {
     }
 
@@ -20,10 +20,10 @@ namespace kailux
     {
         if (this != &other)
         {
-            m_Window = std::move(other.m_Window);
-            m_Engine = std::move(other.m_Engine);
-            m_Editor = std::move(other.m_Editor);
-            m_ThreadDispatcher = std::move(other.m_ThreadDispatcher);
+            mWindow = std::move(other.mWindow);
+            mEngine = std::move(other.mEngine);
+            mEditor = std::move(other.mEditor);
+            mThreadDispatcher = std::move(other.mThreadDispatcher);
         }
         return *this;
     }
@@ -31,54 +31,54 @@ namespace kailux
     Application Application::create(const WindowInfo &windowInfo)
     {
         Application app;
-        app.m_Window = Window::create(windowInfo.width, windowInfo.height, windowInfo.title);
-        app.m_Window.updateUserPointer();
-        app.m_Engine = Engine::create(app.m_Window);
-        app.m_Editor = Editor::create(
-            app.m_Engine.getAssetBrowserDirectoryTextureId(),
-            app.m_Engine.getAssetBrowserFileTextureId()
+        app.mWindow = Window::create(windowInfo.width, windowInfo.height, windowInfo.title);
+        app.mWindow.updateUserPointer();
+        app.mEngine = Engine::create(app.mWindow);
+        app.mEditor = Editor::create(
+            app.mEngine.getAssetBrowserDirectoryTextureId(),
+            app.mEngine.getAssetBrowserFileTextureId()
         );
-        ThreadDispatcher::s_MaxThreads = s_ThreadCount;
-        app.m_ThreadDispatcher = ThreadDispatcher::get();
+        ThreadDispatcher::kMaxThreads = kThreadCount;
+        app.mThreadDispatcher = ThreadDispatcher::get();
         app.setCallbacks();
         return app;
     }
 
     void Application::run()
     {
-        while (m_Window.isOpen())
+        while (mWindow.isOpen())
         {
-            m_Clock.tick();
-            m_Window.pollEvents();
-            if (m_Window.isMinimized())
+            mClock.tick();
+            mWindow.pollEvents();
+            if (mWindow.isMinimized())
                 continue;
 
             pollDialogs();
 
-            auto deltaTime = m_Clock.getDeltaTime<float, TimeType::Seconds>();
+            auto deltaTime = mClock.getDeltaTime<float, TimeType::Seconds>();
             updateEditor();
 
-            updateEngine(deltaTime, m_Window);
-            m_Engine.render(m_Window);
+            updateEngine(deltaTime, mWindow);
+            mEngine.render(mWindow);
         }
-        m_Engine.waitIdle();
+        mEngine.waitIdle();
     }
 
     void Application::setCallbacks()
     {
-        auto &hierarchyPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<HierarchyPanel>();
+        auto &hierarchyPanel = mEditor.getLayer<EditorLayer>().getLayer().getPanel<HierarchyPanel>();
         hierarchyPanel.setOnEntityDeleted([this](const auto& meshComponent, auto materialComponent, auto cacheKey)
         {
-            m_Engine.unregisterMesh(meshComponent.handle, cacheKey);
-            m_Engine.unregisterTextureSet(materialComponent.handle);
+            mEngine.unregisterMesh(meshComponent.handle, cacheKey);
+            mEngine.unregisterTextureSet(materialComponent.handle);
         });
         hierarchyPanel.setOnDragDrop([this](std::string_view path)
         {
             if (Engine::is_mesh_type_supported(path))
             {
                 std::string pathStr = path.data();
-                if (m_Engine.isMeshCached(pathStr))
-                    m_Engine.getPendingMeshDataQueue().emplace(
+                if (mEngine.isMeshCached(pathStr))
+                    mEngine.getPendingMeshDataQueue().emplace(
                         std::move(pathStr),
                         MeshLoader::LoadData(),
                         "",
@@ -87,10 +87,10 @@ namespace kailux
                         MeshType::Loaded
                     );
                 else
-                    m_ThreadDispatcher->enqueue([this, p = pathStr]()
+                    mThreadDispatcher->enqueue([this, p = pathStr]()
                     {
                         if (auto data = MeshLoader::load(p))
-                            m_Engine.getPendingMeshDataQueue().emplace(
+                            mEngine.getPendingMeshDataQueue().emplace(
                                 std::move(p),
                                 std::move(*data),
                                 "",
@@ -103,7 +103,7 @@ namespace kailux
         });
         hierarchyPanel.setOnNewMesh([this](auto type)
         {
-            m_Engine.getPendingMeshDataQueue().emplace(
+            mEngine.getPendingMeshDataQueue().emplace(
                                 "",
                                 MeshLoader::LoadData(),
                                 "",
@@ -114,106 +114,106 @@ namespace kailux
         });
         hierarchyPanel.setOnAddPhysics([this](auto entity, auto bodyType, auto canBecomeDynamic)
         {
-            m_Engine.addPhysicsToEntity(entity, {bodyType, canBecomeDynamic});
+            mEngine.addPhysicsToEntity(entity, {bodyType, canBecomeDynamic});
         });
 
-        auto &menuPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<MenuPanel>();
+        auto &menuPanel = mEditor.getLayer<EditorLayer>().getLayer().getPanel<MenuPanel>();
         menuPanel.setOnSceneSave([this]()
         {
-            m_Engine.saveScene(AssetBrowser::s_DefaultPath);
+            mEngine.saveScene(AssetBrowser::s_DefaultPath);
         });
         menuPanel.setOnSceneOpen([this]()
         {
-            m_LoadSceneDialog.open("Choose a scene", {"Kailux Scene", "*.klx"});
+            mLoadSceneDialog.open("Choose a scene", {"Kailux Scene", "*.klx"});
         });
 
-        auto &projectPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<ProjectPanel>();
+        auto &projectPanel = mEditor.getLayer<EditorLayer>().getLayer().getPanel<ProjectPanel>();
         projectPanel.getAssetBrowser().setOnImportFiles([this]()
         {
-            m_ImportFilesDialog.open("Choose what to copy to the workspace");
+            mImportFilesDialog.open("Choose what to copy to the workspace");
         });
         projectPanel.getAssetBrowser().setOnImportFolder([this]()
         {
-            m_ImportFolderDialog.open("Choose what to copy to the workspace");
+            mImportFolderDialog.open("Choose what to copy to the workspace");
         });
 
-        m_Engine.setOnInfoLog([&projectPanel](auto message)
+        mEngine.setOnInfoLog([&projectPanel](auto message)
         {
             projectPanel.getConsole().log<LogSeverity::Info>(message);
         });
-        m_Engine.setOnWarningLog([&projectPanel](auto message)
+        mEngine.setOnWarningLog([&projectPanel](auto message)
         {
             projectPanel.getConsole().log<LogSeverity::Warning>(message);
         });
-        m_Engine.setOnErrorLog([&projectPanel](auto message)
+        mEngine.setOnErrorLog([&projectPanel](auto message)
         {
             projectPanel.getConsole().log<LogSeverity::Error>(message);
         });
 
-        auto& entityEditor = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<EntityEditorPanel>();
+        auto& entityEditor = mEditor.getLayer<EditorLayer>().getLayer().getPanel<EntityEditorPanel>();
         entityEditor.setOnBodyTypeChange([this](auto component, auto type)
         {
-            m_Engine.updateBodyType(component.handle, type);
+            mEngine.updateBodyType(component.handle, type);
         });
         entityEditor.setOnBodyScaleChange([this](auto component, const auto& scale)
         {
-            m_Engine.updateBodyScale(component.handle, scale);
+            mEngine.updateBodyScale(component.handle, scale);
         });
 
-        auto& viewportPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<ViewportPanel>();
-        viewportPanel.setSceneTextureId(m_Engine.getSceneTextureId());
+        auto& viewportPanel = mEditor.getLayer<EditorLayer>().getLayer().getPanel<ViewportPanel>();
+        viewportPanel.setSceneTextureId(mEngine.getSceneTextureId());
 
         viewportPanel.setOnClick([this, &hierarchyPanel, &entityEditor]()
         {
             if (entityEditor.isGizmoInUse())
                 return;
-            auto entity = static_cast<entt::entity>(m_Engine.getPickedEntity());
+            auto entity = static_cast<entt::entity>(mEngine.getPickedEntity());
             hierarchyPanel.selectEntity(entity);
         });
         viewportPanel.setOnSimulationStart([this]()
         {
-            m_Engine.setSimulationState(SimulationState::Running);
+            mEngine.setSimulationState(SimulationState::Running);
         });
         viewportPanel.setOnSimulationPause([this]()
         {
-            m_Engine.setSimulationState(SimulationState::Paused);
+            mEngine.setSimulationState(SimulationState::Paused);
         });
 
-        m_Engine.setOnEditorRender([this](Scene &scene)
+        mEngine.setOnEditorRender([this](Scene &scene)
         {
-            m_Editor.render(scene);
+            mEditor.render(scene);
         });
     }
 
     void Application::pollDialogs()
     {
-        if (m_LoadSceneDialog.poll())
-            if (auto path = m_LoadSceneDialog.tryPopPath())
-                m_Engine.loadScene(*path, m_Window.getWidth(), m_Window.getHeight());
+        if (mLoadSceneDialog.poll())
+            if (auto path = mLoadSceneDialog.tryPopPath())
+                mEngine.loadScene(*path, mWindow.getWidth(), mWindow.getHeight());
 
-        if (m_ImportFilesDialog.poll())
-            while (auto path = m_ImportFilesDialog.tryPopPath())
-                m_Editor.getLayer<EditorLayer>().getLayer().getPanel<ProjectPanel>().getAssetBrowser().import(*path);
+        if (mImportFilesDialog.poll())
+            while (auto path = mImportFilesDialog.tryPopPath())
+                mEditor.getLayer<EditorLayer>().getLayer().getPanel<ProjectPanel>().getAssetBrowser().import(*path);
 
-        if (m_ImportFolderDialog.poll())
-            if (auto path = m_ImportFolderDialog.tryPopPath())
-                m_Editor.getLayer<EditorLayer>().getLayer().getPanel<ProjectPanel>().getAssetBrowser().import(*path);
+        if (mImportFolderDialog.poll())
+            if (auto path = mImportFolderDialog.tryPopPath())
+                mEditor.getLayer<EditorLayer>().getLayer().getPanel<ProjectPanel>().getAssetBrowser().import(*path);
     }
 
     void Application::updateEditor()
     {
-        m_Editor.update();
-        auto& viewportPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<ViewportPanel>();
-        viewportPanel.setSceneTextureId(m_Engine.getSceneTextureId());
+        mEditor.update();
+        auto& viewportPanel = mEditor.getLayer<EditorLayer>().getLayer().getPanel<ViewportPanel>();
+        viewportPanel.setSceneTextureId(mEngine.getSceneTextureId());
     }
 
     void Application::updateEngine(float deltaTime, Window& window)
     {
-        m_Engine.update(deltaTime, window);
-        auto sceneViewportMousePos = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<ViewportPanel>().getScaledMousePos();
-        auto outlineColor = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<MenuPanel>().getOutlineColor();
-        auto selectedEntity = static_cast<uint32_t>(m_Editor.getLayer<EditorLayer>().getLayer().getPanel<HierarchyPanel>().getSelectedEntity());
-        m_Engine.setOutlineInfo(outlineColor, selectedEntity);
-        m_Engine.setSceneViewportMousePos(sceneViewportMousePos.x, sceneViewportMousePos.y);
+        mEngine.update(deltaTime, window);
+        auto sceneViewportMousePos = mEditor.getLayer<EditorLayer>().getLayer().getPanel<ViewportPanel>().getScaledMousePos();
+        auto outlineColor = mEditor.getLayer<EditorLayer>().getLayer().getPanel<MenuPanel>().getOutlineColor();
+        auto selectedEntity = static_cast<uint32_t>(mEditor.getLayer<EditorLayer>().getLayer().getPanel<HierarchyPanel>().getSelectedEntity());
+        mEngine.setOutlineInfo(outlineColor, selectedEntity);
+        mEngine.setSceneViewportMousePos(sceneViewportMousePos.x, sceneViewportMousePos.y);
     }
 }

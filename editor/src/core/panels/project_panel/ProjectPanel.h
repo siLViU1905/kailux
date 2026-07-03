@@ -20,9 +20,9 @@ namespace kailux
         Console&      getConsole();
 
     private:
-        bool         m_UseFullWidth;
+        bool         mUseFullWidth;
 
-        AssetBrowser m_AssetBrowser;
-        Console      m_Console;
+        AssetBrowser mAssetBrowser;
+        Console      mConsole;
     };
 }

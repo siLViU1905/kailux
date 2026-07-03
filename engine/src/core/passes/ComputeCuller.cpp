@@ -20,9 +20,9 @@ namespace kailux
     ComputeCuller ComputeCuller::create(const Context &context, uint32_t frameCount)
     {
         ComputeCuller picker;
-        picker.createDescriptorLayout(context, s_DescriptorLayoutBindings);
-        picker.createDescriptorPool(context, frameCount, s_DescriptorPoolSizes);
-        picker.createPipeline(context, {s_ComputeShaderPath.data()}, s_PushConstantRanges);
+        picker.createDescriptorLayout(context, kDescriptorLayoutBindings);
+        picker.createDescriptorPool(context, frameCount, kDescriptorPoolSizes);
+        picker.createPipeline(context, {kComputeShaderPath.data()}, kPushConstantRanges);
         return picker;
     }
 }

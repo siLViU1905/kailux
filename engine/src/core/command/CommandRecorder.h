@@ -64,8 +64,8 @@ namespace kailux
         vk::CommandBuffer getCommandBuffer() const;
 
     private:
-        vk::CommandBuffer m_Cmd;
-        bool              m_InRendering;
-        bool              m_IsSecondary;
+        vk::CommandBuffer mCmd;
+        bool              mInRendering;
+        bool              mIsSecondary;
     };
 }

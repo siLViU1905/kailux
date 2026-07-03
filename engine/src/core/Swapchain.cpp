@@ -4,37 +4,37 @@
 
 namespace kailux
 {
-    Swapchain::Swapchain() : m_Swapchain(nullptr),
-                             m_ColorImage({}),
-                             m_DepthImage({}),
-                             m_ColorImageMemory({}),
-                             m_DepthImageMemory({}),
-                             m_ColorImageView({}),
-                             m_DepthImageView({}),
-                             m_ImageFormat(),
-                             m_DepthFormat(),
-                             m_Extent({}),
-                             m_SurfaceFormat({}),
-                             m_SemaphoreIndex(0)
+    Swapchain::Swapchain() : mSwapchain(nullptr),
+                             mColorImage({}),
+                             mDepthImage({}),
+                             mColorImageMemory({}),
+                             mDepthImageMemory({}),
+                             mColorImageView({}),
+                             mDepthImageView({}),
+                             mImageFormat(),
+                             mDepthFormat(),
+                             mExtent({}),
+                             mSurfaceFormat({}),
+                             mSemaphoreIndex(0)
     {
     }
 
-    Swapchain::Swapchain(Swapchain &&other) noexcept : m_Swapchain(std::move(other.m_Swapchain)),
-                                                       m_Images(std::move(other.m_Images)),
-                                                       m_ColorImage(std::move(other.m_ColorImage)),
-                                                       m_DepthImage(std::move(other.m_DepthImage)),
-                                                       m_ColorImageMemory(std::move(other.m_ColorImageMemory)),
-                                                       m_DepthImageMemory(std::move(other.m_DepthImageMemory)),
-                                                       m_ImageViews(std::move(other.m_ImageViews)),
-                                                       m_ColorImageView(std::move(other.m_ColorImageView)),
-                                                       m_DepthImageView(std::move(other.m_DepthImageView)),
-                                                       m_ImageFormat(other.m_ImageFormat),
-                                                       m_DepthFormat(other.m_DepthFormat),
-                                                       m_Extent(other.m_Extent),
-                                                       m_SurfaceFormat(other.m_SurfaceFormat),
-                                                       m_AcquireSemaphores(std::move(other.m_AcquireSemaphores)),
-                                                       m_PresentSemaphores(std::move(other.m_PresentSemaphores)),
-                                                       m_SemaphoreIndex(0)
+    Swapchain::Swapchain(Swapchain &&other) noexcept : mSwapchain(std::move(other.mSwapchain)),
+                                                       mImages(std::move(other.mImages)),
+                                                       mColorImage(std::move(other.mColorImage)),
+                                                       mDepthImage(std::move(other.mDepthImage)),
+                                                       mColorImageMemory(std::move(other.mColorImageMemory)),
+                                                       mDepthImageMemory(std::move(other.mDepthImageMemory)),
+                                                       mImageViews(std::move(other.mImageViews)),
+                                                       mColorImageView(std::move(other.mColorImageView)),
+                                                       mDepthImageView(std::move(other.mDepthImageView)),
+                                                       mImageFormat(other.mImageFormat),
+                                                       mDepthFormat(other.mDepthFormat),
+                                                       mExtent(other.mExtent),
+                                                       mSurfaceFormat(other.mSurfaceFormat),
+                                                       mAcquireSemaphores(std::move(other.mAcquireSemaphores)),
+                                                       mPresentSemaphores(std::move(other.mPresentSemaphores)),
+                                                       mSemaphoreIndex(0)
     {
     }
 
@@ -42,22 +42,22 @@ namespace kailux
     {
         if (this != &other)
         {
-            m_Swapchain = std::move(other.m_Swapchain);
-            m_Images = std::move(other.m_Images);
-            m_ColorImage = std::move(other.m_ColorImage);
-            m_DepthImage = std::move(other.m_DepthImage);
-            m_ColorImageMemory = std::move(other.m_ColorImageMemory);
-            m_DepthImageMemory = std::move(other.m_DepthImageMemory);
-            m_ImageViews = std::move(other.m_ImageViews);
-            m_ColorImageView = std::move(other.m_ColorImageView);
-            m_DepthImageView = std::move(other.m_DepthImageView);
-            m_ImageFormat = other.m_ImageFormat;
-            m_DepthFormat = other.m_DepthFormat;
-            m_Extent = other.m_Extent;
-            m_SurfaceFormat = other.m_SurfaceFormat;
-            m_AcquireSemaphores = std::move(other.m_AcquireSemaphores);
-            m_PresentSemaphores = std::move(other.m_PresentSemaphores);
-            m_SemaphoreIndex = other.m_SemaphoreIndex;
+            mSwapchain = std::move(other.mSwapchain);
+            mImages = std::move(other.mImages);
+            mColorImage = std::move(other.mColorImage);
+            mDepthImage = std::move(other.mDepthImage);
+            mColorImageMemory = std::move(other.mColorImageMemory);
+            mDepthImageMemory = std::move(other.mDepthImageMemory);
+            mImageViews = std::move(other.mImageViews);
+            mColorImageView = std::move(other.mColorImageView);
+            mDepthImageView = std::move(other.mDepthImageView);
+            mImageFormat = other.mImageFormat;
+            mDepthFormat = other.mDepthFormat;
+            mExtent = other.mExtent;
+            mSurfaceFormat = other.mSurfaceFormat;
+            mAcquireSemaphores = std::move(other.mAcquireSemaphores);
+            mPresentSemaphores = std::move(other.mPresentSemaphores);
+            mSemaphoreIndex = other.mSemaphoreIndex;
         }
         return *this;
     }
@@ -66,12 +66,12 @@ namespace kailux
     {
         auto surfaceCapabilities = context.getPhysicalDevice().getSurfaceCapabilitiesKHR(context.getSurface());
 
-        m_SurfaceFormat = choose_swap_surface_format(
+        mSurfaceFormat = choose_swap_surface_format(
             context.getPhysicalDevice().getSurfaceFormatsKHR(context.getSurface()));
 
-        m_Extent = choose_swap_extent(surfaceCapabilities, window);
+        mExtent = choose_swap_extent(surfaceCapabilities, window);
 
-        m_ImageFormat = m_SurfaceFormat.format;
+        mImageFormat = mSurfaceFormat.format;
 
         uint32_t requestedImageCount = surfaceCapabilities.minImageCount + 2;
 
@@ -82,9 +82,9 @@ namespace kailux
             vk::SwapchainCreateFlagsKHR(),
             context.getSurface(),
             requestedImageCount,
-            m_SurfaceFormat.format,
-            m_SurfaceFormat.colorSpace,
-            m_Extent,
+            mSurfaceFormat.format,
+            mSurfaceFormat.colorSpace,
+            mExtent,
             1,
             vk::ImageUsageFlagBits::eColorAttachment,
             vk::SharingMode::eExclusive
@@ -95,11 +95,11 @@ namespace kailux
         swapChainCreateInfo.presentMode = choose_swap_present_mode(
             context.getPhysicalDevice().getSurfacePresentModesKHR(context.getSurface()));
         swapChainCreateInfo.clipped = true;
-        swapChainCreateInfo.oldSwapchain = *m_Swapchain;
+        swapChainCreateInfo.oldSwapchain = *mSwapchain;
 
-        m_Swapchain = vk::raii::SwapchainKHR(context.m_Device, swapChainCreateInfo);
+        mSwapchain = vk::raii::SwapchainKHR(context.mDevice, swapChainCreateInfo);
 
-        m_Images = m_Swapchain.getImages();
+        mImages = mSwapchain.getImages();
     }
 
     Swapchain Swapchain::create(Window &window, const Context &context, vk::SampleCountFlagBits sampleCount)
@@ -130,8 +130,8 @@ namespace kailux
         int width = 0, height = 0;
         window.getFramebufferSize(width, height);
 
-        if (static_cast<uint32_t>(width) == m_Extent.width &&
-            static_cast<uint32_t>(height) == m_Extent.height)
+        if (static_cast<uint32_t>(width) == mExtent.width &&
+            static_cast<uint32_t>(height) == mExtent.height)
             return;
 
         while (width == 0 || height == 0)
@@ -142,11 +142,11 @@ namespace kailux
 
         context.getDevice().waitIdle();
 
-        m_ImageViews.clear();
-        m_Images.clear();
-        m_AcquireSemaphores.clear();
-        m_PresentSemaphores.clear();
-        m_SemaphoreIndex = 0;
+        mImageViews.clear();
+        mImages.clear();
+        mAcquireSemaphores.clear();
+        mPresentSemaphores.clear();
+        mSemaphoreIndex = 0;
 
         createSwapchain(window, context);
         createImageViews(context);
@@ -154,67 +154,67 @@ namespace kailux
         createDepthResources(context, sampleCount);
         createSyncObjects(context);
         KAILUX_LOG_INFO("[Swapchain]",
-                        std::format("Recreated with extent: x:{}, y:{}", m_Extent.width, m_Extent.height))
+                        std::format("Recreated with extent: x:{}, y:{}", mExtent.width, mExtent.height))
     }
 
     vk::Format Swapchain::getFormat() const
     {
-        return m_ImageFormat;
+        return mImageFormat;
     }
 
     vk::Format Swapchain::getDepthFormat() const
     {
-        return m_DepthFormat;
+        return mDepthFormat;
     }
 
     vk::Extent2D Swapchain::getExtent() const
     {
-        return m_Extent;
+        return mExtent;
     }
 
     vk::Image Swapchain::getImage(uint32_t index) const
     {
-        return m_Images[index];
+        return mImages[index];
     }
 
     vk::Image Swapchain::getColorImage() const
     {
-        return *m_ColorImage;
+        return *mColorImage;
     }
 
     vk::Image Swapchain::getDepthImage() const
     {
-        return *m_DepthImage;
+        return *mDepthImage;
     }
 
     vk::ImageView Swapchain::getImageView(uint32_t index) const
     {
-        return *m_ImageViews[index];
+        return *mImageViews[index];
     }
 
     vk::ImageView Swapchain::getColorImageView() const
     {
-        return *m_ColorImageView;
+        return *mColorImageView;
     }
 
     vk::ImageView Swapchain::getDepthImageView() const
     {
-        return *m_DepthImageView;
+        return *mDepthImageView;
     }
 
     uint32_t Swapchain::getImageCount() const
     {
-        return static_cast<uint32_t>(m_Images.size());
+        return static_cast<uint32_t>(mImages.size());
     }
 
     std::optional<Swapchain::AcquireResult> Swapchain::acquire()
     {
-        auto semaphore = *m_AcquireSemaphores[m_SemaphoreIndex];
+        auto semaphore = *mAcquireSemaphores[mSemaphoreIndex];
         try
         {
-            auto [result, imageIndex] = m_Swapchain.acquireNextImage(std::numeric_limits<uint64_t>::max(), semaphore, nullptr);
+            auto [result, imageIndex] = mSwapchain.acquireNextImage(std::numeric_limits<uint64_t>::max(), semaphore, nullptr);
 
-            m_SemaphoreIndex = (m_SemaphoreIndex + 1) % m_AcquireSemaphores.size();
+            mSemaphoreIndex = (mSemaphoreIndex + 1) % mAcquireSemaphores.size();
 
             return AcquireResult(imageIndex, semaphore);
         } catch (const vk::OutOfDateKHRError &)
@@ -228,14 +228,14 @@ namespace kailux
 
     vk::Semaphore Swapchain::getPresentSemaphore(uint32_t index) const
     {
-        return *m_PresentSemaphores[index];
+        return *mPresentSemaphores[index];
     }
 
     bool Swapchain::present(const Context &context, uint32_t imageIndex, vk::Semaphore renderFinishedSemaphore) const
     {
         vk::PresentInfoKHR presentInfo{
             renderFinishedSemaphore,
-            *m_Swapchain,
+            *mSwapchain,
             imageIndex
         };
 
@@ -311,16 +311,16 @@ namespace kailux
 
     void Swapchain::createImageViews(const Context &context)
     {
-        m_ImageViews.clear();
-        m_ImageViews.reserve(m_Images.size());
+        mImageViews.clear();
+        mImageViews.reserve(mImages.size());
 
-        for (auto image: m_Images)
+        for (auto image: mImages)
         {
             vk::ImageViewCreateInfo viewInfo{
                 {},
                 image,
                 vk::ImageViewType::e2D,
-                m_ImageFormat,
+                mImageFormat,
                 {},
                 vk::ImageSubresourceRange{
                     vk::ImageAspectFlagBits::eColor,
@@ -329,7 +329,7 @@ namespace kailux
                 }
             };
 
-            m_ImageViews.emplace_back(context.m_Device, viewInfo);
+            mImageViews.emplace_back(context.mDevice, viewInfo);
         }
     }
 
@@ -341,8 +341,8 @@ namespace kailux
         vk::ImageCreateInfo imageInfo(
             {},
             vk::ImageType::e2D,
-            m_ImageFormat,
-            vk::Extent3D(m_Extent.width, m_Extent.height, 1),
+            mImageFormat,
+            vk::Extent3D(mExtent.width, mExtent.height, 1),
             1,
             1,
             sampleCount,
@@ -350,24 +350,24 @@ namespace kailux
             vk::ImageUsageFlagBits::eTransientAttachment | vk::ImageUsageFlagBits::eColorAttachment
         );
 
-        m_ColorImage = vk::raii::Image(context.m_Device, imageInfo);
+        mColorImage = vk::raii::Image(context.mDevice, imageInfo);
 
-        auto memReqs = m_ColorImage.getMemoryRequirements();
-        m_ColorImageMemory = vk::raii::DeviceMemory(context.m_Device,
+        auto memReqs = mColorImage.getMemoryRequirements();
+        mColorImageMemory = vk::raii::DeviceMemory(context.mDevice,
                                                     {
                                                         memReqs.size,
                                                         context.findMemoryType(
                                                             memReqs.memoryTypeBits,
                                                             vk::MemoryPropertyFlagBits::eDeviceLocal)
                                                     });
-        m_ColorImage.bindMemory(*m_ColorImageMemory, 0);
+        mColorImage.bindMemory(*mColorImageMemory, 0);
 
-        m_ColorImageView = vk::raii::ImageView(context.m_Device,
+        mColorImageView = vk::raii::ImageView(context.mDevice,
                                                {
                                                    {},
-                                                   *m_ColorImage,
+                                                   *mColorImage,
                                                    vk::ImageViewType::e2D,
-                                                   m_ImageFormat,
+                                                   mImageFormat,
                                                    {},
                                                    {
                                                        vk::ImageAspectFlagBits::eColor,
@@ -381,50 +381,50 @@ namespace kailux
 
     void Swapchain::createDepthResources(const Context &context, vk::SampleCountFlagBits sampleCount)
     {
-        m_DepthFormat = find_depth_format(context);
+        mDepthFormat = find_depth_format(context);
 
         vk::ImageCreateInfo imageInfo{
             {},
             vk::ImageType::e2D,
-            m_DepthFormat,
-            vk::Extent3D{m_Extent.width, m_Extent.height, 1},
+            mDepthFormat,
+            vk::Extent3D{mExtent.width, mExtent.height, 1},
             1, 1,
             sampleCount,
             vk::ImageTiling::eOptimal,
             vk::ImageUsageFlagBits::eDepthStencilAttachment
         };
 
-        m_DepthImage = vk::raii::Image(context.m_Device, imageInfo);
+        mDepthImage = vk::raii::Image(context.mDevice, imageInfo);
 
-        vk::MemoryRequirements memReqs = m_DepthImage.getMemoryRequirements();
+        vk::MemoryRequirements memReqs = mDepthImage.getMemoryRequirements();
         vk::MemoryAllocateInfo allocInfo{
             memReqs.size,
             context.findMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)
         };
-        m_DepthImageMemory = vk::raii::DeviceMemory(context.m_Device, allocInfo);
-        m_DepthImage.bindMemory(*m_DepthImageMemory, 0);
+        mDepthImageMemory = vk::raii::DeviceMemory(context.mDevice, allocInfo);
+        mDepthImage.bindMemory(*mDepthImageMemory, 0);
 
         vk::ImageViewCreateInfo viewInfo{
             {},
-            *m_DepthImage,
+            *mDepthImage,
             vk::ImageViewType::e2D,
-            m_DepthFormat,
+            mDepthFormat,
             {},
             vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1}
         };
 
-        m_DepthImageView = vk::raii::ImageView(context.m_Device, viewInfo);
+        mDepthImageView = vk::raii::ImageView(context.mDevice, viewInfo);
     }
 
     void Swapchain::createSyncObjects(const Context &context)
     {
-        m_AcquireSemaphores.reserve(m_Images.size());
-        m_PresentSemaphores.reserve(m_Images.size());
+        mAcquireSemaphores.reserve(mImages.size());
+        mPresentSemaphores.reserve(mImages.size());
 
-        for (size_t i = 0; i < m_Images.size(); i++)
+        for (size_t i = 0; i < mImages.size(); i++)
         {
-            m_AcquireSemaphores.emplace_back(context.m_Device, vk::SemaphoreCreateInfo{});
-            m_PresentSemaphores.emplace_back(context.m_Device, vk::SemaphoreCreateInfo{});
+            mAcquireSemaphores.emplace_back(context.mDevice, vk::SemaphoreCreateInfo{});
+            mPresentSemaphores.emplace_back(context.mDevice, vk::SemaphoreCreateInfo{});
         }
     }
 }

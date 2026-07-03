@@ -11,26 +11,26 @@
 
 namespace kailux
 {
-    HierarchyPanel::HierarchyPanel() : m_SelectedEntity(entt::null)
+    HierarchyPanel::HierarchyPanel() : mSelectedEntity(entt::null)
     {
     }
 
     HierarchyPanel::HierarchyPanel(std::string_view name, ImVec4 backgroundColor)
-        : Panel(name, backgroundColor), m_SelectedEntity(entt::null)
+        : Panel(name, backgroundColor), mSelectedEntity(entt::null)
     {
     }
 
     void HierarchyPanel::render(Scene &scene)
     {
-        if (m_SelectedEntity != m_LastSelectedEntity)
+        if (mSelectedEntity != mLastSelectedEntity)
         {
-            m_LastSelectedEntity = m_SelectedEntity;
-            m_OnEntitySelected(m_SelectedEntity, scene);
+            mLastSelectedEntity = mSelectedEntity;
+            mOnEntitySelected(mSelectedEntity, scene);
         }
 
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, m_BackgroundColor);
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, mBackgroundColor);
 
-        if (ImGui::Begin(m_Name.c_str(), &m_Open))
+        if (ImGui::Begin(mName.c_str(), &mOpen))
         {
             auto &registry = scene.getEntityRegistry();
 
@@ -45,9 +45,9 @@ namespace kailux
 
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered())
             {
-                m_SelectedEntity = entt::null;
-                if (m_OnEntitySelected)
-                    m_OnEntitySelected(m_SelectedEntity, scene);
+                mSelectedEntity = entt::null;
+                if (mOnEntitySelected)
+                    mOnEntitySelected(mSelectedEntity, scene);
             }
 
             if (ImGui::BeginPopupContextWindow("##hierarchy_options",
@@ -58,9 +58,9 @@ namespace kailux
                     if (ImGui::BeginMenu("Mesh"))
                     {
                         if (ImGui::MenuItem("Cube"))
-                            m_OnNewMesh(MeshType::Cube);
+                            mOnNewMesh(MeshType::Cube);
                         if (ImGui::MenuItem("Sphere"))
-                            m_OnNewMesh(MeshType::Sphere);
+                            mOnNewMesh(MeshType::Sphere);
 
                         ImGui::EndMenu();
                     }
@@ -80,21 +80,21 @@ namespace kailux
 
         if (ImGui::BeginDragDropTargetCustom(
             ImGui::GetCurrentWindow()->InnerRect,
-            ImGui::GetID(m_Name.c_str())
+            ImGui::GetID(mName.c_str())
         ))
         {
             if (const auto *payload = ImGui::AcceptDragDropPayload(AssetBrowser::s_DragDropPayloadType.data()))
             {
                 std::string path = static_cast<const char *>(payload->Data);
-                m_OnDragDrop(path);
+                mOnDragDrop(path);
             }
             ImGui::EndDragDropTarget();
         }
 
-        if (m_OpenPhysicsPopup)
+        if (mOpenPhysicsPopup)
         {
             ImGui::OpenPopup("Add Physics##add_physics_popup");
-            m_OpenPhysicsPopup = false;
+            mOpenPhysicsPopup = false;
         }
         renderAddPhysicsPopup(scene);
 
@@ -104,37 +104,37 @@ namespace kailux
 
     void HierarchyPanel::setOnEntitySelected(OnEntitySelected &&callback)
     {
-        m_OnEntitySelected = std::move(callback);
+        mOnEntitySelected = std::move(callback);
     }
 
     void HierarchyPanel::setOnEntityDeleted(OnEntityDeleted &&callback)
     {
-        m_OnEntityDeleted = std::move(callback);
+        mOnEntityDeleted = std::move(callback);
     }
 
     void HierarchyPanel::setOnDragDrop(OnDragDrop &&callback)
     {
-        m_OnDragDrop = std::move(callback);
+        mOnDragDrop = std::move(callback);
     }
 
     void HierarchyPanel::setOnNewMesh(OnNewMesh &&callback)
     {
-        m_OnNewMesh = std::move(callback);
+        mOnNewMesh = std::move(callback);
     }
 
     void HierarchyPanel::setOnAddPhysics(OnAddPhysics &&callback)
     {
-        m_OnAddPhysics = std::move(callback);
+        mOnAddPhysics = std::move(callback);
     }
 
     void HierarchyPanel::selectEntity(entt::entity entity)
     {
-        m_SelectedEntity = entity;
+        mSelectedEntity = entity;
     }
 
     entt::entity HierarchyPanel::getSelectedEntity() const
     {
-        return m_SelectedEntity;
+        return mSelectedEntity;
     }
 
     bool HierarchyPanel::on_entity_rename(entt::registry &registry, entt::entity entity)
@@ -225,7 +225,7 @@ namespace kailux
 
             auto submeshCacheKey = std::format("{}_sub{}", meshComponent->path, submeshIndex);
 
-            m_OnEntityDeleted(*meshComponent, *materialComponent, submeshCacheKey);
+            mOnEntityDeleted(*meshComponent, *materialComponent, submeshCacheKey);
         }
 
         if (hierarchy)
@@ -242,7 +242,7 @@ namespace kailux
         const auto &tag = registry.get<TagComponent>(entity);
         auto *hierarchy = registry.try_get<HierarchyComponent>(entity);
 
-        ImGuiTreeNodeFlags flags = ((m_SelectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0);
+        ImGuiTreeNodeFlags flags = ((mSelectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0);
         flags |= ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
 
         if (!hierarchy || hierarchy->children.empty())
@@ -252,7 +252,7 @@ namespace kailux
                                         tag.name.c_str());
 
         if (ImGui::IsItemClicked())
-            m_SelectedEntity = entity;
+            mSelectedEntity = entity;
 
         if (ImGui::BeginPopupContextItem())
         {
@@ -276,11 +276,11 @@ namespace kailux
             {
                 notifyAndDestroyHierarchy(registry, entity);
 
-                if (m_SelectedEntity == entity)
+                if (mSelectedEntity == entity)
                 {
-                    m_SelectedEntity = entt::null;
-                    m_LastSelectedEntity = entt::null;
-                    m_OnEntitySelected(m_SelectedEntity, scene);
+                    mSelectedEntity = entt::null;
+                    mLastSelectedEntity = entt::null;
+                    mOnEntitySelected(mSelectedEntity, scene);
                 }
                 ImGui::EndPopup();
 
@@ -294,10 +294,10 @@ namespace kailux
                 ImGui::Separator();
                 if (ImGui::MenuItem("Add physics"))
                 {
-                    m_OpenPhysicsPopup = true;
-                    m_PhysicsTargetEntity = entity;
-                    m_PhysicsBodyType = 0;
-                    m_PhysicsCanBecomeDynamic = true;
+                    mOpenPhysicsPopup = true;
+                    mPhysicsTargetEntity = entity;
+                    mPhysicsBodyType = 0;
+                    mPhysicsCanBecomeDynamic = true;
                 }
             }
 
@@ -323,22 +323,22 @@ namespace kailux
         {
             const auto &registry = scene.getEntityRegistry();
 
-            if (m_PhysicsTargetEntity == entt::null)
+            if (mPhysicsTargetEntity == entt::null)
             {
                 ImGui::CloseCurrentPopup();
                 ImGui::EndPopup();
                 return;
             }
 
-            const auto &tag = registry.get<TagComponent>(m_PhysicsTargetEntity);
+            const auto &tag = registry.get<TagComponent>(mPhysicsTargetEntity);
             ImGui::Text("Entity: %s", tag.name.c_str());
             ImGui::Separator();
 
-            ImGui::Combo("Body type", &m_PhysicsBodyType, s_BodyTypeOptions.data());
+            ImGui::Combo("Body type", &mPhysicsBodyType, s_BodyTypeOptions.data());
 
-            bool isStatic = (static_cast<PhysicsBodyType>(m_PhysicsBodyType) == PhysicsBodyType::Static);
+            bool isStatic = (static_cast<PhysicsBodyType>(mPhysicsBodyType) == PhysicsBodyType::Static);
             ImGui::BeginDisabled(!isStatic);
-            ImGui::Checkbox("Can become dynamic", &m_PhysicsCanBecomeDynamic);
+            ImGui::Checkbox("Can become dynamic", &mPhysicsCanBecomeDynamic);
             ImGui::EndDisabled();
             if (ImGui::IsItemHovered() && isStatic)
                 ImGui::SetTooltip("If unchecked, a loaded mesh uses a non-convex\n"
@@ -348,16 +348,16 @@ namespace kailux
 
             if (ImGui::Button("Add"))
             {
-                auto type = static_cast<PhysicsBodyType>(m_PhysicsBodyType);
-                bool canDyn = isStatic ? m_PhysicsCanBecomeDynamic : true;
-                m_OnAddPhysics(m_PhysicsTargetEntity, type, canDyn);
-                m_PhysicsTargetEntity = entt::null;
+                auto type = static_cast<PhysicsBodyType>(mPhysicsBodyType);
+                bool canDyn = isStatic ? mPhysicsCanBecomeDynamic : true;
+                mOnAddPhysics(mPhysicsTargetEntity, type, canDyn);
+                mPhysicsTargetEntity = entt::null;
                 ImGui::CloseCurrentPopup();
             }
             ImGui::SameLine();
             if (ImGui::Button("Cancel"))
             {
-                m_PhysicsTargetEntity = entt::null;
+                mPhysicsTargetEntity = entt::null;
                 ImGui::CloseCurrentPopup();
             }
 
