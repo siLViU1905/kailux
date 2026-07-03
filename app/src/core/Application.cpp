@@ -112,6 +112,10 @@ namespace kailux
                                 type
                             );
         });
+        hierarchyPanel.setOnAddPhysics([this](auto entity, auto bodyType, auto canBecomeDynamic)
+        {
+            m_Engine.addPhysicsToEntity(entity, {bodyType, canBecomeDynamic});
+        });
 
         auto &menuPanel = m_Editor.getLayer<EditorLayer>().getLayer().getPanel<MenuPanel>();
         menuPanel.setOnSceneSave([this]()

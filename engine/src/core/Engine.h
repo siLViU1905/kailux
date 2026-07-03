@@ -83,6 +83,8 @@ namespace kailux
         void updateBodyScale(BodyHandle handle, const glm::vec3& scale);
         void setSimulationState(SimulationState state);
 
+        void addPhysicsToEntity(entt::entity entity, PhysicsCreationOptions options);
+
     private:
         static constexpr uint32_t         s_MaxMeshCount = MainPass::s_MaxMeshCount;
 

@@ -8,6 +8,7 @@
 #include "command/CommandRecorder.h"
 #include "Log.h"
 #include "command/OneTimeCommand.h"
+#include "components/entt/CachedPhysicsData.h"
 #include "components/entt/CameraComponent.h"
 #include "components/entt/HierarchyComponent.h"
 #include "components/entt/MaterialComponent.h"
@@ -1141,14 +1142,6 @@ namespace kailux
             const auto &material = m_TextureRegistry.view(m_TextureRegistry.getDefaultSetHandle());
             auto textureHandle = m_TextureRegistry.registerTextureSet(material);
 
-            auto bodyHandle = uploadPhysicsBodyDataToRegistry(
-                {
-                    {},
-                    data.type,
-                    data.transform,
-                    data.bodyType
-                }
-            );
             meshName = data.name.empty() ? m_Scene.getMeshEntityName() : data.name;
             auto entity = m_Scene.createMeshEntity(
                 meshName,
@@ -1162,9 +1155,6 @@ namespace kailux
                 data.transform,
                 data.material
             );
-            auto& entityReg = m_Scene.getEntityRegistry();
-            entityReg.emplace<PhysicsComponent>(entity, bodyHandle, data.bodyType);
-            entityReg.emplace<PhysicsControlComponent>(entity);
         };
         switch (data.type)
         {
@@ -1288,25 +1278,16 @@ namespace kailux
 
         t0 = Clock::now();
         uint32_t submeshIndex = 0;
-        std::vector<SubmeshPhysicsInfo> submeshPhysicsInfo;
-        submeshPhysicsInfo.reserve(loadData.submeshes.size());
+        auto& entityReg = m_Scene.getEntityRegistry();
+        auto& physicsCache = entityReg.emplace<CachedPhysicsData>(parentEntity);
+        physicsCache.meshType = data.type;
+        physicsCache.submeshes.reserve(loadData.submeshes.size());
         for (const auto &submesh: loadData.submeshes)
-            submeshPhysicsInfo.emplace_back(
-                submesh.meshData.vertices,
-                submesh.meshData.indices,
+            physicsCache.submeshes.emplace_back(
+                std::move(submesh.meshData.vertices),
+                std::move(submesh.meshData.indices),
                 submesh.localTransform
                 );
-
-        auto bodyHandle = uploadPhysicsBodyDataToRegistry(
-            {
-                std::move(submeshPhysicsInfo),
-                data.type,
-                data.transform
-            }
-            );
-        auto& entityReg = m_Scene.getEntityRegistry();
-        entityReg.emplace<PhysicsComponent>(parentEntity, bodyHandle);
-        entityReg.emplace<PhysicsControlComponent>(parentEntity);
 
         const auto& name = entityReg.get<TagComponent>(parentEntity).name;
         m_OnInfoLog(std::format("Loaded '{}' successfully with {} submeshes and {} unique materials in {}ms.",
@@ -1433,6 +1414,50 @@ namespace kailux
     BodyHandle Engine::uploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo &data)
     {
         return m_PhysicsRegistry.createBody(data);
+    }
+
+    void Engine::addPhysicsToEntity(entt::entity entity, PhysicsCreationOptions options)
+    {
+        auto &reg = m_Scene.getEntityRegistry();
+
+        const auto &transform = reg.get<TransformComponent>(entity).transform;
+
+        BodyHandle handle;
+        if (const auto *cache = reg.try_get<CachedPhysicsData>(entity))
+        {
+            std::vector<SubmeshPhysicsInfo> infos;
+            infos.reserve(cache->submeshes.size());
+            for (const auto &sm: cache->submeshes)
+                infos.emplace_back(sm.vertices, sm.indices, sm.localTransform);
+
+            handle = uploadPhysicsBodyDataToRegistry({
+                std::move(infos),
+                cache->meshType,
+                transform,
+                {
+                    options.bodyType,
+                    options.canBecomeDynamic
+                }
+            });
+        } else if (const auto *mesh = reg.try_get<MeshComponent>(entity))
+        {
+            handle = uploadPhysicsBodyDataToRegistry({
+                {},
+                mesh->type,
+                transform,
+                {
+                    options.bodyType,
+                    options.canBecomeDynamic
+                }
+            });
+        } else
+        {
+            m_OnWarningLog("Cannot add physics: entity has neither cached physics data nor a mesh component");
+            return;
+        }
+
+        reg.emplace<PhysicsComponent>(entity, handle, options.bodyType);
+        reg.emplace<PhysicsControlComponent>(entity);
     }
 
     void Engine::updatePendingFrameTasks()
