@@ -11,18 +11,26 @@ A lightweight, modern C++ rendering engine.
 ## Building the Project
 
 ## Windows
-**In the bat file the generator is set to "Visual Studio 18 2026" if you dont have it use your Visual Studio version(eg: "Visual Studio 17 2022")**
+**In the bat file the generator is set to "Visual Studio 18 2026". If you don't have it, use your Visual Studio version (eg: "Visual Studio 17 2022").**
 
-The only thing is to run the provided batch file:
+Run the provided batch file with a build type:
 
 ```bat
-scripts/windows_build.bat
+scripts\windows_build.bat debug
+scripts\windows_build.bat release
+scripts\windows_build.bat debug clean
 ```
-In the build folder you will find the sln file, open it with Visual Studio and build
+
+In the build folder you will find the sln file — open it with Visual Studio and build.
 
 ## Linux
 
-```bat
-scripts/linux_build.sh
+Run the provided shell script with a build type:
+
+```bash
+scripts/linux_build.sh debug
+scripts/linux_build.sh release
+scripts/linux_build.sh debug clean
 ```
-In the build folder([debug/release]/app) you will find the executable 'kailux_application'
+
+In the build folder (`build/[debug|release]/app`) you will find the executable `kailux_application`.

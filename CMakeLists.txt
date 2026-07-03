@@ -7,14 +7,35 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
 endif()
 
-include(CheckIPOSupported)
-check_ipo_supported(RESULT ipo_supported OUTPUT error)
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+    message(STATUS "ccache enabled: ${CCACHE_PROGRAM}")
+endif()
 
-if(ipo_supported)
+if(NOT MSVC)
+    find_program(MOLD_LINKER mold)
+    find_program(LLD_LINKER ld.lld)
+    if(MOLD_LINKER)
+        add_link_options(-fuse-ld=mold)
+        message(STATUS "Linker: mold (${MOLD_LINKER})")
+    elseif(LLD_LINKER)
+        add_link_options(-fuse-ld=lld)
+        message(STATUS "Linker: lld (${LLD_LINKER})")
+    else()
+        message(STATUS "Linker: default (install mold or lld for faster links)")
+    endif()
+endif()
+
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported OUTPUT ipo_error)
+
+if(ipo_supported AND CMAKE_BUILD_TYPE STREQUAL "Release")
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
-    message(STATUS "LTO was activated")
-else()
-    message(WARNING "LTO not supported: ${error}")
+    message(STATUS "LTO activated for Release")
+elseif(NOT ipo_supported)
+    message(WARNING "LTO not supported: ${ipo_error}")
 endif()
 
 if(MSVC)
@@ -56,9 +77,6 @@ find_package(assimp REQUIRED)
 find_package(portable-file-dialogs REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(Jolt REQUIRED)
-
-get_filename_component(VULKAN_BIN_DIR "${Vulkan_GLSLC_EXECUTABLE}" DIRECTORY)
-set(GLSLC_BIN "${VULKAN_BIN_DIR}/glslc.exe")
 
 set(GLSL_SOURCES
         "engine/src/core/shaders/vertex_shader.glsl"
@@ -120,4 +138,3 @@ add_custom_target(CopyAssets ALL
 add_subdirectory(engine)
 add_subdirectory(editor)
 add_subdirectory(app)
-
