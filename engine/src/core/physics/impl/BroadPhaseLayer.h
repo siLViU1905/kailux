@@ -16,6 +16,6 @@ namespace kailux::impl
         const char *GetBroadPhaseLayerName(JPH::BroadPhaseLayer inLayer) const override;
 #endif
     private:
-        std::array<JPH::BroadPhaseLayer, layers::kLayersCount> m_ObjectToBroadPhase;
+        std::array<JPH::BroadPhaseLayer, layers::kLayersCount> mObjectToBroadPhase;
     };
 }

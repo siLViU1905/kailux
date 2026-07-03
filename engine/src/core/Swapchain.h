@@ -45,21 +45,21 @@ namespace kailux
         void createDepthResources(const Context& context, vk::SampleCountFlagBits sampleCount);
         void createSyncObjects(const Context& context);
 
-        vk::raii::SwapchainKHR           m_Swapchain;
-        std::vector<vk::Image>           m_Images;
-        vk::raii::Image                  m_ColorImage;
-        vk::raii::Image                  m_DepthImage;
-        vk::raii::DeviceMemory           m_ColorImageMemory;
-        vk::raii::DeviceMemory           m_DepthImageMemory;
-        std::vector<vk::raii::ImageView> m_ImageViews;
-        vk::raii::ImageView              m_ColorImageView;
-        vk::raii::ImageView              m_DepthImageView;
-        vk::Format                       m_ImageFormat;
-        vk::Format                       m_DepthFormat;
-        vk::Extent2D                     m_Extent;
-        vk::SurfaceFormatKHR             m_SurfaceFormat;
-        std::vector<vk::raii::Semaphore> m_AcquireSemaphores;
-        std::vector<vk::raii::Semaphore> m_PresentSemaphores;
-        uint32_t                         m_SemaphoreIndex;
+        vk::raii::SwapchainKHR           mSwapchain;
+        std::vector<vk::Image>           mImages;
+        vk::raii::Image                  mColorImage;
+        vk::raii::Image                  mDepthImage;
+        vk::raii::DeviceMemory           mColorImageMemory;
+        vk::raii::DeviceMemory           mDepthImageMemory;
+        std::vector<vk::raii::ImageView> mImageViews;
+        vk::raii::ImageView              mColorImageView;
+        vk::raii::ImageView              mDepthImageView;
+        vk::Format                       mImageFormat;
+        vk::Format                       mDepthFormat;
+        vk::Extent2D                     mExtent;
+        vk::SurfaceFormatKHR             mSurfaceFormat;
+        std::vector<vk::raii::Semaphore> mAcquireSemaphores;
+        std::vector<vk::raii::Semaphore> mPresentSemaphores;
+        uint32_t                         mSemaphoreIndex;
     };
 }

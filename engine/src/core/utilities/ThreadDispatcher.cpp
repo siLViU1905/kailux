@@ -12,25 +12,25 @@ namespace kailux
 
     ThreadDispatcher::~ThreadDispatcher()
     {
-        for (auto& worker : m_Workers)
+        for (auto& worker : mWorkers)
             worker.request_stop();
 
-        m_Condition.notify_all();
-        m_Workers.clear();
+        mCondition.notify_all();
+        mWorkers.clear();
     }
 
-    ThreadDispatcher::ThreadDispatcher(uint32_t threads):m_Threads(threads)
+    ThreadDispatcher::ThreadDispatcher(uint32_t threads):mThreads(threads)
     {
         KAILUX_LOG_PARENT_CLR_YELLOW("[ThreadDispatcher]")
         createWorkers();
-        KAILUX_LOG_CHILD_CLR_YELLOW(std::format("Created dispatcher with {} threads", m_Workers.size()))
+        KAILUX_LOG_CHILD_CLR_YELLOW(std::format("Created dispatcher with {} threads", mWorkers.size()))
     }
 
     void ThreadDispatcher::createWorkers()
     {
-        m_Workers.reserve(m_Threads);
-        for (uint32_t i = 0; i < m_Threads; ++i)
-            m_Workers.emplace_back([this](std::stop_token stopToken)
+        mWorkers.reserve(mThreads);
+        for (uint32_t i = 0; i < mThreads; ++i)
+            mWorkers.emplace_back([this](std::stop_token stopToken)
             {
                 workerLoop(stopToken);
             });
@@ -41,17 +41,17 @@ namespace kailux
         while (!stopToken.stop_requested())
         {
             Task task; {
-                std::unique_lock lock(m_WaitMutex);
-                m_Condition.wait(lock, [this, &stopToken]()
+                std::unique_lock lock(mWaitMutex);
+                mCondition.wait(lock, [this, &stopToken]()
                 {
-                    return stopToken.stop_requested() || !m_Tasks.empty();
+                    return stopToken.stop_requested() || !mTasks.empty();
                 });
 
-                if (stopToken.stop_requested() && m_Tasks.empty())
+                if (stopToken.stop_requested() && mTasks.empty())
                     return;
 
-                task = std::move(m_Tasks.front());
-                m_Tasks.pop_front();
+                task = std::move(mTasks.front());
+                mTasks.pop_front();
             }
             task();
         }

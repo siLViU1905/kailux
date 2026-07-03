@@ -54,16 +54,16 @@ namespace kailux
         static std::optional<uint32_t> find_graphics_family(const vk::raii::PhysicalDevice& device, const vk::raii::SurfaceKHR &surface);
         static std::optional<uint32_t> find_transfer_family(const vk::raii::PhysicalDevice& device);
 
-        vk::raii::Context                m_Context;
-        vk::raii::Instance               m_Instance;
-        vk::raii::DebugUtilsMessengerEXT m_DebugMessenger;
-        vk::raii::PhysicalDevice         m_PhysicalDevice;
-        vk::raii::Device                 m_Device;
-        vk::raii::Queue                  m_GraphicsQueue;
-        vk::raii::Queue                  m_TransferQueue;
-        vk::raii::SurfaceKHR             m_Surface;
-        uint32_t                         m_GraphicsQueueFamilyIndex;
-        uint32_t                         m_TransferQueueFamilyIndex;
+        vk::raii::Context                mContext;
+        vk::raii::Instance               mInstance;
+        vk::raii::DebugUtilsMessengerEXT mDebugMessenger;
+        vk::raii::PhysicalDevice         mPhysicalDevice;
+        vk::raii::Device                 mDevice;
+        vk::raii::Queue                  mGraphicsQueue;
+        vk::raii::Queue                  mTransferQueue;
+        vk::raii::SurfaceKHR             mSurface;
+        uint32_t                         mGraphicsQueueFamilyIndex;
+        uint32_t                         mTransferQueueFamilyIndex;
         static constexpr std::array      kValidationLayers = {
             "VK_LAYER_KHRONOS_validation"
             };

@@ -4,18 +4,18 @@
 
 namespace kailux
 {
-    CommandRecorder::CommandRecorder(vk::CommandBuffer cmd) : m_Cmd(cmd), m_InRendering(false), m_IsSecondary(false)
+    CommandRecorder::CommandRecorder(vk::CommandBuffer cmd) : mCmd(cmd), mInRendering(false), mIsSecondary(false)
     {
         vk::CommandBufferBeginInfo beginInfo{
             vk::CommandBufferUsageFlagBits::eOneTimeSubmit
         };
 
-        m_Cmd.begin(beginInfo);
+        mCmd.begin(beginInfo);
     }
 
     CommandRecorder::CommandRecorder(vk::CommandBuffer cmd,
-                                     const vk::CommandBufferInheritanceRenderingInfo &inheritance) : m_Cmd(cmd),
-        m_InRendering(false), m_IsSecondary(true)
+                                     const vk::CommandBufferInheritanceRenderingInfo &inheritance) : mCmd(cmd),
+        mInRendering(false), mIsSecondary(true)
     {
         vk::CommandBufferInheritanceInfo inheritanceInfo;
         inheritanceInfo.pNext = &inheritance;
@@ -25,15 +25,15 @@ namespace kailux
             &inheritanceInfo
         };
 
-        m_Cmd.begin(beginInfo);
+        mCmd.begin(beginInfo);
     }
 
     CommandRecorder::~CommandRecorder()
     {
-        if (m_InRendering && !m_IsSecondary)
-            m_Cmd.endRendering();
+        if (mInRendering && !mIsSecondary)
+            mCmd.endRendering();
 
-        m_Cmd.end();
+        mCmd.end();
     }
 
     void CommandRecorder::imageBarrier(const ImageBarrier &info) const
@@ -59,7 +59,7 @@ namespace kailux
         depInfo.imageMemoryBarrierCount = 1;
         depInfo.pImageMemoryBarriers = &imageBarrier;
 
-        m_Cmd.pipelineBarrier2(depInfo);
+        mCmd.pipelineBarrier2(depInfo);
     }
 
     void CommandRecorder::bufferMemoryBarriers(std::span<const vk::BufferMemoryBarrier2> barriers) const
@@ -67,7 +67,7 @@ namespace kailux
         vk::DependencyInfo depInfo{};
         depInfo.setBufferMemoryBarriers(barriers);
 
-        m_Cmd.pipelineBarrier2(depInfo);
+        mCmd.pipelineBarrier2(depInfo);
     }
 
     void CommandRecorder::beginRendering(const RenderingInfo &info)
@@ -124,26 +124,26 @@ namespace kailux
             renderingInfo.pDepthAttachment = &depthAttachment;
         }
 
-        m_Cmd.beginRendering(renderingInfo);
-        m_InRendering = true;
+        mCmd.beginRendering(renderingInfo);
+        mInRendering = true;
     }
 
     void CommandRecorder::endRendering()
     {
-        if (!m_InRendering || m_IsSecondary)
+        if (!mInRendering || mIsSecondary)
         {
             KAILUX_LOG_WARNING("[CommandRecorder]",
                                "endRendering() was called while the command was rendering or from a secondary buffer")
             return;
         }
 
-        m_Cmd.endRendering();
-        m_InRendering = false;
+        mCmd.endRendering();
+        mInRendering = false;
     }
 
     void CommandRecorder::drawIndexedIndirectCount(const Buffer &indirectBuffer, const Buffer &countBuffer, uint32_t maxDrawCount) const
     {
-        m_Cmd.drawIndexedIndirectCount(
+        mCmd.drawIndexedIndirectCount(
             indirectBuffer.getBuffer(),
             {},
             countBuffer.getBuffer(),
@@ -164,17 +164,17 @@ namespace kailux
             1.f
         };
 
-        m_Cmd.setViewport(0, viewport);
+        mCmd.setViewport(0, viewport);
     }
 
     void CommandRecorder::setScissor(vk::Extent2D extent)
     {
         vk::Rect2D scissor{{0, 0}, extent};
-        m_Cmd.setScissor(0, scissor);
+        mCmd.setScissor(0, scissor);
     }
 
     vk::CommandBuffer CommandRecorder::getCommandBuffer() const
     {
-        return m_Cmd;
+        return mCmd;
     }
 }

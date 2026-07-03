@@ -146,41 +146,41 @@ namespace kailux
 
         static constexpr uint32_t kFramesInFlight = 2;
 
-        Context                                    m_Context;
-        vk::SampleCountFlagBits                    m_SampleCount;
-        Swapchain                                  m_Swapchain;
-        ImGuiBackend                               m_ImGuiBackend;
+        Context                                    mContext;
+        vk::SampleCountFlagBits                    mSampleCount;
+        Swapchain                                  mSwapchain;
+        ImGuiBackend                               mImGuiBackend;
 
-        TransferManager                            m_TransferManager;
+        TransferManager                            mTransferManager;
 
-        MeshRegistry                               m_MeshRegistry;
-        TextureRegistry                            m_TextureRegistry;
-        PhysicsRegistry                            m_PhysicsRegistry;
+        MeshRegistry                               mMeshRegistry;
+        TextureRegistry                            mTextureRegistry;
+        PhysicsRegistry                            mPhysicsRegistry;
 
-        AssetPipeline                                m_AssetPipeline;
-        PhysicsSystem                                m_PhysicsSystem;
-        DeferredResourceEraser<kFramesInFlight + 1> m_DeferredResourceEraser;
+        AssetPipeline                                mAssetPipeline;
+        PhysicsSystem                                mPhysicsSystem;
+        DeferredResourceEraser<kFramesInFlight + 1> mDeferredResourceEraser;
 
-        std::array<FrameData, kFramesInFlight>    m_Frames;
-        uint32_t                                   m_CurrentFrame;
+        std::array<FrameData, kFramesInFlight>    mFrames;
+        uint32_t                                   mCurrentFrame;
 
-        std::array<ImTextureID, kFramesInFlight>  m_SceneTextureIds;
+        std::array<ImTextureID, kFramesInFlight>  mSceneTextureIds;
 
-        Scene                                      m_Scene;
-        OnEditorRender                             m_OnEditorRender;
+        Scene                                      mScene;
+        OnEditorRender                             mOnEditorRender;
 
-        ComputePassesPushConstants::MouseCords     m_SceneViewportMousePos;
-        GraphicsPassesPushConstants::Outline       m_OutlineInfo;
+        ComputePassesPushConstants::MouseCords     mSceneViewportMousePos;
+        GraphicsPassesPushConstants::Outline       mOutlineInfo;
 
-        MainPass                                   m_MainPass;
-        SkyboxPass                                 m_SkyboxPass;
-        OutlinePass                                m_OutlinePass;
-        ComputePicker                              m_ComputePicker;
-        uint32_t                                   m_PickedEntity;
-        ComputeCuller                              m_ComputeCuller;
+        MainPass                                   mMainPass;
+        SkyboxPass                                 mSkyboxPass;
+        OutlinePass                                mOutlinePass;
+        ComputePicker                              mComputePicker;
+        uint32_t                                   mPickedEntity;
+        ComputeCuller                              mComputeCuller;
 
-        OnLog                                      m_OnInfoLog;
-        OnLog                                      m_OnWarningLog;
-        OnLog                                      m_OnErrorLog;
+        OnLog                                      mOnInfoLog;
+        OnLog                                      mOnWarningLog;
+        OnLog                                      mOnErrorLog;
     };
 }

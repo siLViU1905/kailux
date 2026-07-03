@@ -21,8 +21,8 @@ namespace kailux
         bool isOpen() const;
 
     protected:
-        std::string  m_Name;
-        ImVec4       m_BackgroundColor;
-        bool         m_Open;
+        std::string  mName;
+        ImVec4       mBackgroundColor;
+        bool         mOpen;
     };
 }

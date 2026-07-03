@@ -5,52 +5,52 @@
 
 namespace kailux
 {
-    Window::Window() : m_WindowHandle(nullptr), m_Width(0), m_Height(0), m_FramebufferResized(false)
+    Window::Window() : mWindowHandle(nullptr), mWidth(0), mHeight(0), mFramebufferResized(false)
     {
     }
 
-    Window::Window(Window &&other) noexcept : m_WindowHandle(other.m_WindowHandle),
-                                              m_Width(other.m_Width),
-                                              m_Height(other.m_Height),
-                                              m_FramebufferResized(other.m_FramebufferResized),
-                                              m_EventQueue(std::move(other.m_EventQueue))
+    Window::Window(Window &&other) noexcept : mWindowHandle(other.mWindowHandle),
+                                              mWidth(other.mWidth),
+                                              mHeight(other.mHeight),
+                                              mFramebufferResized(other.mFramebufferResized),
+                                              mEventQueue(std::move(other.mEventQueue))
     {
-        other.m_WindowHandle = nullptr;
-        other.m_FramebufferResized = false;
-        other.m_Width = 0;
-        other.m_Height = 0;
+        other.mWindowHandle = nullptr;
+        other.mFramebufferResized = false;
+        other.mWidth = 0;
+        other.mHeight = 0;
     }
 
     Window &Window::operator=(Window &&other) noexcept
     {
         if (this != &other)
         {
-            m_WindowHandle = other.m_WindowHandle;
-            m_FramebufferResized = other.m_FramebufferResized;
-            m_Width = other.m_Width;
-            m_Height = other.m_Height;
-            m_EventQueue = std::move(other.m_EventQueue);
+            mWindowHandle = other.mWindowHandle;
+            mFramebufferResized = other.mFramebufferResized;
+            mWidth = other.mWidth;
+            mHeight = other.mHeight;
+            mEventQueue = std::move(other.mEventQueue);
 
-            other.m_WindowHandle = nullptr;
-            other.m_FramebufferResized = false;
-            other.m_Width = 0;
-            other.m_Height = 0;
+            other.mWindowHandle = nullptr;
+            other.mFramebufferResized = false;
+            other.mWidth = 0;
+            other.mHeight = 0;
         }
         return *this;
     }
 
     Window::~Window()
     {
-        if (m_WindowHandle)
+        if (mWindowHandle)
         {
-            glfwDestroyWindow(m_WindowHandle);
+            glfwDestroyWindow(mWindowHandle);
             glfwTerminate();
         }
     }
 
     GLFWwindow *Window::getGLFWWindow()
     {
-        return m_WindowHandle;
+        return mWindowHandle;
     }
 
     void Window::initGLFW()
@@ -64,10 +64,10 @@ namespace kailux
 
     void Window::createWindow(int width, int height, std::string_view title)
     {
-        m_Width = width;
-        m_Height = height;
-        m_WindowHandle = glfwCreateWindow(width, height, title.data(), nullptr, nullptr);
-        if (!m_WindowHandle)
+        mWidth = width;
+        mHeight = height;
+        mWindowHandle = glfwCreateWindow(width, height, title.data(), nullptr, nullptr);
+        if (!mWindowHandle)
         {
             glfwTerminate();
             throw std::runtime_error("Failed to create GLFW window");
@@ -76,9 +76,9 @@ namespace kailux
 
     void Window::setCallbacks() const
     {
-        glfwSetFramebufferSizeCallback(m_WindowHandle, glfw_framebuffer_callback);
-        glfwSetKeyCallback(m_WindowHandle, glfw_key_callback);
-        glfwSetMouseButtonCallback(m_WindowHandle, glfw_button_callback);
+        glfwSetFramebufferSizeCallback(mWindowHandle, glfw_framebuffer_callback);
+        glfwSetKeyCallback(mWindowHandle, glfw_key_callback);
+        glfwSetMouseButtonCallback(mWindowHandle, glfw_button_callback);
     }
 
     Window Window::create(int width, int height, std::string_view title)
@@ -100,81 +100,81 @@ namespace kailux
 
     void Window::updateUserPointer()
     {
-        glfwSetWindowUserPointer(m_WindowHandle, this);
+        glfwSetWindowUserPointer(mWindowHandle, this);
     }
 
     bool Window::isOpen() const
     {
-        return !glfwWindowShouldClose(m_WindowHandle);
+        return !glfwWindowShouldClose(mWindowHandle);
     }
 
     void Window::close()
     {
-        glfwSetWindowShouldClose(m_WindowHandle, true);
+        glfwSetWindowShouldClose(mWindowHandle, true);
     }
 
     bool Window::wasResized()
     {
-        bool temp = m_FramebufferResized;
+        bool temp = mFramebufferResized;
 
-        m_FramebufferResized = false;
+        mFramebufferResized = false;
 
         return temp;
     }
 
     void Window::maximize()
     {
-        glfwMaximizeWindow(m_WindowHandle);
+        glfwMaximizeWindow(mWindowHandle);
     }
 
     bool Window::isMaximized() const
     {
-        return static_cast<bool>(glfwGetWindowAttrib(m_WindowHandle, GLFW_MAXIMIZED));
+        return static_cast<bool>(glfwGetWindowAttrib(mWindowHandle, GLFW_MAXIMIZED));
     }
 
     bool Window::isMinimized() const
     {
-        return !m_Width || !m_Height;
+        return !mWidth || !mHeight;
     }
 
     bool Window::isKeyPressed(Key key) const
     {
-        return glfwGetKey(m_WindowHandle, static_cast<int>(key)) == GLFW_PRESS;
+        return glfwGetKey(mWindowHandle, static_cast<int>(key)) == GLFW_PRESS;
     }
 
     bool Window::isButtonClicked(MouseButton button) const
     {
-        return glfwGetMouseButton(m_WindowHandle, static_cast<int>(button)) == GLFW_PRESS;
+        return glfwGetMouseButton(mWindowHandle, static_cast<int>(button)) == GLFW_PRESS;
     }
 
     void Window::getMousePos(double &x, double &y) const
     {
-        glfwGetCursorPos(m_WindowHandle, &x, &y);
+        glfwGetCursorPos(mWindowHandle, &x, &y);
     }
 
     void Window::setCursorMode(CursorMode mode)
     {
-        glfwSetInputMode(m_WindowHandle, GLFW_CURSOR, static_cast<int>(mode));
+        glfwSetInputMode(mWindowHandle, GLFW_CURSOR, static_cast<int>(mode));
     }
 
     CursorMode Window::getCursorMode() const
     {
-        return static_cast<CursorMode>(glfwGetInputMode(m_WindowHandle, GLFW_CURSOR));
+        return static_cast<CursorMode>(glfwGetInputMode(mWindowHandle, GLFW_CURSOR));
     }
 
     void Window::restore()
     {
-        glfwRestoreWindow(m_WindowHandle);
+        glfwRestoreWindow(mWindowHandle);
     }
 
     void Window::resize(int width, int height)
     {
-        glfwSetWindowSize(m_WindowHandle, width, height);
+        glfwSetWindowSize(mWindowHandle, width, height);
     }
 
     void Window::getFramebufferSize(int &width, int &height) const
     {
-        glfwGetFramebufferSize(m_WindowHandle, &width, &height);
+        glfwGetFramebufferSize(mWindowHandle, &width, &height);
     }
 
     void Window::pollEvents() const
@@ -189,10 +189,10 @@ namespace kailux
 
     std::optional<Event> Window::getEvent()
     {
-        if (!m_EventQueue.empty())
+        if (!mEventQueue.empty())
         {
-            auto event = m_EventQueue.front();
-            m_EventQueue.pop();
+            auto event = mEventQueue.front();
+            mEventQueue.pop();
             return {event};
         }
         return std::nullopt;
@@ -201,9 +201,9 @@ namespace kailux
     void Window::glfw_framebuffer_callback(GLFWwindow *window, int width, int height)
     {
         auto *self = static_cast<Window *>(glfwGetWindowUserPointer(window));
-        self->m_FramebufferResized = true;
-        self->m_Width = width;
-        self->m_Height = height;
+        self->mFramebufferResized = true;
+        self->mWidth = width;
+        self->mHeight = height;
     }
 
     void Window::glfw_key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -217,13 +217,13 @@ namespace kailux
         switch (kAct)
         {
             case KeyAction::Release:
-                self->m_EventQueue.push(KeyReleased(kKey, scancode, kMods));
+                self->mEventQueue.push(KeyReleased(kKey, scancode, kMods));
                 break;
             case KeyAction::Press:
-                self->m_EventQueue.push(KeyPressed(kKey, scancode, kMods));
+                self->mEventQueue.push(KeyPressed(kKey, scancode, kMods));
                 break;
             case KeyAction::Repeat:
-                self->m_EventQueue.push(KeyRepeated(kKey, scancode, kMods));
+                self->mEventQueue.push(KeyRepeated(kKey, scancode, kMods));
                 break;
             default: ;
         }
@@ -240,10 +240,10 @@ namespace kailux
         switch (mAct)
         {
             case MouseAction::Release:
-                self->m_EventQueue.push(ButtonReleased(mBtn, mMods));
+                self->mEventQueue.push(ButtonReleased(mBtn, mMods));
                 break;
             case MouseAction::Press:
-                self->m_EventQueue.push(ButtonPressed(mBtn, mMods));
+                self->mEventQueue.push(ButtonPressed(mBtn, mMods));
                 break;
             default: ;
         }

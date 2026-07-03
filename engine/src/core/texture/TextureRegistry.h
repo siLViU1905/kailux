@@ -78,12 +78,12 @@ namespace kailux
 
         uint32_t acquireSlot();
 
-        TextureSet                   m_DefaultSet;
-        TextureSetHandle             m_DefaultSetHandle;
-        std::vector<TextureSet>      m_TexturePool;
-        std::deque<uint32_t>         m_FreeSlots;
+        TextureSet                   mDefaultSet;
+        TextureSetHandle             mDefaultSetHandle;
+        std::vector<TextureSet>      mTexturePool;
+        std::deque<uint32_t>         mFreeSlots;
 
-        Texture                      m_AssetBrowserDirectoryTexture;
-        Texture                      m_AssetBrowserFileTexture;
+        Texture                      mAssetBrowserDirectoryTexture;
+        Texture                      mAssetBrowserFileTexture;
     };
 }

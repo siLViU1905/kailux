@@ -37,8 +37,8 @@ namespace kailux
         inline static vk::raii::CommandPool   kGraphicsPool{nullptr};
         inline static vk::raii::CommandPool   kTransferPool{nullptr};
 
-        QueueType                      m_QueueType{QueueType::Graphics};
-        vk::raii::CommandBuffer        m_CommandBuffer{nullptr};
-        vk::raii::Fence                m_Fence{nullptr};
+        QueueType                      mQueueType{QueueType::Graphics};
+        vk::raii::CommandBuffer        mCommandBuffer{nullptr};
+        vk::raii::Fence                mFence{nullptr};
     };
 }

@@ -51,18 +51,18 @@ namespace kailux
         void renderEntityNode(Scene& scene, entt::entity entity);
         void renderAddPhysicsPopup(const Scene &scene);
 
-        OnEntitySelected m_OnEntitySelected;
-        OnEntityDeleted  m_OnEntityDeleted;
-        OnDragDrop       m_OnDragDrop;
-        OnNewMesh        m_OnNewMesh;
-        OnAddPhysics     m_OnAddPhysics;
-        entt::entity     m_SelectedEntity;
-        entt::entity     m_LastSelectedEntity{entt::null};
+        OnEntitySelected mOnEntitySelected;
+        OnEntityDeleted  mOnEntityDeleted;
+        OnDragDrop       mOnDragDrop;
+        OnNewMesh        mOnNewMesh;
+        OnAddPhysics     mOnAddPhysics;
+        entt::entity     mSelectedEntity;
+        entt::entity     mLastSelectedEntity{entt::null};
 
-        bool         m_OpenPhysicsPopup{};
-        entt::entity m_PhysicsTargetEntity{entt::null};
+        bool         mOpenPhysicsPopup{};
+        entt::entity mPhysicsTargetEntity{entt::null};
 
-        int          m_PhysicsBodyType{};
-        bool         m_PhysicsCanBecomeDynamic{true};
+        int          mPhysicsBodyType{};
+        bool         mPhysicsCanBecomeDynamic{true};
     };
 }

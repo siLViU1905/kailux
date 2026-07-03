@@ -14,14 +14,14 @@ namespace kailux
 {
     PhysicsRegistry::PhysicsRegistry() = default;
 
-    PhysicsRegistry::PhysicsRegistry(PhysicsRegistry &&other) noexcept : m_Allocator(std::move(other.m_Allocator)),
-                                                                         m_JobSystem(std::move(other.m_JobSystem)),
-                                                                         m_BroadPhaseLayer(std::move(other.m_BroadPhaseLayer)),
-                                                                         m_ObjectVsBroadPhaseLayer(std::move(other.m_ObjectVsBroadPhaseLayer)),
-                                                                         m_ObjectPairFilter(std::move(other.m_ObjectPairFilter)),
-                                                                         m_PhysicsSystem(std::move(other.m_PhysicsSystem)),
-                                                                         m_BodyIds(std::move(other.m_BodyIds)),
-                                                                         m_FreeSlots(std::move(other.m_FreeSlots))
+    PhysicsRegistry::PhysicsRegistry(PhysicsRegistry &&other) noexcept : mAllocator(std::move(other.mAllocator)),
+                                                                         mJobSystem(std::move(other.mJobSystem)),
+                                                                         mBroadPhaseLayer(std::move(other.mBroadPhaseLayer)),
+                                                                         mObjectVsBroadPhaseLayer(std::move(other.mObjectVsBroadPhaseLayer)),
+                                                                         mObjectPairFilter(std::move(other.mObjectPairFilter)),
+                                                                         mPhysicsSystem(std::move(other.mPhysicsSystem)),
+                                                                         mBodyIds(std::move(other.mBodyIds)),
+                                                                         mFreeSlots(std::move(other.mFreeSlots))
     {
     }
 
@@ -29,14 +29,14 @@ namespace kailux
     {
         if (this != &other)
         {
-            m_Allocator = std::move(other.m_Allocator);
-            m_JobSystem = std::move(other.m_JobSystem);
-            m_BroadPhaseLayer = std::move(other.m_BroadPhaseLayer);
-            m_ObjectVsBroadPhaseLayer = std::move(other.m_ObjectVsBroadPhaseLayer);
-            m_ObjectPairFilter = std::move(other.m_ObjectPairFilter);
-            m_PhysicsSystem = std::move(other.m_PhysicsSystem);
-            m_BodyIds = std::move(other.m_BodyIds);
-            m_FreeSlots = std::move(other.m_FreeSlots);
+            mAllocator = std::move(other.mAllocator);
+            mJobSystem = std::move(other.mJobSystem);
+            mBroadPhaseLayer = std::move(other.mBroadPhaseLayer);
+            mObjectVsBroadPhaseLayer = std::move(other.mObjectVsBroadPhaseLayer);
+            mObjectPairFilter = std::move(other.mObjectPairFilter);
+            mPhysicsSystem = std::move(other.mPhysicsSystem);
+            mBodyIds = std::move(other.mBodyIds);
+            mFreeSlots = std::move(other.mFreeSlots);
         }
         return *this;
     }
@@ -54,30 +54,30 @@ namespace kailux
 
         KAILUX_LOG_PARENT_CLR_MAGENTA("[PhysicsRegistry]")
         PhysicsRegistry registry;
-        registry.m_Allocator = create_scoped<JPH::TempAllocatorImpl>(kAllocatorSize);
+        registry.mAllocator = create_scoped<JPH::TempAllocatorImpl>(kAllocatorSize);
 
         auto threads = pick_thread_count(2);
         KAILUX_LOG_CHILD_CLR_MAGENTA(std::format("Created job system with {} threads", threads))
-        registry.m_JobSystem = create_scoped<JPH::JobSystemThreadPool>(
+        registry.mJobSystem = create_scoped<JPH::JobSystemThreadPool>(
             JPH::cMaxPhysicsJobs,
             JPH::cMaxPhysicsBarriers,
             threads
         );
 
-        registry.m_BroadPhaseLayer = create_scoped<impl::BroadPhaseLayer>();
-        registry.m_ObjectVsBroadPhaseLayer = create_scoped<impl::ObjectVsBroadPhaseLayerFilter>();
-        registry.m_ObjectPairFilter = create_scoped<impl::ObjectLayerPairFilter>();
-        registry.m_PhysicsSystem = create_scoped<JPH::PhysicsSystem>();
+        registry.mBroadPhaseLayer = create_scoped<impl::BroadPhaseLayer>();
+        registry.mObjectVsBroadPhaseLayer = create_scoped<impl::ObjectVsBroadPhaseLayerFilter>();
+        registry.mObjectPairFilter = create_scoped<impl::ObjectLayerPairFilter>();
+        registry.mPhysicsSystem = create_scoped<JPH::PhysicsSystem>();
 
-        registry.m_PhysicsSystem = create_scoped<JPH::PhysicsSystem>();
-        registry.m_PhysicsSystem->Init(
+        registry.mPhysicsSystem = create_scoped<JPH::PhysicsSystem>();
+        registry.mPhysicsSystem->Init(
             kMaxBodies,
             kNumBodyMutexes,
             kMaxBodyPairs,
             kMaxContactConstraints,
-            *registry.m_BroadPhaseLayer,
-            *registry.m_ObjectVsBroadPhaseLayer,
-            *registry.m_ObjectPairFilter
+            *registry.mBroadPhaseLayer,
+            *registry.mObjectVsBroadPhaseLayer,
+            *registry.mObjectPairFilter
         );
         KAILUX_LOG_CHILD_CLR_MAGENTA("Physics system initialized")
 
@@ -114,32 +114,32 @@ namespace kailux
         if (info.options.bodyType == PhysicsBodyType::Static && info.options.canBecomeDynamic)
             settings.mAllowDynamicOrKinematic = true;
 
-        m_BodyIds[slot] = m_PhysicsSystem->GetBodyInterface().CreateAndAddBody(settings, JPH::EActivation::Activate);
+        mBodyIds[slot] = mPhysicsSystem->GetBodyInterface().CreateAndAddBody(settings, JPH::EActivation::Activate);
         return {slot};
     }
 
     void PhysicsRegistry::destroyBody(BodyHandle handle)
     {
         assert(handle.valid());
-        auto id = m_BodyIds[handle.index];
+        auto id = mBodyIds[handle.index];
 
-        auto& bodyInterface = m_PhysicsSystem->GetBodyInterface();
+        auto& bodyInterface = mPhysicsSystem->GetBodyInterface();
 
         if (bodyInterface.IsAdded(id))
             bodyInterface.RemoveBody(id);
 
         bodyInterface.DestroyBody(id);
 
-        m_BodyIds[handle.index] = JPH::BodyID(JPH::BodyID::cInvalidBodyID);
-        m_FreeSlots.push_back(handle.index);
+        mBodyIds[handle.index] = JPH::BodyID(JPH::BodyID::cInvalidBodyID);
+        mFreeSlots.push_back(handle.index);
     }
 
     void PhysicsRegistry::setBodyEnabled(BodyHandle handle, bool enabled)
     {
         assert(handle.valid());
-        auto id = m_BodyIds[handle.index];
+        auto id = mBodyIds[handle.index];
 
-        auto& bodyInterface = m_PhysicsSystem->GetBodyInterface();
+        auto& bodyInterface = mPhysicsSystem->GetBodyInterface();
         bool isAdded = bodyInterface.IsAdded(id);
         if (enabled && !isAdded)
             bodyInterface.AddBody(id, JPH::EActivation::Activate);
@@ -150,15 +150,15 @@ namespace kailux
     bool PhysicsRegistry::isBodyEnabled(BodyHandle handle) const
     {
         assert(handle.valid());
-        auto id = m_BodyIds[handle.index];
-        return m_PhysicsSystem->GetBodyInterface().IsAdded(id);
+        auto id = mBodyIds[handle.index];
+        return mPhysicsSystem->GetBodyInterface().IsAdded(id);
     }
 
     void PhysicsRegistry::setBodyType(BodyHandle handle, PhysicsBodyType type)
     {
         assert(handle.valid());
-        auto id = m_BodyIds[handle.index];
-        auto& bodyInterface = m_PhysicsSystem->GetBodyInterface();
+        auto id = mBodyIds[handle.index];
+        auto& bodyInterface = mPhysicsSystem->GetBodyInterface();
 
         auto motionType = static_cast<JPH::EMotionType>(type);
         auto layer      = (type == PhysicsBodyType::Static) ? layers::kNonMoving : layers::kMoving;
@@ -173,38 +173,38 @@ namespace kailux
     void PhysicsRegistry::addForce(BodyHandle handle, const glm::vec3 &force)
     {
         assert(handle.valid());
-        auto id = m_BodyIds[handle.index];
-        m_PhysicsSystem->GetBodyInterface().AddForce(id, {force.x, force.y, force.z});
+        auto id = mBodyIds[handle.index];
+        mPhysicsSystem->GetBodyInterface().AddForce(id, {force.x, force.y, force.z});
     }
 
     void PhysicsRegistry::addImpulse(BodyHandle handle, const glm::vec3 &impulse)
     {
         assert(handle.valid());
-        auto id = m_BodyIds[handle.index];
-        m_PhysicsSystem->GetBodyInterface().AddImpulse(id, {impulse.x, impulse.y, impulse.z});
+        auto id = mBodyIds[handle.index];
+        mPhysicsSystem->GetBodyInterface().AddImpulse(id, {impulse.x, impulse.y, impulse.z});
     }
 
     void PhysicsRegistry::setLinearVelocity(BodyHandle handle, const glm::vec3 &velocity)
     {
         assert(handle.valid());
-        auto id = m_BodyIds[handle.index];
-        m_PhysicsSystem->GetBodyInterface().AddImpulse(id, {velocity.x, velocity.y, velocity.z});
+        auto id = mBodyIds[handle.index];
+        mPhysicsSystem->GetBodyInterface().AddImpulse(id, {velocity.x, velocity.y, velocity.z});
     }
 
     glm::vec3 PhysicsRegistry::getLinearVelocity(BodyHandle handle) const
     {
         assert(handle.valid());
-        auto id = m_BodyIds[handle.index];
-        auto velocity = m_PhysicsSystem->GetBodyInterface().GetLinearVelocity(id);
+        auto id = mBodyIds[handle.index];
+        auto velocity = mPhysicsSystem->GetBodyInterface().GetLinearVelocity(id);
         return {velocity.GetX(), velocity.GetY(), velocity.GetZ()};
     }
 
     void PhysicsRegistry::setBodyTransform(BodyHandle handle, const glm::vec3 &position, const glm::quat &rotation)
     {
         assert(handle.valid());
-        auto id = m_BodyIds[handle.index];
+        auto id = mBodyIds[handle.index];
 
-        auto& bodyInterface = m_PhysicsSystem->GetBodyInterface();
+        auto& bodyInterface = mPhysicsSystem->GetBodyInterface();
 
         JPH::Vec3 joltPos(position.x, position.y, position.z);
 
@@ -220,9 +220,9 @@ namespace kailux
     void PhysicsRegistry::getBodyTransform(BodyHandle handle, glm::vec3 &outPosition, glm::quat &outRotation) const
     {
         assert(handle.valid());
-        auto id = m_BodyIds[handle.index];
+        auto id = mBodyIds[handle.index];
 
-        JPH::BodyLockRead lock(m_PhysicsSystem->GetBodyLockInterface(), id);
+        JPH::BodyLockRead lock(mPhysicsSystem->GetBodyLockInterface(), id);
         if (lock.Succeeded())
         {
             const auto& body = lock.GetBody();
@@ -238,9 +238,9 @@ namespace kailux
     void PhysicsRegistry::updateBodyScale(BodyHandle handle, const glm::vec3 &scale)
     {
         assert(handle.valid());
-        auto id = m_BodyIds[handle.index];
+        auto id = mBodyIds[handle.index];
 
-        auto& bodyInterface = m_PhysicsSystem->GetBodyInterface();
+        auto& bodyInterface = mPhysicsSystem->GetBodyInterface();
         JPH::ShapeRefC currentShape = bodyInterface.GetShape(id);
         auto baseShape = currentShape;
 
@@ -282,11 +282,11 @@ namespace kailux
 
     void PhysicsRegistry::update(float deltaTime)
     {
-        m_PhysicsSystem->Update(
+        mPhysicsSystem->Update(
             deltaTime,
             kCollisionSteps,
-            m_Allocator.get(),
-            m_JobSystem.get()
+            mAllocator.get(),
+            mJobSystem.get()
             );
     }
 
@@ -301,18 +301,18 @@ namespace kailux
 
     void PhysicsRegistry::allocResources()
     {
-        m_BodyIds.resize(kMaxBodies, JPH::BodyID(JPH::BodyID::cInvalidBodyID));
+        mBodyIds.resize(kMaxBodies, JPH::BodyID(JPH::BodyID::cInvalidBodyID));
 
         for (uint32_t i = 0; i < kMaxBodies; ++i)
-            m_FreeSlots.push_back(i);
+            mFreeSlots.push_back(i);
     }
 
     uint32_t PhysicsRegistry::acquireSlot()
     {
-        if (m_FreeSlots.empty())
+        if (mFreeSlots.empty())
             return BodyHandle::kInvalidIndex;
-        auto slot = m_FreeSlots.front();
-        m_FreeSlots.pop_front();
+        auto slot = mFreeSlots.front();
+        mFreeSlots.pop_front();
         return slot;
     }
 

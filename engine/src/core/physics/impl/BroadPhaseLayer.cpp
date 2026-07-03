@@ -4,8 +4,8 @@ namespace kailux::impl
 {
     BroadPhaseLayer::BroadPhaseLayer()
     {
-        m_ObjectToBroadPhase[layers::kNonMoving] = broad_phase_layers::kNonMoving;
-        m_ObjectToBroadPhase[layers::kMoving] = broad_phase_layers::kMoving;
+        mObjectToBroadPhase[layers::kNonMoving] = broad_phase_layers::kNonMoving;
+        mObjectToBroadPhase[layers::kMoving] = broad_phase_layers::kMoving;
     }
 
     JPH::uint BroadPhaseLayer::GetNumBroadPhaseLayers() const
@@ -15,7 +15,7 @@ namespace kailux::impl
 
     JPH::BroadPhaseLayer BroadPhaseLayer::GetBroadPhaseLayer(JPH::ObjectLayer inLayer) const
     {
-        return m_ObjectToBroadPhase[inLayer];
+        return mObjectToBroadPhase[inLayer];
     }
 
 #if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)

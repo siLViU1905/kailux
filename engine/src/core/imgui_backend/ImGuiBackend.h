@@ -34,6 +34,6 @@ namespace kailux
 
         ImGuiContext*            p_Context;
         ImGuiIO*                 p_IO;
-        vk::raii::DescriptorPool m_DescriptorPool;
+        vk::raii::DescriptorPool mDescriptorPool;
     };
 }

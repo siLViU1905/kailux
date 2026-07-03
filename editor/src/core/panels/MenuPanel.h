@@ -23,10 +23,10 @@ namespace kailux
     private:
         void renderProfilerWindow();
 
-        bool        m_ShowProfiler;
-        OnSceneOpen m_OnSceneOpen;
-        OnSceneSave m_OnSceneSave;
+        bool        mShowProfiler;
+        OnSceneOpen mOnSceneOpen;
+        OnSceneSave mOnSceneSave;
 
-        glm::vec3   m_OutlineColor;
+        glm::vec3   mOutlineColor;
     };
 }

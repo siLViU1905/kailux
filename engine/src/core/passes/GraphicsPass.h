@@ -47,7 +47,7 @@ namespace kailux
                 assert(sizeof(Pcs) == PcRanges[index].size);
 
                 cmd.pushConstants(
-                    m_Pipeline.getLayout(),
+                    mPipeline.getLayout(),
                     PcRanges[index].shaderStage,
                     currentOffset,
                     static_cast<uint32_t>(sizeof(Pcs)),
@@ -59,8 +59,8 @@ namespace kailux
             }(), ...);
         }
 
-        DescriptorLayout    m_DescriptorLayout;
-        DescriptorPool      m_DescriptorPool;
-        Pipeline            m_Pipeline;
+        DescriptorLayout    mDescriptorLayout;
+        DescriptorPool      mDescriptorPool;
+        Pipeline            mPipeline;
     };
 }

@@ -20,13 +20,13 @@ namespace kailux
         template<typename Ty, TimeType timeType>
         Ty getDeltaTime() const
         {
-            return convert<Ty, timeType>(m_DeltaTime);
+            return convert<Ty, timeType>(mDeltaTime);
         }
 
         template<typename Ty, TimeType timeType>
         Ty getElapsedTime() const
         {
-            return convert<Ty, timeType>(std::chrono::steady_clock::now() - m_Start);
+            return convert<Ty, timeType>(std::chrono::steady_clock::now() - mStart);
         }
 
         static auto now()
@@ -61,8 +61,8 @@ namespace kailux
             return {};
         }
 
-        std::chrono::steady_clock::time_point m_Start;
-        std::chrono::steady_clock::time_point m_LastTick;
-        std::chrono::duration<float>          m_DeltaTime{0.f};
+        std::chrono::steady_clock::time_point mStart;
+        std::chrono::steady_clock::time_point mLastTick;
+        std::chrono::duration<float>          mDeltaTime{0.f};
     };
 }

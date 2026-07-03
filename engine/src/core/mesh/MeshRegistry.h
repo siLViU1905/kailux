@@ -118,18 +118,18 @@ namespace kailux
                                          vk::CommandBuffer cmd,
                                          std::vector<Buffer> &stagingBuffers);
 
-        Buffer m_VertexBuffer;
-        Buffer m_IndexBuffer;
+        Buffer mVertexBuffer;
+        Buffer mIndexBuffer;
 
-        LinearZone m_BuiltinVertexZone;
-        LinearZone m_BuiltinIndexZone;
-        FreeListZone m_AssetVertexZone;
-        FreeListZone m_AssetIndexZone;
+        LinearZone mBuiltinVertexZone;
+        LinearZone mBuiltinIndexZone;
+        FreeListZone mAssetVertexZone;
+        FreeListZone mAssetIndexZone;
 
-        std::vector<MeshAlloc> m_Allocs;
-        std::deque<uint32_t> m_FreeSlots;
+        std::vector<MeshAlloc> mAllocs;
+        std::deque<uint32_t> mFreeSlots;
 
-        BuiltinMeshes m_Builtins;
+        BuiltinMeshes mBuiltins;
 
     public:
         struct MeshData

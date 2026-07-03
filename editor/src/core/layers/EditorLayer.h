@@ -19,11 +19,11 @@ namespace kailux
 
         auto&       getLayer()
         {
-            return m_Layer;
+            return mLayer;
         }
         const auto& getLayer() const
         {
-            return m_Layer;
+            return mLayer;
         }
 
         void update();
@@ -37,6 +37,6 @@ namespace kailux
 
         void addPanels(ImTextureID directoryTextureId, ImTextureID fileTextureId);
 
-        Layer<ViewportPanel, MenuPanel, HierarchyPanel, EntityEditorPanel, ProjectPanel> m_Layer;
+        Layer<ViewportPanel, MenuPanel, HierarchyPanel, EntityEditorPanel, ProjectPanel> mLayer;
     };
 }

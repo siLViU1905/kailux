@@ -6,9 +6,9 @@ namespace kailux
     {
     }
 
-    GraphicsPass::GraphicsPass(GraphicsPass &&other) noexcept : m_DescriptorLayout(std::move(other.m_DescriptorLayout)),
-                                                                m_DescriptorPool(std::move(other.m_DescriptorPool)),
-                                                                m_Pipeline(std::move(other.m_Pipeline))
+    GraphicsPass::GraphicsPass(GraphicsPass &&other) noexcept : mDescriptorLayout(std::move(other.mDescriptorLayout)),
+                                                                mDescriptorPool(std::move(other.mDescriptorPool)),
+                                                                mPipeline(std::move(other.mPipeline))
 
     {
     }
@@ -17,42 +17,42 @@ namespace kailux
     {
         if (this != &other)
         {
-            m_DescriptorLayout = std::move(other.m_DescriptorLayout);
-            m_DescriptorPool = std::move(other.m_DescriptorPool);
-            m_Pipeline = std::move(other.m_Pipeline);
+            mDescriptorLayout = std::move(other.mDescriptorLayout);
+            mDescriptorPool = std::move(other.mDescriptorPool);
+            mPipeline = std::move(other.mPipeline);
         }
         return *this;
     }
 
     void GraphicsPass::bind(vk::CommandBuffer cmd) const
     {
-        m_Pipeline.bindGraphics(cmd);
+        mPipeline.bindGraphics(cmd);
     }
 
     const DescriptorLayout &GraphicsPass::getDescriptorLayout() const
     {
-        return m_DescriptorLayout;
+        return mDescriptorLayout;
     }
 
     const DescriptorPool &GraphicsPass::getDescriptorPool() const
     {
-        return m_DescriptorPool;
+        return mDescriptorPool;
     }
 
     const Pipeline &GraphicsPass::getPipeline() const
     {
-        return m_Pipeline;
+        return mPipeline;
     }
 
     void GraphicsPass::createDescriptorLayout(const Context &context, std::span<const DescriptorLayoutBinding> bindings)
     {
-        m_DescriptorLayout = DescriptorLayout::create(context, bindings);
+        mDescriptorLayout = DescriptorLayout::create(context, bindings);
     }
 
     void GraphicsPass::createDescriptorPool(const Context &context, uint32_t frameCount,
                                             std::span<const DescriptorPoolSize> sizes)
     {
-        m_DescriptorPool = DescriptorPool::create(context, frameCount, sizes);
+        mDescriptorPool = DescriptorPool::create(context, frameCount, sizes);
     }
 
     void GraphicsPass::createPipeline(const Context &context, const Swapchain &swapchain,
@@ -66,10 +66,10 @@ namespace kailux
         if (!fragShaderPath.empty())
             shaderInfo.emplace_back(vk::ShaderStageFlagBits::eFragment, fragShaderPath.data());
 
-        m_Pipeline = Pipeline::createGraphics(
+        mPipeline = Pipeline::createGraphics(
             context,
             swapchain,
-            m_DescriptorLayout,
+            mDescriptorLayout,
             shaderInfo,
             info,
             pushConstantRanges

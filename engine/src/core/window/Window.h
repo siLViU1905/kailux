@@ -40,8 +40,8 @@ namespace kailux
         CursorMode getCursorMode() const;
 
         void getFramebufferSize(int& width, int& height) const;
-        constexpr int getWidth()  const { return m_Width;  }
-        constexpr int getHeight() const { return m_Height; }
+        constexpr int getWidth()  const { return mWidth;  }
+        constexpr int getHeight() const { return mHeight; }
 
         GLFWwindow* getGLFWWindow();
 
@@ -54,10 +54,10 @@ namespace kailux
         static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
         static void glfw_button_callback(GLFWwindow* window, int button, int action, int mods);
 
-        GLFWwindow*       m_WindowHandle;
-        int               m_Width;
-        int               m_Height;
-        bool              m_FramebufferResized;
-        std::queue<Event> m_EventQueue;
+        GLFWwindow*       mWindowHandle;
+        int               mWidth;
+        int               mHeight;
+        bool              mFramebufferResized;
+        std::queue<Event> mEventQueue;
     };
 }

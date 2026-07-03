@@ -57,12 +57,12 @@ namespace kailux
 
         void updateTransforms();
 
-        std::string    m_Name;
+        std::string    mName;
 
-        entt::registry m_EntityRegistry;
-        entt::entity   m_MainCameraEntity;
-        entt::entity   m_Sun;
+        entt::registry mEntityRegistry;
+        entt::entity   mMainCameraEntity;
+        entt::entity   mSun;
 
-        uint32_t m_MeshEntityNameCount;
+        uint32_t mMeshEntityNameCount;
     };
 }

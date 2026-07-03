@@ -86,9 +86,9 @@ namespace kailux
         void createPrefilteredEnvTexture(const Context& context);
         void createBRDFLutTexture(const Context& context);
 
-        Texture          m_Texture;
-        Texture          m_IrradianceMapTexture;
-        Texture          m_PrefilteredEnvTexture;
-        Texture          m_BRDFLutTexture;
+        Texture          mTexture;
+        Texture          mIrradianceMapTexture;
+        Texture          mPrefilteredEnvTexture;
+        Texture          mBRDFLutTexture;
     };
 }

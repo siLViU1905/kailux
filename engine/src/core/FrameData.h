@@ -103,30 +103,30 @@ namespace kailux
         static constexpr uint32_t kPickerResolvedViewDescriptorSetBinding = 0;
         static constexpr uint32_t kOutlineIdResolvedViewDescriptorSetBinding = 0;
 
-        vk::raii::CommandPool   m_CommandPool;
-        vk::raii::CommandPool   m_ImGuiCommandPool;
-        vk::raii::CommandBuffer m_CommandBuffer;
-        vk::raii::CommandBuffer m_ImGuiCommandBuffer;
-        vk::raii::Fence         m_FenceInFlight;
+        vk::raii::CommandPool   mCommandPool;
+        vk::raii::CommandPool   mImGuiCommandPool;
+        vk::raii::CommandBuffer mCommandBuffer;
+        vk::raii::CommandBuffer mImGuiCommandBuffer;
+        vk::raii::Fence         mFenceInFlight;
 
-        DescriptorSet           m_DescriptorSet;
-        DescriptorSet           m_SkyboxDescriptorSet;
-        DescriptorSet           m_PickerDescriptorSet;
-        DescriptorSet           m_OutlineDescriptorSet;
-        DescriptorSet           m_CullerDescriptorSet;
+        DescriptorSet           mDescriptorSet;
+        DescriptorSet           mSkyboxDescriptorSet;
+        DescriptorSet           mPickerDescriptorSet;
+        DescriptorSet           mOutlineDescriptorSet;
+        DescriptorSet           mCullerDescriptorSet;
 
-        Buffer                  m_CameraBuffer;
-        Buffer                  m_MeshDataBuffer;
-        Buffer                  m_IndirectBuffer;
-        Buffer                  m_SceneBuffer;
-        Buffer                  m_PickerBuffer;
-        Buffer                  m_CullerInputCommandsBuffer;
-        Buffer                  m_CullerCountBuffer;
+        Buffer                  mCameraBuffer;
+        Buffer                  mMeshDataBuffer;
+        Buffer                  mIndirectBuffer;
+        Buffer                  mSceneBuffer;
+        Buffer                  mPickerBuffer;
+        Buffer                  mCullerInputCommandsBuffer;
+        Buffer                  mCullerCountBuffer;
 
-        vk::Extent2D            m_Extent;
+        vk::Extent2D            mExtent;
 
-        Texture                 m_SceneTexture;
-        Texture                 m_OutIdTexture;
-        Texture                 m_ResolvedOutIdTexture;
+        Texture                 mSceneTexture;
+        Texture                 mOutIdTexture;
+        Texture                 mResolvedOutIdTexture;
     };
 }

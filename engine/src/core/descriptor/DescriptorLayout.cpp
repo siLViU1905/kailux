@@ -4,11 +4,11 @@
 
 namespace kailux
 {
-    DescriptorLayout::DescriptorLayout() : m_Layout({})
+    DescriptorLayout::DescriptorLayout() : mLayout({})
     {
     }
 
-    DescriptorLayout::DescriptorLayout(DescriptorLayout &&other) noexcept : m_Layout(std::move(other.m_Layout))
+    DescriptorLayout::DescriptorLayout(DescriptorLayout &&other) noexcept : mLayout(std::move(other.mLayout))
     {
     }
 
@@ -16,7 +16,7 @@ namespace kailux
     {
         if (this != &other)
         {
-            m_Layout = std::move(other.m_Layout);
+            mLayout = std::move(other.mLayout);
         }
         return *this;
     }
@@ -35,7 +35,7 @@ namespace kailux
 
     vk::DescriptorSetLayout DescriptorLayout::getLayout() const
     {
-        return *m_Layout;
+        return *mLayout;
     }
 
     void DescriptorLayout::createLayout(const Context &context, std::span<const DescriptorLayoutBinding> bindings)
@@ -74,6 +74,6 @@ namespace kailux
         );
         layoutInfo.pNext = &bindingFlags;
 
-        m_Layout = vk::raii::DescriptorSetLayout(context.m_Device, layoutInfo);
+        mLayout = vk::raii::DescriptorSetLayout(context.mDevice, layoutInfo);
     }
 }

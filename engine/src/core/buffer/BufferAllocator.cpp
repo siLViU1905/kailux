@@ -50,7 +50,7 @@ namespace kailux
     Buffer BufferAllocator::alloc(const Context &context, vk::DeviceSize size, vk::BufferUsageFlags usage,
                                   vk::MemoryPropertyFlags props, bool map)
     {
-        auto buffer = vk::raii::Buffer(context.m_Device,
+        auto buffer = vk::raii::Buffer(context.mDevice,
                                        vk::BufferCreateInfo{
                                            {},
                                            size,
@@ -59,7 +59,7 @@ namespace kailux
                                        });
 
         auto reqs = buffer.getMemoryRequirements();
-        auto memory = vk::raii::DeviceMemory(context.m_Device,
+        auto memory = vk::raii::DeviceMemory(context.mDevice,
                                              vk::MemoryAllocateInfo(
                                                  reqs.size,
                                                  context.findMemoryType(reqs.memoryTypeBits, props)

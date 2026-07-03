@@ -114,14 +114,14 @@ namespace kailux
         imageInfo.sharingMode = vk::SharingMode::eExclusive;
         imageInfo.initialLayout = vk::ImageLayout::eUndefined;
 
-        vk::raii::Image image(context.m_Device, imageInfo);
+        vk::raii::Image image(context.mDevice, imageInfo);
 
         auto memRequirements = image.getMemoryRequirements();
         vk::MemoryAllocateInfo allocInfo{
             memRequirements.size,
             context.findMemoryType(memRequirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)
         };
-        vk::raii::DeviceMemory memory(context.m_Device, allocInfo);
+        vk::raii::DeviceMemory memory(context.mDevice, allocInfo);
         image.bindMemory(*memory, 0);
 
         auto otc = OneTimeCommand::create(context);
@@ -159,7 +159,7 @@ namespace kailux
         viewInfo.subresourceRange.baseArrayLayer = 0;
         viewInfo.subresourceRange.layerCount = 6;
 
-        vk::raii::ImageView imageView(context.m_Device, viewInfo);
+        vk::raii::ImageView imageView(context.mDevice, viewInfo);
 
         vk::SamplerCreateInfo samplerInfo{};
         samplerInfo.magFilter = vk::Filter::eLinear;
@@ -171,7 +171,7 @@ namespace kailux
         samplerInfo.minLod = 0.f;
         samplerInfo.maxLod = static_cast<float>(mipLevels);
 
-        vk::raii::Sampler sampler(context.m_Device, samplerInfo);
+        vk::raii::Sampler sampler(context.mDevice, samplerInfo);
         assert(viewInfo.viewType == vk::ImageViewType::eCube);
 
         return {
@@ -236,14 +236,14 @@ namespace kailux
         imageInfo.sharingMode = vk::SharingMode::eExclusive;
         imageInfo.initialLayout = vk::ImageLayout::eUndefined;
 
-        vk::raii::Image image(context.m_Device, imageInfo);
+        vk::raii::Image image(context.mDevice, imageInfo);
 
         auto memRequirements = image.getMemoryRequirements();
         vk::MemoryAllocateInfo allocInfo{
             memRequirements.size,
             context.findMemoryType(memRequirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)
         };
-        vk::raii::DeviceMemory memory(context.m_Device, allocInfo);
+        vk::raii::DeviceMemory memory(context.mDevice, allocInfo);
         image.bindMemory(*memory, 0);
 
         auto otc = OneTimeCommand::create(context);
@@ -314,7 +314,7 @@ namespace kailux
         viewInfo.subresourceRange.baseArrayLayer = 0;
         viewInfo.subresourceRange.layerCount = 6;
 
-        vk::raii::ImageView imageView(context.m_Device, viewInfo);
+        vk::raii::ImageView imageView(context.mDevice, viewInfo);
 
         vk::SamplerCreateInfo samplerInfo{};
         samplerInfo.magFilter = vk::Filter::eLinear;
@@ -326,7 +326,7 @@ namespace kailux
         samplerInfo.minLod = 0.f;
         samplerInfo.maxLod = static_cast<float>(mipLevels - 1);
 
-        vk::raii::Sampler sampler(context.m_Device, samplerInfo);
+        vk::raii::Sampler sampler(context.mDevice, samplerInfo);
 
         return {
             std::move(image),
@@ -391,7 +391,7 @@ namespace kailux
         imageInfo.sharingMode = vk::SharingMode::eExclusive;
         imageInfo.initialLayout = vk::ImageLayout::eUndefined;
 
-        vk::raii::Image image(context.m_Device, imageInfo);
+        vk::raii::Image image(context.mDevice, imageInfo);
 
         auto memRequirements = image.getMemoryRequirements();
         vk::MemoryAllocateInfo allocInfo{};
@@ -401,7 +401,7 @@ namespace kailux
             vk::MemoryPropertyFlagBits::eDeviceLocal
         );
 
-        vk::raii::DeviceMemory memory(context.m_Device, allocInfo);
+        vk::raii::DeviceMemory memory(context.mDevice, allocInfo);
         image.bindMemory(*memory, 0);
 
         vk::ImageViewCreateInfo viewInfo{};
@@ -414,7 +414,7 @@ namespace kailux
         viewInfo.subresourceRange.baseArrayLayer = 0;
         viewInfo.subresourceRange.layerCount = 1;
 
-        vk::raii::ImageView imageView(context.m_Device, viewInfo);
+        vk::raii::ImageView imageView(context.mDevice, viewInfo);
 
         vk::SamplerCreateInfo samplerInfo{};
         samplerInfo.magFilter = vk::Filter::eLinear;
@@ -431,7 +431,7 @@ namespace kailux
         samplerInfo.minLod = 0.f;
         samplerInfo.maxLod = static_cast<float>(mipLevels);
 
-        vk::raii::Sampler sampler(context.m_Device, samplerInfo);
+        vk::raii::Sampler sampler(context.mDevice, samplerInfo);
 
         return {
             std::move(image),

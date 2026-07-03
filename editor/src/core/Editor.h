@@ -13,13 +13,13 @@ namespace kailux
         template<typename Layer>
         auto& getLayer()
         {
-            return std::get<Layer>(*m_ActiveLayer);
+            return std::get<Layer>(*mActiveLayer);
         }
 
         template<typename Layer>
         const auto& getLayer() const
         {
-            return std::get<Layer>(*m_ActiveLayer);
+            return std::get<Layer>(*mActiveLayer);
         }
 
         void render(Scene& scene);
@@ -30,6 +30,6 @@ namespace kailux
         void createLayers(ImTextureID directoryTextureId, ImTextureID fileTextureId);
 
         using LayerTypes = std::variant<EditorLayer>;
-        Scoped<LayerTypes> m_ActiveLayer;
+        Scoped<LayerTypes> mActiveLayer;
     };
 }

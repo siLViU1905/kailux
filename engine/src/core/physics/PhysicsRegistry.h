@@ -86,14 +86,14 @@ namespace kailux
         static JPH::ShapeRefC create_builtin_mesh_body(MeshType type, const MeshTransformData &transform);
         static JPH::ShapeRefC create_loaded_mesh_body(const PhysicsBodyInfo &info);
 
-        Scoped<JPH::TempAllocatorImpl>              m_Allocator;
-        Scoped<JPH::JobSystemThreadPool>            m_JobSystem;
-        Scoped<impl::BroadPhaseLayer>               m_BroadPhaseLayer;
-        Scoped<impl::ObjectVsBroadPhaseLayerFilter> m_ObjectVsBroadPhaseLayer;
-        Scoped<impl::ObjectLayerPairFilter>         m_ObjectPairFilter;
-        Scoped<JPH::PhysicsSystem>                  m_PhysicsSystem;
+        Scoped<JPH::TempAllocatorImpl>              mAllocator;
+        Scoped<JPH::JobSystemThreadPool>            mJobSystem;
+        Scoped<impl::BroadPhaseLayer>               mBroadPhaseLayer;
+        Scoped<impl::ObjectVsBroadPhaseLayerFilter> mObjectVsBroadPhaseLayer;
+        Scoped<impl::ObjectLayerPairFilter>         mObjectPairFilter;
+        Scoped<JPH::PhysicsSystem>                  mPhysicsSystem;
 
-        std::vector<JPH::BodyID> m_BodyIds;
-        std::deque<uint32_t>     m_FreeSlots;
+        std::vector<JPH::BodyID> mBodyIds;
+        std::deque<uint32_t>     mFreeSlots;
     };
 }

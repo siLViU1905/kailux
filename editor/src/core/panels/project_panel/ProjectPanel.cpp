@@ -4,32 +4,32 @@
 
 namespace kailux
 {
-    ProjectPanel::ProjectPanel() : m_UseFullWidth(true)
+    ProjectPanel::ProjectPanel() : mUseFullWidth(true)
     {
     }
 
     ProjectPanel::ProjectPanel(std::string_view name, ImVec4 backgroundColor)
-        : Panel(name, backgroundColor), m_UseFullWidth(true)
+        : Panel(name, backgroundColor), mUseFullWidth(true)
     {
     }
 
     void ProjectPanel::render(Scene &scene)
     {
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, m_BackgroundColor);
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, mBackgroundColor);
 
-        if (ImGui::Begin(m_Name.c_str(), &m_Open))
+        if (ImGui::Begin(mName.c_str(), &mOpen))
         {
             if (ImGui::BeginTabBar("ProjectPanelTabs"))
             {
                 if (ImGui::BeginTabItem("Asset Browser"))
                 {
-                    m_AssetBrowser.render();
+                    mAssetBrowser.render();
                     ImGui::EndTabItem();
                 }
 
                 if (ImGui::BeginTabItem("Console"))
                 {
-                    m_Console.render();
+                    mConsole.render();
                     ImGui::EndTabItem();
                 }
 
@@ -42,16 +42,16 @@ namespace kailux
 
     void ProjectPanel::useFullWidth(bool use)
     {
-        m_UseFullWidth = use;
+        mUseFullWidth = use;
     }
 
     AssetBrowser &ProjectPanel::getAssetBrowser()
     {
-        return m_AssetBrowser;
+        return mAssetBrowser;
     }
 
     Console &ProjectPanel::getConsole()
     {
-        return m_Console;
+        return mConsole;
     }
 }

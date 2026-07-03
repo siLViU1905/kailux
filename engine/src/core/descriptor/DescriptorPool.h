@@ -23,6 +23,6 @@ namespace kailux
     private:
         void createPool(const Context& context, uint32_t sets, std::span<const DescriptorPoolSize> sizes);
 
-        vk::raii::DescriptorPool m_Pool;
+        vk::raii::DescriptorPool mPool;
     };
 }
