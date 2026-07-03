@@ -34,12 +34,12 @@ namespace kailux
 
         void renderSimulationIndicator(ImVec2 minBound, ImVec2 viewportSize);
 
-        ImTextureID   m_SceneTextureId;
-        MousePosition m_MousePos;
-        OnClick       m_OnClick;
+        ImTextureID   mSceneTextureId;
+        MousePosition mMousePos;
+        OnClick       mOnClick;
 
-        SimulationState m_SimulationState;
-        OnSimulationStart m_OnSimulationStart;
-        OnSimulationPause m_OnSimulationPause;
+        SimulationState mSimulationState;
+        OnSimulationStart mOnSimulationStart;
+        OnSimulationPause mOnSimulationPause;
     };
 }

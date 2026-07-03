@@ -24,18 +24,18 @@ namespace kailux
         template<typename T>
         T read() const
         {
-            assert(m_Mapped && "Buffer is not host-visible");
+            assert(mMapped && "Buffer is not host-visible");
 
             T result;
-            memcpy(&result, m_Mapped, sizeof(T));
+            memcpy(&result, mMapped, sizeof(T));
 
             return result;
         }
 
     private:
-        vk::raii::Buffer       m_Buffer;
-        vk::raii::DeviceMemory m_Memory;
-        void*                  m_Mapped;
-        vk::DeviceSize         m_Size;
+        vk::raii::Buffer       mBuffer;
+        vk::raii::DeviceMemory mMemory;
+        void*                  mMapped;
+        vk::DeviceSize         mSize;
     };
 }

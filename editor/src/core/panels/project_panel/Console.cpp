@@ -9,7 +9,7 @@ namespace kailux
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 8));
 
         int i = 0;
-        for (const auto &[message, severity] : m_Logs)
+        for (const auto &[message, severity] : mLogs)
         {
             ImGui::PushID(i++);
 
@@ -52,7 +52,7 @@ namespace kailux
                                            ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
         {
             if (ImGui::MenuItem("Clear"))
-                m_Logs.clear();
+                mLogs.clear();
             ImGui::EndPopup();
         }
 

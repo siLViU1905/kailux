@@ -12,81 +12,81 @@
 
 namespace kailux
 {
-    EntityEditorPanel::EntityEditorPanel() : m_SelectedEntity(entt::null),
-                                             m_RotationDegrees({}),
-                                             m_CurrentGizmoOperation(ImGuizmo::TRANSLATE),
-                                             m_CurrentGizmoMode(ImGuizmo::LOCAL),
-                                             m_UniformScale(true),
-                                             m_GizmoInUse(false),
-                                             m_GizmoWasDragging(false),
-                                             m_SimulationRunning(false)
+    EntityEditorPanel::EntityEditorPanel() : mSelectedEntity(entt::null),
+                                             mRotationDegrees({}),
+                                             mCurrentGizmoOperation(ImGuizmo::TRANSLATE),
+                                             mCurrentGizmoMode(ImGuizmo::LOCAL),
+                                             mUniformScale(true),
+                                             mGizmoInUse(false),
+                                             mGizmoWasDragging(false),
+                                             mSimulationRunning(false)
     {
-        m_Open = false;
+        mOpen = false;
     }
 
     EntityEditorPanel::EntityEditorPanel(std::string_view name, ImVec4 backgroundColor)
         : Panel(name, backgroundColor),
-          m_SelectedEntity(entt::null),
-          m_RotationDegrees({}),
-          m_CurrentGizmoOperation(ImGuizmo::TRANSLATE),
-          m_CurrentGizmoMode(ImGuizmo::LOCAL),
-          m_UniformScale(true),
-          m_GizmoInUse(false),
-          m_GizmoWasDragging(false),
-          m_SimulationRunning(false)
+          mSelectedEntity(entt::null),
+          mRotationDegrees({}),
+          mCurrentGizmoOperation(ImGuizmo::TRANSLATE),
+          mCurrentGizmoMode(ImGuizmo::LOCAL),
+          mUniformScale(true),
+          mGizmoInUse(false),
+          mGizmoWasDragging(false),
+          mSimulationRunning(false)
     {
-        m_Open = false;
+        mOpen = false;
     }
 
     void EntityEditorPanel::render(Scene &scene)
     {
-        if (!m_Open || m_SelectedEntity == entt::null)
+        if (!mOpen || mSelectedEntity == entt::null)
             return;
         auto &registry = scene.getEntityRegistry();
-        if (!registry.valid(m_SelectedEntity))
+        if (!registry.valid(mSelectedEntity))
             return;
 
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, m_BackgroundColor);
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, mBackgroundColor);
 
-        if (ImGui::Begin(m_Name.c_str(), &m_Open))
+        if (ImGui::Begin(mName.c_str(), &mOpen))
         {
-            const auto &tag = registry.get<TagComponent>(m_SelectedEntity);
+            const auto &tag = registry.get<TagComponent>(mSelectedEntity);
             ImGui::Text("Entity: %s", tag.name.c_str());
             ImGui::Separator();
 
-            if (registry.all_of<TransformComponent>(m_SelectedEntity))
+            if (registry.all_of<TransformComponent>(mSelectedEntity))
             {
                 ImGui::Text("Gizmo Operation:");
-                if (ImGui::RadioButton("Translate", m_CurrentGizmoOperation == ImGuizmo::TRANSLATE))
-                    m_CurrentGizmoOperation = ImGuizmo::TRANSLATE;
+                if (ImGui::RadioButton("Translate", mCurrentGizmoOperation == ImGuizmo::TRANSLATE))
+                    mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
                 ImGui::SameLine();
-                if (ImGui::RadioButton("Rotate", m_CurrentGizmoOperation == ImGuizmo::ROTATE))
-                    m_CurrentGizmoOperation = ImGuizmo::ROTATE;
+                if (ImGui::RadioButton("Rotate", mCurrentGizmoOperation == ImGuizmo::ROTATE))
+                    mCurrentGizmoOperation = ImGuizmo::ROTATE;
                 ImGui::SameLine();
-                if (ImGui::RadioButton("Scale", m_CurrentGizmoOperation == ImGuizmo::SCALE))
-                    m_CurrentGizmoOperation = ImGuizmo::SCALE;
+                if (ImGui::RadioButton("Scale", mCurrentGizmoOperation == ImGuizmo::SCALE))
+                    mCurrentGizmoOperation = ImGuizmo::SCALE;
 
                 ImGui::Text("Gizmo Mode:");
-                if (ImGui::RadioButton("Local", m_CurrentGizmoMode == ImGuizmo::LOCAL))
-                    m_CurrentGizmoMode = ImGuizmo::LOCAL;
+                if (ImGui::RadioButton("Local", mCurrentGizmoMode == ImGuizmo::LOCAL))
+                    mCurrentGizmoMode = ImGuizmo::LOCAL;
                 ImGui::SameLine();
-                if (ImGui::RadioButton("World", m_CurrentGizmoMode == ImGuizmo::WORLD))
-                    m_CurrentGizmoMode = ImGuizmo::WORLD;
+                if (ImGui::RadioButton("World", mCurrentGizmoMode == ImGuizmo::WORLD))
+                    mCurrentGizmoMode = ImGuizmo::WORLD;
 
                 ImGui::Separator();
 
-                auto &transform = registry.get<TransformComponent>(m_SelectedEntity).transform;
+                auto &transform = registry.get<TransformComponent>(mSelectedEntity).transform;
                 if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
                 {
                     ImGui::InputFloat3("Translation", glm::value_ptr(transform.position));
 
-                    if (ImGui::InputFloat3("Rotation (Deg)", glm::value_ptr(m_RotationDegrees)))
-                        transform.rotation = glm::quat(glm::radians(m_RotationDegrees));
+                    if (ImGui::InputFloat3("Rotation (Deg)", glm::value_ptr(mRotationDegrees)))
+                        transform.rotation = glm::quat(glm::radians(mRotationDegrees));
 
                     auto oldScale = transform.scale;
                     if (ImGui::InputFloat3("Scale", glm::value_ptr(transform.scale)))
                     {
-                        if (m_UniformScale)
+                        if (mUniformScale)
                         {
                             float newValue = oldScale.x;
                             if (transform.scale.x != oldScale.x)
@@ -99,27 +99,27 @@ namespace kailux
                         }
 
                     }
-                    if (ImGui::IsItemDeactivatedAfterEdit() && registry.all_of<PhysicsComponent>(m_SelectedEntity))
-                        m_OnBodyScaleChange(registry.get<PhysicsComponent>(m_SelectedEntity), transform.scale);
+                    if (ImGui::IsItemDeactivatedAfterEdit() && registry.all_of<PhysicsComponent>(mSelectedEntity))
+                        mOnBodyScaleChange(registry.get<PhysicsComponent>(mSelectedEntity), transform.scale);
                     ImGui::SameLine();
-                    ImGui::Checkbox("##uniform", &m_UniformScale);
+                    ImGui::Checkbox("##uniform", &mUniformScale);
                     if (ImGui::IsItemHovered())
                         ImGui::SetTooltip("Uniform Scale");
                 }
-            } if (registry.all_of<PhysicsComponent, PhysicsControlComponent>(m_SelectedEntity))
+            } if (registry.all_of<PhysicsComponent, PhysicsControlComponent>(mSelectedEntity))
             {
                 if (ImGui::CollapsingHeader("Physics", ImGuiTreeNodeFlags_DefaultOpen))
                 {
-                    auto &physics = registry.get<PhysicsComponent>(m_SelectedEntity);
-                    auto &control = registry.get<PhysicsControlComponent>(m_SelectedEntity);
+                    auto &physics = registry.get<PhysicsComponent>(mSelectedEntity);
+                    auto &control = registry.get<PhysicsControlComponent>(mSelectedEntity);
 
-                    ImGui::BeginDisabled(m_SimulationRunning);
+                    ImGui::BeginDisabled(mSimulationRunning);
 
                     int typeIndex = static_cast<int>(physics.type);
                     if (ImGui::Combo("Body type", &typeIndex, HierarchyPanel::s_BodyTypeOptions.data()))
                     {
                         physics.type = static_cast<PhysicsBodyType>(typeIndex);
-                        m_OnBodyTypeChange(physics, physics.type);
+                        mOnBodyTypeChange(physics, physics.type);
                     }
 
                     ImGui::InputFloat3("Velocity", glm::value_ptr(control.velocity));
@@ -133,11 +133,11 @@ namespace kailux
                     control.applyImpulse = ImGui::Button("Apply Impulse");
                 }
             }
-            if (registry.all_of<MeshMaterialData>(m_SelectedEntity))
+            if (registry.all_of<MeshMaterialData>(mSelectedEntity))
             {
                 if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
                 {
-                    auto &material = registry.get<MeshMaterialData>(m_SelectedEntity);
+                    auto &material = registry.get<MeshMaterialData>(mSelectedEntity);
                     bool changed = false;
 
                     float &roughness = material.albedoAndRoughness.w;
@@ -152,11 +152,11 @@ namespace kailux
                     changed |= ImGui::ColorPicker3("Albedo", glm::value_ptr(material.albedoAndRoughness));
 
                     if (changed)
-                        propagate_material_to_children(scene, m_SelectedEntity, material);
+                        propagate_material_to_children(scene, mSelectedEntity, material);
                 }
-            } else if (registry.all_of<DirectionalLightData>(m_SelectedEntity))
+            } else if (registry.all_of<DirectionalLightData>(mSelectedEntity))
             {
-                auto &data = registry.get<DirectionalLightData>(m_SelectedEntity);
+                auto &data = registry.get<DirectionalLightData>(mSelectedEntity);
                 if (ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen))
                 {
                     ImGui::SliderFloat3("Direction", glm::value_ptr(data.directionAndIntensity), -1.f, 1.f);
@@ -169,9 +169,9 @@ namespace kailux
                     if (ImGui::Checkbox("Enabled", &enabled))
                         enabled ? enableValue = 1.f : enableValue = 0.f;
                 }
-            } else if (registry.all_of<CameraComponent>(m_SelectedEntity))
+            } else if (registry.all_of<CameraComponent>(mSelectedEntity))
             {
-                auto &camera = registry.get<CameraComponent>(m_SelectedEntity);
+                auto &camera = registry.get<CameraComponent>(mSelectedEntity);
                 if (ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen))
                     ImGui::InputFloat("Exposure", &camera.exposure, 0.f, 0.f, "%.6f");
             }
@@ -184,45 +184,45 @@ namespace kailux
 
     void EntityEditorPanel::setSelectedEntity(entt::entity entity, const Scene &scene)
     {
-        m_SelectedEntity = entity;
+        mSelectedEntity = entity;
         if (entity == entt::null)
-            m_Open = false;
+            mOpen = false;
 
-        if (scene.getEntityRegistry().all_of<TransformComponent>(m_SelectedEntity))
+        if (scene.getEntityRegistry().all_of<TransformComponent>(mSelectedEntity))
         {
-            const auto &transform = scene.getEntityRegistry().get<TransformComponent>(m_SelectedEntity);
-            m_RotationDegrees = glm::degrees(glm::eulerAngles(transform.transform.rotation));
+            const auto &transform = scene.getEntityRegistry().get<TransformComponent>(mSelectedEntity);
+            mRotationDegrees = glm::degrees(glm::eulerAngles(transform.transform.rotation));
         }
     }
 
     bool EntityEditorPanel::isGizmoInUse() const
     {
-        return m_GizmoInUse;
+        return mGizmoInUse;
     }
 
     void EntityEditorPanel::setSimulationState(bool running)
     {
-        m_SimulationRunning = running;
+        mSimulationRunning = running;
     }
 
     void EntityEditorPanel::setOnBodyTypeChange(OnBodyTypeChange &&callback)
     {
-        m_OnBodyTypeChange = std::move(callback);
+        mOnBodyTypeChange = std::move(callback);
     }
 
     void EntityEditorPanel::setOnBodyScaleChange(OnBodyScaleChange &&callback)
     {
-        m_OnBodyScaleChange = std::move(callback);
+        mOnBodyScaleChange = std::move(callback);
     }
 
     void EntityEditorPanel::renderGizmo(Scene &scene)
     {
         auto &registry = scene.getEntityRegistry();
 
-        if (!registry.all_of<TransformComponent>(m_SelectedEntity))
+        if (!registry.all_of<TransformComponent>(mSelectedEntity))
             return;
 
-        auto &transformComp = registry.get<TransformComponent>(m_SelectedEntity);
+        auto &transformComp = registry.get<TransformComponent>(mSelectedEntity);
         auto &transform = transformComp.transform;
 
         auto modelMatrix = transformComp.worldMatrix;
@@ -231,24 +231,24 @@ namespace kailux
         ImGuizmo::Manipulate(
             glm::value_ptr(cameraData.view),
             glm::value_ptr(cameraData.projection),
-            m_CurrentGizmoOperation,
-            m_CurrentGizmoMode,
+            mCurrentGizmoOperation,
+            mCurrentGizmoMode,
             glm::value_ptr(modelMatrix)
         );
 
         bool isDragging = ImGuizmo::IsUsing();
-        if (m_GizmoWasDragging && !isDragging)
-            if (m_CurrentGizmoOperation == ImGuizmo::SCALE &&
-                registry.all_of<PhysicsComponent>(m_SelectedEntity) &&
-                registry.all_of<TransformComponent>(m_SelectedEntity))
-                m_OnBodyScaleChange(
-                    registry.get<PhysicsComponent>(m_SelectedEntity),
-                    registry.get<TransformComponent>(m_SelectedEntity).transform.scale
+        if (mGizmoWasDragging && !isDragging)
+            if (mCurrentGizmoOperation == ImGuizmo::SCALE &&
+                registry.all_of<PhysicsComponent>(mSelectedEntity) &&
+                registry.all_of<TransformComponent>(mSelectedEntity))
+                mOnBodyScaleChange(
+                    registry.get<PhysicsComponent>(mSelectedEntity),
+                    registry.get<TransformComponent>(mSelectedEntity).transform.scale
                     );
 
-        m_GizmoWasDragging = isDragging;
+        mGizmoWasDragging = isDragging;
 
-        m_GizmoInUse = isDragging || ImGuizmo::IsOver();
+        mGizmoInUse = isDragging || ImGuizmo::IsOver();
         if (isDragging)
         {
             glm::vec3 translation, scale, skew;
@@ -256,7 +256,7 @@ namespace kailux
             glm::vec4 perspective;
 
             glm::mat4 parentWorld{1.0f};
-            if (auto* hierarchy = registry.try_get<HierarchyComponent>(m_SelectedEntity))
+            if (auto* hierarchy = registry.try_get<HierarchyComponent>(mSelectedEntity))
                 if (hierarchy->parent != entt::null)
                     parentWorld = registry.get<TransformComponent>(hierarchy->parent).worldMatrix;
 
@@ -266,14 +266,14 @@ namespace kailux
 
             transform.position = translation;
             transform.rotation = rotation;
-            if (m_UniformScale && m_CurrentGizmoOperation == ImGuizmo::SCALE)
+            if (mUniformScale && mCurrentGizmoOperation == ImGuizmo::SCALE)
             {
                 float avgScale = (scale.x + scale.y + scale.z) / 3.f;
                 transform.scale = glm::vec3(avgScale);
             } else
                 transform.scale = scale;
 
-            m_RotationDegrees = glm::degrees(glm::eulerAngles(transform.rotation));
+            mRotationDegrees = glm::degrees(glm::eulerAngles(transform.rotation));
         }
     }
 

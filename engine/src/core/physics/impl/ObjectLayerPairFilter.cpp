@@ -6,9 +6,9 @@ namespace kailux::impl
     {
         switch (inLayer1)
         {
-            case layers::s_NonMoving:
-                return inLayer2 == layers::s_Moving;
-            case layers::s_Moving:
+            case layers::kNonMoving:
+                return inLayer2 == layers::kMoving;
+            case layers::kMoving:
                 return true;
             default:
                 return false;

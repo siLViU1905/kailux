@@ -19,9 +19,9 @@ namespace kailux
         vk::Sampler    getSampler() const;
 
     private:
-        vk::raii::Image        m_Image;
-        vk::raii::ImageView    m_ImageView;
-        vk::raii::Sampler      m_Sampler;
-        vk::raii::DeviceMemory m_Memory;
+        vk::raii::Image        mImage;
+        vk::raii::ImageView    mImageView;
+        vk::raii::Sampler      mSampler;
+        vk::raii::DeviceMemory mMemory;
     };
 }

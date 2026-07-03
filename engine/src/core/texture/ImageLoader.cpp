@@ -21,7 +21,7 @@ namespace kailux
         auto uHeight = static_cast<uint32_t>(height);
         auto mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(uWidth, uHeight)))) + 1;
 
-        size_t imageSize = uWidth * uHeight * ImageData::s_Channels;
+        size_t imageSize = uWidth * uHeight * ImageData::kChannels;
         std::vector pixels(data, data + imageSize);
 
         stbi_image_free(data);

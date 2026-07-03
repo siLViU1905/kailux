@@ -48,7 +48,7 @@ namespace kailux
         void pushImpl(vk::CommandBuffer cmd, const Pcs &... pcs) const
         {
             static_assert(sizeof...(Pcs) == PcRanges.size(),
-                  "Number of push constants doesnt correspond with s_PushConstantRanges");
+                  "Number of push constants doesnt correspond with kPushConstantRanges");
 
             uint32_t currentOffset = 0;
             size_t index = 0;
@@ -57,7 +57,7 @@ namespace kailux
                 assert(sizeof(Pcs) == PcRanges[index].size);
 
                 cmd.pushConstants(
-                    m_Pipeline.getLayout(),
+                    mPipeline.getLayout(),
                     vk::ShaderStageFlagBits::eCompute,
                     currentOffset,
                     static_cast<uint32_t>(sizeof(Pcs)),
@@ -69,8 +69,8 @@ namespace kailux
             }(), ...);
         }
 
-        DescriptorLayout    m_DescriptorLayout;
-        DescriptorPool      m_DescriptorPool;
-        Pipeline            m_Pipeline;
+        DescriptorLayout    mDescriptorLayout;
+        DescriptorPool      mDescriptorPool;
+        Pipeline            mPipeline;
     };
 }

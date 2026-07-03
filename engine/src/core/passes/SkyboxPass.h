@@ -28,10 +28,10 @@ namespace kailux
         const Texture&          getBRDFLutTexture() const;
 
     private:
-        static constexpr std::string_view s_VertexShaderPath = "shaders/skybox_vertex_shader.spv";
-        static constexpr std::string_view s_FragmentShaderPath = "shaders/skybox_fragment_shader.spv";
+        static constexpr std::string_view kVertexShaderPath = "shaders/skybox_vertex_shader.spv";
+        static constexpr std::string_view kFragmentShaderPath = "shaders/skybox_fragment_shader.spv";
 
-        static constexpr std::array<std::string_view, 6> s_SkyboxTexturePaths = {
+        static constexpr std::array<std::string_view, 6> kSkyboxTexturePaths = {
             "assets/cubemap/px.png",
             "assets/cubemap/nx.png",
             "assets/cubemap/py.png",
@@ -39,7 +39,7 @@ namespace kailux
             "assets/cubemap/pz.png",
             "assets/cubemap/nz.png"
         };
-        static constexpr std::array<std::string_view, 6> s_IrradianceTexturePaths = {
+        static constexpr std::array<std::string_view, 6> kIrradianceTexturePaths = {
             "assets/ibl/irradiance/i_px.png",
             "assets/ibl/irradiance/i_nx.png",
             "assets/ibl/irradiance/i_py.png",
@@ -47,12 +47,12 @@ namespace kailux
             "assets/ibl/irradiance/i_pz.png",
             "assets/ibl/irradiance/i_nz.png"
         };
-        static constexpr std::string_view s_PrefilteredBasePath = "assets/ibl/prefiltered/m";
-        static constexpr std::string_view s_BRDFLutPath = "assets/ibl/brdf_lut.png";
+        static constexpr std::string_view kPrefilteredBasePath = "assets/ibl/prefiltered/m";
+        static constexpr std::string_view kBRDFLutPath = "assets/ibl/brdf_lut.png";
 
-        static constexpr uint32_t         s_PrefilteredMipLevels = 5;
+        static constexpr uint32_t         kPrefilteredMipLevels = 5;
 
-        static constexpr std::array s_DescriptorLayoutBindings = {
+        static constexpr std::array kDescriptorLayoutBindings = {
             DescriptorLayoutBinding(
                 vk::DescriptorType::eUniformBuffer,
                 1, // camera
@@ -64,7 +64,7 @@ namespace kailux
                 vk::ShaderStageFlagBits::eFragment
             )
         };
-        static constexpr std::array s_DescriptorPoolSizes = {
+        static constexpr std::array kDescriptorPoolSizes = {
             DescriptorPoolSize(
                 vk::DescriptorType::eUniformBuffer,
                 1 // camera
@@ -75,7 +75,7 @@ namespace kailux
             )
         };
         static_assert(
-            check_descriptor_layout_bindings_and_pool_sizes_match(s_DescriptorLayoutBindings, s_DescriptorPoolSizes),
+            check_descriptor_layout_bindings_and_pool_sizes_match(kDescriptorLayoutBindings, kDescriptorPoolSizes),
             "Descriptor layout bindings and pool sizes do not match"
             );
 
@@ -86,9 +86,9 @@ namespace kailux
         void createPrefilteredEnvTexture(const Context& context);
         void createBRDFLutTexture(const Context& context);
 
-        Texture          m_Texture;
-        Texture          m_IrradianceMapTexture;
-        Texture          m_PrefilteredEnvTexture;
-        Texture          m_BRDFLutTexture;
+        Texture          mTexture;
+        Texture          mIrradianceMapTexture;
+        Texture          mPrefilteredEnvTexture;
+        Texture          mBRDFLutTexture;
     };
 }

@@ -16,28 +16,28 @@ namespace kailux
                                  TransferManager &transferManager,
                                  Scene &scene,
                                  std::span<FrameData> frames)
-        : m_Context(context),
-          m_MeshRegistry(meshRegistry),
-          m_TextureRegistry(textureRegistry),
-          m_TransferManager(transferManager),
-          m_Scene(scene),
-          m_Frames(frames)
+        : mContext(context),
+          mMeshRegistry(meshRegistry),
+          mTextureRegistry(textureRegistry),
+          mTransferManager(transferManager),
+          mScene(scene),
+          mFrames(frames)
     {
     }
 
     Queue<AssetPipeline::PendingMeshData> &AssetPipeline::getPendingQueue()
     {
-        return m_PendingMeshData;
+        return mPendingMeshData;
     }
 
     void AssetPipeline::setOnInfoLog(OnLog &&callback)
     {
-        m_OnInfoLog = std::move(callback);
+        mOnInfoLog = std::move(callback);
     }
 
     bool AssetPipeline::isCached(std::string_view path) const
     {
-        return m_MeshCache.contains(std::string(path));
+        return mMeshCache.contains(std::string(path));
     }
 
     void AssetPipeline::cacheMesh(std::string_view path, MeshHandle meshHandle, TextureSetHandle materialHandle)
@@ -45,16 +45,16 @@ namespace kailux
         auto strPath = std::string(path);
         if (isCached(path))
         {
-            ++m_MeshCache[strPath].count;
+            ++mMeshCache[strPath].count;
             return;
         }
-        m_MeshCache[strPath] = {meshHandle, materialHandle};
+        mMeshCache[strPath] = {meshHandle, materialHandle};
     }
 
     std::optional<AssetPipeline::MeshCache> AssetPipeline::uncache(std::string_view path)
     {
-        auto it = m_MeshCache.find(std::string(path));
-        if (it == m_MeshCache.end())
+        auto it = mMeshCache.find(std::string(path));
+        if (it == mMeshCache.end())
             return std::nullopt;
         auto &count = it->second.count;
         if (count > 1)
@@ -63,13 +63,13 @@ namespace kailux
             return std::nullopt;
         }
         std::optional cache = it->second;
-        m_MeshCache.erase(it);
+        mMeshCache.erase(it);
         return cache;
     }
 
     void AssetPipeline::poll()
     {
-        if (auto data = m_PendingMeshData.tryPop())
+        if (auto data = mPendingMeshData.tryPop())
         {
             if (data->type == MeshType::Unknown)
                 return;
@@ -80,7 +80,7 @@ namespace kailux
         }
     }
 
-    std::array<DescriptorSetUpdateInfo, TextureRegistry::s_TextureTypes.size()>
+    std::array<DescriptorSetUpdateInfo, TextureRegistry::kTextureTypes.size()>
     AssetPipeline::makeDescriptorSetUpdateInfo(TextureSetHandle slotToOverwrite, const TextureSet &replacementSet)
     {
         auto makeUpdateInfo = [slotToOverwrite](uint32_t binding, const auto &texture) -> DescriptorSetUpdateInfo
@@ -98,20 +98,20 @@ namespace kailux
         };
         uint32_t textureIndex = 0;
         std::array updateInfos = {
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.albedo),
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.normal),
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.roughness),
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.metallic),
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.ao)
+            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.albedo),
+            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.normal),
+            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.roughness),
+            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.metallic),
+            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.ao)
         };
-        static_assert(TextureRegistry::s_TextureTypes.size() == updateInfos.size(),
+        static_assert(TextureRegistry::kTextureTypes.size() == updateInfos.size(),
                       "Texture type count mismatch");
         return updateInfos;
     }
 
     entt::entity AssetPipeline::createParentMeshEntity(const PendingMeshData &data)
     {
-        Scene &scene = m_Scene;
+        Scene &scene = mScene;
 
         auto rootName = data.name.empty() ? scene.getMeshEntityName() : data.name;
         auto parentEntity = scene.createParentEntity(rootName);
@@ -143,35 +143,35 @@ namespace kailux
     MeshHandle AssetPipeline::uploadMeshDataToRegistry(const MeshRegistry::MeshData &data)
     {
         std::vector<Buffer> stagingBuffers;
-        auto otc = OneTimeCommand::create(m_Context);
-        auto handle = m_MeshRegistry.get().upload(m_Context, otc.getCommandBuffer(), data, stagingBuffers);
-        otc.submit(m_Context);
+        auto otc = OneTimeCommand::create(mContext);
+        auto handle = mMeshRegistry.get().upload(mContext, otc.getCommandBuffer(), data, stagingBuffers);
+        otc.submit(mContext);
         return handle;
     }
 
     TextureSetHandle AssetPipeline::uploadMaterialDataToRegistry(const TextureRegistry::MaterialData &data)
     {
-        auto &textureRegistry = m_TextureRegistry.get();
+        auto &textureRegistry = mTextureRegistry.get();
 
-        auto result = textureRegistry.createSetFromMaterialData(m_Context, data);
+        auto result = textureRegistry.createSetFromMaterialData(mContext, data);
         auto handle = textureRegistry.registerTextureSet(result.set);
 
         auto updateInfos = makeDescriptorSetUpdateInfo(handle, result.set);
 
-        for (const auto &frame: m_Frames)
-            frame.getDescriptorSet().updateInfo(m_Context, updateInfos);
+        for (const auto &frame: mFrames)
+            frame.getDescriptorSet().updateInfo(mContext, updateInfos);
 
         if (!result.uploads.empty())
-            m_TransferManager.get().enqueueImages(
-                m_Context,
+            mTransferManager.get().enqueueImages(
+                mContext,
                 std::move(result.uploads),
                 std::move(result.staging),
                 [this, handle]()
                 {
-                    const auto &set = m_TextureRegistry.get().view(handle);
+                    const auto &set = mTextureRegistry.get().view(handle);
                     auto infos = makeDescriptorSetUpdateInfo(handle, set);
-                    for (const auto &frame: m_Frames)
-                        frame.getDescriptorSet().updateInfo(m_Context, infos);
+                    for (const auto &frame: mFrames)
+                        frame.getDescriptorSet().updateInfo(mContext, infos);
                 }
             );
 
@@ -180,9 +180,9 @@ namespace kailux
 
     void AssetPipeline::processBuiltinMesh(const PendingMeshData &data)
     {
-        Scene &scene = m_Scene;
-        auto &textureRegistry = m_TextureRegistry.get();
-        auto &meshRegistry = m_MeshRegistry.get();
+        Scene &scene = mScene;
+        auto &textureRegistry = mTextureRegistry.get();
+        auto &meshRegistry = mMeshRegistry.get();
 
         auto now = Clock::now();
         std::string meshName;
@@ -222,13 +222,13 @@ namespace kailux
             default:
                 break;
         }
-        m_OnInfoLog(std::format("Loaded '{}' successfully in {:.3f}ms.",
+        mOnInfoLog(std::format("Loaded '{}' successfully in {:.3f}ms.",
                                 meshName, Clock::get_elapsed<float, TimeType::Milliseconds>(now)));
     }
 
     void AssetPipeline::processLoadedMesh(const PendingMeshData &data)
     {
-        Scene &scene = m_Scene;
+        Scene &scene = mScene;
 
         auto now = Clock::now();
         const auto &loadData = data.data;
@@ -244,14 +244,14 @@ namespace kailux
 
         auto pendingEntities = create_shared<std::vector<entt::entity> >();
 
-        m_TransferManager.get().enqueueBuffer(
-            m_Context,
+        mTransferManager.get().enqueueBuffer(
+            mContext,
             [this, &data, &loadData, &loadedMaterialHandles, parentEntity, modelIsCached, pendingEntities]
     (auto cmd) -> TransferManager::RecordResult
             {
-                Scene &scene = m_Scene;
-                auto &meshRegistry = m_MeshRegistry.get();
-                auto &textureRegistry = m_TextureRegistry.get();
+                Scene &scene = mScene;
+                auto &meshRegistry = mMeshRegistry.get();
+                auto &textureRegistry = mTextureRegistry.get();
 
                 TransferManager::RecordResult result;
                 uint32_t submeshIndex = 0;
@@ -265,16 +265,16 @@ namespace kailux
 
                     if (isCached(cacheKey))
                     {
-                        auto cache = m_MeshCache.at(cacheKey);
+                        auto cache = mMeshCache.at(cacheKey);
                         const auto &material = textureRegistry.view(cache.materialHandle);
                         textureHandle = textureRegistry.registerTextureSet(material);
                         auto updateInfos = makeDescriptorSetUpdateInfo(textureHandle, material);
-                        for (const auto &frame: m_Frames)
-                            frame.getDescriptorSet().updateInfo(m_Context, updateInfos);
+                        for (const auto &frame: mFrames)
+                            frame.getDescriptorSet().updateInfo(mContext, updateInfos);
                         meshHandle = cache.meshHandle;
                     } else
                     {
-                        meshHandle = meshRegistry.upload(m_Context, cmd, submesh.meshData, result.staging);
+                        meshHandle = meshRegistry.upload(mContext, cmd, submesh.meshData, result.staging);
                         textureHandle = loadedMaterialHandles[submesh.materialIndex];
 
                         auto regions = meshRegistry.getRegions(meshHandle);
@@ -322,7 +322,7 @@ namespace kailux
             },
             [this, pendingEntities]()
             {
-                auto &registry = m_Scene.get().getEntityRegistry();
+                auto &registry = mScene.get().getEntityRegistry();
                 for (auto entity: *pendingEntities)
                     if (registry.valid(entity))
                         registry.remove<PendingUploadComponent>(entity);
@@ -341,7 +341,7 @@ namespace kailux
             );
 
         const auto &name = entityReg.get<TagComponent>(parentEntity).name;
-        m_OnInfoLog(std::format("Loaded '{}' successfully with {} submeshes and {} unique materials in {}ms.",
+        mOnInfoLog(std::format("Loaded '{}' successfully with {} submeshes and {} unique materials in {}ms.",
                                 name,
                                 loadData.submeshes.size(),
                                 loadData.materials.size(),

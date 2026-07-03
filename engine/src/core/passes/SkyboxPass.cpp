@@ -9,10 +9,10 @@ namespace kailux
     SkyboxPass::SkyboxPass() = default;
 
     SkyboxPass::SkyboxPass(SkyboxPass &&other) noexcept : GraphicsPass(std::move(other)),
-                                                          m_Texture(std::move(other.m_Texture)),
-                                                          m_IrradianceMapTexture(std::move(other.m_IrradianceMapTexture)),
-                                                          m_PrefilteredEnvTexture(std::move(other.m_PrefilteredEnvTexture)),
-                                                          m_BRDFLutTexture(std::move(other.m_BRDFLutTexture))
+                                                          mTexture(std::move(other.mTexture)),
+                                                          mIrradianceMapTexture(std::move(other.mIrradianceMapTexture)),
+                                                          mPrefilteredEnvTexture(std::move(other.mPrefilteredEnvTexture)),
+                                                          mBRDFLutTexture(std::move(other.mBRDFLutTexture))
     {
     }
 
@@ -21,10 +21,10 @@ namespace kailux
         if (this != &other)
         {
             GraphicsPass::operator=(std::move(other));
-            m_Texture = std::move(other.m_Texture);
-            m_IrradianceMapTexture = std::move(other.m_IrradianceMapTexture);
-            m_PrefilteredEnvTexture = std::move(other.m_PrefilteredEnvTexture);
-            m_BRDFLutTexture = std::move(other.m_BRDFLutTexture);
+            mTexture = std::move(other.mTexture);
+            mIrradianceMapTexture = std::move(other.mIrradianceMapTexture);
+            mPrefilteredEnvTexture = std::move(other.mPrefilteredEnvTexture);
+            mBRDFLutTexture = std::move(other.mBRDFLutTexture);
         }
         return *this;
     }
@@ -32,13 +32,13 @@ namespace kailux
     SkyboxPass SkyboxPass::create(const Context &context, const Swapchain &swapchain, uint32_t maxFrames)
     {
         SkyboxPass pass;
-        pass.createDescriptorLayout(context, s_DescriptorLayoutBindings);
-        pass.createDescriptorPool(context, maxFrames, s_DescriptorPoolSizes);
+        pass.createDescriptorLayout(context, kDescriptorLayoutBindings);
+        pass.createDescriptorPool(context, maxFrames, kDescriptorPoolSizes);
         pass.createPipeline(
             context,
             swapchain,
-            s_VertexShaderPath,
-            s_FragmentShaderPath,
+            kVertexShaderPath,
+            kFragmentShaderPath,
             make_pipeline_info(swapchain, context.getMaxUsableSampleCount()),
             {}
             );
@@ -51,22 +51,22 @@ namespace kailux
 
     const Texture &SkyboxPass::getTexture() const
     {
-        return m_Texture;
+        return mTexture;
     }
 
     const Texture & SkyboxPass::getIrradianceMapTexture() const
     {
-        return m_IrradianceMapTexture;
+        return mIrradianceMapTexture;
     }
 
     const Texture & SkyboxPass::getPrefilteredEnvTexture() const
     {
-        return m_PrefilteredEnvTexture;
+        return mPrefilteredEnvTexture;
     }
 
     const Texture & SkyboxPass::getBRDFLutTexture() const
     {
-        return m_BRDFLutTexture;
+        return mBRDFLutTexture;
     }
 
     PipelineInfo SkyboxPass::make_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits samples)
@@ -125,7 +125,7 @@ namespace kailux
     {
         std::array<ImageLoader::ImageData, 6> faces;
         int i = 0;
-        for (auto path: s_SkyboxTexturePaths)
+        for (auto path: kSkyboxTexturePaths)
         {
             auto result = ImageLoader::load_image(path);
             if (!result)
@@ -133,14 +133,14 @@ namespace kailux
             faces[i++] = *result;
         }
 
-        m_Texture = TextureAllocator::create_cubemap(context, faces);
+        mTexture = TextureAllocator::create_cubemap(context, faces);
     }
 
     void SkyboxPass::createIrradianceTexture(const Context &context)
     {
         std::array<ImageLoader::ImageData, 6> faces;
         int i = 0;
-        for (auto path: s_IrradianceTexturePaths)
+        for (auto path: kIrradianceTexturePaths)
         {
             auto result = ImageLoader::load_image(path);
             if (!result)
@@ -148,7 +148,7 @@ namespace kailux
             faces[i++] = *result;
         }
 
-        m_IrradianceMapTexture = TextureAllocator::create_cubemap(context, faces);
+        mIrradianceMapTexture = TextureAllocator::create_cubemap(context, faces);
     }
 
     void SkyboxPass::createPrefilteredEnvTexture(const Context &context)
@@ -157,12 +157,12 @@ namespace kailux
             "px", "nx", "py", "ny", "pz", "nz"
         };
 
-        std::vector<std::array<ImageLoader::ImageData, 6>> mips(s_PrefilteredMipLevels);
+        std::vector<std::array<ImageLoader::ImageData, 6>> mips(kPrefilteredMipLevels);
 
-        for (uint32_t mip = 0; mip < s_PrefilteredMipLevels; mip++)
+        for (uint32_t mip = 0; mip < kPrefilteredMipLevels; mip++)
             for (uint32_t face = 0; face < 6; face++)
             {
-                auto path = std::string(s_PrefilteredBasePath)
+                auto path = std::string(kPrefilteredBasePath)
                                  + std::to_string(mip)
                                  + "_"
                                  + std::string(faceNames[face])
@@ -175,12 +175,12 @@ namespace kailux
                 mips[mip][face] = std::move(*result);
             }
 
-        m_PrefilteredEnvTexture = TextureAllocator::create_cubemap_with_mips(context, mips);
+        mPrefilteredEnvTexture = TextureAllocator::create_cubemap_with_mips(context, mips);
     }
 
     void SkyboxPass::createBRDFLutTexture(const Context &context)
     {
-        if (auto data = ImageLoader::load_image(s_BRDFLutPath))
-            m_BRDFLutTexture = TextureAllocator::create_from_image_data(context, *data);
+        if (auto data = ImageLoader::load_image(kBRDFLutPath))
+            mBRDFLutTexture = TextureAllocator::create_from_image_data(context, *data);
     }
 }

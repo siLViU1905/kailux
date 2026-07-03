@@ -2,11 +2,11 @@
 
 namespace kailux
 {
-    DescriptorPool::DescriptorPool() : m_Pool({})
+    DescriptorPool::DescriptorPool() : mPool({})
     {
     }
 
-    DescriptorPool::DescriptorPool(DescriptorPool &&other) noexcept : m_Pool(std::move(other.m_Pool))
+    DescriptorPool::DescriptorPool(DescriptorPool &&other) noexcept : mPool(std::move(other.mPool))
     {
     }
 
@@ -14,7 +14,7 @@ namespace kailux
     {
         if (this != &other)
         {
-            m_Pool = std::move(other.m_Pool);
+            mPool = std::move(other.mPool);
         }
         return *this;
     }
@@ -29,7 +29,7 @@ namespace kailux
 
     vk::DescriptorPool DescriptorPool::getPool() const
     {
-        return *m_Pool;
+        return *mPool;
     }
 
     void DescriptorPool::createPool(const Context &context, uint32_t sets, std::span<const DescriptorPoolSize> sizes)
@@ -44,6 +44,6 @@ namespace kailux
             sets,
             poolSizes
         );
-        m_Pool = vk::raii::DescriptorPool(context.m_Device, createInfo);
+        mPool = vk::raii::DescriptorPool(context.mDevice, createInfo);
     }
 }

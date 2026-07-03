@@ -10,7 +10,7 @@ namespace kailux
     {
     }
 
-    EditorLayer::EditorLayer(EditorLayer &&other) noexcept : m_Layer(std::move(other.m_Layer))
+    EditorLayer::EditorLayer(EditorLayer &&other) noexcept : mLayer(std::move(other.mLayer))
     {
     }
 
@@ -18,7 +18,7 @@ namespace kailux
     {
         if (this != &other)
         {
-            m_Layer = std::move(other.m_Layer);
+            mLayer = std::move(other.mLayer);
         }
         return *this;
     }
@@ -54,20 +54,20 @@ namespace kailux
 
         ImGui::End();
 
-        m_Layer.render(scene);
+        mLayer.render(scene);
     }
 
     void EditorLayer::update()
     {
-        m_Layer.getPanel<ProjectPanel>().useFullWidth(!m_Layer.getPanel<EntityEditorPanel>().isOpen());
+        mLayer.getPanel<ProjectPanel>().useFullWidth(!mLayer.getPanel<EntityEditorPanel>().isOpen());
 
-        bool isSimulationRunning = m_Layer.getPanel<ViewportPanel>().getSimulationState() != SimulationState::Paused;
-        m_Layer.getPanel<EntityEditorPanel>().setSimulationState(isSimulationRunning);
+        bool isSimulationRunning = mLayer.getPanel<ViewportPanel>().getSimulationState() != SimulationState::Paused;
+        mLayer.getPanel<EntityEditorPanel>().setSimulationState(isSimulationRunning);
     }
 
     void EditorLayer::addPanels(ImTextureID directoryTextureId, ImTextureID fileTextureId)
     {
-        auto &panels = m_Layer.getPanels();
+        auto &panels = mLayer.getPanels();
         std::get<ViewportPanel>(panels) = {};
         std::get<MenuPanel>(panels) = {};
         auto &hierarchyPanel = std::get<HierarchyPanel>(panels) = {

@@ -35,16 +35,16 @@ namespace kailux
 
         using Path = std::filesystem::path;
 
-        Path     m_CurrentPath;
+        Path     mCurrentPath;
 
-        OnImport m_OnImportFiles;
-        OnImport m_OnImportFolder;
+        OnImport mOnImportFiles;
+        OnImport mOnImportFolder;
 
-        ImTextureID m_DirectoryTextureId;
-        ImTextureID m_FileTextureId;
+        ImTextureID mDirectoryTextureId;
+        ImTextureID mFileTextureId;
 
-        Path                  m_ItemToRenamePath;
-        std::array<char, 65>  m_RenameBuffer;
-        bool                  m_IsRenaming;
+        Path                  mItemToRenamePath;
+        std::array<char, 65>  mRenameBuffer;
+        bool                  mIsRenaming;
     };
 }

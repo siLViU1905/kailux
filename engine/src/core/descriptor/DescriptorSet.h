@@ -50,6 +50,6 @@ namespace kailux
         void createSet(const Context &context, const DescriptorLayout &layout, const DescriptorPool &pool,
                        std::span<const DescriptorSetInfo> infos);
 
-        vk::raii::DescriptorSet m_Set;
+        vk::raii::DescriptorSet mSet;
     };
 }

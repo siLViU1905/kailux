@@ -11,12 +11,12 @@ namespace kailux
         using Task = std::move_only_function<void()>;
         void enqueue(Task&& task)
         {
-            m_Tasks.emplace_back(std::move(task), Delay);
+            mTasks.emplace_back(std::move(task), Delay);
         }
 
         void tick()
         {
-            std::erase_if(m_Tasks, [](auto &pending)
+            std::erase_if(mTasks, [](auto &pending)
             {
                 --pending.remainingFrames;
                 if (pending.remainingFrames == 0)
@@ -35,6 +35,6 @@ namespace kailux
             uint32_t remainingFrames{Delay};
         };
 
-        std::vector<PendingTask> m_Tasks;
+        std::vector<PendingTask> mTasks;
     };
 }

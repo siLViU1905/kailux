@@ -41,7 +41,7 @@ namespace kailux
     class TextureRegistry
     {
     public:
-        static constexpr std::array s_TextureTypes = magic_enum::enum_values<TextureType>();
+        static constexpr std::array kTextureTypes = magic_enum::enum_values<TextureType>();
 
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(TextureRegistry)
 
@@ -78,12 +78,12 @@ namespace kailux
 
         uint32_t acquireSlot();
 
-        TextureSet                   m_DefaultSet;
-        TextureSetHandle             m_DefaultSetHandle;
-        std::vector<TextureSet>      m_TexturePool;
-        std::deque<uint32_t>         m_FreeSlots;
+        TextureSet                   mDefaultSet;
+        TextureSetHandle             mDefaultSetHandle;
+        std::vector<TextureSet>      mTexturePool;
+        std::deque<uint32_t>         mFreeSlots;
 
-        Texture                      m_AssetBrowserDirectoryTexture;
-        Texture                      m_AssetBrowserFileTexture;
+        Texture                      mAssetBrowserDirectoryTexture;
+        Texture                      mAssetBrowserFileTexture;
     };
 }

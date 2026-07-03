@@ -7,19 +7,19 @@ namespace kailux
     class Layer
     {
     public:
-        Layer() : m_Panels(create_scoped<std::tuple<Panels...>>())
+        Layer() : mPanels(create_scoped<std::tuple<Panels...>>())
         {
         }
         Layer(const Layer&) = delete;
         Layer& operator=(const Layer&) = delete;
-        Layer(Layer&& other) noexcept : m_Panels(std::move(other.m_Panels))
+        Layer(Layer&& other) noexcept : mPanels(std::move(other.mPanels))
         {
         }
         Layer& operator=(Layer&& other) noexcept
         {
             if (this != &other)
             {
-                m_Panels = std::move(other.m_Panels);
+                mPanels = std::move(other.mPanels);
             }
             return *this;
         }
@@ -30,25 +30,25 @@ namespace kailux
             std::apply([&scene](auto&&... panel)
             {
                 (panel.render(scene), ...);
-            }, *m_Panels);
+            }, *mPanels);
         }
 
-        auto       &getPanels() {return *m_Panels;}
-        const auto &getPanels() const {return *m_Panels;}
+        auto       &getPanels() {return *mPanels;}
+        const auto &getPanels() const {return *mPanels;}
 
         template<typename _Panel>
         auto& getPanel()
         {
-            return std::get<_Panel>(*m_Panels);
+            return std::get<_Panel>(*mPanels);
         }
 
         template<typename _Panel>
         const auto& getPanel() const
         {
-            return std::get<_Panel>(*m_Panels);
+            return std::get<_Panel>(*mPanels);
         }
 
     private:
-        Scoped<std::tuple<Panels...>> m_Panels;
+        Scoped<std::tuple<Panels...>> mPanels;
     };
 }

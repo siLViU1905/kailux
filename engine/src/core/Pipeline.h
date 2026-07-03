@@ -86,7 +86,7 @@ namespace kailux
         void createGraphicsPipeline(const Context &context, const Swapchain& swapchain, const ShaderModules& shaderModules, const PipelineInfo& info);
         void createComputePipeline(const Context &context, const vk::raii::ShaderModule& shaderModule);
 
-        vk::raii::PipelineLayout m_Layout;
-        vk::raii::Pipeline       m_Pipeline;
+        vk::raii::PipelineLayout mLayout;
+        vk::raii::Pipeline       mPipeline;
     };
 }

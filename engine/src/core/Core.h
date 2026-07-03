@@ -41,11 +41,11 @@ namespace kailux
 {
     struct Handle
     {
-        static constexpr uint32_t s_InvalidIndex = ~0u;
+        static constexpr uint32_t kInvalidIndex = ~0u;
 
-        uint32_t index = s_InvalidIndex;
+        uint32_t index = kInvalidIndex;
 
-        constexpr bool valid() const { return index != s_InvalidIndex; }
+        constexpr bool valid() const { return index != kInvalidIndex; }
     };
 }
 

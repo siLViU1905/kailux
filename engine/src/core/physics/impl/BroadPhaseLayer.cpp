@@ -4,18 +4,18 @@ namespace kailux::impl
 {
     BroadPhaseLayer::BroadPhaseLayer()
     {
-        m_ObjectToBroadPhase[layers::s_NonMoving] = broad_phase_layers::s_NonMoving;
-        m_ObjectToBroadPhase[layers::s_Moving] = broad_phase_layers::s_Moving;
+        mObjectToBroadPhase[layers::kNonMoving] = broad_phase_layers::kNonMoving;
+        mObjectToBroadPhase[layers::kMoving] = broad_phase_layers::kMoving;
     }
 
     JPH::uint BroadPhaseLayer::GetNumBroadPhaseLayers() const
     {
-        return broad_phase_layers::s_LayersCount;
+        return broad_phase_layers::kLayersCount;
     }
 
     JPH::BroadPhaseLayer BroadPhaseLayer::GetBroadPhaseLayer(JPH::ObjectLayer inLayer) const
     {
-        return m_ObjectToBroadPhase[inLayer];
+        return mObjectToBroadPhase[inLayer];
     }
 
 #if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
@@ -23,9 +23,9 @@ namespace kailux::impl
     {
         switch (inLayer)
         {
-            case broad_phase_layers::s_NonMoving:
+            case broad_phase_layers::kNonMoving:
                 return "NON_MOVING";
-            case broad_phase_layers::s_Moving:
+            case broad_phase_layers::kMoving:
                 return "MOVING";
             default:
                 return "UNKNOWN";

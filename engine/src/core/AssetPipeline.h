@@ -64,19 +64,19 @@ namespace kailux
 
         void cacheMesh(std::string_view path, MeshHandle meshHandle, TextureSetHandle materialHandle);
 
-        std::array<DescriptorSetUpdateInfo, TextureRegistry::s_TextureTypes.size()>
+        std::array<DescriptorSetUpdateInfo, TextureRegistry::kTextureTypes.size()>
         makeDescriptorSetUpdateInfo(TextureSetHandle slotToOverwrite, const TextureSet &replacementSet);
 
-        std::reference_wrapper<Context>         m_Context;
-        std::reference_wrapper<MeshRegistry>    m_MeshRegistry;
-        std::reference_wrapper<TextureRegistry> m_TextureRegistry;
-        std::reference_wrapper<TransferManager> m_TransferManager;
-        std::reference_wrapper<Scene>           m_Scene;
-        std::span<FrameData>                    m_Frames;
+        std::reference_wrapper<Context>         mContext;
+        std::reference_wrapper<MeshRegistry>    mMeshRegistry;
+        std::reference_wrapper<TextureRegistry> mTextureRegistry;
+        std::reference_wrapper<TransferManager> mTransferManager;
+        std::reference_wrapper<Scene>           mScene;
+        std::span<FrameData>                    mFrames;
 
-        Queue<PendingMeshData>                     m_PendingMeshData;
-        std::unordered_map<std::string, MeshCache> m_MeshCache;
+        Queue<PendingMeshData>                     mPendingMeshData;
+        std::unordered_map<std::string, MeshCache> mMeshCache;
 
-        OnLog m_OnInfoLog;
+        OnLog mOnInfoLog;
     };
 }

@@ -68,14 +68,14 @@ namespace kailux
         void update(float deltaTime);
 
     private:
-        static constexpr uint32_t s_AllocatorSize = 10 * 1024 * 1024;
+        static constexpr uint32_t kAllocatorSize = 10 * 1024 * 1024;
 
-        static constexpr uint32_t s_MaxBodies = 65536;
-        static constexpr uint32_t s_NumBodyMutexes = 0;
-        static constexpr uint32_t s_MaxBodyPairs = 65536;
-        static constexpr uint32_t s_MaxContactConstraints = 10240;
+        static constexpr uint32_t kMaxBodies = 65536;
+        static constexpr uint32_t kNumBodyMutexes = 0;
+        static constexpr uint32_t kMaxBodyPairs = 65536;
+        static constexpr uint32_t kMaxContactConstraints = 10240;
 
-        static constexpr uint32_t s_CollisionSteps = 1;
+        static constexpr uint32_t kCollisionSteps = 1;
 
         static uint32_t pick_thread_count(uint32_t freeThreads);
 
@@ -86,14 +86,14 @@ namespace kailux
         static JPH::ShapeRefC create_builtin_mesh_body(MeshType type, const MeshTransformData &transform);
         static JPH::ShapeRefC create_loaded_mesh_body(const PhysicsBodyInfo &info);
 
-        Scoped<JPH::TempAllocatorImpl>              m_Allocator;
-        Scoped<JPH::JobSystemThreadPool>            m_JobSystem;
-        Scoped<impl::BroadPhaseLayer>               m_BroadPhaseLayer;
-        Scoped<impl::ObjectVsBroadPhaseLayerFilter> m_ObjectVsBroadPhaseLayer;
-        Scoped<impl::ObjectLayerPairFilter>         m_ObjectPairFilter;
-        Scoped<JPH::PhysicsSystem>                  m_PhysicsSystem;
+        Scoped<JPH::TempAllocatorImpl>              mAllocator;
+        Scoped<JPH::JobSystemThreadPool>            mJobSystem;
+        Scoped<impl::BroadPhaseLayer>               mBroadPhaseLayer;
+        Scoped<impl::ObjectVsBroadPhaseLayerFilter> mObjectVsBroadPhaseLayer;
+        Scoped<impl::ObjectLayerPairFilter>         mObjectPairFilter;
+        Scoped<JPH::PhysicsSystem>                  mPhysicsSystem;
 
-        std::vector<JPH::BodyID> m_BodyIds;
-        std::deque<uint32_t>     m_FreeSlots;
+        std::vector<JPH::BodyID> mBodyIds;
+        std::deque<uint32_t>     mFreeSlots;
     };
 }

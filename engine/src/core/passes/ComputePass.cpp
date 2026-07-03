@@ -6,9 +6,9 @@ namespace kailux
     {
     }
 
-    ComputePass::ComputePass(ComputePass &&other) noexcept : m_DescriptorLayout(std::move(other.m_DescriptorLayout)),
-                                                             m_DescriptorPool(std::move(other.m_DescriptorPool)),
-                                                             m_Pipeline(std::move(other.m_Pipeline))
+    ComputePass::ComputePass(ComputePass &&other) noexcept : mDescriptorLayout(std::move(other.mDescriptorLayout)),
+                                                             mDescriptorPool(std::move(other.mDescriptorPool)),
+                                                             mPipeline(std::move(other.mPipeline))
 
     {
     }
@@ -17,16 +17,16 @@ namespace kailux
     {
         if (this != &other)
         {
-            m_DescriptorLayout = std::move(other.m_DescriptorLayout);
-            m_DescriptorPool = std::move(other.m_DescriptorPool);
-            m_Pipeline = std::move(other.m_Pipeline);
+            mDescriptorLayout = std::move(other.mDescriptorLayout);
+            mDescriptorPool = std::move(other.mDescriptorPool);
+            mPipeline = std::move(other.mPipeline);
         }
         return *this;
     }
 
     void ComputePass::bind(vk::CommandBuffer cmd) const
     {
-        m_Pipeline.bindCompute(cmd);
+        mPipeline.bindCompute(cmd);
     }
 
     void ComputePass::execute(vk::CommandBuffer cmd, ComputeWorkgroup group) const
@@ -36,37 +36,37 @@ namespace kailux
 
     const DescriptorLayout &ComputePass::getDescriptorLayout() const
     {
-        return m_DescriptorLayout;
+        return mDescriptorLayout;
     }
 
     const DescriptorPool &ComputePass::getDescriptorPool() const
     {
-        return m_DescriptorPool;
+        return mDescriptorPool;
     }
 
     const Pipeline &ComputePass::getPipeline() const
     {
-        return m_Pipeline;
+        return mPipeline;
     }
 
     void ComputePass::createDescriptorLayout(const Context &context, std::span<const DescriptorLayoutBinding> bindings)
     {
-        m_DescriptorLayout = DescriptorLayout::create(context, bindings);
+        mDescriptorLayout = DescriptorLayout::create(context, bindings);
     }
 
     void ComputePass::createDescriptorPool(const Context &context, uint32_t frameCount,
                                            std::span<const DescriptorPoolSize> sizes)
     {
-        m_DescriptorPool = DescriptorPool::create(context, frameCount, sizes);
+        mDescriptorPool = DescriptorPool::create(context, frameCount, sizes);
     }
 
     void ComputePass::createPipeline(const Context &context,
                                      const ComputeShaderInfo &info,
                                      std::span<const PushConstantRangeInfo> pushConstantRanges)
     {
-        m_Pipeline = Pipeline::createCompute(
+        mPipeline = Pipeline::createCompute(
             context,
-            m_DescriptorLayout,
+            mDescriptorLayout,
             info,
             pushConstantRanges
         );

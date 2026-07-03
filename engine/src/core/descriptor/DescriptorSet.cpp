@@ -6,11 +6,11 @@
 
 namespace kailux
 {
-    DescriptorSet::DescriptorSet() : m_Set({})
+    DescriptorSet::DescriptorSet() : mSet({})
     {
     }
 
-    DescriptorSet::DescriptorSet(DescriptorSet &&other) noexcept : m_Set(std::move(other.m_Set))
+    DescriptorSet::DescriptorSet(DescriptorSet &&other) noexcept : mSet(std::move(other.mSet))
     {
     }
 
@@ -18,7 +18,7 @@ namespace kailux
     {
         if (this != &other)
         {
-            m_Set = std::move(other.m_Set);
+            mSet = std::move(other.mSet);
         }
         return *this;
     }
@@ -38,12 +38,12 @@ namespace kailux
 
     vk::DescriptorSet DescriptorSet::getDescriptorSet() const
     {
-        return *m_Set;
+        return *mSet;
     }
 
     void DescriptorSet::bind(const Pipeline &pipeline, vk::CommandBuffer cmd, vk::PipelineBindPoint bindPoint) const
     {
-        cmd.bindDescriptorSets(bindPoint, pipeline.getLayout(), 0, *m_Set, {});
+        cmd.bindDescriptorSets(bindPoint, pipeline.getLayout(), 0, *mSet, {});
     }
 
     void DescriptorSet::updateInfo(const Context &context, std::span<const DescriptorSetUpdateInfo> updateInfos) const
@@ -70,7 +70,7 @@ namespace kailux
                         );
 
                         descriptorWrites.emplace_back(
-                            *m_Set,
+                            *mSet,
                             update.binding,
                             update.arrayIndex,
                             bufferInfo.count,
@@ -88,7 +88,7 @@ namespace kailux
                         );
 
                         descriptorWrites.emplace_back(
-                            *m_Set,
+                            *mSet,
                             update.binding,
                             update.arrayIndex,
                             imageInfo.count,
@@ -101,7 +101,7 @@ namespace kailux
                 update.info
             );
         }
-        context.m_Device.updateDescriptorSets(descriptorWrites, {});
+        context.mDevice.updateDescriptorSets(descriptorWrites, {});
     }
 
     void DescriptorSet::createSet(const Context &context, const DescriptorLayout &layout, const DescriptorPool &pool,
@@ -113,7 +113,7 @@ namespace kailux
             1,
             &layoutHandle
         );
-        m_Set = std::move(context.m_Device.allocateDescriptorSets(allocInfo).front());
+        mSet = std::move(context.mDevice.allocateDescriptorSets(allocInfo).front());
 
         std::vector<vk::WriteDescriptorSet> descriptorWrites;
 
@@ -152,7 +152,7 @@ namespace kailux
                             bufferInfos.emplace_back(bufferInfo.buffer, 0, bufferInfo.size);
 
                         descriptorWrites.emplace_back(
-                            *m_Set,
+                            *mSet,
                             i,
                             0,
                             bufferInfo.count,
@@ -168,7 +168,7 @@ namespace kailux
                             imageInfos.emplace_back(imageInfo.sampler, imageInfo.view, imageInfo.layout);
 
                         descriptorWrites.emplace_back(
-                            *m_Set,
+                            *mSet,
                             i,
                             0,
                             imageInfo.count,
@@ -180,6 +180,6 @@ namespace kailux
                 }, infos[i]);
         }
 
-        context.m_Device.updateDescriptorSets(descriptorWrites, {});
+        context.mDevice.updateDescriptorSets(descriptorWrites, {});
     }
 }

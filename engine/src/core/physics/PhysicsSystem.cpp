@@ -9,25 +9,25 @@
 namespace kailux
 {
     PhysicsSystem::PhysicsSystem(Scene& scene, PhysicsRegistry& physicsRegistry)
-        : m_Scene(scene)
-        , m_PhysicsRegistry(physicsRegistry)
+        : mScene(scene)
+        , mPhysicsRegistry(physicsRegistry)
     {
     }
 
     void PhysicsSystem::setOnWarningLog(OnLog&& callback)
     {
-        m_OnWarningLog = std::move(callback);
+        mOnWarningLog = std::move(callback);
     }
 
     SimulationState PhysicsSystem::getSimulationState() const
     {
-        return m_SimulationState;
+        return mSimulationState;
     }
 
     void PhysicsSystem::setSimulationState(SimulationState state)
     {
-        m_SimulationState = state;
-        if (m_SimulationState == SimulationState::Running)
+        mSimulationState = state;
+        if (mSimulationState == SimulationState::Running)
             onSimulationStart();
     }
 
@@ -35,27 +35,27 @@ namespace kailux
     {
         updateControls();
         updateTransforms();
-        m_PhysicsRegistry.get().update(deltaTime);
+        mPhysicsRegistry.get().update(deltaTime);
     }
 
     void PhysicsSystem::updateBodyType(BodyHandle handle, PhysicsBodyType type)
     {
-        m_PhysicsRegistry.get().setBodyType(handle, type);
+        mPhysicsRegistry.get().setBodyType(handle, type);
     }
 
     void PhysicsSystem::updateBodyScale(BodyHandle handle, const glm::vec3& scale)
     {
-        m_PhysicsRegistry.get().updateBodyScale(handle, scale);
+        mPhysicsRegistry.get().updateBodyScale(handle, scale);
     }
 
     BodyHandle PhysicsSystem::uploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo& data)
     {
-        return m_PhysicsRegistry.get().createBody(data);
+        return mPhysicsRegistry.get().createBody(data);
     }
 
     void PhysicsSystem::onSimulationStart()
     {
-        auto& registry = m_Scene.get().getEntityRegistry();
+        auto& registry = mScene.get().getEntityRegistry();
         auto view = registry.view<TransformComponent, PhysicsComponent>();
 
         for (auto entity : view)
@@ -63,20 +63,20 @@ namespace kailux
             const auto& transformComp = view.get<TransformComponent>(entity);
             const auto& physicsComp = view.get<PhysicsComponent>(entity);
 
-            m_PhysicsRegistry.get().setBodyTransform(
+            mPhysicsRegistry.get().setBodyTransform(
                 physicsComp.handle,
                 transformComp.transform.position,
                 transformComp.transform.rotation
             );
 
             if (physicsComp.isDynamic())
-                m_PhysicsRegistry.get().setLinearVelocity(physicsComp.handle, glm::vec3(0.f));
+                mPhysicsRegistry.get().setLinearVelocity(physicsComp.handle, glm::vec3(0.f));
         }
     }
 
     void PhysicsSystem::updateControls()
     {
-        auto& registry = m_Scene.get().getEntityRegistry();
+        auto& registry = mScene.get().getEntityRegistry();
         auto view = registry.view<PhysicsComponent, PhysicsControlComponent>();
 
         for (auto entity : view)
@@ -84,19 +84,19 @@ namespace kailux
             auto phys = view.get<PhysicsComponent>(entity);
             auto& control = view.get<PhysicsControlComponent>(entity);
 
-            control.velocity = m_PhysicsRegistry.get().getLinearVelocity(phys.handle);
+            control.velocity = mPhysicsRegistry.get().getLinearVelocity(phys.handle);
 
             if (control.applyForce)
-                m_PhysicsRegistry.get().addForce(phys.handle, control.force);
+                mPhysicsRegistry.get().addForce(phys.handle, control.force);
 
             if (control.applyImpulse)
-                m_PhysicsRegistry.get().addImpulse(phys.handle, control.impulse);
+                mPhysicsRegistry.get().addImpulse(phys.handle, control.impulse);
         }
     }
 
     void PhysicsSystem::updateTransforms()
     {
-        auto& registry = m_Scene.get().getEntityRegistry();
+        auto& registry = mScene.get().getEntityRegistry();
         auto view = registry.view<TransformComponent, PhysicsComponent>();
 
         for (auto entity : view)
@@ -106,7 +106,7 @@ namespace kailux
 
             if (physics.isDynamic())
             {
-                m_PhysicsRegistry.get().getBodyTransform(
+                mPhysicsRegistry.get().getBodyTransform(
                     physics.handle,
                     transformComp.transform.position,
                     transformComp.transform.rotation
@@ -119,7 +119,7 @@ namespace kailux
 
     void PhysicsSystem::addPhysicsToEntity(entt::entity entity, PhysicsCreationOptions options)
     {
-        auto& reg = m_Scene.get().getEntityRegistry();
+        auto& reg = mScene.get().getEntityRegistry();
 
         const auto& transform = reg.get<TransformComponent>(entity).transform;
 
@@ -155,7 +155,7 @@ namespace kailux
         }
         else
         {
-            m_OnWarningLog("Cannot add physics: entity has neither cached physics data nor a mesh component");
+            mOnWarningLog("Cannot add physics: entity has neither cached physics data nor a mesh component");
             return;
         }
 

@@ -25,6 +25,6 @@ namespace kailux
     private:
         void createLayout(const Context &context, std::span<const DescriptorLayoutBinding> bindings);
 
-        vk::raii::DescriptorSetLayout m_Layout;
+        vk::raii::DescriptorSetLayout mLayout;
     };
 }

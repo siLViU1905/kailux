@@ -78,6 +78,6 @@ namespace kailux
             OnComplete &&onComplete
             );
 
-        std::vector<PendingTransfer> m_Pending;
+        std::vector<PendingTransfer> mPending;
     };
 }

@@ -25,7 +25,7 @@ namespace kailux
             else if constexpr (severity == LogSeverity::Error)
                 formatedMessage = std::format("[{}]: {}", magic_enum::enum_name(severity), message);
 
-            m_Logs.emplace_back(std::move(formatedMessage), severity);
+            mLogs.emplace_back(std::move(formatedMessage), severity);
         }
 
         void render();
@@ -45,6 +45,6 @@ namespace kailux
             LogSeverity severity;
         };
 
-        std::vector<Log> m_Logs;
+        std::vector<Log> mLogs;
     };
 }

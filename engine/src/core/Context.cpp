@@ -8,21 +8,21 @@
 
 namespace kailux
 {
-    Context::Context() : m_Context({}), m_Instance({}), m_DebugMessenger({}), m_PhysicalDevice({}), m_Device({}),
-                         m_GraphicsQueue({}), m_TransferQueue({}), m_Surface({}), m_GraphicsQueueFamilyIndex(~0), m_TransferQueueFamilyIndex(~0)
+    Context::Context() : mContext({}), mInstance({}), mDebugMessenger({}), mPhysicalDevice({}), mDevice({}),
+                         mGraphicsQueue({}), mTransferQueue({}), mSurface({}), mGraphicsQueueFamilyIndex(~0), mTransferQueueFamilyIndex(~0)
     {
     }
 
-    Context::Context(Context &&other) noexcept : m_Context(std::move(other.m_Context)),
-                                                 m_Instance(std::move(other.m_Instance)),
-                                                 m_DebugMessenger(std::move(other.m_DebugMessenger)),
-                                                 m_PhysicalDevice(std::move(other.m_PhysicalDevice)),
-                                                 m_Device(std::move(other.m_Device)),
-                                                 m_GraphicsQueue(std::move(other.m_GraphicsQueue)),
-                                                 m_TransferQueue(std::move(other.m_TransferQueue)),
-                                                 m_Surface(std::move(other.m_Surface)),
-                                                 m_GraphicsQueueFamilyIndex(other.m_GraphicsQueueFamilyIndex),
-                                                 m_TransferQueueFamilyIndex(other.m_TransferQueueFamilyIndex)
+    Context::Context(Context &&other) noexcept : mContext(std::move(other.mContext)),
+                                                 mInstance(std::move(other.mInstance)),
+                                                 mDebugMessenger(std::move(other.mDebugMessenger)),
+                                                 mPhysicalDevice(std::move(other.mPhysicalDevice)),
+                                                 mDevice(std::move(other.mDevice)),
+                                                 mGraphicsQueue(std::move(other.mGraphicsQueue)),
+                                                 mTransferQueue(std::move(other.mTransferQueue)),
+                                                 mSurface(std::move(other.mSurface)),
+                                                 mGraphicsQueueFamilyIndex(other.mGraphicsQueueFamilyIndex),
+                                                 mTransferQueueFamilyIndex(other.mTransferQueueFamilyIndex)
     {
     }
 
@@ -30,16 +30,16 @@ namespace kailux
     {
         if (this != &other)
         {
-            m_Context = std::move(other.m_Context);
-            m_Instance = std::move(other.m_Instance);
-            m_DebugMessenger = std::move(other.m_DebugMessenger);
-            m_PhysicalDevice = std::move(other.m_PhysicalDevice);
-            m_Device = std::move(other.m_Device);
-            m_GraphicsQueue = std::move(other.m_GraphicsQueue);
-            m_TransferQueue = std::move(other.m_TransferQueue);
-            m_Surface = std::move(other.m_Surface);
-            m_GraphicsQueueFamilyIndex = other.m_GraphicsQueueFamilyIndex;
-            m_TransferQueueFamilyIndex = other.m_TransferQueueFamilyIndex;
+            mContext = std::move(other.mContext);
+            mInstance = std::move(other.mInstance);
+            mDebugMessenger = std::move(other.mDebugMessenger);
+            mPhysicalDevice = std::move(other.mPhysicalDevice);
+            mDevice = std::move(other.mDevice);
+            mGraphicsQueue = std::move(other.mGraphicsQueue);
+            mTransferQueue = std::move(other.mTransferQueue);
+            mSurface = std::move(other.mSurface);
+            mGraphicsQueueFamilyIndex = other.mGraphicsQueueFamilyIndex;
+            mTransferQueueFamilyIndex = other.mTransferQueueFamilyIndex;
         }
         return *this;
     }
@@ -68,49 +68,49 @@ namespace kailux
         KAILUX_LOG_CHILD_CLR_YELLOW("Queues created")
 
         KAILUX_LOG_CHILD_CLR_YELLOW(std::format("Transfer queue: dedicated={}, family={}",
-            context.hasDedicatedTransferQueue(), context.m_TransferQueueFamilyIndex))
+            context.hasDedicatedTransferQueue(), context.mTransferQueueFamilyIndex))
 
         return context;
     }
 
     vk::PhysicalDevice Context::getPhysicalDevice() const
     {
-        return *m_PhysicalDevice;
+        return *mPhysicalDevice;
     }
 
     vk::Device Context::getDevice() const
     {
-        return *m_Device;
+        return *mDevice;
     }
 
     vk::SurfaceKHR Context::getSurface() const
     {
-        return *m_Surface;
+        return *mSurface;
     }
 
     vk::Queue Context::getGraphicsQueue() const
     {
-        return *m_GraphicsQueue;
+        return *mGraphicsQueue;
     }
 
     vk::Queue Context::getTransferQueue() const
     {
-        return *m_TransferQueue;
+        return *mTransferQueue;
     }
 
     uint32_t Context::getGraphicsQueueFamilyIndex() const
     {
-        return m_GraphicsQueueFamilyIndex;
+        return mGraphicsQueueFamilyIndex;
     }
 
     uint32_t Context::getTransferQueueFamilyIndex() const
     {
-        return m_TransferQueueFamilyIndex;
+        return mTransferQueueFamilyIndex;
     }
 
     uint32_t Context::findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const
     {
-        auto memProperties = m_PhysicalDevice.getMemoryProperties();
+        auto memProperties = mPhysicalDevice.getMemoryProperties();
 
         for (uint32_t i = 0; i < memProperties.memoryTypeCount; ++i)
             if ((typeFilter & (1 << i)) &&
@@ -122,7 +122,7 @@ namespace kailux
 
     vk::SampleCountFlagBits Context::getMaxUsableSampleCount() const
     {
-        auto props = m_PhysicalDevice.getProperties();
+        auto props = mPhysicalDevice.getProperties();
 
         vk::SampleCountFlags counts = props.limits.framebufferColorSampleCounts &
                                       props.limits.framebufferDepthSampleCounts;
@@ -139,7 +139,7 @@ namespace kailux
 
     bool Context::hasDedicatedTransferQueue() const
     {
-        return m_TransferQueueFamilyIndex != m_GraphicsQueueFamilyIndex;
+        return mTransferQueueFamilyIndex != mGraphicsQueueFamilyIndex;
     }
 
     std::vector<const char *> Context::get_required_extensions()
@@ -150,7 +150,7 @@ namespace kailux
 
         std::vector extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-        if (s_EnableValidationLayers)
+        if (kEnableValidationLayers)
             extensions.push_back(vk::EXTDebugUtilsExtensionName);
 
         return extensions;
@@ -178,10 +178,10 @@ namespace kailux
 
         std::vector<const char *> requiredLayers;
 
-        if (s_EnableValidationLayers)
-            requiredLayers.assign(s_ValidationLayers.begin(), s_ValidationLayers.end());
+        if (kEnableValidationLayers)
+            requiredLayers.assign(kValidationLayers.begin(), kValidationLayers.end());
 
-        auto layerProperties = m_Context.enumerateInstanceLayerProperties();
+        auto layerProperties = mContext.enumerateInstanceLayerProperties();
 
         for (auto const &requiredLayer: requiredLayers)
 
@@ -195,7 +195,7 @@ namespace kailux
 
         auto requiredExtensions = get_required_extensions();
 
-        auto extensionProperties = m_Context.enumerateInstanceExtensionProperties();
+        auto extensionProperties = mContext.enumerateInstanceExtensionProperties();
         for (auto const &requiredExtension: requiredExtensions)
             if (std::ranges::none_of(extensionProperties,
                                      [requiredExtension](auto const &extensionProperty)
@@ -213,12 +213,12 @@ namespace kailux
             requiredExtensions.data()
         };
 
-        m_Instance = vk::raii::Instance(m_Context, createInfo);
+        mInstance = vk::raii::Instance(mContext, createInfo);
     }
 
     void Context::setupDebugMessenger()
     {
-        if constexpr (!s_EnableValidationLayers)
+        if constexpr (!kEnableValidationLayers)
             return;
 
         vk::DebugUtilsMessageSeverityFlagsEXT severityFlags(
@@ -236,22 +236,22 @@ namespace kailux
             &debug_callback
         };
 
-        m_DebugMessenger = m_Instance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT);
+        mDebugMessenger = mInstance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT);
     }
 
     void Context::createSurface(Window &window)
     {
         VkSurfaceKHR surface;
 
-        if (glfwCreateWindowSurface(*m_Instance, window.getGLFWWindow(), nullptr, &surface))
+        if (glfwCreateWindowSurface(*mInstance, window.getGLFWWindow(), nullptr, &surface))
             throw std::runtime_error("failed to create window surface");
 
-        m_Surface = vk::raii::SurfaceKHR(m_Instance, surface);
+        mSurface = vk::raii::SurfaceKHR(mInstance, surface);
     }
 
     void Context::pickPhysicalDevice()
     {
-        auto devices = vk::raii::PhysicalDevices(m_Instance);
+        auto devices = vk::raii::PhysicalDevices(mInstance);
 
         if (devices.empty())
             throw std::runtime_error("Failed to find GPUs with Vulkan support");
@@ -271,7 +271,7 @@ namespace kailux
                                                       isSuitable = isSuitable && (qfpIter != queueFamilies.end());
                                                       auto extensions = device.enumerateDeviceExtensionProperties();
                                                       bool found = true;
-                                                      for (auto const &extension: s_DeviceExtensions)
+                                                      for (auto const &extension: kDeviceExtensions)
                                                       {
                                                           auto extensionIter = std::ranges::find_if(
                                                               extensions, [extension](auto const &ext)
@@ -282,7 +282,7 @@ namespace kailux
                                                       }
                                                       isSuitable = isSuitable && found;
                                                       if (isSuitable)
-                                                          m_PhysicalDevice = device;
+                                                          mPhysicalDevice = device;
 
                                                       return isSuitable;
                                                   });
@@ -311,7 +311,7 @@ namespace kailux
         }
 
         if (candidates.rbegin()->first > 0)
-            m_PhysicalDevice = std::move(candidates.rbegin()->second);
+            mPhysicalDevice = std::move(candidates.rbegin()->second);
         else
             throw std::runtime_error("Failed to find a suitable GPU");
     }
@@ -368,18 +368,18 @@ namespace kailux
         std::vector<vk::DeviceQueueCreateInfo> queueInfos;
         float queuePriority{};
 
-        auto qIndex = find_graphics_family(m_PhysicalDevice, m_Surface);
+        auto qIndex = find_graphics_family(mPhysicalDevice, mSurface);
         if (!qIndex)
             throw std::runtime_error("Could not find a queue for graphics and present -> terminating");
 
-        m_GraphicsQueueFamilyIndex = *qIndex;
-        queueInfos.emplace_back(vk::DeviceQueueCreateFlags{}, m_GraphicsQueueFamilyIndex, 1, &queuePriority);
+        mGraphicsQueueFamilyIndex = *qIndex;
+        queueInfos.emplace_back(vk::DeviceQueueCreateFlags{}, mGraphicsQueueFamilyIndex, 1, &queuePriority);
 
-        qIndex = find_transfer_family(m_PhysicalDevice);
+        qIndex = find_transfer_family(mPhysicalDevice);
         if (qIndex)
         {
-            m_TransferQueueFamilyIndex = *qIndex;
-            queueInfos.emplace_back(vk::DeviceQueueCreateFlags{}, m_TransferQueueFamilyIndex, 1, &queuePriority);
+            mTransferQueueFamilyIndex = *qIndex;
+            queueInfos.emplace_back(vk::DeviceQueueCreateFlags{}, mTransferQueueFamilyIndex, 1, &queuePriority);
         }
 
         vk::DeviceCreateInfo deviceCreateInfo{};
@@ -387,20 +387,20 @@ namespace kailux
 
         deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueInfos.size());
         deviceCreateInfo.pQueueCreateInfos = queueInfos.data();
-        deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(s_DeviceExtensions.size());
-        deviceCreateInfo.ppEnabledExtensionNames = s_DeviceExtensions.data();
+        deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(kDeviceExtensions.size());
+        deviceCreateInfo.ppEnabledExtensionNames = kDeviceExtensions.data();
 
-        m_Device = vk::raii::Device(m_PhysicalDevice, deviceCreateInfo);
+        mDevice = vk::raii::Device(mPhysicalDevice, deviceCreateInfo);
     }
 
     void Context::createQueues()
     {
-        m_GraphicsQueue = vk::raii::Queue(m_Device, m_GraphicsQueueFamilyIndex, 0);
+        mGraphicsQueue = vk::raii::Queue(mDevice, mGraphicsQueueFamilyIndex, 0);
 
-        if (m_TransferQueueFamilyIndex == ~0u)
-            m_TransferQueueFamilyIndex = m_GraphicsQueueFamilyIndex;
+        if (mTransferQueueFamilyIndex == ~0u)
+            mTransferQueueFamilyIndex = mGraphicsQueueFamilyIndex;
 
-        m_TransferQueue = vk::raii::Queue(m_Device, m_TransferQueueFamilyIndex, 0);
+        mTransferQueue = vk::raii::Queue(mDevice, mTransferQueueFamilyIndex, 0);
     }
 
     std::optional<uint32_t> Context::find_graphics_family(const vk::raii::PhysicalDevice &device, const vk::raii::SurfaceKHR &surface)
