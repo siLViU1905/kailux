@@ -25,7 +25,8 @@
 
 namespace kailux
 {
-    Engine::Engine() : m_SampleCount(vk::SampleCountFlagBits::e1), m_SimulationState(SimulationState::Paused), m_CurrentFrame(0), m_PickedEntity(~0u)
+    Engine::Engine() : m_SampleCount(vk::SampleCountFlagBits::e1), m_AssetPipeline(m_Context, m_MeshRegistry, m_TextureRegistry, m_TransferManager, m_Scene, m_Frames), m_SimulationState(SimulationState::Paused), m_CurrentFrame(0),
+    m_PickedEntity(~0u)
     {
     }
 
@@ -37,6 +38,7 @@ namespace kailux
                                               m_MeshRegistry(std::move(other.m_MeshRegistry)),
                                               m_TextureRegistry(std::move(other.m_TextureRegistry)),
                                               m_PhysicsRegistry(std::move(other.m_PhysicsRegistry)),
+                                              m_AssetPipeline(std::move(other.m_AssetPipeline)),
                                               m_SimulationState(other.m_SimulationState),
                                               m_Frames(std::move(other.m_Frames)),
                                               m_CurrentFrame(other.m_CurrentFrame),
@@ -48,13 +50,12 @@ namespace kailux
                                               m_ComputePicker(std::move(other.m_ComputePicker)),
                                               m_PickedEntity(other.m_PickedEntity),
                                               m_ComputeCuller(std::move(other.m_ComputeCuller)),
-                                              m_PendingMeshData(std::move(other.m_PendingMeshData)),
-                                              m_MeshCache(std::move(other.m_MeshCache)),
                                               m_PendingFrameTasks(std::move(other.m_PendingFrameTasks)),
                                               m_OnInfoLog(std::move(other.m_OnInfoLog)),
                                               m_OnWarningLog(std::move(other.m_OnWarningLog)),
                                               m_OnErrorLog(std::move(other.m_OnErrorLog))
     {
+        createAssetPipeline();
     }
 
     Engine &Engine::operator=(Engine &&other) noexcept
@@ -69,6 +70,7 @@ namespace kailux
             m_MeshRegistry = std::move(other.m_MeshRegistry);
             m_TextureRegistry = std::move(other.m_TextureRegistry);
             m_PhysicsRegistry = std::move(other.m_PhysicsRegistry);
+            m_AssetPipeline = std::move(other.m_AssetPipeline);
             m_SimulationState = other.m_SimulationState;
             m_Frames = std::move(other.m_Frames);
             m_CurrentFrame = other.m_CurrentFrame;
@@ -80,12 +82,12 @@ namespace kailux
             m_ComputePicker = std::move(other.m_ComputePicker);
             m_PickedEntity = other.m_PickedEntity;
             m_ComputeCuller = std::move(other.m_ComputeCuller);
-            m_PendingMeshData = std::move(other.m_PendingMeshData);
-            m_MeshCache = std::move(other.m_MeshCache);
             m_PendingFrameTasks = std::move(other.m_PendingFrameTasks);
             m_OnInfoLog = std::move(other.m_OnInfoLog);
             m_OnWarningLog = std::move(other.m_OnWarningLog);
             m_OnErrorLog = std::move(other.m_OnErrorLog);
+
+            createAssetPipeline();
         }
         return *this;
     }
@@ -119,6 +121,7 @@ namespace kailux
         engine.createImGui(window);
         engine.createSceneTextureIds();
         engine.createSceneEntities(window);
+        engine.createAssetPipeline();
         return engine;
     }
 
@@ -132,14 +135,14 @@ namespace kailux
         m_Context.getDevice().waitIdle();
     }
 
-    Queue<Engine::PendingMeshData> &Engine::getPendingMeshDataQueue()
+    Queue<AssetPipeline::PendingMeshData> &Engine::getPendingMeshDataQueue()
     {
-        return m_PendingMeshData;
+        return m_AssetPipeline.getPendingQueue();
     }
 
     void Engine::unregisterMesh(MeshHandle handle, std::string_view path)
     {
-        if (uncacheMesh(path))
+        if (m_AssetPipeline.uncache(path))
             m_MeshRegistry.destroy(handle);
     }
 
@@ -255,6 +258,15 @@ namespace kailux
         m_PhysicsRegistry = PhysicsRegistry::create();
     }
 
+    void Engine::createAssetPipeline()
+    {
+        m_AssetPipeline = AssetPipeline(m_Context, m_MeshRegistry, m_TextureRegistry, m_TransferManager, m_Scene, m_Frames);
+        m_AssetPipeline.setOnInfoLog([this](auto msg)
+        {
+            m_OnInfoLog(msg);
+        });
+    }
+
     void Engine::createImGui(Window &window)
     {
         m_ImGuiBackend = ImGuiBackend::create(window, m_Context, m_Swapchain, m_SampleCount);
@@ -292,23 +304,6 @@ namespace kailux
             windowHeight
         );
         m_Scene.setMainCamera(cameraEntity);
-
-        m_PendingMeshData.emplace(
-                    "",
-                    MeshLoader::LoadData(),
-                    "Cube",
-                    MeshTransformData(),
-                    MeshMaterialData(),
-                    MeshType::Cube
-            );
-        m_PendingMeshData.emplace(
-                    "",
-                    MeshLoader::LoadData(),
-                    "Sphere",
-                    MeshTransformData({1.f,0.f,0.f}),
-                    MeshMaterialData(),
-                    MeshType::Sphere
-            );
     }
 
     std::array<DescriptorSetUpdateInfo, TextureRegistry::s_TextureTypes.size()>
@@ -532,7 +527,7 @@ namespace kailux
 
     bool Engine::isMeshCached(std::string_view path) const
     {
-        return m_MeshCache.contains(std::string(path));
+        return m_AssetPipeline.isCached(path);
     }
 
     void Engine::saveScene(std::string_view folder) const
@@ -603,8 +598,6 @@ namespace kailux
                     if (!isMeshCached(pending.path))
                         if (auto loadData = MeshLoader::load(pending.path))
                             pending.data = std::move(*loadData);
-
-                    m_PendingMeshData.push(std::move(pending));
                 }
             }
         }
@@ -613,6 +606,10 @@ namespace kailux
     void Engine::setOnInfoLog(OnLog &&callback)
     {
         m_OnInfoLog = std::move(callback);
+        m_AssetPipeline.setOnInfoLog([this](auto msg)
+        {
+            m_OnInfoLog(msg);
+        });
     }
 
     void Engine::setOnWarningLog(OnLog &&callback)
@@ -655,33 +652,6 @@ namespace kailux
         m_SimulationState = state;
         if (m_SimulationState == SimulationState::Running)
             onSimulationStart();
-    }
-
-    void Engine::cacheMesh(std::string_view path, MeshHandle meshHandle, TextureSetHandle materialHandle)
-    {
-        auto strPath = std::string(path);
-        if (isMeshCached(path))
-        {
-            ++m_MeshCache[strPath].count;
-            return;
-        }
-        m_MeshCache[strPath] = {meshHandle, materialHandle};
-    }
-
-    std::optional<Engine::MeshCache> Engine::uncacheMesh(std::string_view path)
-    {
-        auto it = m_MeshCache.find(std::string(path));
-        if (it == m_MeshCache.end())
-            return std::nullopt;
-        auto &count = it->second.count;
-        if (count > 1)
-        {
-            --count;
-            return std::nullopt;
-        }
-        std::optional cache = it->second;
-        m_MeshCache.erase(it);
-        return cache;
     }
 
     void Engine::executeCulling(const FrameData &frame, const CommandRecorder &recorder)
@@ -912,7 +882,7 @@ namespace kailux
     {
         handleEvent(window);
 
-        pollPendingData();
+        m_AssetPipeline.poll();
         m_TransferManager.poll(m_Context);
         updatePendingFrameTasks();
 
@@ -1118,297 +1088,6 @@ namespace kailux
                 },
                 *event
             );
-    }
-
-    void Engine::pollPendingData()
-    {
-        if (auto data = m_PendingMeshData.tryPop())
-        {
-            if (data->type == MeshType::Unknown)
-                return;
-            if (data->type != MeshType::Loaded)
-                processBuiltinMesh(*data);
-            else
-                processLoadedMesh(*data);
-        }
-    }
-
-    void Engine::processBuiltinMesh(const PendingMeshData &data)
-    {
-        auto now = Clock::now();
-        std::string meshName;
-        auto createMeshEntity = [this, &data, &meshName](auto meshHandle, const auto &vertices)
-        {
-            const auto &material = m_TextureRegistry.view(m_TextureRegistry.getDefaultSetHandle());
-            auto textureHandle = m_TextureRegistry.registerTextureSet(material);
-
-            meshName = data.name.empty() ? m_Scene.getMeshEntityName() : data.name;
-            auto entity = m_Scene.createMeshEntity(
-                meshName,
-                {
-                    meshHandle,
-                    data.path,
-                    data.type,
-                    Geometry::computeBoundingSphere(vertices)
-                },
-                textureHandle,
-                data.transform,
-                data.material
-            );
-        };
-        switch (data.type)
-        {
-            case MeshType::Cube:
-                createMeshEntity(
-                    m_MeshRegistry.getBuiltins().cube,
-                    MeshRegistry::generate_cube().vertices
-                );
-                break;
-            case MeshType::Sphere:
-                createMeshEntity(
-                    m_MeshRegistry.getBuiltins().sphere,
-                    MeshRegistry::generate_sphere().vertices
-                );
-                break;
-            default:
-                break;
-        }
-        m_OnInfoLog(std::format("Loaded '{}' successfully in {:.3f}ms.",
-                                meshName, Clock::get_elapsed<float, TimeType::Milliseconds>(now)));
-    }
-
-    void Engine::processLoadedMesh(const PendingMeshData &data)
-    {
-        auto now = Clock::now();
-        const auto &loadData = data.data;
-
-        auto parentEntity = createParentMeshEntity(data);
-
-        auto firstSubmeshKey = std::format("{}_sub0", data.path);
-        bool modelIsCached = isMeshCached(firstSubmeshKey);
-
-        std::vector<TextureSetHandle> loadedMaterialHandles;
-        auto t0 = Clock::now();
-        if (!modelIsCached)
-            loadedMaterialHandles = loadAndRegisterMaterials(loadData.materials);
-
-        auto pendingEntities = create_shared<std::vector<entt::entity>>();
-
-        t0 = Clock::now();
-        m_TransferManager.enqueueBuffer(
-            m_Context,
-            [this, &data, &loadData, &loadedMaterialHandles, parentEntity, modelIsCached, pendingEntities]
-    (auto cmd) -> TransferManager::RecordResult
-            {
-                TransferManager::RecordResult result;
-                uint32_t submeshIndex = 0;
-
-                for (const auto &submesh: loadData.submeshes)
-                {
-                    auto cacheKey = std::format("{}_sub{}", data.path, submeshIndex);
-
-                    MeshHandle meshHandle;
-                    TextureSetHandle textureHandle;
-
-                    if (isMeshCached(cacheKey))
-                    {
-                        auto cache = m_MeshCache.at(cacheKey);
-                        const auto &material = m_TextureRegistry.view(cache.materialHandle);
-                        textureHandle = m_TextureRegistry.registerTextureSet(material);
-                        auto updateInfos = make_descriptor_set_update_info_from_texture_set(textureHandle, material);
-                        for (const auto &frame: m_Frames)
-                            frame.getDescriptorSet().updateInfo(m_Context, updateInfos);
-                        meshHandle = cache.meshHandle;
-                    } else
-                    {
-                        meshHandle = m_MeshRegistry.upload(m_Context, cmd, submesh.meshData, result.staging);
-                        textureHandle = loadedMaterialHandles[submesh.materialIndex];
-
-                        auto regions = m_MeshRegistry.getRegions(meshHandle);
-                        result.resources.emplace_back(
-                            regions.vertexBuffer, regions.vertexOffset, regions.vertexSize,
-                            vk::PipelineStageFlagBits2::eVertexInput,
-                            vk::AccessFlagBits2::eVertexAttributeRead
-                        );
-                        result.resources.emplace_back(
-                            regions.indexBuffer, regions.indexOffset, regions.indexSize,
-                            vk::PipelineStageFlagBits2::eVertexInput,
-                            vk::AccessFlagBits2::eIndexRead
-                        );
-                    }
-
-                    cacheMesh(cacheKey, meshHandle, textureHandle);
-
-                    auto rootName = data.name.empty() ? m_Scene.getMeshEntityName() : data.name;
-                    auto submeshName = std::format("{}_{}", rootName,
-                                                   submesh.name.empty() ? std::to_string(submeshIndex) : submesh.name);
-
-                    auto childEntity = m_Scene.createMeshEntity(
-                        submeshName,
-                        {
-                            meshHandle,
-                            data.path,
-                            data.type,
-                            submesh.boundingSphere
-                        },
-                        textureHandle,
-                        {},
-                        data.material,
-                        parentEntity
-                    );
-
-                    auto &childTransform = m_Scene.getEntityRegistry().get<TransformComponent>(childEntity);
-                    childTransform.submeshLocalMatrix = submesh.localTransform;
-
-                    m_Scene.getEntityRegistry().emplace<PendingUploadComponent>(childEntity);
-                    pendingEntities->push_back(childEntity);
-
-                    ++submeshIndex;
-                }
-                return result;
-            },
-            [this, pendingEntities]()
-            {
-                auto &registry = m_Scene.getEntityRegistry();
-                for (auto entity: *pendingEntities)
-                    if (registry.valid(entity))
-                        registry.remove<PendingUploadComponent>(entity);
-            }
-        );
-
-        t0 = Clock::now();
-        uint32_t submeshIndex = 0;
-        auto& entityReg = m_Scene.getEntityRegistry();
-        auto& physicsCache = entityReg.emplace<CachedPhysicsData>(parentEntity);
-        physicsCache.meshType = data.type;
-        physicsCache.submeshes.reserve(loadData.submeshes.size());
-        for (const auto &submesh: loadData.submeshes)
-            physicsCache.submeshes.emplace_back(
-                std::move(submesh.meshData.vertices),
-                std::move(submesh.meshData.indices),
-                submesh.localTransform
-                );
-
-        const auto& name = entityReg.get<TagComponent>(parentEntity).name;
-        m_OnInfoLog(std::format("Loaded '{}' successfully with {} submeshes and {} unique materials in {}ms.",
-                                name,
-                                loadData.submeshes.size(),
-                                loadData.materials.size(),
-                                Clock::get_elapsed<float, TimeType::Milliseconds>(now)
-                                ));
-    }
-
-    entt::entity Engine::createParentMeshEntity(const PendingMeshData &data)
-    {
-        auto rootName = data.name.empty() ? m_Scene.getMeshEntityName() : data.name;
-        auto parentEntity = m_Scene.createParentEntity(rootName);
-
-        auto &entityReg = m_Scene.getEntityRegistry();
-        entityReg.emplace<HierarchyComponent>(parentEntity);
-
-        auto &parentTransform = entityReg.emplace<TransformComponent>(parentEntity);
-        parentTransform.transform.position = data.transform.position;
-        parentTransform.transform.rotation = data.transform.rotation;
-        parentTransform.transform.scale = data.transform.scale;
-
-        entityReg.emplace<MeshMaterialData>(parentEntity, data.material);
-
-        return parentEntity;
-    }
-
-    std::vector<TextureSetHandle> Engine::loadAndRegisterMaterials(
-        std::span<const TextureRegistry::MaterialData> materials)
-    {
-        std::vector<TextureSetHandle> handles;
-        handles.reserve(materials.size());
-        for (const auto &material: materials)
-            handles.push_back(uploadMaterialDataToRegistry(material));
-
-        return handles;
-    }
-
-    void Engine::processSubmesh(const PendingMeshData &data, const MeshLoader::SubMeshData &submesh,
-                                uint32_t submeshIndex, entt::entity parentEntity,
-                                std::span<const TextureSetHandle> materials)
-    {
-        MeshHandle meshHandle;
-        TextureSetHandle textureHandle;
-
-        auto cacheKey = std::format("{}_sub{}", data.path, submeshIndex);
-
-        if (isMeshCached(cacheKey))
-        {
-            auto cache = m_MeshCache.at(cacheKey);
-            const auto &material = m_TextureRegistry.view(cache.materialHandle);
-            textureHandle = m_TextureRegistry.registerTextureSet(material);
-
-            auto updateInfos = make_descriptor_set_update_info_from_texture_set(textureHandle, material);
-            for (const auto &frame: m_Frames)
-                frame.getDescriptorSet().updateInfo(m_Context, updateInfos);
-
-            meshHandle = cache.meshHandle;
-        } else
-        {
-            meshHandle = uploadMeshDataToRegistry(submesh.meshData);
-            textureHandle = materials[submesh.materialIndex];
-        }
-
-        cacheMesh(cacheKey, meshHandle, textureHandle);
-
-        auto rootName = data.name.empty() ? m_Scene.getMeshEntityName() : data.name;
-        auto submeshName = std::format("{}_{}", rootName,
-                                       submesh.name.empty() ? std::to_string(submeshIndex) : submesh.name);
-
-        auto childEntity = m_Scene.createMeshEntity(
-            submeshName,
-            {meshHandle, data.path, data.type, submesh.boundingSphere},
-            textureHandle,
-            {},
-            data.material,
-            parentEntity
-        );
-
-        auto &childTransform = m_Scene.getEntityRegistry().get<TransformComponent>(childEntity);
-        childTransform.submeshLocalMatrix = submesh.localTransform;
-    }
-
-    MeshHandle Engine::uploadMeshDataToRegistry(const MeshRegistry::MeshData &data)
-    {
-        std::vector<Buffer> stagingBuffers;
-        auto otc = OneTimeCommand::create(m_Context);
-        auto handle = m_MeshRegistry.upload(m_Context, otc.getCommandBuffer(), data, stagingBuffers);
-        otc.submit(m_Context);
-        return handle;
-    }
-
-    TextureSetHandle Engine::uploadMaterialDataToRegistry(const TextureRegistry::MaterialData &data)
-    {
-        auto result = m_TextureRegistry.createSetFromMaterialData(m_Context, data);
-        auto handle = m_TextureRegistry.registerTextureSet(result.set);
-
-        auto updateInfos = make_descriptor_set_update_info_from_texture_set(handle, result.set);
-
-        for (const auto &frame: m_Frames)
-            frame.getDescriptorSet().updateInfo(
-                m_Context,
-                updateInfos
-            );
-
-        if (!result.uploads.empty())
-            m_TransferManager.enqueueImages(
-                m_Context,
-                std::move(result.uploads),
-                std::move(result.staging),
-                [this, handle]()
-                {
-                    const auto &set = m_TextureRegistry.view(handle);
-                    auto infos = make_descriptor_set_update_info_from_texture_set(handle, set);
-                    for (const auto &frame : m_Frames)
-                        frame.getDescriptorSet().updateInfo(m_Context, infos);
-                }
-            );
-
-        return handle;
     }
 
     BodyHandle Engine::uploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo &data)

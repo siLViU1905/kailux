@@ -42,6 +42,7 @@ add_library(kailux_engine STATIC
         src/core/physics/impl/ObjectLayerPairFilter.cpp
         src/core/physics/PhysicsRegistry.cpp
         src/core/TransferManager.cpp
+        src/core/AssetPipeline.cpp
 )
 
 target_compile_definitions(kailux_engine PUBLIC

@@ -13,6 +13,7 @@
 #include "mesh/MeshRegistry.h"
 #include <entt/entt.hpp>
 
+#include "AssetPipeline.h"
 #include "passes/ComputePicker.h"
 #include "Scene.h"
 #include "TransferManager.h"
@@ -48,7 +49,7 @@ namespace kailux
             PhysicsBodyType      bodyType{PhysicsBodyType::Static};
         };
 
-        Queue<PendingMeshData> &getPendingMeshDataQueue();
+        Queue<AssetPipeline::PendingMeshData> &getPendingMeshDataQueue();
 
         void unregisterMesh(MeshHandle handle, std::string_view path);
         void unregisterTextureSet(TextureSetHandle handle);
@@ -100,6 +101,7 @@ namespace kailux
         void createMeshRegistry();
         void createTextureRegistry();
         void createPhysicsRegistry();
+        void createAssetPipeline();
         void createImGui(Window& window);
 
         void createSceneTextureIds();
@@ -134,32 +136,9 @@ namespace kailux
 
         void handleEvent(Window &window);
 
-        void                          pollPendingData();
-        void                          processBuiltinMesh(const PendingMeshData& data);
-        void                          processLoadedMesh(const PendingMeshData& data);
-        entt::entity                  createParentMeshEntity(const PendingMeshData &data);
-        std::vector<TextureSetHandle> loadAndRegisterMaterials(std::span<const TextureRegistry::MaterialData> materials);
-        void                          processSubmesh(
-                                          const PendingMeshData& data,
-                                          const MeshLoader::SubMeshData& submesh,
-                                          uint32_t submeshIndex,
-                                          entt::entity parentEntity,
-                                          std::span<const TextureSetHandle> materials
-                                          );
-        MeshHandle       uploadMeshDataToRegistry(const MeshRegistry::MeshData& data);
-        TextureSetHandle uploadMaterialDataToRegistry(const TextureRegistry::MaterialData &data);
-        BodyHandle       uploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo& data);
+        BodyHandle uploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo& data);
 
         void updatePendingFrameTasks();
-
-        struct MeshCache
-        {
-            MeshHandle       meshHandle;
-            TextureSetHandle materialHandle;
-            uint32_t         count = 1;
-        };
-        void                     cacheMesh(std::string_view path, MeshHandle meshHandle, TextureSetHandle materialHandle);
-        std::optional<MeshCache> uncacheMesh(std::string_view path);
 
         void executeCulling(const FrameData& frame, const CommandRecorder& recorder);
 
@@ -181,6 +160,8 @@ namespace kailux
         TextureRegistry                            m_TextureRegistry;
         PhysicsRegistry                            m_PhysicsRegistry;
 
+        AssetPipeline                              m_AssetPipeline;
+
         SimulationState                            m_SimulationState;
 
         std::array<FrameData, s_FramesInFlight>    m_Frames;
@@ -200,9 +181,6 @@ namespace kailux
         ComputePicker                              m_ComputePicker;
         uint32_t                                   m_PickedEntity;
         ComputeCuller                              m_ComputeCuller;
-
-        Queue<PendingMeshData>                     m_PendingMeshData;
-        std::unordered_map<std::string, MeshCache> m_MeshCache;
 
         static constexpr uint32_t                  s_ResourceCleanupFrameDelay = s_FramesInFlight + 1;
         using FrameTask = std::move_only_function<void()>;
