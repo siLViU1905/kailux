@@ -42,10 +42,12 @@ namespace kailux
     {
         if (!m_Open || m_SelectedEntity == entt::null)
             return;
+        auto &registry = scene.getEntityRegistry();
+        if (!registry.valid(m_SelectedEntity))
+            return;
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, m_BackgroundColor);
 
-        auto &registry = scene.getEntityRegistry();
         if (ImGui::Begin(m_Name.c_str(), &m_Open))
         {
             const auto &tag = registry.get<TagComponent>(m_SelectedEntity);

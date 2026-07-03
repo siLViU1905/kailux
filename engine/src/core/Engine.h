@@ -23,6 +23,7 @@
 #include "physics/PhysicsSystem.h"
 #include "utilities/Queue.h"
 #include "utilities/ThreadDispatcher.h"
+#include "DeferredResourceEraser.h"
 
 namespace kailux
 {
@@ -136,8 +137,6 @@ namespace kailux
 
         BodyHandle uploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo& data);
 
-        void updatePendingFrameTasks();
-
         void executeCulling(const FrameData& frame, const CommandRecorder& recorder);
 
         void transitionForMainPass(const FrameData& frame, const CommandRecorder& recorder) const;
@@ -158,8 +157,9 @@ namespace kailux
         TextureRegistry                            m_TextureRegistry;
         PhysicsRegistry                            m_PhysicsRegistry;
 
-        AssetPipeline                              m_AssetPipeline;
-        PhysicsSystem                              m_PhysicsSystem;
+        AssetPipeline                                m_AssetPipeline;
+        PhysicsSystem                                m_PhysicsSystem;
+        DeferredResourceEraser<s_FramesInFlight + 1> m_DeferredResourceEraser;
 
         std::array<FrameData, s_FramesInFlight>    m_Frames;
         uint32_t                                   m_CurrentFrame;
@@ -178,15 +178,6 @@ namespace kailux
         ComputePicker                              m_ComputePicker;
         uint32_t                                   m_PickedEntity;
         ComputeCuller                              m_ComputeCuller;
-
-        static constexpr uint32_t                  s_ResourceCleanupFrameDelay = s_FramesInFlight + 1;
-        using FrameTask = std::move_only_function<void()>;
-        struct PendingFrameTask
-        {
-            FrameTask task;
-            uint32_t  remainingFrames = s_ResourceCleanupFrameDelay;
-        };
-        std::vector<PendingFrameTask>              m_PendingFrameTasks;
 
         OnLog                                      m_OnInfoLog;
         OnLog                                      m_OnWarningLog;

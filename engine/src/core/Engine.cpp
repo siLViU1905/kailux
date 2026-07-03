@@ -43,6 +43,7 @@ namespace kailux
                                               m_PhysicsRegistry(std::move(other.m_PhysicsRegistry)),
                                               m_AssetPipeline(std::move(other.m_AssetPipeline)),
                                               m_PhysicsSystem(std::move(other.m_PhysicsSystem)),
+                                              m_DeferredResourceEraser(std::move(other.m_DeferredResourceEraser)),
                                               m_Frames(std::move(other.m_Frames)),
                                               m_CurrentFrame(other.m_CurrentFrame),
                                               m_SceneTextureIds(other.m_SceneTextureIds),
@@ -53,7 +54,6 @@ namespace kailux
                                               m_ComputePicker(std::move(other.m_ComputePicker)),
                                               m_PickedEntity(other.m_PickedEntity),
                                               m_ComputeCuller(std::move(other.m_ComputeCuller)),
-                                              m_PendingFrameTasks(std::move(other.m_PendingFrameTasks)),
                                               m_OnInfoLog(std::move(other.m_OnInfoLog)),
                                               m_OnWarningLog(std::move(other.m_OnWarningLog)),
                                               m_OnErrorLog(std::move(other.m_OnErrorLog))
@@ -76,6 +76,7 @@ namespace kailux
             m_PhysicsRegistry = std::move(other.m_PhysicsRegistry);
             m_AssetPipeline = std::move(other.m_AssetPipeline);
             m_PhysicsSystem = std::move(other.m_PhysicsSystem);
+            m_DeferredResourceEraser = std::move(other.m_DeferredResourceEraser);
             m_Frames = std::move(other.m_Frames);
             m_CurrentFrame = other.m_CurrentFrame;
             m_SceneTextureIds = other.m_SceneTextureIds;
@@ -86,7 +87,6 @@ namespace kailux
             m_ComputePicker = std::move(other.m_ComputePicker);
             m_PickedEntity = other.m_PickedEntity;
             m_ComputeCuller = std::move(other.m_ComputeCuller);
-            m_PendingFrameTasks = std::move(other.m_PendingFrameTasks);
             m_OnInfoLog = std::move(other.m_OnInfoLog);
             m_OnWarningLog = std::move(other.m_OnWarningLog);
             m_OnErrorLog = std::move(other.m_OnErrorLog);
@@ -164,12 +164,10 @@ namespace kailux
                 updateInfos
             );
 
-        m_PendingFrameTasks.emplace_back(
-            [this, handle]()
-            {
-                m_TextureRegistry.unregisterTextureSet(handle);
-            }
-        );
+        m_DeferredResourceEraser.enqueue([this, handle]()
+        {
+            m_TextureRegistry.unregisterTextureSet(handle);
+        });
     }
 
     ImTextureID Engine::getAssetBrowserDirectoryTextureId() const
@@ -897,7 +895,7 @@ namespace kailux
 
         m_AssetPipeline.poll();
         m_TransferManager.poll(m_Context);
-        updatePendingFrameTasks();
+        m_DeferredResourceEraser.tick();
 
         if (m_PhysicsSystem.getSimulationState() == SimulationState::Running)
             m_PhysicsSystem.update(deltaTime);
@@ -1085,19 +1083,5 @@ namespace kailux
 
         reg.emplace<PhysicsComponent>(entity, handle, options.bodyType);
         reg.emplace<PhysicsControlComponent>(entity);
-    }
-
-    void Engine::updatePendingFrameTasks()
-    {
-        std::erase_if(m_PendingFrameTasks, [](auto &task)
-        {
-            --task.remainingFrames;
-            if (task.remainingFrames == 0)
-            {
-                task.task();
-                return true;
-            }
-            return false;
-        });
     }
 }
