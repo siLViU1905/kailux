@@ -1,73 +1,78 @@
 #!/bin/bash
+set -e
 
-cd ..
+cd "$(dirname "$0")/.."
+PROJECT_ROOT="$(pwd)"
+
+BUILD_TYPE=""
+BUILD_DIR=""
+DO_CLEAN=0
+
+for arg in "$@"; do
+    case "$arg" in
+        debug|Debug)     BUILD_TYPE="Debug";   BUILD_DIR="debug" ;;
+        release|Release) BUILD_TYPE="Release"; BUILD_DIR="release" ;;
+        clean)           DO_CLEAN=1 ;;
+        *) echo "[WARN] unknown arg: $arg" ;;
+    esac
+done
+
+if [ -z "${BUILD_TYPE}" ]; then
+    echo "[ERROR] Missing build type."
+    echo "        You must specify 'debug' or 'release'."
+    echo ""
+    echo "        Usage:"
+    echo "          ./linux_build.sh debug"
+    echo "          ./linux_build.sh release"
+    echo "          ./linux_build.sh debug clean     (wipe build/ first)"
+    exit 1
+fi
+
+JOBS=$(nproc)
+echo "[INFO] Build type: ${BUILD_TYPE}, jobs: ${JOBS}"
 
 conan export scripts/imguizmo
 
-if [ -d "build" ]; then
+if [ "$DO_CLEAN" -eq 1 ] && [ -d "build" ]; then
+    echo "[INFO] Clean requested: removing build/"
     rm -rf build
 fi
 
 export CONAN_CMAKE_GENERATOR=Ninja
 
-echo "[INFO] Conan install: DEBUG..."
-conan install . --output-folder=build --build=missing \
-    -s build_type=Debug \
-    -s compiler.cppstd=23 \
-    -c tools.system.package_manager:mode=install \
-    -c tools.system.package_manager:sudo=True \
-    -c tools.cmake.cmaketoolchain:generator=Ninja
+TOOLCHAIN="${PROJECT_ROOT}/build/build/${BUILD_TYPE}/generators/conan_toolchain.cmake"
 
-if [ $? -ne 0 ]; then
-    echo "[ERROR] Conan Debug install failed"
-    exit 1
-fi
-
-mkdir -p build/debug
-cd build/debug
-
-cmake ../.. -G "Ninja" \
-    -DCMAKE_BUILD_TYPE=Debug \
-    -DCMAKE_TOOLCHAIN_FILE="../build/Debug/generators/conan_toolchain.cmake" \
-    -DCMAKE_CXX_STANDARD=23 \
-    -DCMAKE_CXX_STANDARD_REQUIRED=ON
-
-if [ $? -eq 0 ]; then
-    echo "[SUCCESS] Debug config ready! Building..."
-    make -j$(nproc)
+if [ ! -f "${TOOLCHAIN}" ]; then
+    echo "[INFO] Conan install: ${BUILD_TYPE}..."
+    conan install . --output-folder=build --build=missing \
+        -s build_type=${BUILD_TYPE} \
+        -s compiler.cppstd=23 \
+        -c tools.system.package_manager:mode=install \
+        -c tools.system.package_manager:sudo=True \
+        -c tools.cmake.cmaketoolchain:generator=Ninja
 else
-    echo "[ERROR] Debug CMake config failed"
+    echo "[INFO] Reusing existing conan deps for ${BUILD_TYPE}"
+fi
+
+if [ ! -f "${TOOLCHAIN}" ]; then
+    echo "[ERROR] Toolchain not found at: ${TOOLCHAIN}"
+    echo "        Conan install may have failed or used a different layout."
+    echo "        Look under build/ for conan_toolchain.cmake:"
+    find build -name conan_toolchain.cmake 2>/dev/null || true
     exit 1
 fi
 
-cd ../..
+mkdir -p "build/${BUILD_DIR}"
+cd "build/${BUILD_DIR}"
 
-echo "[INFO] Conan install: RELEASE..."
-conan install . --output-folder=build --build=missing \
-    -s build_type=Release \
-    -s compiler.cppstd=23 \
-    -c tools.system.package_manager:mode=install \
-    -c tools.system.package_manager:sudo=True \
-    -c tools.cmake.cmaketoolchain:generator=Ninja
-
-if [ $? -ne 0 ]; then
-    echo "[ERROR] Conan Release install failed"
-    exit 1
-fi
-
-mkdir -p build/release
-cd build/release
-
-cmake ../.. -G "Ninja" \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_TOOLCHAIN_FILE="../build/Release/generators/conan_toolchain.cmake" \
+cmake "${PROJECT_ROOT}" -G "Ninja" \
+    -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+    -DCMAKE_TOOLCHAIN_FILE="${TOOLCHAIN}" \
     -DCMAKE_CXX_STANDARD=23 \
-    -DCMAKE_CXX_STANDARD_REQUIRED=ON
+    -DCMAKE_CXX_STANDARD_REQUIRED=ON \
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
-if [ $? -eq 0 ]; then
-    echo "[SUCCESS] Release config ready! Building..."
-    make -j$(nproc)
-else
-    echo "[ERROR] Release CMake config failed"
-    exit 1
-fi
+echo "[INFO] Building with Ninja..."
+cmake --build . -j "${JOBS}"
+
+echo "[SUCCESS] ${BUILD_TYPE} build complete."
