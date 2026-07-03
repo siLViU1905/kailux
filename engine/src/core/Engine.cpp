@@ -25,8 +25,11 @@
 
 namespace kailux
 {
-    Engine::Engine() : m_SampleCount(vk::SampleCountFlagBits::e1), m_AssetPipeline(m_Context, m_MeshRegistry, m_TextureRegistry, m_TransferManager, m_Scene, m_Frames), m_SimulationState(SimulationState::Paused), m_CurrentFrame(0),
-    m_PickedEntity(~0u)
+    Engine::Engine() : m_SampleCount(vk::SampleCountFlagBits::e1),
+                       m_AssetPipeline(m_Context, m_MeshRegistry, m_TextureRegistry, m_TransferManager, m_Scene,m_Frames),
+                       m_PhysicsSystem(m_Scene, m_PhysicsRegistry),
+                       m_CurrentFrame(0),
+                       m_PickedEntity(~0u)
     {
     }
 
@@ -39,7 +42,7 @@ namespace kailux
                                               m_TextureRegistry(std::move(other.m_TextureRegistry)),
                                               m_PhysicsRegistry(std::move(other.m_PhysicsRegistry)),
                                               m_AssetPipeline(std::move(other.m_AssetPipeline)),
-                                              m_SimulationState(other.m_SimulationState),
+                                              m_PhysicsSystem(std::move(other.m_PhysicsSystem)),
                                               m_Frames(std::move(other.m_Frames)),
                                               m_CurrentFrame(other.m_CurrentFrame),
                                               m_SceneTextureIds(other.m_SceneTextureIds),
@@ -56,6 +59,7 @@ namespace kailux
                                               m_OnErrorLog(std::move(other.m_OnErrorLog))
     {
         createAssetPipeline();
+        createPhysicsSystem();
     }
 
     Engine &Engine::operator=(Engine &&other) noexcept
@@ -71,7 +75,7 @@ namespace kailux
             m_TextureRegistry = std::move(other.m_TextureRegistry);
             m_PhysicsRegistry = std::move(other.m_PhysicsRegistry);
             m_AssetPipeline = std::move(other.m_AssetPipeline);
-            m_SimulationState = other.m_SimulationState;
+            m_PhysicsSystem = std::move(other.m_PhysicsSystem);
             m_Frames = std::move(other.m_Frames);
             m_CurrentFrame = other.m_CurrentFrame;
             m_SceneTextureIds = other.m_SceneTextureIds;
@@ -88,6 +92,7 @@ namespace kailux
             m_OnErrorLog = std::move(other.m_OnErrorLog);
 
             createAssetPipeline();
+            createPhysicsSystem();
         }
         return *this;
     }
@@ -122,6 +127,7 @@ namespace kailux
         engine.createSceneTextureIds();
         engine.createSceneEntities(window);
         engine.createAssetPipeline();
+        engine.createPhysicsSystem();
         return engine;
     }
 
@@ -264,6 +270,15 @@ namespace kailux
         m_AssetPipeline.setOnInfoLog([this](auto msg)
         {
             m_OnInfoLog(msg);
+        });
+    }
+
+    void Engine::createPhysicsSystem()
+    {
+        m_PhysicsSystem = PhysicsSystem(m_Scene, m_PhysicsRegistry);
+        m_PhysicsSystem.setOnWarningLog([this](auto msg)
+        {
+            m_OnWarningLog(msg);
         });
     }
 
@@ -649,9 +664,7 @@ namespace kailux
 
     void Engine::setSimulationState(SimulationState state)
     {
-        m_SimulationState = state;
-        if (m_SimulationState == SimulationState::Running)
-            onSimulationStart();
+        m_PhysicsSystem.setSimulationState(state);
     }
 
     void Engine::executeCulling(const FrameData &frame, const CommandRecorder &recorder)
@@ -886,12 +899,8 @@ namespace kailux
         m_TransferManager.poll(m_Context);
         updatePendingFrameTasks();
 
-        if (m_SimulationState == SimulationState::Running)
-        {
-            updatePhysicsControls();
-            updatePhysicsTransforms();
-            m_PhysicsRegistry.update(deltaTime);
-        }
+        if (m_PhysicsSystem.getSimulationState() == SimulationState::Running)
+            m_PhysicsSystem.update(deltaTime);
 
         m_Scene.update();
 
@@ -984,67 +993,6 @@ namespace kailux
     void Engine::readOutputBuffers(const FrameData &frame)
     {
         m_PickedEntity = frame.getPickerBuffer().read<uint32_t>();
-    }
-
-    void Engine::onSimulationStart()
-    {
-        auto view = m_Scene.getEntityRegistry().view<TransformComponent, PhysicsComponent>();
-
-        for (auto entity : view)
-        {
-            const auto& transformComp = view.get<TransformComponent>(entity);
-            const auto& physicsComp = view.get<PhysicsComponent>(entity);
-
-                m_PhysicsRegistry.setBodyTransform(
-                    physicsComp.handle,
-                    transformComp.transform.position,
-                    transformComp.transform.rotation
-                );
-
-                if (physicsComp.isDynamic())
-                    m_PhysicsRegistry.setLinearVelocity(physicsComp.handle, glm::vec3(0.f));
-        }
-    }
-
-    void Engine::updatePhysicsControls()
-    {
-        auto view = m_Scene.getEntityRegistry().view<PhysicsComponent, PhysicsControlComponent>();
-
-        for (auto entity:view)
-        {
-            auto phys = view.get<PhysicsComponent>(entity);
-            auto& control = view.get<PhysicsControlComponent>(entity);
-
-            control.velocity = m_PhysicsRegistry.getLinearVelocity(phys.handle);
-
-            if (control.applyForce)
-                m_PhysicsRegistry.addForce(phys.handle, control.force);
-
-            if (control.applyImpulse)
-                m_PhysicsRegistry.addImpulse(phys.handle, control.impulse);
-        }
-    }
-
-    void Engine::updatePhysicsTransforms()
-    {
-        auto view = m_Scene.getEntityRegistry().view<TransformComponent, PhysicsComponent>();
-
-        for (auto entity : view)
-        {
-            auto& transformComp = view.get<TransformComponent>(entity);
-            auto physics = view.get<PhysicsComponent>(entity);
-
-            if (physics.isDynamic())
-            {
-                m_PhysicsRegistry.getBodyTransform(
-                    physics.handle,
-                    transformComp.transform.position,
-                    transformComp.transform.rotation
-                    );
-
-                transformComp.worldMatrix = transformComp.transform.getModelMatrix();
-            }
-        }
     }
 
     void Engine::handleEvent(Window &window)

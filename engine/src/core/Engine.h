@@ -20,6 +20,7 @@
 #include "mesh/MeshLoader.h"
 #include "passes/MainPass.h"
 #include "physics/PhysicsRegistry.h"
+#include "physics/PhysicsSystem.h"
 #include "utilities/Queue.h"
 #include "utilities/ThreadDispatcher.h"
 
@@ -102,6 +103,7 @@ namespace kailux
         void createTextureRegistry();
         void createPhysicsRegistry();
         void createAssetPipeline();
+        void createPhysicsSystem();
         void createImGui(Window& window);
 
         void createSceneTextureIds();
@@ -130,10 +132,6 @@ namespace kailux
 
         void readOutputBuffers(const FrameData& frame);
 
-        void onSimulationStart();
-        void updatePhysicsControls();
-        void updatePhysicsTransforms();
-
         void handleEvent(Window &window);
 
         BodyHandle uploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo& data);
@@ -161,8 +159,7 @@ namespace kailux
         PhysicsRegistry                            m_PhysicsRegistry;
 
         AssetPipeline                              m_AssetPipeline;
-
-        SimulationState                            m_SimulationState;
+        PhysicsSystem                              m_PhysicsSystem;
 
         std::array<FrameData, s_FramesInFlight>    m_Frames;
         uint32_t                                   m_CurrentFrame;
