@@ -40,16 +40,16 @@ namespace kailux
                                       std::vector<Buffer> &stagingBuffers)
     {
         MeshRegistry registry;
-        registry.m_VertexBuffer = BufferAllocator::alloc_vertex(context, s_TotalSize);
-        registry.m_IndexBuffer = BufferAllocator::alloc_index(context, s_TotalSize / 2);
+        registry.m_VertexBuffer = BufferAllocator::alloc_vertex(context, kTotalSize);
+        registry.m_IndexBuffer = BufferAllocator::alloc_index(context, kTotalSize / 2);
 
-        registry.m_BuiltinVertexZone = {0, s_BuiltinZoneSize, 0};
-        registry.m_BuiltinIndexZone = {0, s_BuiltinZoneSize / 2, 0};
-        registry.m_AssetVertexZone = {s_BuiltinZoneSize, s_AssetZoneSize};
-        registry.m_AssetIndexZone = {s_BuiltinZoneSize / 2, s_AssetZoneSize / 2};
+        registry.m_BuiltinVertexZone = {0, kBuiltinZoneSize, 0};
+        registry.m_BuiltinIndexZone = {0, kBuiltinZoneSize / 2, 0};
+        registry.m_AssetVertexZone = {kBuiltinZoneSize, kAssetZoneSize};
+        registry.m_AssetIndexZone = {kBuiltinZoneSize / 2, kAssetZoneSize / 2};
 
-        registry.m_AssetVertexZone.freeBlocks.emplace_back(s_BuiltinZoneSize, s_AssetZoneSize);
-        registry.m_AssetIndexZone.freeBlocks.emplace_back(s_BuiltinZoneSize / 2, s_AssetZoneSize / 2);
+        registry.m_AssetVertexZone.freeBlocks.emplace_back(kBuiltinZoneSize, kAssetZoneSize);
+        registry.m_AssetIndexZone.freeBlocks.emplace_back(kBuiltinZoneSize / 2, kAssetZoneSize / 2);
 
         auto uploadShape = [&](auto genFn, MeshHandle &out)
         {

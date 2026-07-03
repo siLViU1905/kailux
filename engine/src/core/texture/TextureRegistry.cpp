@@ -78,7 +78,7 @@ namespace kailux
     uint32_t TextureRegistry::acquireSlot()
     {
         if (m_FreeSlots.empty())
-            return TextureSetHandle::s_InvalidIndex;
+            return TextureSetHandle::kInvalidIndex;
         auto slot = m_FreeSlots.front();
         m_FreeSlots.pop_front();
         return slot;

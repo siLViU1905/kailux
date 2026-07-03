@@ -35,20 +35,20 @@ namespace kailux
         void push(const T& val)
         {
             auto tail = m_Tail.load(std::memory_order_relaxed);
-            m_Buffer[tail & s_Mask] = val;
+            m_Buffer[tail & kMask] = val;
             m_Tail.store(tail + 1, std::memory_order_release);
         }
         void push(T&& val)
         {
             auto tail = m_Tail.load(std::memory_order_relaxed);
-            m_Buffer[tail & s_Mask] = std::move(val);
+            m_Buffer[tail & kMask] = std::move(val);
             m_Tail.store(tail + 1, std::memory_order_release);
         }
         template<typename... Args>
         void emplace(Args&&... args)
         {
             auto tail = m_Tail.load(std::memory_order_relaxed);
-            m_Buffer[tail & s_Mask] = T(std::forward<Args>(args)...);
+            m_Buffer[tail & kMask] = T(std::forward<Args>(args)...);
             m_Tail.store(tail + 1, std::memory_order_release);
         }
 
@@ -58,13 +58,13 @@ namespace kailux
             auto head = m_Head.load(std::memory_order_relaxed);
             if (head == m_Tail.load(std::memory_order_acquire))
                 return std::nullopt;
-            auto val = std::move(m_Buffer[head & s_Mask]);
+            auto val = std::move(m_Buffer[head & kMask]);
             m_Head.store(head + 1, std::memory_order_release);
             return val;
         }
 
     private:
-        static constexpr size_t s_Mask = Capacity - 1;
+        static constexpr size_t kMask = Capacity - 1;
 
         std::vector<T> m_Buffer{Capacity};
 

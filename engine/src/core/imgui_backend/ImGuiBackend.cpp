@@ -185,7 +185,7 @@ namespace kailux
     void ImGuiBackend::applyStyle()
     {
         //load font
-        p_IO->Fonts->AddFontFromFileTTF(s_FontPath.data(), 22.f);
+        p_IO->Fonts->AddFontFromFileTTF(kFontPath.data(), 22.f);
 
         auto &style = ImGui::GetStyle();
         // Borders

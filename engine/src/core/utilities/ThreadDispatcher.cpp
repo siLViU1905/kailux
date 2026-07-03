@@ -6,7 +6,7 @@ namespace kailux
 {
     Shared<ThreadDispatcher> ThreadDispatcher::get()
     {
-        static Shared<ThreadDispatcher> dispatcher(new ThreadDispatcher(s_MaxThreads));
+        static Shared<ThreadDispatcher> dispatcher(new ThreadDispatcher(kMaxThreads));
         return dispatcher;
     }
 

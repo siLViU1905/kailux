@@ -68,7 +68,7 @@ namespace kailux
 
         bool isMeshCached(std::string_view path) const;
 
-        static constexpr std::string_view s_SceneFileExtension = "klx";
+        static constexpr std::string_view kSceneFileExtension = "klx";
         void saveScene(std::string_view folder) const;
         void loadScene(std::string_view path, int windowWidth, int windowHeight);
 
@@ -89,10 +89,10 @@ namespace kailux
         void addPhysicsToEntity(entt::entity entity, PhysicsCreationOptions options);
 
     private:
-        static constexpr uint32_t         s_MaxMeshCount = MainPass::s_MaxMeshCount;
+        static constexpr uint32_t         kMaxMeshCount = MainPass::kMaxMeshCount;
 
-        static constexpr std::string_view s_DirectoryIconPath = "assets/icons/directory_icon.png";
-        static constexpr std::string_view s_FileIconPath = "assets/icons/file_icon.png";
+        static constexpr std::string_view kDirectoryIconPath = "assets/icons/directory_icon.png";
+        static constexpr std::string_view kFileIconPath = "assets/icons/file_icon.png";
 
         void createRenderingContext(Window& window);
         void createMainPass();
@@ -115,7 +115,7 @@ namespace kailux
         void createScene();
         void createSceneEntities(const Window &window);
 
-        static std::array<DescriptorSetUpdateInfo, TextureRegistry::s_TextureTypes.size()> make_descriptor_set_update_info_from_texture_set(TextureSetHandle slotToOverwrite, const TextureSet& replacementSet);
+        static std::array<DescriptorSetUpdateInfo, TextureRegistry::kTextureTypes.size()> make_descriptor_set_update_info_from_texture_set(TextureSetHandle slotToOverwrite, const TextureSet& replacementSet);
 
         void                                        submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
         void                                        recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const;
@@ -144,7 +144,7 @@ namespace kailux
         void transitionForPickerAndPostProcess(const FrameData& frame, const CommandRecorder& recorder) const;
         void transitionForPresent(const CommandRecorder& recorder, uint32_t imageIndex) const;
 
-        static constexpr uint32_t s_FramesInFlight = 2;
+        static constexpr uint32_t kFramesInFlight = 2;
 
         Context                                    m_Context;
         vk::SampleCountFlagBits                    m_SampleCount;
@@ -159,12 +159,12 @@ namespace kailux
 
         AssetPipeline                                m_AssetPipeline;
         PhysicsSystem                                m_PhysicsSystem;
-        DeferredResourceEraser<s_FramesInFlight + 1> m_DeferredResourceEraser;
+        DeferredResourceEraser<kFramesInFlight + 1> m_DeferredResourceEraser;
 
-        std::array<FrameData, s_FramesInFlight>    m_Frames;
+        std::array<FrameData, kFramesInFlight>    m_Frames;
         uint32_t                                   m_CurrentFrame;
 
-        std::array<ImTextureID, s_FramesInFlight>  m_SceneTextureIds;
+        std::array<ImTextureID, kFramesInFlight>  m_SceneTextureIds;
 
         Scene                                      m_Scene;
         OnEditorRender                             m_OnEditorRender;

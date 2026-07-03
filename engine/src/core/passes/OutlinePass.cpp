@@ -20,9 +20,9 @@ namespace kailux
     OutlinePass OutlinePass::create(const Context &context, const Swapchain &swapchain, uint32_t frameCount)
     {
         OutlinePass pass;
-        pass.createDescriptorLayout(context, s_DescriptorLayoutBindings);
-        pass.createDescriptorPool(context, frameCount, s_DescriptorPoolSizes);
-        pass.createPipeline(context, swapchain, s_OutlineVertexShaderPath, s_OutlineFragmentShaderPath, make_pipeline_info(swapchain), s_PushConstantRanges);
+        pass.createDescriptorLayout(context, kDescriptorLayoutBindings);
+        pass.createDescriptorPool(context, frameCount, kDescriptorPoolSizes);
+        pass.createPipeline(context, swapchain, kOutlineVertexShaderPath, kOutlineFragmentShaderPath, make_pipeline_info(swapchain), kPushConstantRanges);
         return pass;
     }
 

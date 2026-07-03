@@ -41,7 +41,7 @@ namespace kailux
     class TextureRegistry
     {
     public:
-        static constexpr std::array s_TextureTypes = magic_enum::enum_values<TextureType>();
+        static constexpr std::array kTextureTypes = magic_enum::enum_values<TextureType>();
 
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(TextureRegistry)
 

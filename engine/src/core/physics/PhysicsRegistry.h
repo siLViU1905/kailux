@@ -68,14 +68,14 @@ namespace kailux
         void update(float deltaTime);
 
     private:
-        static constexpr uint32_t s_AllocatorSize = 10 * 1024 * 1024;
+        static constexpr uint32_t kAllocatorSize = 10 * 1024 * 1024;
 
-        static constexpr uint32_t s_MaxBodies = 65536;
-        static constexpr uint32_t s_NumBodyMutexes = 0;
-        static constexpr uint32_t s_MaxBodyPairs = 65536;
-        static constexpr uint32_t s_MaxContactConstraints = 10240;
+        static constexpr uint32_t kMaxBodies = 65536;
+        static constexpr uint32_t kNumBodyMutexes = 0;
+        static constexpr uint32_t kMaxBodyPairs = 65536;
+        static constexpr uint32_t kMaxContactConstraints = 10240;
 
-        static constexpr uint32_t s_CollisionSteps = 1;
+        static constexpr uint32_t kCollisionSteps = 1;
 
         static uint32_t pick_thread_count(uint32_t freeThreads);
 

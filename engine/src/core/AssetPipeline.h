@@ -64,7 +64,7 @@ namespace kailux
 
         void cacheMesh(std::string_view path, MeshHandle meshHandle, TextureSetHandle materialHandle);
 
-        std::array<DescriptorSetUpdateInfo, TextureRegistry::s_TextureTypes.size()>
+        std::array<DescriptorSetUpdateInfo, TextureRegistry::kTextureTypes.size()>
         makeDescriptorSetUpdateInfo(TextureSetHandle slotToOverwrite, const TextureSet &replacementSet);
 
         std::reference_wrapper<Context>         m_Context;

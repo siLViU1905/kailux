@@ -54,7 +54,7 @@ namespace kailux
 
         KAILUX_LOG_PARENT_CLR_MAGENTA("[PhysicsRegistry]")
         PhysicsRegistry registry;
-        registry.m_Allocator = create_scoped<JPH::TempAllocatorImpl>(s_AllocatorSize);
+        registry.m_Allocator = create_scoped<JPH::TempAllocatorImpl>(kAllocatorSize);
 
         auto threads = pick_thread_count(2);
         KAILUX_LOG_CHILD_CLR_MAGENTA(std::format("Created job system with {} threads", threads))
@@ -71,10 +71,10 @@ namespace kailux
 
         registry.m_PhysicsSystem = create_scoped<JPH::PhysicsSystem>();
         registry.m_PhysicsSystem->Init(
-            s_MaxBodies,
-            s_NumBodyMutexes,
-            s_MaxBodyPairs,
-            s_MaxContactConstraints,
+            kMaxBodies,
+            kNumBodyMutexes,
+            kMaxBodyPairs,
+            kMaxContactConstraints,
             *registry.m_BroadPhaseLayer,
             *registry.m_ObjectVsBroadPhaseLayer,
             *registry.m_ObjectPairFilter
@@ -89,7 +89,7 @@ namespace kailux
     BodyHandle PhysicsRegistry::createBody(const PhysicsBodyInfo &info)
     {
         auto slot = acquireSlot();
-        if (slot == BodyHandle::s_InvalidIndex)
+        if (slot == BodyHandle::kInvalidIndex)
             return {};
 
         JPH::ShapeRefC shape;
@@ -101,7 +101,7 @@ namespace kailux
             shape = create_loaded_mesh_body(info);
 
         auto motionType = static_cast<JPH::EMotionType>(info.options.bodyType);
-        auto objectLayer = (info.options.bodyType == PhysicsBodyType::Static) ? layers::s_NonMoving : layers::s_Moving;
+        auto objectLayer = (info.options.bodyType == PhysicsBodyType::Static) ? layers::kNonMoving : layers::kMoving;
 
         const auto& transform = info.transform;
         JPH::BodyCreationSettings settings(
@@ -161,7 +161,7 @@ namespace kailux
         auto& bodyInterface = m_PhysicsSystem->GetBodyInterface();
 
         auto motionType = static_cast<JPH::EMotionType>(type);
-        auto layer      = (type == PhysicsBodyType::Static) ? layers::s_NonMoving : layers::s_Moving;
+        auto layer      = (type == PhysicsBodyType::Static) ? layers::kNonMoving : layers::kMoving;
 
         auto activation = (type == PhysicsBodyType::Dynamic) ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
 
@@ -284,7 +284,7 @@ namespace kailux
     {
         m_PhysicsSystem->Update(
             deltaTime,
-            s_CollisionSteps,
+            kCollisionSteps,
             m_Allocator.get(),
             m_JobSystem.get()
             );
@@ -301,16 +301,16 @@ namespace kailux
 
     void PhysicsRegistry::allocResources()
     {
-        m_BodyIds.resize(s_MaxBodies, JPH::BodyID(JPH::BodyID::cInvalidBodyID));
+        m_BodyIds.resize(kMaxBodies, JPH::BodyID(JPH::BodyID::cInvalidBodyID));
 
-        for (uint32_t i = 0; i < s_MaxBodies; ++i)
+        for (uint32_t i = 0; i < kMaxBodies; ++i)
             m_FreeSlots.push_back(i);
     }
 
     uint32_t PhysicsRegistry::acquireSlot()
     {
         if (m_FreeSlots.empty())
-            return BodyHandle::s_InvalidIndex;
+            return BodyHandle::kInvalidIndex;
         auto slot = m_FreeSlots.front();
         m_FreeSlots.pop_front();
         return slot;

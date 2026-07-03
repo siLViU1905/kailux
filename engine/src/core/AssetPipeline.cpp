@@ -80,7 +80,7 @@ namespace kailux
         }
     }
 
-    std::array<DescriptorSetUpdateInfo, TextureRegistry::s_TextureTypes.size()>
+    std::array<DescriptorSetUpdateInfo, TextureRegistry::kTextureTypes.size()>
     AssetPipeline::makeDescriptorSetUpdateInfo(TextureSetHandle slotToOverwrite, const TextureSet &replacementSet)
     {
         auto makeUpdateInfo = [slotToOverwrite](uint32_t binding, const auto &texture) -> DescriptorSetUpdateInfo
@@ -98,13 +98,13 @@ namespace kailux
         };
         uint32_t textureIndex = 0;
         std::array updateInfos = {
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.albedo),
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.normal),
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.roughness),
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.metallic),
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.ao)
+            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.albedo),
+            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.normal),
+            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.roughness),
+            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.metallic),
+            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.ao)
         };
-        static_assert(TextureRegistry::s_TextureTypes.size() == updateInfos.size(),
+        static_assert(TextureRegistry::kTextureTypes.size() == updateInfos.size(),
                       "Texture type count mismatch");
         return updateInfos;
     }

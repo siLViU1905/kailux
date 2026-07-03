@@ -31,8 +31,8 @@ namespace kailux
         static LoadResult load(std::string_view path);
 
     private:
-        static constexpr float        s_ScaleFactor = 0.1f;
-        inline static const glm::mat4 s_ParentMatrix = glm::scale(glm::mat4(1.f), glm::vec3(s_ScaleFactor));
+        static constexpr float        kScaleFactor = 0.1f;
+        inline static const glm::mat4 kParentMatrix = glm::scale(glm::mat4(1.f), glm::vec3(kScaleFactor));
 
         static glm::mat4 aiMatrix4x4_to_glm(const aiMatrix4x4 &m);
 

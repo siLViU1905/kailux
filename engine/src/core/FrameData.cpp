@@ -135,7 +135,7 @@ namespace kailux
 
         createOutIdTexture(context);
         std::array pickerInfo{
-            DescriptorSetUpdateInfo(s_PickerResolvedViewDescriptorSetBinding,
+            DescriptorSetUpdateInfo(kPickerResolvedViewDescriptorSetBinding,
                                     0,
                                     DescriptorSetImageInfo(
                                         nullptr,
@@ -148,7 +148,7 @@ namespace kailux
         m_PickerDescriptorSet.updateInfo(context, pickerInfo);
 
         std::array outlineInfo{
-            DescriptorSetUpdateInfo(s_OutlineIdResolvedViewDescriptorSetBinding,
+            DescriptorSetUpdateInfo(kOutlineIdResolvedViewDescriptorSetBinding,
                                     0,
                                     DescriptorSetImageInfo(
                                         m_ResolvedOutIdTexture.getSampler(),
@@ -261,7 +261,7 @@ namespace kailux
         return m_ResolvedOutIdTexture;
     }
 
-    std::array<vk::BufferMemoryBarrier2, FrameData::s_BufferMemoryBarriersCount>
+    std::array<vk::BufferMemoryBarrier2, FrameData::kBufferMemoryBarriersCount>
     FrameData::getBufferMemoryBarriers() const
     {
         return {
@@ -327,7 +327,7 @@ namespace kailux
         };
     }
 
-    std::array<vk::BufferMemoryBarrier2, FrameData::s_CullerBufferMemoryBarriersCount> FrameData::
+    std::array<vk::BufferMemoryBarrier2, FrameData::kCullerBufferMemoryBarriersCount> FrameData::
     getCullerBufferMemoryBarriers() const
     {
         return {
@@ -518,7 +518,7 @@ namespace kailux
         );
     }
 
-    std::array<DescriptorSetInfo, FrameData::s_DescriptorSetInfoCount> FrameData::makeDescriptorSetInfo(
+    std::array<DescriptorSetInfo, FrameData::kDescriptorSetInfoCount> FrameData::makeDescriptorSetInfo(
         const SkyboxPass &skybox, const TextureRegistry &textureRegistry, uint32_t meshCount) const
     {
         return {
@@ -597,7 +597,7 @@ namespace kailux
         };
     }
 
-    std::array<DescriptorSetInfo, FrameData::s_SkyboxDescriptorSetInfoCount> FrameData::makeSkyboxDescriptorSetInfo(
+    std::array<DescriptorSetInfo, FrameData::kSkyboxDescriptorSetInfoCount> FrameData::makeSkyboxDescriptorSetInfo(
         const Texture &skyboxTexture) const
     {
         return {
@@ -616,7 +616,7 @@ namespace kailux
         };
     }
 
-    std::array<DescriptorSetInfo, FrameData::s_PickerDescriptorSetInfoCount>
+    std::array<DescriptorSetInfo, FrameData::kPickerDescriptorSetInfoCount>
     FrameData::makePickerDescriptorSetInfo() const
     {
         return {
@@ -636,7 +636,7 @@ namespace kailux
         };
     }
 
-    std::array<DescriptorSetInfo, FrameData::s_OutlineDescriptorSetInfoCount> FrameData::
+    std::array<DescriptorSetInfo, FrameData::kOutlineDescriptorSetInfoCount> FrameData::
     makeOutlineDescriptorSetInfo() const
     {
         return {
@@ -650,7 +650,7 @@ namespace kailux
         };
     }
 
-    std::array<DescriptorSetInfo, FrameData::s_CullerDescriptorSetInfoCount> FrameData::
+    std::array<DescriptorSetInfo, FrameData::kCullerDescriptorSetInfoCount> FrameData::
     makeCullerDescriptorSetInfo() const
     {
         return {

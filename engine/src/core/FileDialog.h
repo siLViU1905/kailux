@@ -17,8 +17,8 @@ namespace kailux
     class FileDialog
     {
     public:
-        static constexpr std::string_view s_DefaultTitle = "Choose...";
-        static constexpr std::array<std::string_view, 2> s_DefaultFilters =
+        static constexpr std::string_view kDefaultTitle = "Choose...";
+        static constexpr std::array<std::string_view, 2> kDefaultFilters =
         {
             "All Files",
             "*"
@@ -27,8 +27,8 @@ namespace kailux
         using Filters = std::vector<std::string>;
 
         void open(
-            std::string_view title = s_DefaultTitle,
-            const Filters &filters = std::ranges::to<Filters>(s_DefaultFilters)
+            std::string_view title = kDefaultTitle,
+            const Filters &filters = std::ranges::to<Filters>(kDefaultFilters)
         )
         {
             if constexpr (Mode == DialogMode::SingleFile)

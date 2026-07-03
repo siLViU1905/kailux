@@ -32,13 +32,13 @@ namespace kailux
     SkyboxPass SkyboxPass::create(const Context &context, const Swapchain &swapchain, uint32_t maxFrames)
     {
         SkyboxPass pass;
-        pass.createDescriptorLayout(context, s_DescriptorLayoutBindings);
-        pass.createDescriptorPool(context, maxFrames, s_DescriptorPoolSizes);
+        pass.createDescriptorLayout(context, kDescriptorLayoutBindings);
+        pass.createDescriptorPool(context, maxFrames, kDescriptorPoolSizes);
         pass.createPipeline(
             context,
             swapchain,
-            s_VertexShaderPath,
-            s_FragmentShaderPath,
+            kVertexShaderPath,
+            kFragmentShaderPath,
             make_pipeline_info(swapchain, context.getMaxUsableSampleCount()),
             {}
             );
@@ -125,7 +125,7 @@ namespace kailux
     {
         std::array<ImageLoader::ImageData, 6> faces;
         int i = 0;
-        for (auto path: s_SkyboxTexturePaths)
+        for (auto path: kSkyboxTexturePaths)
         {
             auto result = ImageLoader::load_image(path);
             if (!result)
@@ -140,7 +140,7 @@ namespace kailux
     {
         std::array<ImageLoader::ImageData, 6> faces;
         int i = 0;
-        for (auto path: s_IrradianceTexturePaths)
+        for (auto path: kIrradianceTexturePaths)
         {
             auto result = ImageLoader::load_image(path);
             if (!result)
@@ -157,12 +157,12 @@ namespace kailux
             "px", "nx", "py", "ny", "pz", "nz"
         };
 
-        std::vector<std::array<ImageLoader::ImageData, 6>> mips(s_PrefilteredMipLevels);
+        std::vector<std::array<ImageLoader::ImageData, 6>> mips(kPrefilteredMipLevels);
 
-        for (uint32_t mip = 0; mip < s_PrefilteredMipLevels; mip++)
+        for (uint32_t mip = 0; mip < kPrefilteredMipLevels; mip++)
             for (uint32_t face = 0; face < 6; face++)
             {
-                auto path = std::string(s_PrefilteredBasePath)
+                auto path = std::string(kPrefilteredBasePath)
                                  + std::to_string(mip)
                                  + "_"
                                  + std::string(faceNames[face])
@@ -180,7 +180,7 @@ namespace kailux
 
     void SkyboxPass::createBRDFLutTexture(const Context &context)
     {
-        if (auto data = ImageLoader::load_image(s_BRDFLutPath))
+        if (auto data = ImageLoader::load_image(kBRDFLutPath))
             m_BRDFLutTexture = TextureAllocator::create_from_image_data(context, *data);
     }
 }

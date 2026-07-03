@@ -6,9 +6,9 @@ namespace kailux::impl
     {
         switch (inLayer1)
         {
-            case layers::s_NonMoving:
-                return inLayer2 == broad_phase_layers::s_Moving;
-            case layers::s_Moving:
+            case layers::kNonMoving:
+                return inLayer2 == broad_phase_layers::kMoving;
+            case layers::kMoving:
                 return true;
             default:
                 return false;

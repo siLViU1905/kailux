@@ -56,11 +56,11 @@ namespace kailux
         const Texture& getOutIdTexture() const;
         const Texture& getResolvedOutIdTexture() const;
 
-        static constexpr uint32_t s_BufferMemoryBarriersCount = 1 + 1 + 1 + 1; // camera buffer + mesh data buffer + culler input buffer + scene buffer
-        std::array<vk::BufferMemoryBarrier2, s_BufferMemoryBarriersCount>       getBufferMemoryBarriers() const;
+        static constexpr uint32_t kBufferMemoryBarriersCount = 1 + 1 + 1 + 1; // camera buffer + mesh data buffer + culler input buffer + scene buffer
+        std::array<vk::BufferMemoryBarrier2, kBufferMemoryBarriersCount>       getBufferMemoryBarriers() const;
         vk::BufferMemoryBarrier2                                                getPickerBufferMemoryBarrier() const;
-        static constexpr uint32_t s_CullerBufferMemoryBarriersCount = 1 + 1; // indirect buffer + culler count buffer
-        std::array<vk::BufferMemoryBarrier2, s_CullerBufferMemoryBarriersCount> getCullerBufferMemoryBarriers() const;
+        static constexpr uint32_t kCullerBufferMemoryBarriersCount = 1 + 1; // indirect buffer + culler count buffer
+        std::array<vk::BufferMemoryBarrier2, kCullerBufferMemoryBarriersCount> getCullerBufferMemoryBarriers() const;
         vk::BufferMemoryBarrier2                                                getCullerCountBufferFillMemoryBarrier() const;
 
     private:
@@ -90,18 +90,18 @@ namespace kailux
         void createSceneTexture(const Context& context, vk::Format format);
         void createOutIdTexture(const Context &context);
 
-        static constexpr uint32_t s_DescriptorSetInfoCount = 1 + 1 + 1 + 1 + 1 + 1 + 1 + TextureRegistry::s_TextureTypes.size(); // camera buffer + mesh data buffer + scene buffer + skybox sampler + irradiance map + prefiltered env + brdf lut + textures
-        static constexpr uint32_t s_SkyboxDescriptorSetInfoCount = 1 + 1; // camera buffer + cube texture
-        static constexpr uint32_t s_PickerDescriptorSetInfoCount = 1 + 1; // id image + out buffer
-        static constexpr uint32_t s_OutlineDescriptorSetInfoCount = 1; // id image
-        static constexpr uint32_t s_CullerDescriptorSetInfoCount = 4; // mesh data + template + out indirect + counter
-        std::array<DescriptorSetInfo, s_DescriptorSetInfoCount>        makeDescriptorSetInfo(const SkyboxPass &skybox, const TextureRegistry& textureRegistry, uint32_t meshCount) const;
-        std::array<DescriptorSetInfo, s_SkyboxDescriptorSetInfoCount>  makeSkyboxDescriptorSetInfo(const Texture& skyboxTexture) const;
-        std::array<DescriptorSetInfo, s_PickerDescriptorSetInfoCount>  makePickerDescriptorSetInfo() const;
-        std::array<DescriptorSetInfo, s_OutlineDescriptorSetInfoCount> makeOutlineDescriptorSetInfo() const;
-        std::array<DescriptorSetInfo, s_CullerDescriptorSetInfoCount>  makeCullerDescriptorSetInfo() const;
-        static constexpr uint32_t s_PickerResolvedViewDescriptorSetBinding = 0;
-        static constexpr uint32_t s_OutlineIdResolvedViewDescriptorSetBinding = 0;
+        static constexpr uint32_t kDescriptorSetInfoCount = 1 + 1 + 1 + 1 + 1 + 1 + 1 + TextureRegistry::kTextureTypes.size(); // camera buffer + mesh data buffer + scene buffer + skybox sampler + irradiance map + prefiltered env + brdf lut + textures
+        static constexpr uint32_t kSkyboxDescriptorSetInfoCount = 1 + 1; // camera buffer + cube texture
+        static constexpr uint32_t kPickerDescriptorSetInfoCount = 1 + 1; // id image + out buffer
+        static constexpr uint32_t kOutlineDescriptorSetInfoCount = 1; // id image
+        static constexpr uint32_t kCullerDescriptorSetInfoCount = 4; // mesh data + template + out indirect + counter
+        std::array<DescriptorSetInfo, kDescriptorSetInfoCount>        makeDescriptorSetInfo(const SkyboxPass &skybox, const TextureRegistry& textureRegistry, uint32_t meshCount) const;
+        std::array<DescriptorSetInfo, kSkyboxDescriptorSetInfoCount>  makeSkyboxDescriptorSetInfo(const Texture& skyboxTexture) const;
+        std::array<DescriptorSetInfo, kPickerDescriptorSetInfoCount>  makePickerDescriptorSetInfo() const;
+        std::array<DescriptorSetInfo, kOutlineDescriptorSetInfoCount> makeOutlineDescriptorSetInfo() const;
+        std::array<DescriptorSetInfo, kCullerDescriptorSetInfoCount>  makeCullerDescriptorSetInfo() const;
+        static constexpr uint32_t kPickerResolvedViewDescriptorSetBinding = 0;
+        static constexpr uint32_t kOutlineIdResolvedViewDescriptorSetBinding = 0;
 
         vk::raii::CommandPool   m_CommandPool;
         vk::raii::CommandPool   m_ImGuiCommandPool;

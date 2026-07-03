@@ -197,7 +197,7 @@ namespace kailux
         m_MainPass = MainPass::create(
             m_Context,
             m_Swapchain,
-            s_FramesInFlight
+            kFramesInFlight
         );
     }
 
@@ -206,7 +206,7 @@ namespace kailux
         m_SkyboxPass = SkyboxPass::create(
             m_Context,
             m_Swapchain,
-            s_FramesInFlight
+            kFramesInFlight
         );
     }
 
@@ -215,7 +215,7 @@ namespace kailux
         m_OutlinePass = OutlinePass::create(
             m_Context,
             m_Swapchain,
-            s_FramesInFlight
+            kFramesInFlight
         );
     }
 
@@ -230,7 +230,7 @@ namespace kailux
                 m_ComputePicker,
                 m_OutlinePass,
                 m_ComputeCuller,
-                m_TextureRegistry, s_MaxMeshCount
+                m_TextureRegistry, kMaxMeshCount
             );
     }
 
@@ -251,9 +251,9 @@ namespace kailux
     {
         m_TextureRegistry = TextureRegistry::create(
             m_Context,
-            s_MaxMeshCount,
-            s_DirectoryIconPath,
-            s_FileIconPath
+            kMaxMeshCount,
+            kDirectoryIconPath,
+            kFileIconPath
         );
     }
 
@@ -287,18 +287,18 @@ namespace kailux
 
     void Engine::createSceneTextureIds()
     {
-        for (uint32_t i = 0; i < s_FramesInFlight; i++)
+        for (uint32_t i = 0; i < kFramesInFlight; i++)
             m_SceneTextureIds[i] = ImGuiBackend::get_texture_id_from_texture(m_Frames[i].getSceneTexture());
     }
 
     void Engine::createComputePicker()
     {
-        m_ComputePicker = ComputePicker::create(m_Context, s_FramesInFlight);
+        m_ComputePicker = ComputePicker::create(m_Context, kFramesInFlight);
     }
 
     void Engine::createComputeCuller()
     {
-        m_ComputeCuller = ComputeCuller::create(m_Context, s_FramesInFlight);
+        m_ComputeCuller = ComputeCuller::create(m_Context, kFramesInFlight);
     }
 
     void Engine::createScene()
@@ -319,7 +319,7 @@ namespace kailux
         m_Scene.setMainCamera(cameraEntity);
     }
 
-    std::array<DescriptorSetUpdateInfo, TextureRegistry::s_TextureTypes.size()>
+    std::array<DescriptorSetUpdateInfo, TextureRegistry::kTextureTypes.size()>
     Engine::make_descriptor_set_update_info_from_texture_set(TextureSetHandle slotToOverwrite,
                                                              const TextureSet &replacementSet)
     {
@@ -338,13 +338,13 @@ namespace kailux
         };
         uint32_t textureIndex = 0;
         std::array updateInfos = {
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.albedo),
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.normal),
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.roughness),
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.metallic),
-            makeUpdateInfo(MainPass::s_MeshTextureBindStart + textureIndex++, replacementSet.ao)
+            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.albedo),
+            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.normal),
+            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.roughness),
+            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.metallic),
+            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.ao)
         };
-        static_assert(TextureRegistry::s_TextureTypes.size() == updateInfos.size(),
+        static_assert(TextureRegistry::kTextureTypes.size() == updateInfos.size(),
                       "There is a missing texture in update info");
         return updateInfos;
     }
@@ -508,7 +508,7 @@ namespace kailux
             createSceneTextureIds();
         }
 
-        m_CurrentFrame = (m_CurrentFrame + 1) % s_FramesInFlight;
+        m_CurrentFrame = (m_CurrentFrame + 1) % kFramesInFlight;
     }
 
     bool Engine::is_mesh_type_supported(std::string_view path)
@@ -546,10 +546,10 @@ namespace kailux
     void Engine::saveScene(std::string_view folder) const
     {
         std::filesystem::path savePath = folder;
-        savePath /= Scene::s_SaveFolder;
+        savePath /= Scene::kSaveFolder;
         if (!std::filesystem::exists(savePath))
             std::filesystem::create_directory(savePath);
-        savePath /= std::string(m_Scene.getName().data()) + "." + s_SceneFileExtension.data();
+        savePath /= std::string(m_Scene.getName().data()) + "." + kSceneFileExtension.data();
 
         std::ofstream saveFile(savePath);
         if (saveFile.is_open())
@@ -827,7 +827,7 @@ namespace kailux
         recorder.drawIndexedIndirectCount(
             frame.getIndirectBuffer(),
             frame.getCullerCountBuffer(),
-            MainPass::s_MaxMeshCount
+            MainPass::kMaxMeshCount
         );
     }
 

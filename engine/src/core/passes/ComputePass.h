@@ -48,7 +48,7 @@ namespace kailux
         void pushImpl(vk::CommandBuffer cmd, const Pcs &... pcs) const
         {
             static_assert(sizeof...(Pcs) == PcRanges.size(),
-                  "Number of push constants doesnt correspond with s_PushConstantRanges");
+                  "Number of push constants doesnt correspond with kPushConstantRanges");
 
             uint32_t currentOffset = 0;
             size_t index = 0;

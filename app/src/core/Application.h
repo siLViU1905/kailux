@@ -36,7 +36,7 @@ namespace kailux
 
         Clock            m_Clock;
 
-        static constexpr uint32_t s_ThreadCount = 2;
+        static constexpr uint32_t kThreadCount = 2;
         Shared<ThreadDispatcher>  m_ThreadDispatcher;
 
         FileDialog<DialogMode::SingleFile>    m_LoadSceneDialog;

@@ -64,15 +64,15 @@ namespace kailux
         vk::raii::SurfaceKHR             m_Surface;
         uint32_t                         m_GraphicsQueueFamilyIndex;
         uint32_t                         m_TransferQueueFamilyIndex;
-        static constexpr std::array      s_ValidationLayers = {
+        static constexpr std::array      kValidationLayers = {
             "VK_LAYER_KHRONOS_validation"
             };
 #ifdef NDEBUG
-        static constexpr bool            s_EnableValidationLayers = false;
+        static constexpr bool            kEnableValidationLayers = false;
 #else
-        static constexpr bool            s_EnableValidationLayers = true;
+        static constexpr bool            kEnableValidationLayers = true;
 #endif
-        static constexpr std::array      s_DeviceExtensions = {
+        static constexpr std::array      kDeviceExtensions = {
             vk::KHRSwapchainExtensionName,
             vk::KHRPresentModeFifoLatestReadyExtensionName,
             vk::KHRSpirv14ExtensionName,

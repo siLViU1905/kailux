@@ -10,7 +10,7 @@ namespace kailux
     class ThreadDispatcher
     {
     public:
-        inline static uint32_t s_MaxThreads = 0;
+        inline static uint32_t kMaxThreads = 0;
 
         KAILUX_DECLARE_SINGLETON(ThreadDispatcher)
         ~ThreadDispatcher();

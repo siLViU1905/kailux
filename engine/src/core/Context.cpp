@@ -150,7 +150,7 @@ namespace kailux
 
         std::vector extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-        if (s_EnableValidationLayers)
+        if (kEnableValidationLayers)
             extensions.push_back(vk::EXTDebugUtilsExtensionName);
 
         return extensions;
@@ -178,8 +178,8 @@ namespace kailux
 
         std::vector<const char *> requiredLayers;
 
-        if (s_EnableValidationLayers)
-            requiredLayers.assign(s_ValidationLayers.begin(), s_ValidationLayers.end());
+        if (kEnableValidationLayers)
+            requiredLayers.assign(kValidationLayers.begin(), kValidationLayers.end());
 
         auto layerProperties = m_Context.enumerateInstanceLayerProperties();
 
@@ -218,7 +218,7 @@ namespace kailux
 
     void Context::setupDebugMessenger()
     {
-        if constexpr (!s_EnableValidationLayers)
+        if constexpr (!kEnableValidationLayers)
             return;
 
         vk::DebugUtilsMessageSeverityFlagsEXT severityFlags(
@@ -271,7 +271,7 @@ namespace kailux
                                                       isSuitable = isSuitable && (qfpIter != queueFamilies.end());
                                                       auto extensions = device.enumerateDeviceExtensionProperties();
                                                       bool found = true;
-                                                      for (auto const &extension: s_DeviceExtensions)
+                                                      for (auto const &extension: kDeviceExtensions)
                                                       {
                                                           auto extensionIter = std::ranges::find_if(
                                                               extensions, [extension](auto const &ext)
@@ -387,8 +387,8 @@ namespace kailux
 
         deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueInfos.size());
         deviceCreateInfo.pQueueCreateInfos = queueInfos.data();
-        deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(s_DeviceExtensions.size());
-        deviceCreateInfo.ppEnabledExtensionNames = s_DeviceExtensions.data();
+        deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(kDeviceExtensions.size());
+        deviceCreateInfo.ppEnabledExtensionNames = kDeviceExtensions.data();
 
         m_Device = vk::raii::Device(m_PhysicalDevice, deviceCreateInfo);
     }

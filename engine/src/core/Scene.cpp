@@ -309,7 +309,7 @@ namespace kailux
 
     entt::entity Scene::createSunEntity(const SunData &data)
     {
-        auto entity = createEntity(s_SunName);
+        auto entity = createEntity(kSunName);
         m_EntityRegistry.emplace<SunData>(
             entity,
             data

@@ -33,7 +33,7 @@ namespace kailux
             loadData.materials.push_back(process_material_paths(paths));
         }
 
-        process_node(scene->mRootNode, scene, s_ParentMatrix, loadData, meshDirectoryPath);
+        process_node(scene->mRootNode, scene, kParentMatrix, loadData, meshDirectoryPath);
 
         return loadData;
     }
@@ -119,7 +119,7 @@ namespace kailux
             }
         };
 
-        std::ranges::for_each(TextureRegistry::s_TextureTypes, [&](auto type)
+        std::ranges::for_each(TextureRegistry::kTextureTypes, [&](auto type)
         {
             auto aiType = static_cast<aiTextureType>(type);
             auto& targetPath = *getMaterialMemberPtr(type, outPaths);

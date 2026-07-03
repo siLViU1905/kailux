@@ -38,7 +38,7 @@ namespace kailux
             app.m_Engine.getAssetBrowserDirectoryTextureId(),
             app.m_Engine.getAssetBrowserFileTextureId()
         );
-        ThreadDispatcher::s_MaxThreads = s_ThreadCount;
+        ThreadDispatcher::kMaxThreads = kThreadCount;
         app.m_ThreadDispatcher = ThreadDispatcher::get();
         app.setCallbacks();
         return app;

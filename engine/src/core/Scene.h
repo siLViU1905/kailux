@@ -44,12 +44,12 @@ namespace kailux
 
         std::string           getMeshEntityName();
 
-        static constexpr std::string_view s_SaveFolder = "scenes";
+        static constexpr std::string_view kSaveFolder = "scenes";
         std::string           serialize() const;
         nlohmann::json        deserialize(std::string_view content, int windowWidth, int windowHeight);
 
     private:
-        static constexpr std::string_view s_SunName = "Sun";
+        static constexpr std::string_view kSunName = "Sun";
 
         entt::entity createEntity(std::string_view name);
         using        SunData = DirectionalLightData;

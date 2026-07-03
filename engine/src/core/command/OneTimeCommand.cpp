@@ -23,7 +23,7 @@ namespace kailux
 
     void OneTimeCommand::create_command_pools(const Context &context)
     {
-        s_GraphicsPool = vk::raii::CommandPool(
+        kGraphicsPool = vk::raii::CommandPool(
             context.m_Device,
             {
                 vk::CommandPoolCreateFlagBits::eTransient,
@@ -31,7 +31,7 @@ namespace kailux
             }
         );
 
-        s_TransferPool = vk::raii::CommandPool(
+        kTransferPool = vk::raii::CommandPool(
             context.m_Device,
             {
                 vk::CommandPoolCreateFlagBits::eTransient,
@@ -42,8 +42,8 @@ namespace kailux
 
     void OneTimeCommand::destroy_command_pools()
     {
-        s_GraphicsPool = {nullptr};
-        s_TransferPool = {nullptr};
+        kGraphicsPool = {nullptr};
+        kTransferPool = {nullptr};
     }
 
     OneTimeCommand OneTimeCommand::create(const Context &context, QueueType type)
@@ -101,7 +101,7 @@ namespace kailux
 
     void OneTimeCommand::createBuffer(const Context &context)
     {
-        const auto &pool = (m_QueueType == QueueType::Transfer) ? s_TransferPool : s_GraphicsPool;
+        const auto &pool = (m_QueueType == QueueType::Transfer) ? kTransferPool : kGraphicsPool;
         m_CommandBuffer = std::move(vk::raii::CommandBuffers(
             context.m_Device,
             {

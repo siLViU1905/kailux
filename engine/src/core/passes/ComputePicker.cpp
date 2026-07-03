@@ -20,9 +20,9 @@ namespace kailux
     ComputePicker ComputePicker::create(const Context &context, uint32_t frameCount)
     {
         ComputePicker picker;
-        picker.createDescriptorLayout(context, s_DescriptorLayoutBindings);
-        picker.createDescriptorPool(context, frameCount, s_DescriptorPoolSizes);
-        picker.createPipeline(context, {s_PickerComputeShaderPath.data()}, s_PushConstantRanges);
+        picker.createDescriptorLayout(context, kDescriptorLayoutBindings);
+        picker.createDescriptorPool(context, frameCount, kDescriptorPoolSizes);
+        picker.createPipeline(context, {kPickerComputeShaderPath.data()}, kPushConstantRanges);
         return picker;
     }
 }
