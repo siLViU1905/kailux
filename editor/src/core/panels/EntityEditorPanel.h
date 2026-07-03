@@ -28,13 +28,6 @@ namespace kailux
         void setOnBodyScaleChange(OnBodyScaleChange&& callback);
 
     private:
-        static constexpr std::string_view s_BodyTypeOptions = {
-            "Static\0"
-            "Kinematic\0"
-            "Dynamic\0",
-            sizeof("Static\0Dynamic\0Kinematic\0")
-        };
-
         void renderGizmo(Scene& scene);
 
         static void propagate_material_to_children(Scene &scene, entt::entity entity, const MeshMaterialData& material);

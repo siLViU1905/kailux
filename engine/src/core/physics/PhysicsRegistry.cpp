@@ -100,8 +100,8 @@ namespace kailux
         else
             shape = create_loaded_mesh_body(info);
 
-        auto motionType = static_cast<JPH::EMotionType>(info.bodyType);
-        auto objectLayer = (info.bodyType == PhysicsBodyType::Static) ? layers::s_NonMoving : layers::s_Moving;
+        auto motionType = static_cast<JPH::EMotionType>(info.options.bodyType);
+        auto objectLayer = (info.options.bodyType == PhysicsBodyType::Static) ? layers::s_NonMoving : layers::s_Moving;
 
         const auto& transform = info.transform;
         JPH::BodyCreationSettings settings(
@@ -111,7 +111,7 @@ namespace kailux
             motionType,
             objectLayer
             );
-        if (info.bodyType == PhysicsBodyType::Static && info.canBecomeDynamic)
+        if (info.options.bodyType == PhysicsBodyType::Static && info.options.canBecomeDynamic)
             settings.mAllowDynamicOrKinematic = true;
 
         m_BodyIds[slot] = m_PhysicsSystem->GetBodyInterface().CreateAndAddBody(settings, JPH::EActivation::Activate);
@@ -359,7 +359,7 @@ namespace kailux
                     );
 
             JPH::ShapeRefC childShape;
-            if (info.bodyType == PhysicsBodyType::Static && !info.canBecomeDynamic)
+            if (info.options.bodyType == PhysicsBodyType::Static && !info.options.canBecomeDynamic)
             {
                 JPH::IndexedTriangleList joltTriangles;
                 joltTriangles.reserve(submesh.indices.size() / 3);

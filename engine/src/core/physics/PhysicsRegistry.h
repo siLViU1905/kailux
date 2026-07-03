@@ -23,9 +23,15 @@ namespace kailux
 
     struct SubmeshPhysicsInfo
     {
-        std::span<const Vertex>                  vertices;
-        std::span<const MeshRegistry::IndexType> indices;
-        glm::mat4                                localTransform;
+        std::vector<Vertex>                  vertices;
+        std::vector<MeshRegistry::IndexType> indices;
+        glm::mat4                            localTransform{1.f};
+    };
+
+    struct PhysicsCreationOptions
+    {
+        PhysicsBodyType bodyType{PhysicsBodyType::Static};
+        bool            canBecomeDynamic{true};
     };
 
     struct PhysicsBodyInfo
@@ -33,8 +39,7 @@ namespace kailux
         std::vector<SubmeshPhysicsInfo> submeshes;
         MeshType                        meshType;
         MeshTransformData               transform;
-        PhysicsBodyType                 bodyType{PhysicsBodyType::Static};
-        bool                            canBecomeDynamic{true};
+        PhysicsCreationOptions          options;
     };
 
     class PhysicsRegistry

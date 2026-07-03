@@ -1,7 +1,5 @@
 #include "Geometry.h"
 
-#include <execution>
-
 namespace kailux
 {
     glm::vec4 Geometry::computeBoundingSphere(std::span<const Vertex> vertices)
@@ -9,49 +7,25 @@ namespace kailux
         if (vertices.empty())
             return {0.f, 0.f, 0.f, 0.f};
 
-        AABB initialAABB;
+        glm::vec3 min = vertices[0].position;
+        glm::vec3 max = vertices[0].position;
 
-        auto finalAABB = std::transform_reduce(
-            std::execution::par,
-            vertices.begin(),
-            vertices.end(),
-            initialAABB,
-            [](const AABB& a, const AABB& b)
-            {
-                return AABB(
-                    glm::min(a.min, b.min),
-                    glm::max(a.max, b.max)
-                    );
-            },
-            [](const Vertex& vertex)
-            {
-                return AABB(
-                    vertex.position,
-                    vertex.position
-                );
-            }
-            );
+        for (const auto& vertex : vertices)
+        {
+            min = glm::min(min, vertex.position);
+            max = glm::max(max, vertex.position);
+        }
 
-        auto center = (finalAABB.min + finalAABB.max) * 0.5f;
+        auto center = (min + max) * 0.5f;
 
-        float maxRadiusSq = std::transform_reduce(
-            std::execution::par,
-            vertices.begin(),
-            vertices.end(),
-            0.f,
-            [](float a, float b)
-            {
-                return std::max(a, b);
-            },
-            [center](const Vertex& vertex)
-            {
-                auto offset = vertex.position - center;
-                return glm::dot(offset, offset);
-            }
-            );
+        float maxRadiusSq = 0.f;
+        for (const auto& vertex : vertices)
+        {
+            auto offset = vertex.position - center;
+            maxRadiusSq = std::max(maxRadiusSq, glm::dot(offset, offset));
+        }
 
         float radius = std::sqrt(maxRadiusSq);
-
         return {center, radius};
     }
 }

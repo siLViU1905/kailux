@@ -2,6 +2,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 
+#include "HierarchyPanel.h"
 #include "core/components/entt/CameraComponent.h"
 #include "core/components/entt/HierarchyComponent.h"
 #include "core/components/entt/PhysicsControlComponent.h"
@@ -113,7 +114,7 @@ namespace kailux
                     ImGui::BeginDisabled(m_SimulationRunning);
 
                     int typeIndex = static_cast<int>(physics.type);
-                    if (ImGui::Combo("Body type", &typeIndex, s_BodyTypeOptions.data()))
+                    if (ImGui::Combo("Body type", &typeIndex, HierarchyPanel::s_BodyTypeOptions.data()))
                     {
                         physics.type = static_cast<PhysicsBodyType>(typeIndex);
                         m_OnBodyTypeChange(physics, physics.type);

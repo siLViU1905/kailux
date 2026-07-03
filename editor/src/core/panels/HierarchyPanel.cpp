@@ -4,7 +4,9 @@
 
 #include "core/components/entt/HierarchyComponent.h"
 #include "core/components/entt/MeshComponent.h"
+#include "core/components/entt/PhysicsComponent.h"
 #include "core/components/entt/TagComponent.h"
+#include "core/components/gpu/TransformComponent.h"
 #include "project_panel/ProjectPanel.h"
 
 namespace kailux
@@ -89,6 +91,13 @@ namespace kailux
             ImGui::EndDragDropTarget();
         }
 
+        if (m_OpenPhysicsPopup)
+        {
+            ImGui::OpenPopup("Add Physics##add_physics_popup");
+            m_OpenPhysicsPopup = false;
+        }
+        renderAddPhysicsPopup(scene);
+
         ImGui::End();
         ImGui::PopStyleColor();
     }
@@ -111,6 +120,11 @@ namespace kailux
     void HierarchyPanel::setOnNewMesh(OnNewMesh &&callback)
     {
         m_OnNewMesh = std::move(callback);
+    }
+
+    void HierarchyPanel::setOnAddPhysics(OnAddPhysics &&callback)
+    {
+        m_OnAddPhysics = std::move(callback);
     }
 
     void HierarchyPanel::selectEntity(entt::entity entity)
@@ -177,6 +191,17 @@ namespace kailux
             ImGui::CloseCurrentPopup();
         }
         return false;
+    }
+
+    bool HierarchyPanel::can_attach_physics(const entt::registry &registry, entt::entity entity)
+    {
+        if (registry.all_of<PhysicsComponent>(entity))
+            return false;
+        if (!registry.all_of<TransformComponent>(entity))
+            return false;
+
+        const auto *h = registry.try_get<HierarchyComponent>(entity);
+        return !h || h->parent == entt::null;
     }
 
     void HierarchyPanel::notifyAndDestroyHierarchy(entt::registry &registry, entt::entity entity)
@@ -263,6 +288,19 @@ namespace kailux
                     ImGui::TreePop();
                 return;
             }
+
+            if (can_attach_physics(registry, entity))
+            {
+                ImGui::Separator();
+                if (ImGui::MenuItem("Add physics"))
+                {
+                    m_OpenPhysicsPopup = true;
+                    m_PhysicsTargetEntity = entity;
+                    m_PhysicsBodyType = 0;
+                    m_PhysicsCanBecomeDynamic = true;
+                }
+            }
+
             ImGui::EndPopup();
         }
 
@@ -274,6 +312,56 @@ namespace kailux
                         renderEntityNode(scene, child);
 
             ImGui::TreePop();
+        }
+    }
+
+    void HierarchyPanel::renderAddPhysicsPopup(const Scene &scene)
+    {
+        ImGui::SetNextWindowSize(ImVec2(300, 0), ImGuiCond_Appearing);
+        if (ImGui::BeginPopupModal("Add Physics##add_physics_popup", nullptr,
+                                   ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            const auto &registry = scene.getEntityRegistry();
+
+            if (m_PhysicsTargetEntity == entt::null)
+            {
+                ImGui::CloseCurrentPopup();
+                ImGui::EndPopup();
+                return;
+            }
+
+            const auto &tag = registry.get<TagComponent>(m_PhysicsTargetEntity);
+            ImGui::Text("Entity: %s", tag.name.c_str());
+            ImGui::Separator();
+
+            ImGui::Combo("Body type", &m_PhysicsBodyType, s_BodyTypeOptions.data());
+
+            bool isStatic = (static_cast<PhysicsBodyType>(m_PhysicsBodyType) == PhysicsBodyType::Static);
+            ImGui::BeginDisabled(!isStatic);
+            ImGui::Checkbox("Can become dynamic", &m_PhysicsCanBecomeDynamic);
+            ImGui::EndDisabled();
+            if (ImGui::IsItemHovered() && isStatic)
+                ImGui::SetTooltip("If unchecked, a loaded mesh uses a non-convex\n"
+                    "collision shape and can't switch to Dynamic later.");
+
+            ImGui::Separator();
+
+            if (ImGui::Button("Add"))
+            {
+                auto type = static_cast<PhysicsBodyType>(m_PhysicsBodyType);
+                bool canDyn = isStatic ? m_PhysicsCanBecomeDynamic : true;
+                m_OnAddPhysics(m_PhysicsTargetEntity, type, canDyn);
+                m_PhysicsTargetEntity = entt::null;
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel"))
+            {
+                m_PhysicsTargetEntity = entt::null;
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::EndPopup();
         }
     }
 }
