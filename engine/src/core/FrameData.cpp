@@ -27,6 +27,7 @@ namespace kailux
                                                        mFenceInFlight(std::move(other.mFenceInFlight)),
                                                        mDescriptorSet(std::move(other.mDescriptorSet)),
                                                        mSkyboxDescriptorSet(std::move(other.mSkyboxDescriptorSet)),
+                                                       mGizmoDescriptorSet(std::move(other.mGizmoDescriptorSet)),
                                                        mPickerDescriptorSet(std::move(other.mPickerDescriptorSet)),
                                                        mOutlineDescriptorSet(std::move(other.mOutlineDescriptorSet)),
                                                        mCullerDescriptorSet(std::move(other.mCullerDescriptorSet)),
@@ -56,6 +57,7 @@ namespace kailux
             mFenceInFlight = std::move(other.mFenceInFlight);
             mDescriptorSet = std::move(other.mDescriptorSet);
             mSkyboxDescriptorSet = std::move(other.mSkyboxDescriptorSet);
+            mGizmoDescriptorSet = std::move(other.mGizmoDescriptorSet);
             mPickerDescriptorSet = std::move(other.mPickerDescriptorSet);
             mOutlineDescriptorSet = std::move(other.mOutlineDescriptorSet);
             mCullerDescriptorSet = std::move(other.mCullerDescriptorSet);
@@ -79,9 +81,9 @@ namespace kailux
         const Swapchain &swapchain,
         const MainPass &mainPass,
         const SkyboxPass &skybox,
+        const GizmoPass & gizmoPass,
         const ComputePicker &picker,
-        const OutlinePass &outlinePass,
-        const ComputeCuller &culler, const TextureRegistry &textureRegistry, uint32_t maxMeshCount
+        const OutlinePass &outlinePass, const ComputeCuller &culler, const TextureRegistry &textureRegistry, uint32_t maxMeshCount
     )
     {
         FrameData frame;
@@ -104,6 +106,8 @@ namespace kailux
         auto skyboxDescInfo = frame.makeSkyboxDescriptorSetInfo(skybox.getTexture());
         frame.createSkyboxDescriptorSet(context, skybox.getDescriptorLayout(), skybox.getDescriptorPool(),
                                         skyboxDescInfo);
+        auto gizmoDescInfo = frame.makeGizmoDescriptorSetInfo();
+        frame.createGizmoDescriptorSet(context, gizmoPass.getDescriptorLayout(), gizmoPass.getDescriptorPool(), gizmoDescInfo);
         auto pickerDescInfo = frame.makePickerDescriptorSetInfo();
         frame.createPickerDescriptorSet(context, picker.getDescriptorLayout(), picker.getDescriptorPool(),
                                         pickerDescInfo);
@@ -184,6 +188,11 @@ namespace kailux
     const DescriptorSet &FrameData::getSkyboxDescriptorSet() const
     {
         return mSkyboxDescriptorSet;
+    }
+
+    const DescriptorSet & FrameData::getGizmoDescriptorSet() const
+    {
+        return mGizmoDescriptorSet;
     }
 
     const DescriptorSet &FrameData::getPickerDescriptorSet() const
@@ -425,6 +434,12 @@ namespace kailux
         mSkyboxDescriptorSet = DescriptorSet::create(context, descriptorLayout, descriptorPool, infos);
     }
 
+    void FrameData::createGizmoDescriptorSet(const Context &context, const DescriptorLayout &descriptorLayout,
+        const DescriptorPool &descriptorPool, std::span<const DescriptorSetInfo> infos)
+    {
+        mGizmoDescriptorSet = DescriptorSet::create(context, descriptorLayout, descriptorPool, infos);
+    }
+
     void FrameData::createPickerDescriptorSet(const Context &context, const DescriptorLayout &descriptorLayout,
                                               const DescriptorPool &descriptorPool,
                                               std::span<const DescriptorSetInfo> infos)
@@ -613,6 +628,18 @@ namespace kailux
                 vk::ImageLayout::eShaderReadOnlyOptimal,
                 1
             )
+        };
+    }
+
+    std::array<DescriptorSetInfo, FrameData::kGizmoDescriptorSetInfoCount> FrameData::makeGizmoDescriptorSetInfo() const
+    {
+        return {
+            DescriptorSetBufferInfo(
+                mCameraBuffer.getBuffer(),
+                mCameraBuffer.getSize(),
+                1,
+                vk::DescriptorType::eUniformBuffer
+                )
         };
     }
 

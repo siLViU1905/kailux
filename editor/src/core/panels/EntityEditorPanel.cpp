@@ -54,7 +54,7 @@ namespace kailux
             ImGui::Text("Entity: %s", tag.name.c_str());
             ImGui::Separator();
 
-            if (registry.all_of<TransformComponent>(mSelectedEntity))
+            if (registry.all_of<TransformComponent, MeshComponent>(mSelectedEntity))
             {
                 ImGui::Text("Gizmo Operation:");
                 if (ImGui::RadioButton("Translate", mCurrentGizmoOperation == ImGuizmo::TRANSLATE))
@@ -164,10 +164,30 @@ namespace kailux
                     ImGui::InputFloat("Intensity", &intensity);
                     ImGui::ColorPicker3("Color", glm::value_ptr(data.colorAndEnabled));
                     float &enableValue = data.colorAndEnabled.w;
-                    static bool enabled = true;
-                    enabled = enableValue > 0.5f;
+                    bool enabled = enableValue > 0.5f;
                     if (ImGui::Checkbox("Enabled", &enabled))
                         enabled ? enableValue = 1.f : enableValue = 0.f;
+                }
+            } else if (registry.all_of<PointLightData>(mSelectedEntity))
+            {
+                auto [light, transform] = registry.get<PointLightData, TransformComponent>(mSelectedEntity);
+                if (ImGui::CollapsingHeader("Point Light", ImGuiTreeNodeFlags_DefaultOpen))
+                {
+                    ImGui::InputFloat3("Position", glm::value_ptr(transform.transform.position));
+
+                    float &intensity = light.positionAndIntensity.w;
+                    ImGui::InputFloat("Intensity", &intensity);
+
+                    float &range = light.range.x;
+                    ImGui::InputFloat("Range", &range);
+
+                    ImGui::ColorPicker3("Color", glm::value_ptr(light.colorAndEnabled));
+                    registry.get<GizmoComponent>(mSelectedEntity).color = {glm::vec3(light.colorAndEnabled), 1.f};
+
+                    float &enableValue = light.colorAndEnabled.w;
+                    bool enabled = enableValue > 0.5f;
+                    if (ImGui::Checkbox("Enabled", &enabled))
+                        enableValue = enabled ? 1.f : 0.f;
                 }
             } else if (registry.all_of<CameraComponent>(mSelectedEntity))
             {
@@ -221,6 +241,8 @@ namespace kailux
 
         if (!registry.all_of<TransformComponent>(mSelectedEntity))
             return;
+        bool isMesh = registry.all_of<MeshComponent>(mSelectedEntity);
+        auto operation = isMesh ? mCurrentGizmoOperation : ImGuizmo::TRANSLATE;
 
         auto &transformComp = registry.get<TransformComponent>(mSelectedEntity);
         auto &transform = transformComp.transform;
@@ -231,14 +253,14 @@ namespace kailux
         ImGuizmo::Manipulate(
             glm::value_ptr(cameraData.view),
             glm::value_ptr(cameraData.projection),
-            mCurrentGizmoOperation,
+            operation,
             mCurrentGizmoMode,
             glm::value_ptr(modelMatrix)
         );
 
         bool isDragging = ImGuizmo::IsUsing();
         if (mGizmoWasDragging && !isDragging)
-            if (mCurrentGizmoOperation == ImGuizmo::SCALE &&
+            if (operation == ImGuizmo::SCALE &&
                 registry.all_of<PhysicsComponent>(mSelectedEntity) &&
                 registry.all_of<TransformComponent>(mSelectedEntity))
                 mOnBodyScaleChange(
@@ -266,7 +288,7 @@ namespace kailux
 
             transform.position = translation;
             transform.rotation = rotation;
-            if (mUniformScale && mCurrentGizmoOperation == ImGuizmo::SCALE)
+            if (mUniformScale && operation == ImGuizmo::SCALE)
             {
                 float avgScale = (scale.x + scale.y + scale.z) / 3.f;
                 transform.scale = glm::vec3(avgScale);

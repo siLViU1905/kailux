@@ -28,6 +28,12 @@ namespace kailux
         Unknown
     };
 
+    enum class LightType : uint8_t
+    {
+        Point,
+        Unknown
+    };
+
     enum class SimulationState : uint8_t
     {
         Paused,
@@ -72,4 +78,12 @@ namespace kailux
     {
         using Overloads::operator()...;
     };
+}
+
+namespace kailux
+{
+    namespace details
+    {
+        constexpr uint32_t kMaxPointLights{16};
+    }
 }

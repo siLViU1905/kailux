@@ -10,6 +10,11 @@ namespace kailux
             uint32_t                id = ~0u;
             std::array<uint32_t, 3> _padding;
         };
-        Outline outline;
+
+        struct Gizmo
+        {
+            glm::vec4 positionAndScale{};
+            glm::vec4 color{};
+        };
     };
 }

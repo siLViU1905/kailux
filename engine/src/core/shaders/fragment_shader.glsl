@@ -1,7 +1,6 @@
 #version 460
 #extension GL_EXT_nonuniform_qualifier : enable
 
-// --- BEGIN INCLUDE ---
 const float PI = 3.14159265359;
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
@@ -48,7 +47,6 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 {
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
-// --- END INCLUDE ---
 
 layout (location = 0) in vec3 fragPos;
 layout (location = 1) in vec3 fragNormal;
@@ -73,9 +71,22 @@ struct DirectionalLight
     vec4 directionAndIntensity;
     vec4 colorAndEnabled;
 };
+struct PointLight
+{
+    vec4 positionAndIntensity;
+    vec4 colorAndEnabled;
+    vec4 range;
+};
+vec3 calcPointLight(PointLight light, vec3 N, vec3 V, vec3 fragPos, vec3 albedo, float roughness, float metallic, vec3 F0);
+
+#define kMaxPointLights 16
 
 layout (std430, set = 0, binding = 2) readonly buffer SceneBuffer {
     DirectionalLight sun;
+
+    PointLight pointLights[kMaxPointLights];
+    uint       pointLightCount;
+    uint       _padding[3];
 } sceneData;
 
 layout (set = 0, binding = 3) uniform samplerCube skyboxSampler;
@@ -150,6 +161,10 @@ void main()
         Lo = (kD * albedo / PI + specular) * radiance * NdotL;
     }
 
+    for (uint i = 0u; i < sceneData.pointLightCount; ++i)
+        Lo += calcPointLight(sceneData.pointLights[i], N, V, fragPos,
+                             albedo, roughness, metallic, F0);
+
     vec3 color = (Lo + ambient) * fragExposure;
 
     color = toneMapACES(color);
@@ -168,4 +183,43 @@ vec3 toneMapACES(vec3 color)
     const float d = 0.59;
     const float e = 0.14;
     return clamp((color * (a * color + b)) / (color * (c * color + d) + e), 0.0, 1.0);
+}
+
+vec3 calcPointLight(PointLight light, vec3 N, vec3 V, vec3 fragPos, vec3 albedo, float roughness, float metallic, vec3 F0)
+{
+    if (light.colorAndEnabled.w < 0.5)
+    return vec3(0.0);
+
+    vec3  lightPos  = light.positionAndIntensity.xyz;
+    float intensity = light.positionAndIntensity.w;
+    vec3  lightColor = light.colorAndEnabled.rgb;
+    float range     = light.range.x;
+
+    vec3  toLight  = lightPos - fragPos;
+    float distance = length(toLight);
+
+    if (distance > range)
+        return vec3(0.0);
+
+    vec3 L = toLight / max(distance, 0.0001);
+    vec3 H = normalize(V + L);
+
+    float attenuation = 1.0 / max(distance * distance, 0.0001);
+    float rangeFade   = clamp(1.0 - pow(distance / range, 4.0), 0.0, 1.0);
+    rangeFade *= rangeFade;
+    vec3  radiance    = lightColor * intensity * attenuation * rangeFade;
+
+    vec3  F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+    float D = DistributionGGX(N, H, roughness);
+    float G = GeometrySmith(N, V, L, roughness);
+
+    vec3  numerator   = D * G * F;
+    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
+    vec3  specular    = numerator / denominator;
+
+    vec3 kS = F;
+    vec3 kD = (vec3(1.0) - kS) * (1.0 - metallic);
+
+    float NdotL = max(dot(N, L), 0.0);
+    return (kD * albedo / PI + specular) * radiance * NdotL;
 }

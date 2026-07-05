@@ -41,6 +41,7 @@ namespace kailux
                                               mMeshRegistry(std::move(other.mMeshRegistry)),
                                               mTextureRegistry(std::move(other.mTextureRegistry)),
                                               mPhysicsRegistry(std::move(other.mPhysicsRegistry)),
+                                              mGizmoRegistry(std::move(other.mGizmoRegistry)),
                                               mAssetPipeline(std::move(other.mAssetPipeline)),
                                               mPhysicsSystem(std::move(other.mPhysicsSystem)),
                                               mDeferredResourceEraser(std::move(other.mDeferredResourceEraser)),
@@ -50,6 +51,7 @@ namespace kailux
                                               mScene(std::move(other.mScene)),
                                               mMainPass(std::move(other.mMainPass)),
                                               mSkyboxPass(std::move(other.mSkyboxPass)),
+                                              mGizmoPass(std::move(other.mGizmoPass)),
                                               mOutlinePass(std::move(other.mOutlinePass)),
                                               mComputePicker(std::move(other.mComputePicker)),
                                               mPickedEntity(other.mPickedEntity),
@@ -74,6 +76,7 @@ namespace kailux
             mMeshRegistry = std::move(other.mMeshRegistry);
             mTextureRegistry = std::move(other.mTextureRegistry);
             mPhysicsRegistry = std::move(other.mPhysicsRegistry);
+            mGizmoRegistry = std::move(other.mGizmoRegistry);
             mAssetPipeline = std::move(other.mAssetPipeline);
             mPhysicsSystem = std::move(other.mPhysicsSystem);
             mDeferredResourceEraser = std::move(other.mDeferredResourceEraser);
@@ -83,6 +86,7 @@ namespace kailux
             mScene = std::move(other.mScene);
             mMainPass = std::move(other.mMainPass);
             mSkyboxPass = std::move(other.mSkyboxPass);
+            mGizmoPass = std::move(other.mGizmoPass);
             mOutlinePass = std::move(other.mOutlinePass);
             mComputePicker = std::move(other.mComputePicker);
             mPickedEntity = other.mPickedEntity;
@@ -115,15 +119,18 @@ namespace kailux
         OneTimeCommand::create_command_pools(engine.mContext);
         engine.createMainPass();
         engine.createSkybox();
+        engine.createGizmoPass();
         engine.createOutlinePass();
         engine.createTransferManager();
         engine.createMeshRegistry();
         engine.createTextureRegistry();
         engine.createPhysicsRegistry();
+        engine.createGizmoRegistry();
         engine.createComputePicker();
         engine.createComputeCuller();
         engine.createFrameResources();
         engine.createImGui(window);
+        engine.createScene();
         engine.createSceneTextureIds();
         engine.createSceneEntities(window);
         engine.createAssetPipeline();
@@ -210,6 +217,11 @@ namespace kailux
         );
     }
 
+    void Engine::createGizmoPass()
+    {
+        mGizmoPass = GizmoPass::create(mContext, mSwapchain, kFramesInFlight);
+    }
+
     void Engine::createOutlinePass()
     {
         mOutlinePass = OutlinePass::create(
@@ -227,10 +239,10 @@ namespace kailux
                 mSwapchain,
                 mMainPass,
                 mSkyboxPass,
+                mGizmoPass,
                 mComputePicker,
                 mOutlinePass,
-                mComputeCuller,
-                mTextureRegistry, kMaxMeshCount
+                mComputeCuller, mTextureRegistry, kMaxMeshCount
             );
     }
 
@@ -242,7 +254,7 @@ namespace kailux
     void Engine::createMeshRegistry()
     {
         std::vector<Buffer> stagingBuffers;
-        OneTimeCommand otc = OneTimeCommand::create(mContext);
+        auto otc = OneTimeCommand::create(mContext);
         mMeshRegistry = MeshRegistry::create(mContext, otc.getCommandBuffer(), stagingBuffers);
         otc.submit(mContext);
     }
@@ -260,6 +272,14 @@ namespace kailux
     void Engine::createPhysicsRegistry()
     {
         mPhysicsRegistry = PhysicsRegistry::create();
+    }
+
+    void Engine::createGizmoRegistry()
+    {
+        std::vector<Buffer> stagingBuffers;
+        auto otc = OneTimeCommand::create(mContext);
+        mGizmoRegistry = GizmoRegistry::create(mContext, otc.getCommandBuffer(), stagingBuffers);
+        otc.submit(mContext);
     }
 
     void Engine::createAssetPipeline()
@@ -440,6 +460,7 @@ namespace kailux
 
             recordMeshData(frame, recorder);
             recordSkybox(frame, recorder);
+            recordGizmos(frame, recorder);
 
             recorder.endRendering();
 
@@ -846,6 +867,37 @@ namespace kailux
         );
     }
 
+    void Engine::recordGizmos(const FrameData &frame, const CommandRecorder &recorder) const
+    {
+        if (mPhysicsSystem.getSimulationState() == SimulationState::Running)
+            return;
+
+        const auto cmd = recorder.getCommandBuffer();
+        mGizmoPass.bind(cmd);
+        mGizmoRegistry.bind(cmd);
+        frame.getGizmoDescriptorSet().bind(mGizmoPass.getPipeline(), cmd);
+        auto view = mScene.getEntityRegistry().view<GizmoComponent, TransformComponent>();
+        view.each([&](const auto& component, const auto& transform)
+        {
+            auto gizmoView = mGizmoRegistry.view(component.handle);
+
+            GraphicsPassesPushConstants::Gizmo pc{
+                glm::vec4(transform.transform.position, component.scale),
+                component.color
+            };
+
+            mGizmoPass.push(cmd, pc);
+
+            cmd.drawIndexed(
+                gizmoView.indexCount,
+                1,
+                gizmoView.firstIndex,
+                gizmoView.vertexOffset,
+                0
+                );
+        });
+    }
+
     void Engine::recordImGuiData(const FrameData &frame)
     {
         auto format = mSwapchain.getFormat();
@@ -1083,5 +1135,17 @@ namespace kailux
 
         reg.emplace<PhysicsComponent>(entity, handle, options.bodyType);
         reg.emplace<PhysicsControlComponent>(entity);
+    }
+
+    void Engine::addLightEntity(LightType type)
+    {
+        switch (type)
+        {
+            case LightType::Point:
+                mScene.createPointLightEntity(mScene.getLightEntityName(), {mGizmoRegistry.getBuiltins().pointLight, 0.5f, {1.f, 1.f, 1.f, 1.f}}, {});
+                break;
+            default:
+                break;
+        }
     }
 }

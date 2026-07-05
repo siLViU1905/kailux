@@ -25,6 +25,9 @@ namespace kailux
         using OnNewMesh = std::move_only_function<void(MeshType)>;
         void  setOnNewMesh(OnNewMesh&& callback);
 
+        using OnNewLight = std::move_only_function<void(LightType)>;
+        void  setOnNewLight(OnNewLight&& callback);
+
         using OnAddPhysics = std::move_only_function<void(entt::entity, PhysicsBodyType, bool)>;
         void setOnAddPhysics(OnAddPhysics&& callback);
 
@@ -55,6 +58,7 @@ namespace kailux
         OnEntityDeleted  mOnEntityDeleted;
         OnDragDrop       mOnDragDrop;
         OnNewMesh        mOnNewMesh;
+        OnNewLight       mOnNewLight;
         OnAddPhysics     mOnAddPhysics;
         entt::entity     mSelectedEntity;
         entt::entity     mLastSelectedEntity{entt::null};

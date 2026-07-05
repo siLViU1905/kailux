@@ -3,6 +3,7 @@
 
 #include "Camera.h"
 #include "Core.h"
+#include "components/entt/GizmoComponent.h"
 #include "components/entt/MeshComponent.h"
 #include "components/gpu/MeshTransformData.h"
 #include "components/gpu/MeshMaterialData.h"
@@ -33,6 +34,8 @@ namespace kailux
         );
         entt::entity createParentEntity(std::string_view name);
 
+        std::optional<entt::entity> createPointLightEntity(std::string_view name, GizmoComponent component, const glm::vec3 &position);
+
         entt::registry&       getEntityRegistry();
         const entt::registry& getEntityRegistry() const;
         entt::entity          getMainCamera() const;
@@ -43,6 +46,7 @@ namespace kailux
         std::string_view      getName() const;
 
         std::string           getMeshEntityName();
+        std::string           getLightEntityName();
 
         static constexpr std::string_view kSaveFolder = "scenes";
         std::string           serialize() const;
@@ -55,14 +59,17 @@ namespace kailux
         using        SunData = DirectionalLightData;
         entt::entity createSunEntity(const SunData& data);
 
+        LightsData getLightData() const;
+
         void updateTransforms();
 
-        std::string    mName;
+        std::string    mName{"Scene"};
 
         entt::registry mEntityRegistry;
-        entt::entity   mMainCameraEntity;
-        entt::entity   mSun;
+        entt::entity   mMainCameraEntity{entt::null};
+        entt::entity   mSun{entt::null};
 
-        uint32_t mMeshEntityNameCount;
+        uint32_t mMeshEntityNameCount{};
+        uint32_t mLightEntityNameCount{};
     };
 }

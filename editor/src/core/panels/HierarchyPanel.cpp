@@ -67,6 +67,8 @@ namespace kailux
 
                     if (ImGui::BeginMenu("Light"))
                     {
+                        if (ImGui::MenuItem("Point"))
+                            mOnNewLight(LightType::Point);
                         ImGui::EndMenu();
                     }
 
@@ -120,6 +122,11 @@ namespace kailux
     void HierarchyPanel::setOnNewMesh(OnNewMesh &&callback)
     {
         mOnNewMesh = std::move(callback);
+    }
+
+    void HierarchyPanel::setOnNewLight(OnNewLight &&callback)
+    {
+        mOnNewLight = std::move(callback);
     }
 
     void HierarchyPanel::setOnAddPhysics(OnAddPhysics &&callback)
@@ -197,7 +204,7 @@ namespace kailux
     {
         if (registry.all_of<PhysicsComponent>(entity))
             return false;
-        if (!registry.all_of<TransformComponent>(entity))
+        if (!registry.all_of<TransformComponent, MeshComponent>(entity))
             return false;
 
         const auto *h = registry.try_get<HierarchyComponent>(entity);
