@@ -204,7 +204,7 @@ namespace kailux
         mMainPass = MainPass::create(
             mContext,
             mSwapchain,
-            kFramesInFlight
+            details::kFramesInFlight
         );
     }
 
@@ -213,13 +213,13 @@ namespace kailux
         mSkyboxPass = SkyboxPass::create(
             mContext,
             mSwapchain,
-            kFramesInFlight
+            details::kFramesInFlight
         );
     }
 
     void Engine::createGizmoPass()
     {
-        mGizmoPass = GizmoPass::create(mContext, mSwapchain, kFramesInFlight);
+        mGizmoPass = GizmoPass::create(mContext, mSwapchain, details::kFramesInFlight);
     }
 
     void Engine::createOutlinePass()
@@ -227,7 +227,7 @@ namespace kailux
         mOutlinePass = OutlinePass::create(
             mContext,
             mSwapchain,
-            kFramesInFlight
+            details::kFramesInFlight
         );
     }
 
@@ -242,7 +242,7 @@ namespace kailux
                 mGizmoPass,
                 mComputePicker,
                 mOutlinePass,
-                mComputeCuller, mTextureRegistry, kMaxMeshCount
+                mComputeCuller, mTextureRegistry
             );
     }
 
@@ -263,7 +263,7 @@ namespace kailux
     {
         mTextureRegistry = TextureRegistry::create(
             mContext,
-            kMaxMeshCount,
+            details::kMaxMeshes,
             kDirectoryIconPath,
             kFileIconPath
         );
@@ -289,6 +289,10 @@ namespace kailux
         {
             mOnInfoLog(msg);
         });
+        mAssetPipeline.setOnWarningLog([this](auto msg)
+        {
+            mOnWarningLog(msg);
+        });
     }
 
     void Engine::createPhysicsSystem()
@@ -307,18 +311,18 @@ namespace kailux
 
     void Engine::createSceneTextureIds()
     {
-        for (uint32_t i = 0; i < kFramesInFlight; i++)
+        for (uint32_t i = 0; i < details::kFramesInFlight; i++)
             mSceneTextureIds[i] = ImGuiBackend::get_texture_id_from_texture(mFrames[i].getSceneTexture());
     }
 
     void Engine::createComputePicker()
     {
-        mComputePicker = ComputePicker::create(mContext, kFramesInFlight);
+        mComputePicker = ComputePicker::create(mContext, details::kFramesInFlight);
     }
 
     void Engine::createComputeCuller()
     {
-        mComputeCuller = ComputeCuller::create(mContext, kFramesInFlight);
+        mComputeCuller = ComputeCuller::create(mContext, details::kFramesInFlight);
     }
 
     void Engine::createScene()
@@ -529,7 +533,7 @@ namespace kailux
             createSceneTextureIds();
         }
 
-        mCurrentFrame = (mCurrentFrame + 1) % kFramesInFlight;
+        mCurrentFrame = (mCurrentFrame + 1) % details::kFramesInFlight;
     }
 
     bool Engine::is_mesh_type_supported(std::string_view path)
@@ -848,7 +852,7 @@ namespace kailux
         recorder.drawIndexedIndirectCount(
             frame.getIndirectBuffer(),
             frame.getCullerCountBuffer(),
-            MainPass::kMaxMeshCount
+            details::kMaxMeshes
         );
     }
 
@@ -1142,7 +1146,11 @@ namespace kailux
         switch (type)
         {
             case LightType::Point:
-                mScene.createPointLightEntity(mScene.getLightEntityName(), {mGizmoRegistry.getBuiltins().pointLight, 0.5f, {1.f, 1.f, 1.f, 1.f}}, {});
+                if (!mScene.createPointLightEntity(
+                    mScene.getLightEntityName(),
+                    {mGizmoRegistry.getBuiltins().pointLight, 0.5f, {1.f, 1.f, 1.f, 1.f}},
+                    {}))
+                    mOnWarningLog("The maximum number of point lights has been reached");
                 break;
             default:
                 break;

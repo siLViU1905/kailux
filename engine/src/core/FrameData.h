@@ -25,7 +25,9 @@ namespace kailux
                                 const SkyboxPass &skybox,
                                 const GizmoPass & gizmoPass,
                                 const ComputePicker& picker,
-                                const OutlinePass& outlinePass, const ComputeCuller& culler, const TextureRegistry &textureRegistry, uint32_t maxMeshCount
+                                const OutlinePass& outlinePass,
+                                const ComputeCuller& culler,
+                                const TextureRegistry &textureRegistry
         );
 
         void reset(const Context& context) const;
@@ -85,11 +87,11 @@ namespace kailux
         void createCullerDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
                                        DescriptorSetInfo> infos);
         void createCameraBuffer(const Context& context);
-        void createMeshDataBuffer(const Context& context, uint32_t meshCount);
-        void createIndirectBuffer(const Context& context, uint32_t count);
+        void createMeshDataBuffer(const Context &context);
+        void createIndirectBuffer(const Context &context);
         void createSceneBuffer(const Context& context);
         void createPickerBuffer(const Context& context);
-        void createCullerBuffers(const Context& context, uint32_t count);
+        void createCullerBuffers(const Context &context);
 
         void createSceneTexture(const Context& context, vk::Format format);
         void createOutIdTexture(const Context &context);
@@ -100,7 +102,7 @@ namespace kailux
         static constexpr uint32_t kPickerDescriptorSetInfoCount = 1 + 1; // id image + out buffer
         static constexpr uint32_t kOutlineDescriptorSetInfoCount = 1; // id image
         static constexpr uint32_t kCullerDescriptorSetInfoCount = 4; // mesh data + template + out indirect + counter
-        std::array<DescriptorSetInfo, kDescriptorSetInfoCount>        makeDescriptorSetInfo(const SkyboxPass &skybox, const TextureRegistry& textureRegistry, uint32_t meshCount) const;
+        std::array<DescriptorSetInfo, kDescriptorSetInfoCount>        makeDescriptorSetInfo(const SkyboxPass &skybox, const TextureRegistry &textureRegistry) const;
         std::array<DescriptorSetInfo, kSkyboxDescriptorSetInfoCount>  makeSkyboxDescriptorSetInfo(const Texture& skyboxTexture) const;
         std::array<DescriptorSetInfo, kGizmoDescriptorSetInfoCount>   makeGizmoDescriptorSetInfo() const;
         std::array<DescriptorSetInfo, kPickerDescriptorSetInfoCount>  makePickerDescriptorSetInfo() const;

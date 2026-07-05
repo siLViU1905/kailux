@@ -16,8 +16,6 @@ namespace kailux
             pushImpl<{}, Pcs...>(cmd, pcs...);
         }
 
-        static constexpr uint32_t kMaxMeshCount = 1'000;
-
     private:
         static constexpr std::string_view kVertexShaderPath = "shaders/vertex_shader.spv";
         static constexpr std::string_view kFragmentShaderPath = "shaders/fragment_shader.spv";
@@ -60,27 +58,27 @@ namespace kailux
             ),
             DescriptorLayoutBinding(
                 vk::DescriptorType::eCombinedImageSampler,
-                kMaxMeshCount, // albedo
+                details::kMaxMeshes, // albedo
                 vk::ShaderStageFlagBits::eFragment
             ),
             DescriptorLayoutBinding(
                 vk::DescriptorType::eCombinedImageSampler,
-                kMaxMeshCount, // normal
+                details::kMaxMeshes, // normal
                 vk::ShaderStageFlagBits::eFragment
             ),
             DescriptorLayoutBinding(
                 vk::DescriptorType::eCombinedImageSampler,
-                kMaxMeshCount, // roughness
+                details::kMaxMeshes, // roughness
                 vk::ShaderStageFlagBits::eFragment
             ),
             DescriptorLayoutBinding(
                 vk::DescriptorType::eCombinedImageSampler,
-                kMaxMeshCount, // metallic
+                details::kMaxMeshes, // metallic
                 vk::ShaderStageFlagBits::eFragment
             ),
             DescriptorLayoutBinding(
                 vk::DescriptorType::eCombinedImageSampler,
-                kMaxMeshCount, // ao
+                details::kMaxMeshes, // ao
                 vk::ShaderStageFlagBits::eFragment
             )
         };
@@ -115,23 +113,23 @@ namespace kailux
             ),
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
-                kMaxMeshCount // albedo
+                details::kMaxMeshes // albedo
             ),
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
-                kMaxMeshCount // normal
+                details::kMaxMeshes // normal
             ),
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
-                kMaxMeshCount // roughness
+                details::kMaxMeshes // roughness
             ),
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
-                kMaxMeshCount // metallic
+                details::kMaxMeshes // metallic
             ),
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
-                kMaxMeshCount // ao
+                details::kMaxMeshes // ao
             )
         };
         static_assert(
@@ -146,7 +144,7 @@ namespace kailux
                 const auto [descriptor, count, stage] = kDescriptorLayoutBindings[i];
 
                 if (descriptor == vk::DescriptorType::eCombinedImageSampler &&
-                    count == kMaxMeshCount &&
+                    count == details::kMaxMeshes &&
                     stage == vk::ShaderStageFlagBits::eFragment)
                     return i;
             }

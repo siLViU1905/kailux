@@ -93,8 +93,6 @@ namespace kailux
         void addLightEntity(LightType type);
 
     private:
-        static constexpr uint32_t         kMaxMeshCount = MainPass::kMaxMeshCount;
-
         static constexpr std::string_view kDirectoryIconPath = "assets/icons/directory_icon.png";
         static constexpr std::string_view kFileIconPath = "assets/icons/file_icon.png";
 
@@ -151,8 +149,6 @@ namespace kailux
         void transitionForPickerAndPostProcess(const FrameData& frame, const CommandRecorder& recorder) const;
         void transitionForPresent(const CommandRecorder& recorder, uint32_t imageIndex) const;
 
-        static constexpr uint32_t kFramesInFlight = 2;
-
         Context                                    mContext;
         vk::SampleCountFlagBits                    mSampleCount;
         Swapchain                                  mSwapchain;
@@ -167,12 +163,12 @@ namespace kailux
 
         AssetPipeline                                mAssetPipeline;
         PhysicsSystem                                mPhysicsSystem;
-        DeferredResourceEraser<kFramesInFlight + 1> mDeferredResourceEraser;
+        DeferredResourceEraser<details::kFramesInFlight + 1> mDeferredResourceEraser;
 
-        std::array<FrameData, kFramesInFlight>    mFrames;
+        std::array<FrameData, details::kFramesInFlight>    mFrames;
         uint32_t                                   mCurrentFrame;
 
-        std::array<ImTextureID, kFramesInFlight>  mSceneTextureIds;
+        std::array<ImTextureID, details::kFramesInFlight>  mSceneTextureIds;
 
         Scene                                      mScene;
         OnEditorRender                             mOnEditorRender;
