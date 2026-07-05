@@ -47,6 +47,7 @@ namespace kailux
 
         using OnLog = std::move_only_function<void(std::string_view)>;
         void setOnInfoLog(OnLog &&callback);
+        void setOnWarningLog(OnLog &&callback);
 
     private:
         void processBuiltinMesh(const PendingMeshData &data);
@@ -78,5 +79,6 @@ namespace kailux
         std::unordered_map<std::string, MeshCache> mMeshCache;
 
         OnLog mOnInfoLog;
+        OnLog mOnWarningLog;
     };
 }

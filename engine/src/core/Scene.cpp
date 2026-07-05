@@ -67,7 +67,7 @@ namespace kailux
         return entity;
     }
 
-    entt::entity Scene::createMeshEntity(
+    std::optional<entt::entity> Scene::createMeshEntity(
         std::string_view name,
         const MeshComponent &component,
         TextureSetHandle textureSetHandle,
@@ -76,6 +76,9 @@ namespace kailux
         entt::entity parent
     )
     {
+        if (mEntityRegistry.view<MeshComponent>().size() >= details::kMaxMeshes)
+            return std::nullopt;
+
         auto entity = createEntity(name);
         mEntityRegistry.emplace<MeshComponent>(
             entity,

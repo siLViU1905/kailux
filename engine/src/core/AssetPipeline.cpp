@@ -35,6 +35,11 @@ namespace kailux
         mOnInfoLog = std::move(callback);
     }
 
+    void AssetPipeline::setOnWarningLog(OnLog &&callback)
+    {
+        mOnWarningLog = std::move(callback);
+    }
+
     bool AssetPipeline::isCached(std::string_view path) const
     {
         return mMeshCache.contains(std::string(path));
@@ -228,8 +233,13 @@ namespace kailux
 
     void AssetPipeline::processLoadedMesh(const PendingMeshData &data)
     {
-        Scene &scene = mScene;
-
+        Scene& scene = mScene;
+        auto remainingMeshes = details::kMaxMeshes - static_cast<uint32_t>(scene.getEntityRegistry().view<MeshComponent>().size());
+        if (data.data.submeshes.size() > remainingMeshes)
+        {
+            mOnWarningLog("The maximum number of meshes will be reached, mesh not loaded");
+            return;
+        }
         auto now = Clock::now();
         const auto &loadData = data.data;
 
@@ -243,19 +253,16 @@ namespace kailux
             loadedMaterialHandles = loadAndRegisterMaterials(loadData.materials);
 
         auto pendingEntities = create_shared<std::vector<entt::entity> >();
-
         mTransferManager.get().enqueueBuffer(
             mContext,
-            [this, &data, &loadData, &loadedMaterialHandles, parentEntity, modelIsCached, pendingEntities]
+            [&]
     (auto cmd) -> TransferManager::RecordResult
             {
-                Scene &scene = mScene;
                 auto &meshRegistry = mMeshRegistry.get();
                 auto &textureRegistry = mTextureRegistry.get();
 
                 TransferManager::RecordResult result;
                 uint32_t submeshIndex = 0;
-
                 for (const auto &submesh: loadData.submeshes)
                 {
                     auto cacheKey = std::format("{}_sub{}", data.path, submeshIndex);
@@ -296,7 +303,7 @@ namespace kailux
                     auto submeshName = std::format("{}_{}", rootName,
                                                    submesh.name.empty() ? std::to_string(submeshIndex) : submesh.name);
 
-                    auto childEntity = scene.createMeshEntity(
+                    if (auto childEntity = scene.createMeshEntity(
                         submeshName,
                         {
                             meshHandle,
@@ -308,15 +315,18 @@ namespace kailux
                         {},
                         data.material,
                         parentEntity
-                    );
+                    ))
+                    {
+                        auto &childTransform = scene.getEntityRegistry().get<TransformComponent>(*childEntity);
+                        childTransform.submeshLocalMatrix = submesh.localTransform;
 
-                    auto &childTransform = scene.getEntityRegistry().get<TransformComponent>(childEntity);
-                    childTransform.submeshLocalMatrix = submesh.localTransform;
+                        scene.getEntityRegistry().emplace<PendingUploadComponent>(*childEntity);
+                        pendingEntities->push_back(*childEntity);
 
-                    scene.getEntityRegistry().emplace<PendingUploadComponent>(childEntity);
-                    pendingEntities->push_back(childEntity);
-
-                    ++submeshIndex;
+                        ++submeshIndex;
+                    }
+                    else
+                        mOnWarningLog("The maximum number of meshes has been reached");
                 }
                 return result;
             },

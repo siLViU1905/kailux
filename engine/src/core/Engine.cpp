@@ -289,6 +289,10 @@ namespace kailux
         {
             mOnInfoLog(msg);
         });
+        mAssetPipeline.setOnWarningLog([this](auto msg)
+        {
+            mOnWarningLog(msg);
+        });
     }
 
     void Engine::createPhysicsSystem()
@@ -1142,7 +1146,11 @@ namespace kailux
         switch (type)
         {
             case LightType::Point:
-                mScene.createPointLightEntity(mScene.getLightEntityName(), {mGizmoRegistry.getBuiltins().pointLight, 0.5f, {1.f, 1.f, 1.f, 1.f}}, {});
+                if (!mScene.createPointLightEntity(
+                    mScene.getLightEntityName(),
+                    {mGizmoRegistry.getBuiltins().pointLight, 0.5f, {1.f, 1.f, 1.f, 1.f}},
+                    {}))
+                    mOnWarningLog("The maximum number of point lights has been reached");
                 break;
             default:
                 break;

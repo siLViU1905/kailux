@@ -86,7 +86,7 @@ namespace kailux
     {
         constexpr uint32_t kFramesInFlight{2};
 
-        constexpr uint32_t kMaxMeshes{16};
-        constexpr uint32_t kMaxPointLights{16};
+        constexpr uint32_t kMaxMeshes{1'000};
+        constexpr uint32_t kMaxPointLights{1};
     }
 }
