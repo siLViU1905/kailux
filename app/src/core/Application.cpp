@@ -112,6 +112,10 @@ namespace kailux
                                 type
                             );
         });
+        hierarchyPanel.setOnNewLight([this](auto type)
+        {
+            mEngine.addLightEntity(type);
+        });
         hierarchyPanel.setOnAddPhysics([this](auto entity, auto bodyType, auto canBecomeDynamic)
         {
             mEngine.addPhysicsToEntity(entity, {bodyType, canBecomeDynamic});

@@ -24,6 +24,8 @@
 #include "utilities/Queue.h"
 #include "utilities/ThreadDispatcher.h"
 #include "DeferredResourceEraser.h"
+#include "gizmo/GizmoRegistry.h"
+#include "passes/GizmoPass.h"
 
 namespace kailux
 {
@@ -69,8 +71,8 @@ namespace kailux
         bool isMeshCached(std::string_view path) const;
 
         static constexpr std::string_view kSceneFileExtension = "klx";
-        void saveScene(std::string_view folder) const;
-        void loadScene(std::string_view path, int windowWidth, int windowHeight);
+        void   saveScene(std::string_view folder) const;
+        void   loadScene(std::string_view path, int windowWidth, int windowHeight);
 
         using OnLog = std::move_only_function<void(std::string_view)>;
         void setOnInfoLog(OnLog&& callback);
@@ -88,6 +90,8 @@ namespace kailux
 
         void addPhysicsToEntity(entt::entity entity, PhysicsCreationOptions options);
 
+        void addLightEntity(LightType type);
+
     private:
         static constexpr uint32_t         kMaxMeshCount = MainPass::kMaxMeshCount;
 
@@ -97,12 +101,14 @@ namespace kailux
         void createRenderingContext(Window& window);
         void createMainPass();
         void createSkybox();
+        void createGizmoPass();
         void createOutlinePass();
         void createFrameResources();
         void createTransferManager();
         void createMeshRegistry();
         void createTextureRegistry();
         void createPhysicsRegistry();
+        void createGizmoRegistry();
         void createAssetPipeline();
         void createPhysicsSystem();
         void createImGui(Window& window);
@@ -120,6 +126,7 @@ namespace kailux
         void                                        submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
         void                                        recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const;
         void                                        recordSkybox(const FrameData &frame, const CommandRecorder &recorder) const;
+        void                                        recordGizmos(const FrameData &frame, const CommandRecorder &recorder) const;
         void                                        recordImGuiData(const FrameData& frame);
         void                                        recordPicker(const FrameData& frame, const CommandRecorder &recorder) const;
         void                                        recordOutline(const FrameData& frame, const CommandRecorder &recorder) const;
@@ -156,6 +163,7 @@ namespace kailux
         MeshRegistry                               mMeshRegistry;
         TextureRegistry                            mTextureRegistry;
         PhysicsRegistry                            mPhysicsRegistry;
+        GizmoRegistry                              mGizmoRegistry;
 
         AssetPipeline                                mAssetPipeline;
         PhysicsSystem                                mPhysicsSystem;
@@ -174,6 +182,7 @@ namespace kailux
 
         MainPass                                   mMainPass;
         SkyboxPass                                 mSkyboxPass;
+        GizmoPass                                  mGizmoPass;
         OutlinePass                                mOutlinePass;
         ComputePicker                              mComputePicker;
         uint32_t                                   mPickedEntity;

@@ -6,25 +6,21 @@
 #include "components/entt/TagComponent.h"
 #include "components/gpu/CameraData.h"
 #include <nlohmann/json.hpp>
+
 #include "components/entt/HierarchyComponent.h"
 #include "components/entt/PhysicsComponent.h"
 #include "components/gpu/TransformComponent.h"
 
 namespace kailux
 {
-    Scene::Scene() : mName("Scene"),
-                     mMainCameraEntity(entt::null),
-                     mSun(entt::null),
-                     mMeshEntityNameCount(0)
-    {
-        mSun = createSunEntity({});
-    }
+    Scene::Scene() = default;
 
     Scene::Scene(Scene &&other) noexcept : mName(std::move(other.mName)),
                                            mEntityRegistry(std::move(other.mEntityRegistry)),
                                            mMainCameraEntity(other.mMainCameraEntity),
                                            mSun(other.mSun),
-                                           mMeshEntityNameCount(other.mMeshEntityNameCount)
+                                           mMeshEntityNameCount(other.mMeshEntityNameCount),
+                                           mLightEntityNameCount(other.mLightEntityNameCount)
     {
     }
 
@@ -37,6 +33,7 @@ namespace kailux
             mMainCameraEntity = other.mMainCameraEntity;
             mSun = other.mSun;
             mMeshEntityNameCount = other.mMeshEntityNameCount;
+            mLightEntityNameCount = other.mLightEntityNameCount;
         }
         return *this;
     }
@@ -45,6 +42,7 @@ namespace kailux
     {
         Scene scene;
         scene.mName = name;
+        scene.mSun = scene.createSunEntity({});
         return scene;
     }
 
@@ -111,6 +109,30 @@ namespace kailux
         return createEntity(name);
     }
 
+    std::optional<entt::entity> Scene::createPointLightEntity(std::string_view name, GizmoComponent component, const glm::vec3 &position)
+    {
+        if (mEntityRegistry.view<PointLightData>().size() >= details::kMaxPointLights)
+            return std::nullopt;
+        auto entity = createEntity(name);
+        mEntityRegistry.emplace<GizmoComponent>(
+            entity,
+            component
+        );
+        mEntityRegistry.emplace<PointLightData>(entity);
+
+        MeshTransformData transform;
+        transform.position = position;
+        mEntityRegistry.emplace<TransformComponent>(
+            entity,
+            transform,
+            transform.getModelMatrix(),
+            glm::mat4(1.f)
+        );
+        mEntityRegistry.emplace<HierarchyComponent>(entity);
+
+        return entity;
+    }
+
     entt::registry &Scene::getEntityRegistry()
     {
         return mEntityRegistry;
@@ -138,8 +160,25 @@ namespace kailux
 
     SceneData Scene::getData() const
     {
-        const auto &sunData = mEntityRegistry.get<SunData>(mSun);
-        return {sunData};
+        return {getLightData()};
+    }
+
+    LightsData Scene::getLightData() const
+    {
+        LightsData data;
+        data.directional = mEntityRegistry.get<SunData>(mSun);
+        auto view = mEntityRegistry.view<PointLightData, TransformComponent>();
+        uint32_t index = 0;
+        for (auto entity : view)
+        {
+            auto light = view.get<PointLightData>(entity);
+            const auto& transform = view.get<TransformComponent>(entity);
+            glm::vec3 pos = glm::vec3(transform.worldMatrix[3]);
+            light.positionAndIntensity = glm::vec4(pos, light.positionAndIntensity.w);
+            data.pointLights[index++] = light;
+        }
+        data.pointLightCount = index;
+        return data;
     }
 
     std::string_view Scene::getName() const
@@ -149,7 +188,12 @@ namespace kailux
 
     std::string Scene::getMeshEntityName()
     {
-        return "Mesh" + std::to_string(mMeshEntityNameCount++);
+        return std::format("Mesh{}", mMeshEntityNameCount++);
+    }
+
+    std::string Scene::getLightEntityName()
+    {
+        return std::format("Light{}", mLightEntityNameCount++);
     }
 
     std::string Scene::serialize() const

@@ -9,13 +9,11 @@ namespace kailux
             uint32_t x{};
             uint32_t y{};
         };
-        MouseCords mouseCords;
 
         struct CameraFrustum
         {
             std::array<glm::vec4, 6> frustumPlanes{};
             uint32_t                 totalObjects{};
         };
-        CameraFrustum cameraFrustum;
     };
 }

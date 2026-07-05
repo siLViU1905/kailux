@@ -8,6 +8,7 @@
 #include "texture/Texture.h"
 #include "texture/TextureRegistry.h"
 #include "passes/ComputePicker.h"
+#include "passes/GizmoPass.h"
 #include "passes/MainPass.h"
 #include "passes/OutlinePass.h"
 
@@ -22,9 +23,9 @@ namespace kailux
                                 const Swapchain &swapchain,
                                 const MainPass & mainPass,
                                 const SkyboxPass &skybox,
+                                const GizmoPass & gizmoPass,
                                 const ComputePicker& picker,
-                                const OutlinePass& outlinePass,
-                                const ComputeCuller& culler, const TextureRegistry &textureRegistry, uint32_t maxMeshCount
+                                const OutlinePass& outlinePass, const ComputeCuller& culler, const TextureRegistry &textureRegistry, uint32_t maxMeshCount
         );
 
         void reset(const Context& context) const;
@@ -37,6 +38,7 @@ namespace kailux
 
         const DescriptorSet& getDescriptorSet() const;
         const DescriptorSet& getSkyboxDescriptorSet() const;
+        const DescriptorSet& getGizmoDescriptorSet() const;
         const DescriptorSet& getPickerDescriptorSet() const;
         const DescriptorSet& getOutlineDescriptorSet() const;
         const DescriptorSet& getCullerDescriptorSet() const;
@@ -74,6 +76,8 @@ namespace kailux
                                  DescriptorSetInfo> infos);
         void createSkyboxDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
                                        DescriptorSetInfo> infos);
+        void createGizmoDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
+                                       DescriptorSetInfo> infos);
         void createPickerDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
                                        DescriptorSetInfo> infos);
         void createOutlineDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
@@ -92,11 +96,13 @@ namespace kailux
 
         static constexpr uint32_t kDescriptorSetInfoCount = 1 + 1 + 1 + 1 + 1 + 1 + 1 + TextureRegistry::kTextureTypes.size(); // camera buffer + mesh data buffer + scene buffer + skybox sampler + irradiance map + prefiltered env + brdf lut + textures
         static constexpr uint32_t kSkyboxDescriptorSetInfoCount = 1 + 1; // camera buffer + cube texture
+        static constexpr uint32_t kGizmoDescriptorSetInfoCount = 1; // camera buffer
         static constexpr uint32_t kPickerDescriptorSetInfoCount = 1 + 1; // id image + out buffer
         static constexpr uint32_t kOutlineDescriptorSetInfoCount = 1; // id image
         static constexpr uint32_t kCullerDescriptorSetInfoCount = 4; // mesh data + template + out indirect + counter
         std::array<DescriptorSetInfo, kDescriptorSetInfoCount>        makeDescriptorSetInfo(const SkyboxPass &skybox, const TextureRegistry& textureRegistry, uint32_t meshCount) const;
         std::array<DescriptorSetInfo, kSkyboxDescriptorSetInfoCount>  makeSkyboxDescriptorSetInfo(const Texture& skyboxTexture) const;
+        std::array<DescriptorSetInfo, kGizmoDescriptorSetInfoCount>   makeGizmoDescriptorSetInfo() const;
         std::array<DescriptorSetInfo, kPickerDescriptorSetInfoCount>  makePickerDescriptorSetInfo() const;
         std::array<DescriptorSetInfo, kOutlineDescriptorSetInfoCount> makeOutlineDescriptorSetInfo() const;
         std::array<DescriptorSetInfo, kCullerDescriptorSetInfoCount>  makeCullerDescriptorSetInfo() const;
@@ -111,6 +117,7 @@ namespace kailux
 
         DescriptorSet           mDescriptorSet;
         DescriptorSet           mSkyboxDescriptorSet;
+        DescriptorSet           mGizmoDescriptorSet;
         DescriptorSet           mPickerDescriptorSet;
         DescriptorSet           mOutlineDescriptorSet;
         DescriptorSet           mCullerDescriptorSet;

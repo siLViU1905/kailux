@@ -44,6 +44,10 @@ add_library(kailux_engine STATIC
         src/core/TransferManager.cpp
         src/core/AssetPipeline.cpp
         src/core/physics/PhysicsSystem.cpp
+        src/core/passes/GizmoPass.cpp
+        src/core/gizmo/GizmoGeometry.cpp
+        src/core/utilities/LinearZone.cpp
+        src/core/gizmo/GizmoRegistry.cpp
 )
 
 target_compile_definitions(kailux_engine PUBLIC
