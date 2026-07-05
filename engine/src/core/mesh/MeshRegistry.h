@@ -7,6 +7,7 @@
 #include "core/Core.h"
 #include "core/buffer/Buffer.h"
 #include "core/buffer/BufferAllocator.h"
+#include "core/utilities/LinearZone.h"
 
 namespace kailux
 {
@@ -45,7 +46,6 @@ namespace kailux
 
         using IndexType = uint32_t;
 
-    public:
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(MeshRegistry)
 
         static MeshRegistry  create(const Context &context,
@@ -61,17 +61,6 @@ namespace kailux
         MeshBufferRegions getRegions(MeshHandle handle) const;
 
     private:
-        struct LinearZone
-        {
-            static constexpr vk::DeviceSize kDefaultAlignment = 16;
-
-            vk::DeviceSize base{};
-            vk::DeviceSize capacity{};
-            vk::DeviceSize cursor{};
-
-            vk::DeviceSize alloc(vk::DeviceSize size, vk::DeviceSize alignment = kDefaultAlignment);
-        };
-
         struct Block
         {
             vk::DeviceSize offset{};
@@ -127,7 +116,7 @@ namespace kailux
         FreeListZone mAssetIndexZone;
 
         std::vector<MeshAlloc> mAllocs;
-        std::deque<uint32_t> mFreeSlots;
+        std::vector<uint32_t>  mFreeSlots;
 
         BuiltinMeshes mBuiltins;
 

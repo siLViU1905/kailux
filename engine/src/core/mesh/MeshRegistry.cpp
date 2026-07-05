@@ -116,15 +116,6 @@ namespace kailux
         };
     }
 
-    vk::DeviceSize MeshRegistry::LinearZone::alloc(vk::DeviceSize size, vk::DeviceSize alignment)
-    {
-        vk::DeviceSize aligned = ((cursor + alignment - 1) / alignment) * alignment;
-        if (aligned + size > capacity)
-            throw std::runtime_error("Built in mesh zone out of memory");
-        cursor = aligned + size;
-        return base + aligned;
-    }
-
     vk::DeviceSize MeshRegistry::FreeListZone::alloc(vk::DeviceSize size, vk::DeviceSize alignment)
     {
         for (auto it = freeBlocks.begin(); it != freeBlocks.end(); ++it)
