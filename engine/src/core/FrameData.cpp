@@ -83,7 +83,9 @@ namespace kailux
         const SkyboxPass &skybox,
         const GizmoPass & gizmoPass,
         const ComputePicker &picker,
-        const OutlinePass &outlinePass, const ComputeCuller &culler, const TextureRegistry &textureRegistry, uint32_t maxMeshCount
+        const OutlinePass &outlinePass,
+        const ComputeCuller &culler,
+        const TextureRegistry &textureRegistry
     )
     {
         FrameData frame;
@@ -94,14 +96,14 @@ namespace kailux
         frame.createImGuiCommandBuffer(context);
         frame.createSyncObjects(context);
         frame.createCameraBuffer(context);
-        frame.createMeshDataBuffer(context, maxMeshCount);
-        frame.createIndirectBuffer(context, maxMeshCount);
+        frame.createMeshDataBuffer(context);
+        frame.createIndirectBuffer(context);
         frame.createSceneBuffer(context);
         frame.createPickerBuffer(context);
-        frame.createCullerBuffers(context, maxMeshCount);
+        frame.createCullerBuffers(context);
         frame.createSceneTexture(context, swapchain.getFormat());
         frame.createOutIdTexture(context);
-        auto descSetInfo = frame.makeDescriptorSetInfo(skybox, textureRegistry, maxMeshCount);
+        auto descSetInfo = frame.makeDescriptorSetInfo(skybox, textureRegistry);
         frame.createDescriptorSet(context, mainPass.getDescriptorLayout(), mainPass.getDescriptorPool(), descSetInfo);
         auto skyboxDescInfo = frame.makeSkyboxDescriptorSetInfo(skybox.getTexture());
         frame.createSkyboxDescriptorSet(context, skybox.getDescriptorLayout(), skybox.getDescriptorPool(),
@@ -466,14 +468,14 @@ namespace kailux
         mCameraBuffer = BufferAllocator::alloc_uniform(context, sizeof(CameraData));
     }
 
-    void FrameData::createMeshDataBuffer(const Context &context, uint32_t meshCount)
+    void FrameData::createMeshDataBuffer(const Context &context)
     {
-        mMeshDataBuffer = BufferAllocator::alloc_storage(context, meshCount * sizeof(MeshData));
+        mMeshDataBuffer = BufferAllocator::alloc_storage(context, details::kMaxMeshes * sizeof(MeshData));
     }
 
-    void FrameData::createIndirectBuffer(const Context &context, uint32_t count)
+    void FrameData::createIndirectBuffer(const Context &context)
     {
-        mIndirectBuffer = BufferAllocator::alloc_host(context, count * sizeof(vk::DrawIndexedIndirectCommand),
+        mIndirectBuffer = BufferAllocator::alloc_host(context, details::kMaxMeshes * sizeof(vk::DrawIndexedIndirectCommand),
                                                        vk::BufferUsageFlagBits::eIndirectBuffer |
                                                        vk::BufferUsageFlagBits::eStorageBuffer);
     }
@@ -488,9 +490,9 @@ namespace kailux
         mPickerBuffer = BufferAllocator::alloc_storage(context, sizeof(uint32_t));
     }
 
-    void FrameData::createCullerBuffers(const Context &context, uint32_t count)
+    void FrameData::createCullerBuffers(const Context &context)
     {
-        mCullerInputCommandsBuffer = BufferAllocator::alloc_host(context, count * sizeof(vk::DrawIndexedIndirectCommand),
+        mCullerInputCommandsBuffer = BufferAllocator::alloc_host(context, details::kMaxMeshes * sizeof(vk::DrawIndexedIndirectCommand),
                                                                   vk::BufferUsageFlagBits::eStorageBuffer);
         mCullerCountBuffer = BufferAllocator::alloc_local(context, sizeof(uint32_t),
                                                            vk::BufferUsageFlagBits::eStorageBuffer |
@@ -534,7 +536,7 @@ namespace kailux
     }
 
     std::array<DescriptorSetInfo, FrameData::kDescriptorSetInfoCount> FrameData::makeDescriptorSetInfo(
-        const SkyboxPass &skybox, const TextureRegistry &textureRegistry, uint32_t meshCount) const
+        const SkyboxPass &skybox, const TextureRegistry &textureRegistry) const
     {
         return {
             DescriptorSetBufferInfo(
@@ -583,31 +585,31 @@ namespace kailux
                 textureRegistry.view(textureRegistry.getDefaultSetHandle()).albedo->getSampler(),
                 textureRegistry.view(textureRegistry.getDefaultSetHandle()).albedo->getImageView(),
                 vk::ImageLayout::eShaderReadOnlyOptimal,
-                meshCount
+                details::kMaxMeshes
             ),
             DescriptorSetImageInfo(
                 textureRegistry.view(textureRegistry.getDefaultSetHandle()).normal->getSampler(),
                 textureRegistry.view(textureRegistry.getDefaultSetHandle()).normal->getImageView(),
                 vk::ImageLayout::eShaderReadOnlyOptimal,
-                meshCount
+                details::kMaxMeshes
             ),
             DescriptorSetImageInfo(
                 textureRegistry.view(textureRegistry.getDefaultSetHandle()).roughness->getSampler(),
                 textureRegistry.view(textureRegistry.getDefaultSetHandle()).roughness->getImageView(),
                 vk::ImageLayout::eShaderReadOnlyOptimal,
-                meshCount
+                details::kMaxMeshes
             ),
             DescriptorSetImageInfo(
                 textureRegistry.view(textureRegistry.getDefaultSetHandle()).metallic->getSampler(),
                 textureRegistry.view(textureRegistry.getDefaultSetHandle()).metallic->getImageView(),
                 vk::ImageLayout::eShaderReadOnlyOptimal,
-                meshCount
+                details::kMaxMeshes
             ),
             DescriptorSetImageInfo(
                 textureRegistry.view(textureRegistry.getDefaultSetHandle()).ao->getSampler(),
                 textureRegistry.view(textureRegistry.getDefaultSetHandle()).ao->getImageView(),
                 vk::ImageLayout::eShaderReadOnlyOptimal,
-                meshCount
+                details::kMaxMeshes
             )
         };
     }
