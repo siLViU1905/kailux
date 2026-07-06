@@ -20,7 +20,7 @@ namespace kailux
             MeshTransformData transform;
             MeshMaterialData material;
             MeshType type{MeshType::Unknown};
-            PhysicsBodyType bodyType{PhysicsBodyType::Static};
+            PhysicsBodyType bodyType{PhysicsBodyType::Unknown};
         };
 
         AssetPipeline(Context &context,
@@ -48,6 +48,9 @@ namespace kailux
         using OnLog = std::move_only_function<void(std::string_view)>;
         void setOnInfoLog(OnLog &&callback);
         void setOnWarningLog(OnLog &&callback);
+
+        using OnAttachPhysics = std::move_only_function<void(entt::entity, PhysicsBodyType)>;
+        void setOnAttachPhysics(OnAttachPhysics &&callback);
 
     private:
         void processBuiltinMesh(const PendingMeshData &data);
@@ -80,5 +83,7 @@ namespace kailux
 
         OnLog mOnInfoLog;
         OnLog mOnWarningLog;
+
+        OnAttachPhysics mOnAttachPhysics;
     };
 }

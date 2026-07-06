@@ -18,7 +18,8 @@ namespace kailux
     {
         Static = static_cast<uint8_t>(JPH::EMotionType::Static),
         Kinematic = static_cast<uint8_t>(JPH::EMotionType::Kinematic),
-        Dynamic = static_cast<uint8_t>(JPH::EMotionType::Dynamic)
+        Dynamic = static_cast<uint8_t>(JPH::EMotionType::Dynamic),
+        Unknown
     };
 
     struct SubmeshPhysicsInfo

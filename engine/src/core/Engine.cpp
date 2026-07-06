@@ -293,6 +293,10 @@ namespace kailux
         {
             mOnWarningLog(msg);
         });
+        mAssetPipeline.setOnAttachPhysics([this](auto entity, auto bodyType)
+        {
+            addPhysicsToEntity(entity, {bodyType, true});
+        });
     }
 
     void Engine::createPhysicsSystem()
@@ -598,7 +602,7 @@ namespace kailux
             {
                 for (const auto &meshJs: js["Mesh"])
                 {
-                    PendingMeshData pending;
+                    AssetPipeline::PendingMeshData pending;
                     pending.path = meshJs.value("path", "");
                     pending.name = meshJs.value("name", "");
                     pending.type = meshJs.value("type", MeshType::Unknown);
@@ -629,13 +633,45 @@ namespace kailux
 
                     if (meshJs.contains("physics"))
                     {
-                        auto &p = meshJs["physics"];
+                        const auto &p = meshJs["physics"];
                         pending.bodyType = static_cast<PhysicsBodyType>(p["body"]);
                     }
 
                     if (!isMeshCached(pending.path))
                         if (auto loadData = MeshLoader::load(pending.path))
                             pending.data = std::move(*loadData);
+
+                    mAssetPipeline.getPendingQueue().push(std::move(pending));
+                }
+            }
+            if (js.contains("PointLight") && js["PointLight"].is_array())
+            {
+                for (const auto &lightJs : js["PointLight"])
+                {
+                    glm::vec3 position{};
+                    if (lightJs.contains("position"))
+                        position = {lightJs["position"][0], lightJs["position"][1], lightJs["position"][2]};
+
+                    glm::vec3 color{1.f};
+                    if (lightJs.contains("color"))
+                        color = {lightJs["color"][0], lightJs["color"][1], lightJs["color"][2]};
+
+                    auto entity = mScene.createPointLightEntity(
+                        lightJs.value("name", mScene.getLightEntityName()),
+                        {mGizmoRegistry.getBuiltins().pointLight, 0.5f, glm::vec4(color, 1.f)},
+                        position);
+
+                    if (!entity)
+                    {
+                        mOnWarningLog("The maximum number of point lights has been reached");
+                        continue;
+                    }
+
+                    float enabled = lightJs.value("enabled", 1.f);
+                    auto &light = mScene.getEntityRegistry().get<PointLightData>(*entity);
+                    light.colorAndEnabled = glm::vec4(color, enabled);
+                    light.positionAndIntensity.w = lightJs.value("intensity", light.positionAndIntensity.w);
+                    light.range.x = lightJs.value("range", light.range.x);
                 }
             }
         }

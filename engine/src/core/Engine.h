@@ -42,17 +42,6 @@ namespace kailux
 
         void waitIdle() const;
 
-        struct PendingMeshData
-        {
-            std::string          path;
-            MeshLoader::LoadData data;
-            std::string          name;
-            MeshTransformData    transform;
-            MeshMaterialData     material;
-            MeshType             type{MeshType::Unknown};
-            PhysicsBodyType      bodyType{PhysicsBodyType::Static};
-        };
-
         Queue<AssetPipeline::PendingMeshData> &getPendingMeshDataQueue();
 
         void unregisterMesh(MeshHandle handle, std::string_view path);
