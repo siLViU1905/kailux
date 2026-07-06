@@ -40,6 +40,11 @@ namespace kailux
         mOnWarningLog = std::move(callback);
     }
 
+    void AssetPipeline::setOnAttachPhysics(OnAttachPhysics &&callback)
+    {
+        mOnAttachPhysics = std::move(callback);
+    }
+
     bool AssetPipeline::isCached(std::string_view path) const
     {
         return mMeshCache.contains(std::string(path));
@@ -197,7 +202,7 @@ namespace kailux
             auto textureHandle = textureRegistry.registerTextureSet(material);
 
             meshName = data.name.empty() ? scene.getMeshEntityName() : data.name;
-            scene.createMeshEntity(
+            auto entity = scene.createMeshEntity(
                 meshName,
                 {
                     meshHandle,
@@ -209,6 +214,10 @@ namespace kailux
                 data.transform,
                 data.material
             );
+            if (!entity)
+                mOnWarningLog("The maximum number of meshes has been reached");
+            else if (data.bodyType != PhysicsBodyType::Unknown)
+                mOnAttachPhysics(*entity, data.bodyType);
         };
         switch (data.type)
         {
@@ -296,6 +305,8 @@ namespace kailux
                             vk::AccessFlagBits2::eIndexRead
                         );
                     }
+                    if (data.bodyType != PhysicsBodyType::Unknown)
+                        mOnAttachPhysics(parentEntity, data.bodyType);
 
                     cacheMesh(cacheKey, meshHandle, textureHandle);
 

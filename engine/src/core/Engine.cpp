@@ -293,6 +293,10 @@ namespace kailux
         {
             mOnWarningLog(msg);
         });
+        mAssetPipeline.setOnAttachPhysics([this](auto entity, auto bodyType)
+        {
+            addPhysicsToEntity(entity, {bodyType, true});
+        });
     }
 
     void Engine::createPhysicsSystem()
@@ -629,7 +633,7 @@ namespace kailux
 
                     if (meshJs.contains("physics"))
                     {
-                        auto &p = meshJs["physics"];
+                        const auto &p = meshJs["physics"];
                         pending.bodyType = static_cast<PhysicsBodyType>(p["body"]);
                     }
 
