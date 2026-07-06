@@ -91,8 +91,8 @@ namespace kailux
         mEntityRegistry.emplace<TransformComponent>(
             entity,
             transform,
-            transform.getModelMatrix(),
-            glm::mat4(1.f)
+            glm::mat4(1.f),
+            transform.getModelMatrix()
         );
         mEntityRegistry.emplace<MeshMaterialData>
         (
@@ -128,8 +128,8 @@ namespace kailux
         mEntityRegistry.emplace<TransformComponent>(
             entity,
             transform,
-            transform.getModelMatrix(),
-            glm::mat4(1.f)
+            glm::mat4(1.f),
+            transform.getModelMatrix()
         );
         mEntityRegistry.emplace<HierarchyComponent>(entity);
 
@@ -208,6 +208,7 @@ namespace kailux
         js["Scene"] = {
             {"name", mName},
             {"mesh_name_count", mMeshEntityNameCount},
+            {"light_name_count", mLightEntityNameCount},
             {
                 "sun", {
                     {
@@ -261,15 +262,16 @@ namespace kailux
         };
 
         js["Mesh"] = nlohmann::json::array();
-        auto meshView = mEntityRegistry.view<TagComponent, MeshComponent, TransformComponent, MeshMaterialData, PhysicsComponent>();
-        meshView.each([&js](const auto &tag, const auto &mesh, const auto &transformComponent, const auto &material, auto physics)
+        auto meshView = mEntityRegistry.view<TagComponent, MeshComponent, TransformComponent, MeshMaterialData>();
+        for (auto entity : meshView)
         {
+            const auto [tag, mesh, transformComponent, material] = mEntityRegistry.get<TagComponent, MeshComponent, TransformComponent, MeshMaterialData>(entity);
             nlohmann::json meshEntry;
 
             meshEntry["name"] = tag.name;
 
             meshEntry["path"] = mesh.path;
-            meshEntry["type"] = static_cast<uint8_t>(mesh.type);
+            meshEntry["type"] = mesh.type;
 
             meshEntry["transform"] = {
                 {"position", {transformComponent.transform.position.x, transformComponent.transform.position.y, transformComponent.transform.position.z}},
@@ -287,11 +289,32 @@ namespace kailux
                 {"ao", material.pbrParams.y}
             };
 
-            meshEntry["physics"] = {
-                {"body", static_cast<uint8_t>(physics.type)}
-            };
+            if (auto* physics = mEntityRegistry.try_get<PhysicsComponent>(entity))
+                meshEntry["physics"] = {
+                    {"body", static_cast<uint8_t>(physics->type)}
+                };
 
             js["Mesh"].push_back(meshEntry);
+        }
+
+        js["PointLight"] = nlohmann::json::array();
+        auto lightView = mEntityRegistry.view<TagComponent, PointLightData, TransformComponent>();
+        lightView.each([&js](const auto &tag, const auto &light, const auto &transformComponent)
+        {
+            nlohmann::json lightEntry;
+            lightEntry["name"] = tag.name;
+            lightEntry["position"] = {
+                transformComponent.transform.position.x,
+                transformComponent.transform.position.y,
+                transformComponent.transform.position.z
+            };
+            lightEntry["intensity"] = light.positionAndIntensity.w;
+            lightEntry["range"] = light.range.x;
+            lightEntry["color"] = {
+                light.colorAndEnabled.x, light.colorAndEnabled.y, light.colorAndEnabled.z
+            };
+            lightEntry["enabled"] = light.colorAndEnabled.w;
+            js["PointLight"].push_back(lightEntry);
         });
 
         return js.dump(3);
@@ -307,6 +330,7 @@ namespace kailux
 
         mName = sceneJs.value("name", "Scene");
         mMeshEntityNameCount = sceneJs.value("mesh_name_count", 0);
+        mLightEntityNameCount = sceneJs.value("light_name_count", 0);
 
         auto &sunJs = sceneJs["sun"];
         auto &sunData = mEntityRegistry.get<SunData>(mSun);
