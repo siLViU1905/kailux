@@ -33,6 +33,11 @@ namespace kailux
             ),
             DescriptorLayoutBinding(
                 vk::DescriptorType::eStorageBuffer,
+                1, // material
+                vk::ShaderStageFlagBits::eFragment
+            ),
+            DescriptorLayoutBinding(
+                vk::DescriptorType::eStorageBuffer,
                 1, // scene
                 vk::ShaderStageFlagBits::eFragment
             ),
@@ -58,27 +63,7 @@ namespace kailux
             ),
             DescriptorLayoutBinding(
                 vk::DescriptorType::eCombinedImageSampler,
-                details::kMaxMeshes, // albedo
-                vk::ShaderStageFlagBits::eFragment
-            ),
-            DescriptorLayoutBinding(
-                vk::DescriptorType::eCombinedImageSampler,
-                details::kMaxMeshes, // normal
-                vk::ShaderStageFlagBits::eFragment
-            ),
-            DescriptorLayoutBinding(
-                vk::DescriptorType::eCombinedImageSampler,
-                details::kMaxMeshes, // roughness
-                vk::ShaderStageFlagBits::eFragment
-            ),
-            DescriptorLayoutBinding(
-                vk::DescriptorType::eCombinedImageSampler,
-                details::kMaxMeshes, // metallic
-                vk::ShaderStageFlagBits::eFragment
-            ),
-            DescriptorLayoutBinding(
-                vk::DescriptorType::eCombinedImageSampler,
-                details::kMaxMeshes, // ao
+                details::kMaxTextures, // textures array
                 vk::ShaderStageFlagBits::eFragment
             )
         };
@@ -90,6 +75,10 @@ namespace kailux
             DescriptorPoolSize(
                 vk::DescriptorType::eStorageBuffer,
                 1 // model
+            ),
+            DescriptorPoolSize(
+                vk::DescriptorType::eStorageBuffer,
+                1 // material
             ),
             DescriptorPoolSize(
                 vk::DescriptorType::eStorageBuffer,
@@ -113,23 +102,7 @@ namespace kailux
             ),
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
-                details::kMaxMeshes // albedo
-            ),
-            DescriptorPoolSize(
-                vk::DescriptorType::eCombinedImageSampler,
-                details::kMaxMeshes // normal
-            ),
-            DescriptorPoolSize(
-                vk::DescriptorType::eCombinedImageSampler,
-                details::kMaxMeshes // roughness
-            ),
-            DescriptorPoolSize(
-                vk::DescriptorType::eCombinedImageSampler,
-                details::kMaxMeshes // metallic
-            ),
-            DescriptorPoolSize(
-                vk::DescriptorType::eCombinedImageSampler,
-                details::kMaxMeshes // ao
+                details::kMaxTextures // textures array
             )
         };
         static_assert(
@@ -144,7 +117,7 @@ namespace kailux
                 const auto [descriptor, count, stage] = kDescriptorLayoutBindings[i];
 
                 if (descriptor == vk::DescriptorType::eCombinedImageSampler &&
-                    count == details::kMaxMeshes &&
+                    count == details::kMaxTextures &&
                     stage == vk::ShaderStageFlagBits::eFragment)
                     return i;
             }

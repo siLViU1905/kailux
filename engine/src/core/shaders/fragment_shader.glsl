@@ -66,6 +66,20 @@ layout (location = 1) out uint outEntityId;
 
 vec3 toneMapACES(vec3 color);
 
+struct Material
+{
+    uint albedoIdx;
+    uint normalIdx;
+    uint roughnessIdx;
+    uint metallicIdx;
+    uint aoIdx;
+    uint _padding[3];
+};
+
+layout (std430, set = 0, binding = 2) readonly buffer MaterialsBuffer {
+    Material materials[];
+} materialData;
+
 struct DirectionalLight
 {
     vec4 directionAndIntensity;
@@ -81,7 +95,7 @@ vec3 calcPointLight(PointLight light, vec3 N, vec3 V, vec3 fragPos, vec3 albedo,
 
 #define kMaxPointLights 16
 
-layout (std430, set = 0, binding = 2) readonly buffer SceneBuffer {
+layout (std430, set = 0, binding = 3) readonly buffer SceneBuffer {
     DirectionalLight sun;
 
     PointLight pointLights[kMaxPointLights];
@@ -89,24 +103,21 @@ layout (std430, set = 0, binding = 2) readonly buffer SceneBuffer {
     uint       _padding[3];
 } sceneData;
 
-layout (set = 0, binding = 3) uniform samplerCube skyboxSampler;
-layout (set = 0, binding = 4) uniform samplerCube irradianceSampler;
-layout (set = 0, binding = 5) uniform samplerCube prefilteredEnvSampler;
-layout (set = 0, binding = 6) uniform sampler2D brdfLutSampler;
-layout (set = 0, binding = 7) uniform sampler2D albedoSampler[];
-layout (set = 0, binding = 8) uniform sampler2D normalSampler[];
-layout (set = 0, binding = 9) uniform sampler2D roughnessSampler[];
-layout (set = 0, binding = 10) uniform sampler2D metallicSampler[];
-layout (set = 0, binding = 11) uniform sampler2D aoSampler[];
+layout (set = 0, binding = 4) uniform samplerCube skyboxSampler;
+layout (set = 0, binding = 5) uniform samplerCube irradianceSampler;
+layout (set = 0, binding = 6) uniform samplerCube prefilteredEnvSampler;
+layout (set = 0, binding = 7) uniform sampler2D brdfLutSampler;
+layout (set = 0, binding = 8) uniform sampler2D textures[];
 
 
 void main()
 {
-    vec3  texAlbedo    = texture(albedoSampler[fragMaterialIdx], fragTexCoord).rgb;
-    vec3  texNormal    = texture(normalSampler[fragMaterialIdx], fragTexCoord).rgb;
-    float texRoughness = texture(roughnessSampler[fragMaterialIdx], fragTexCoord).r;
-    float texMetallic  = texture(metallicSampler[fragMaterialIdx], fragTexCoord).r;
-    float texAO        = texture(aoSampler[fragMaterialIdx], fragTexCoord).r;
+    Material material = materialData.materials[fragMaterialIdx];
+    vec3  texAlbedo    = texture(textures[nonuniformEXT(material.albedoIdx)],    fragTexCoord).rgb;
+    vec3  texNormal    = texture(textures[nonuniformEXT(material.normalIdx)],    fragTexCoord).rgb;
+    float texRoughness = texture(textures[nonuniformEXT(material.roughnessIdx)], fragTexCoord).r;
+    float texMetallic  = texture(textures[nonuniformEXT(material.metallicIdx)],  fragTexCoord).r;
+    float texAO        = texture(textures[nonuniformEXT(material.aoIdx)],        fragTexCoord).r;
 
     vec3  albedo    = texAlbedo * fragAlbedo;
     float roughness = max(texRoughness * fragRoughness, 0.05);

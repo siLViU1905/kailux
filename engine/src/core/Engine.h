@@ -45,7 +45,7 @@ namespace kailux
         Queue<AssetPipeline::PendingMeshData> &getPendingMeshDataQueue();
 
         void unregisterMesh(MeshHandle handle, std::string_view path);
-        void unregisterTextureSet(TextureSetHandle handle);
+        void unregisterMaterial(MaterialHandle handle);
 
         ImTextureID getAssetBrowserDirectoryTextureId() const;
         ImTextureID getAssetBrowserFileTextureId() const;
@@ -108,8 +108,6 @@ namespace kailux
         void createScene();
         void createSceneEntities(const Window &window);
 
-        static std::array<DescriptorSetUpdateInfo, TextureRegistry::kTextureTypes.size()> make_descriptor_set_update_info_from_texture_set(TextureSetHandle slotToOverwrite, const TextureSet& replacementSet);
-
         void                                        submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
         void                                        recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const;
         void                                        recordSkybox(const FrameData &frame, const CommandRecorder &recorder) const;
@@ -121,6 +119,7 @@ namespace kailux
         void updateFrameBuffers(FrameData& frame, const CommandRecorder& recorder);
         void updateCameraBuffer(FrameData& frame) const;
         void updateMeshDataBuffer(FrameData& frame) const;
+        void updateMaterialBuffer(FrameData& frame) const;
 
         void updateSceneBuffer(FrameData& frame) const;
         void updateCullerBuffers(const FrameData& frame, const CommandRecorder &recorder);

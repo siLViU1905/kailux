@@ -70,7 +70,7 @@ namespace kailux
         hierarchyPanel.setOnEntityDeleted([this](const auto& meshComponent, auto materialComponent, auto cacheKey)
         {
             mEngine.unregisterMesh(meshComponent.handle, cacheKey);
-            mEngine.unregisterTextureSet(materialComponent.handle);
+            mEngine.unregisterMaterial(materialComponent.handle);
         });
         hierarchyPanel.setOnDragDrop([this](std::string_view path)
         {

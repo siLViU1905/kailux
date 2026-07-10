@@ -47,6 +47,7 @@ namespace kailux
 
         Buffer&       getCameraBuffer();
         Buffer&       getModelBuffer();
+        Buffer&       getMaterialBuffer();
         Buffer&       getIndirectBuffer();
         const Buffer& getIndirectBuffer() const;
         Buffer&       getSceneBuffer();
@@ -60,7 +61,7 @@ namespace kailux
         const Texture& getOutIdTexture() const;
         const Texture& getResolvedOutIdTexture() const;
 
-        static constexpr uint32_t kBufferMemoryBarriersCount = 1 + 1 + 1 + 1; // camera buffer + mesh data buffer + culler input buffer + scene buffer
+        static constexpr uint32_t kBufferMemoryBarriersCount = 1 + 1 + 1 + 1 + 1; // camera buffer + mesh data buffer + materials buffer + culler input buffer + scene buffer
         std::array<vk::BufferMemoryBarrier2, kBufferMemoryBarriersCount>       getBufferMemoryBarriers() const;
         vk::BufferMemoryBarrier2                                                getPickerBufferMemoryBarrier() const;
         static constexpr uint32_t kCullerBufferMemoryBarriersCount = 1 + 1; // indirect buffer + culler count buffer
@@ -88,6 +89,7 @@ namespace kailux
                                        DescriptorSetInfo> infos);
         void createCameraBuffer(const Context& context);
         void createMeshDataBuffer(const Context &context);
+        void createMaterialsBuffer(const Context &context);
         void createIndirectBuffer(const Context &context);
         void createSceneBuffer(const Context& context);
         void createPickerBuffer(const Context& context);
@@ -96,7 +98,7 @@ namespace kailux
         void createSceneTexture(const Context& context, vk::Format format);
         void createOutIdTexture(const Context &context);
 
-        static constexpr uint32_t kDescriptorSetInfoCount = 1 + 1 + 1 + 1 + 1 + 1 + 1 + TextureRegistry::kTextureTypes.size(); // camera buffer + mesh data buffer + scene buffer + skybox sampler + irradiance map + prefiltered env + brdf lut + textures
+        static constexpr uint32_t kDescriptorSetInfoCount = 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1; // camera buffer + mesh data buffer + materials buffer + scene buffer + skybox sampler + irradiance map + prefiltered env + brdf lut + textures array
         static constexpr uint32_t kSkyboxDescriptorSetInfoCount = 1 + 1; // camera buffer + cube texture
         static constexpr uint32_t kGizmoDescriptorSetInfoCount = 1; // camera buffer
         static constexpr uint32_t kPickerDescriptorSetInfoCount = 1 + 1; // id image + out buffer
@@ -126,6 +128,7 @@ namespace kailux
 
         Buffer                  mCameraBuffer;
         Buffer                  mMeshDataBuffer;
+        Buffer                  mMaterialsBuffer;
         Buffer                  mIndirectBuffer;
         Buffer                  mSceneBuffer;
         Buffer                  mPickerBuffer;

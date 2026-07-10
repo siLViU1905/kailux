@@ -159,21 +159,11 @@ namespace kailux
             mMeshRegistry.destroy(handle);
     }
 
-    void Engine::unregisterTextureSet(TextureSetHandle handle)
+    void Engine::unregisterMaterial(MaterialHandle handle)
     {
-        auto defaultHandle = mTextureRegistry.getDefaultSetHandle();
-        const auto &defaultSet = mTextureRegistry.view(defaultHandle);
-        auto updateInfos = make_descriptor_set_update_info_from_texture_set(handle, defaultSet);
-
-        for (const auto &frame: mFrames)
-            frame.getDescriptorSet().updateInfo(
-                mContext,
-                updateInfos
-            );
-
         mDeferredResourceEraser.enqueue([this, handle]()
         {
-            mTextureRegistry.unregisterTextureSet(handle);
+            mTextureRegistry.releaseMaterial(handle);
         });
     }
 
@@ -263,7 +253,6 @@ namespace kailux
     {
         mTextureRegistry = TextureRegistry::create(
             mContext,
-            details::kMaxMeshes,
             kDirectoryIconPath,
             kFileIconPath
         );
@@ -345,36 +334,6 @@ namespace kailux
             windowHeight
         );
         mScene.setMainCamera(cameraEntity);
-    }
-
-    std::array<DescriptorSetUpdateInfo, TextureRegistry::kTextureTypes.size()>
-    Engine::make_descriptor_set_update_info_from_texture_set(TextureSetHandle slotToOverwrite,
-                                                             const TextureSet &replacementSet)
-    {
-        auto makeUpdateInfo = [slotToOverwrite](uint32_t binding, const auto &texture)-> DescriptorSetUpdateInfo
-        {
-            return {
-                binding,
-                slotToOverwrite.index,
-                DescriptorSetImageInfo(
-                    texture->getSampler(),
-                    texture->getImageView(),
-                    vk::ImageLayout::eShaderReadOnlyOptimal,
-                    1
-                )
-            };
-        };
-        uint32_t textureIndex = 0;
-        std::array updateInfos = {
-            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.albedo),
-            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.normal),
-            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.roughness),
-            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.metallic),
-            makeUpdateInfo(MainPass::kMeshTextureBindStart + textureIndex++, replacementSet.ao)
-        };
-        static_assert(TextureRegistry::kTextureTypes.size() == updateInfos.size(),
-                      "There is a missing texture in update info");
-        return updateInfos;
     }
 
     void Engine::submit(const FrameData &frame, vk::Semaphore imageAvailableSemaphore,
@@ -1010,6 +969,7 @@ namespace kailux
     {
         updateCameraBuffer(frame);
         updateMeshDataBuffer(frame);
+        updateMaterialBuffer(frame);
         updateSceneBuffer(frame);
         updateCullerBuffers(frame, recorder);
 
@@ -1049,6 +1009,12 @@ namespace kailux
             );
         }
         frame.getModelBuffer().upload(data.data(), data.size() * sizeof(MeshData));
+    }
+
+    void Engine::updateMaterialBuffer(FrameData &frame) const
+    {
+        const auto materials = mTextureRegistry.viewMaterials();
+        frame.getMaterialBuffer().upload(materials);
     }
 
     void Engine::updateSceneBuffer(FrameData &frame) const

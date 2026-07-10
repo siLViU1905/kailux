@@ -38,9 +38,9 @@ namespace kailux
 
         struct MeshCache
         {
-            MeshHandle meshHandle;
-            TextureSetHandle materialHandle;
-            uint32_t count = 1;
+            MeshHandle     meshHandle;
+            MaterialHandle materialHandle;
+            uint32_t       count{1};
         };
 
         std::optional<MeshCache> uncache(std::string_view path);
@@ -59,17 +59,16 @@ namespace kailux
 
         entt::entity createParentMeshEntity(const PendingMeshData &data);
 
-        std::vector<TextureSetHandle> loadAndRegisterMaterials(
+        std::vector<MaterialHandle> loadAndRegisterMaterials(
             std::span<const TextureRegistry::MaterialData> materials);
 
         MeshHandle uploadMeshDataToRegistry(const MeshRegistry::MeshData &data);
 
-        TextureSetHandle uploadMaterialDataToRegistry(const TextureRegistry::MaterialData &data);
+        MaterialHandle uploadMaterialDataToRegistry(const TextureRegistry::MaterialData &data);
 
         void cacheMesh(std::string_view path, MeshHandle meshHandle, TextureSetHandle materialHandle);
 
-        std::array<DescriptorSetUpdateInfo, TextureRegistry::kTextureTypes.size()>
-        makeDescriptorSetUpdateInfo(TextureSetHandle slotToOverwrite, const TextureSet &replacementSet);
+        static DescriptorSetUpdateInfo make_texture_write(TextureHandle handle, const Texture& texture);
 
         std::reference_wrapper<Context>         mContext;
         std::reference_wrapper<MeshRegistry>    mMeshRegistry;
