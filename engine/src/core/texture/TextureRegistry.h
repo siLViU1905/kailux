@@ -8,19 +8,13 @@
 #include "core/Core.h"
 #include "core/TransferManager.h"
 #include "core/buffer/Buffer.h"
+#include "core/components/gpu/MaterialSlot.h"
 
 namespace kailux
 {
     using TextureSetHandle = Handle;
-
-    struct TextureSet
-    {
-        Shared<Texture> albedo;
-        Shared<Texture> normal;
-        Shared<Texture> roughness;
-        Shared<Texture> metallic;
-        Shared<Texture> ao;
-    };
+    using TextureHandle = Handle;
+    using MaterialHandle = Handle;
 
     enum class TextureType
     {
@@ -33,9 +27,10 @@ namespace kailux
 
     struct AsyncMaterialResult
     {
-        TextureSet               set;
-        std::vector<ImageUpload> uploads;
-        std::vector<Buffer>      staging;
+        MaterialSlot               slot;
+        std::vector<TextureHandle> handles;
+        std::vector<ImageUpload>   uploads;
+        std::vector<Buffer>        staging;
     };
 
     class TextureRegistry
@@ -46,16 +41,21 @@ namespace kailux
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(TextureRegistry)
 
         static TextureRegistry create(const Context &context,
-                                      uint32_t meshCount,
                                       std::string_view directoryIconPath,
                                       std::string_view fileIconPath
         );
 
-        TextureSetHandle  registerTextureSet(const TextureSet& set);
-        void              unregisterTextureSet(TextureSetHandle handle);
-        void              updateTextureSet(TextureSetHandle handle, const TextureSet& set);
-        const TextureSet& view(TextureSetHandle handle) const;
-        TextureSetHandle  getDefaultSetHandle() const;
+        std::optional<TextureHandle>  registerTexture(Texture&& texture);
+        void                          releaseTexture(TextureHandle handle);
+        const Texture&                getTexture(TextureHandle handle) const;
+        std::optional<MaterialHandle> registerMaterial(const MaterialSlot& slot);
+        void                          updateMaterial(MaterialHandle handle, const MaterialSlot& slot);
+        void                          releaseMaterial(MaterialHandle handle);
+        const MaterialSlot&           getMaterial(MaterialHandle handle) const;
+        MaterialHandle                getDefaultMaterialHandle() const;
+        TextureHandle                 getDefaultTextureHandle(TextureType type) const;
+
+        std::span<const MaterialSlot> viewMaterials() const;
 
         const Texture& getAssetBrowserDirectoryIconTexture() const;
         const Texture& getAssetBrowserFileIconTexture() const;
@@ -69,19 +69,24 @@ namespace kailux
             ImageLoader::ImageData aoData;
         };
 
-        AsyncMaterialResult createSetFromMaterialData(const Context &context, const MaterialData& data) const;
+        AsyncMaterialResult createMaterialFromData(const Context &context, const MaterialData& data);
 
     private:
-        void     allocResources(uint32_t meshCount);
+        void     allocResources();
         void     createDefaultTextures(const Context& context);
         void     createAssetBrowserTextures(const Context& context, std::string_view directoryIconPath, std::string_view fileIconPath);
 
-        uint32_t acquireSlot();
+        std::vector<std::optional<Texture>>  mTextures;
+        std::vector<uint32_t>                mTextureRefCount;
+        std::deque<uint32_t>                 mFreeTextureSlots;
 
-        TextureSet                   mDefaultSet;
-        TextureSetHandle             mDefaultSetHandle;
-        std::vector<TextureSet>      mTexturePool;
-        std::deque<uint32_t>         mFreeSlots;
+        std::vector<MaterialSlot> mMaterials;
+        std::deque<uint32_t>      mFreeMaterialSlots;
+
+        uint32_t       mDefaultAlbedoIdx{~0u};
+        uint32_t       mDefaultNormalIdx{~0u};
+        uint32_t       mDefaultWhiteIdx{~0u};
+        MaterialHandle mDefaultMaterialHandle;
 
         Texture                      mAssetBrowserDirectoryTexture;
         Texture                      mAssetBrowserFileTexture;

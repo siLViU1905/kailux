@@ -33,6 +33,7 @@ namespace kailux
                                                        mCullerDescriptorSet(std::move(other.mCullerDescriptorSet)),
                                                        mCameraBuffer(std::move(other.mCameraBuffer)),
                                                        mMeshDataBuffer(std::move(other.mMeshDataBuffer)),
+                                                       mMaterialsBuffer(std::move(other.mMaterialsBuffer)),
                                                        mIndirectBuffer(std::move(other.mIndirectBuffer)),
                                                        mSceneBuffer(std::move(other.mSceneBuffer)),
                                                        mPickerBuffer(std::move(other.mPickerBuffer)),
@@ -63,6 +64,7 @@ namespace kailux
             mCullerDescriptorSet = std::move(other.mCullerDescriptorSet);
             mCameraBuffer = std::move(other.mCameraBuffer);
             mMeshDataBuffer = std::move(other.mMeshDataBuffer);
+            mMaterialsBuffer = std::move(other.mMaterialsBuffer);
             mIndirectBuffer = std::move(other.mIndirectBuffer);
             mSceneBuffer = std::move(other.mSceneBuffer);
             mPickerBuffer = std::move(other.mPickerBuffer);
@@ -97,6 +99,7 @@ namespace kailux
         frame.createSyncObjects(context);
         frame.createCameraBuffer(context);
         frame.createMeshDataBuffer(context);
+        frame.createMaterialsBuffer(context);
         frame.createIndirectBuffer(context);
         frame.createSceneBuffer(context);
         frame.createPickerBuffer(context);
@@ -222,6 +225,11 @@ namespace kailux
         return mMeshDataBuffer;
     }
 
+    Buffer & FrameData::getMaterialBuffer()
+    {
+        return mMaterialsBuffer;
+    }
+
     Buffer &FrameData::getIndirectBuffer()
     {
         return mIndirectBuffer;
@@ -297,6 +305,17 @@ namespace kailux
                 mMeshDataBuffer.getBuffer(),
                 {},
                 mMeshDataBuffer.getSize()
+            ),
+            vk::BufferMemoryBarrier2( // materials
+                vk::PipelineStageFlagBits2::eHost,
+                vk::AccessFlagBits2::eHostWrite,
+                vk::PipelineStageFlagBits2::eFragmentShader,
+                vk::AccessFlagBits2::eShaderStorageRead,
+                vk::QueueFamilyIgnored,
+                vk::QueueFamilyIgnored,
+                mMaterialsBuffer.getBuffer(),
+                {},
+                mMaterialsBuffer.getSize()
             ),
             vk::BufferMemoryBarrier2( // culler input
                 vk::PipelineStageFlagBits2::eHost,
@@ -473,6 +492,11 @@ namespace kailux
         mMeshDataBuffer = BufferAllocator::alloc_storage(context, details::kMaxMeshes * sizeof(MeshData));
     }
 
+    void FrameData::createMaterialsBuffer(const Context &context)
+    {
+        mMaterialsBuffer = BufferAllocator::alloc_storage(context, details::kMaxMaterials * sizeof(MaterialSlot));
+    }
+
     void FrameData::createIndirectBuffer(const Context &context)
     {
         mIndirectBuffer = BufferAllocator::alloc_host(context, details::kMaxMeshes * sizeof(vk::DrawIndexedIndirectCommand),
@@ -552,6 +576,12 @@ namespace kailux
                 vk::DescriptorType::eStorageBuffer
             ),
             DescriptorSetBufferInfo(
+                mMaterialsBuffer.getBuffer(),
+                mMaterialsBuffer.getSize(),
+                1,
+                vk::DescriptorType::eStorageBuffer
+            ),
+            DescriptorSetBufferInfo(
                 mSceneBuffer.getBuffer(),
                 mSceneBuffer.getSize(),
                 1,
@@ -582,34 +612,10 @@ namespace kailux
                 1
             ),
             DescriptorSetImageInfo(
-                textureRegistry.view(textureRegistry.getDefaultSetHandle()).albedo->getSampler(),
-                textureRegistry.view(textureRegistry.getDefaultSetHandle()).albedo->getImageView(),
+                textureRegistry.getTexture(textureRegistry.getDefaultTextureHandle(TextureType::Albedo)).getSampler(),
+                textureRegistry.getTexture(textureRegistry.getDefaultTextureHandle(TextureType::Albedo)).getImageView(),
                 vk::ImageLayout::eShaderReadOnlyOptimal,
-                details::kMaxMeshes
-            ),
-            DescriptorSetImageInfo(
-                textureRegistry.view(textureRegistry.getDefaultSetHandle()).normal->getSampler(),
-                textureRegistry.view(textureRegistry.getDefaultSetHandle()).normal->getImageView(),
-                vk::ImageLayout::eShaderReadOnlyOptimal,
-                details::kMaxMeshes
-            ),
-            DescriptorSetImageInfo(
-                textureRegistry.view(textureRegistry.getDefaultSetHandle()).roughness->getSampler(),
-                textureRegistry.view(textureRegistry.getDefaultSetHandle()).roughness->getImageView(),
-                vk::ImageLayout::eShaderReadOnlyOptimal,
-                details::kMaxMeshes
-            ),
-            DescriptorSetImageInfo(
-                textureRegistry.view(textureRegistry.getDefaultSetHandle()).metallic->getSampler(),
-                textureRegistry.view(textureRegistry.getDefaultSetHandle()).metallic->getImageView(),
-                vk::ImageLayout::eShaderReadOnlyOptimal,
-                details::kMaxMeshes
-            ),
-            DescriptorSetImageInfo(
-                textureRegistry.view(textureRegistry.getDefaultSetHandle()).ao->getSampler(),
-                textureRegistry.view(textureRegistry.getDefaultSetHandle()).ao->getImageView(),
-                vk::ImageLayout::eShaderReadOnlyOptimal,
-                details::kMaxMeshes
+                details::kMaxTextures
             )
         };
     }
