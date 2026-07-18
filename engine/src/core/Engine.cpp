@@ -156,8 +156,16 @@ namespace kailux
 
     void Engine::unregisterMesh(MeshHandle handle, std::string_view path)
     {
-        if (mAssetPipeline.uncache(path))
-            mMeshRegistry.destroy(handle);
+        if (auto cache = mAssetPipeline.uncache(path))
+        {
+            mMeshRegistry.destroy(cache->meshHandle);
+
+            auto materialHandle = cache->materialHandle;
+            mDeferredResourceEraser.enqueue([this, materialHandle]()
+            {
+                mTextureRegistry.releaseMaterial(materialHandle);
+            });
+        }
     }
 
     void Engine::unregisterMaterial(MaterialHandle handle)
