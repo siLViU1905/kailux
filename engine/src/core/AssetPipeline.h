@@ -62,8 +62,6 @@ namespace kailux
         std::vector<MaterialHandle> loadAndRegisterMaterials(
             std::span<const TextureRegistry::MaterialData> materials);
 
-        MeshHandle uploadMeshDataToRegistry(const MeshRegistry::MeshData &data);
-
         MaterialHandle uploadMaterialDataToRegistry(const TextureRegistry::MaterialData &data);
 
         void cacheMesh(std::string_view path, MeshHandle meshHandle, TextureSetHandle materialHandle);

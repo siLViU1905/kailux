@@ -135,15 +135,6 @@ namespace kailux
         return handles;
     }
 
-    MeshHandle AssetPipeline::uploadMeshDataToRegistry(const MeshRegistry::MeshData &data)
-    {
-        std::vector<Buffer> stagingBuffers;
-        auto otc = OneTimeCommand::create(mContext);
-        auto handle = mMeshRegistry.get().upload(mContext, otc.getCommandBuffer(), data, stagingBuffers);
-        otc.submit(mContext);
-        return handle;
-    }
-
     MaterialHandle AssetPipeline::uploadMaterialDataToRegistry(const TextureRegistry::MaterialData &data)
     {
         auto &textureRegistry = mTextureRegistry.get();
@@ -285,7 +276,7 @@ namespace kailux
 
                     cacheMesh(cacheKey, meshHandle, materialHandle);
 
-                    auto rootName = data.name.empty() ? scene.getMeshEntityName() : data.name;
+                    const auto &rootName = mScene.get().getEntityRegistry().get<TagComponent>(parentEntity).name;
                     auto submeshName = std::format("{}_{}", rootName,
                                                    submesh.name.empty() ? std::to_string(submeshIndex) : submesh.name);
 
