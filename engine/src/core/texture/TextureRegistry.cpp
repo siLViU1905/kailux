@@ -79,8 +79,11 @@ namespace kailux
     void TextureRegistry::releaseTexture(TextureHandle handle)
     {
         assert(handle.valid() || handle.index < mMaterials.size());
-        assert(handle.index != mDefaultAlbedoIdx || handle.index != mDefaultNormalIdx ||
-            handle.index != mDefaultWhiteIdx);
+
+        if (handle.index == mDefaultAlbedoIdx ||
+            handle.index == mDefaultNormalIdx ||
+            handle.index == mDefaultWhiteIdx)
+            return;
 
         if (mTextureRefCount[handle.index] == 0)
             return;
@@ -118,8 +121,9 @@ namespace kailux
 
     void TextureRegistry::releaseMaterial(MaterialHandle handle)
     {
-        assert(handle.valid() || handle.index < mMaterials.size());
-        assert(handle.index != mDefaultMaterialHandle.index);
+        assert(handle.valid() && handle.index < mMaterials.size());
+        if (handle.index == mDefaultMaterialHandle.index)
+            return;
 
         const auto& slot = mMaterials[handle.index];
         for (auto textureIdx : {slot.albedoIdx, slot.normalIdx, slot.roughnessIdx,

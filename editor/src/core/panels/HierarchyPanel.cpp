@@ -109,7 +109,7 @@ namespace kailux
         mOnEntitySelected = std::move(callback);
     }
 
-    void HierarchyPanel::setOnEntityDeleted(OnEntityDeleted &&callback)
+    void HierarchyPanel::setOnMeshDeleted(OnMeshDeleted &&callback)
     {
         mOnEntityDeleted = std::move(callback);
     }
@@ -216,9 +216,8 @@ namespace kailux
         auto *hierarchy = registry.try_get<HierarchyComponent>(entity);
 
         auto *meshComponent = registry.try_get<MeshComponent>(entity);
-        auto *materialComponent = registry.try_get<MaterialComponent>(entity);
 
-        if (meshComponent && materialComponent)
+        if (meshComponent)
         {
             uint32_t submeshIndex{~0u};
 
@@ -232,7 +231,7 @@ namespace kailux
 
             auto submeshCacheKey = std::format("{}_sub{}", meshComponent->path, submeshIndex);
 
-            mOnEntityDeleted(*meshComponent, *materialComponent, submeshCacheKey);
+            mOnEntityDeleted(*meshComponent, submeshCacheKey);
         }
 
         if (hierarchy)

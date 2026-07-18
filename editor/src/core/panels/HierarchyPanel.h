@@ -16,8 +16,8 @@ namespace kailux
         using OnEntitySelected = std::move_only_function<void(entt::entity, const Scene&)>;
         void  setOnEntitySelected(OnEntitySelected&& callback);
 
-        using OnEntityDeleted = std::move_only_function<void(MeshComponent, MaterialComponent, std::string_view)>;
-        void  setOnEntityDeleted(OnEntityDeleted&& callback);
+        using OnMeshDeleted = std::move_only_function<void(MeshComponent, std::string_view)>;
+        void  setOnMeshDeleted(OnMeshDeleted&& callback);
 
         using OnDragDrop = std::move_only_function<void(std::string_view)>;
         void  setOnDragDrop(OnDragDrop&& callback);
@@ -55,7 +55,7 @@ namespace kailux
         void renderAddPhysicsPopup(const Scene &scene);
 
         OnEntitySelected mOnEntitySelected;
-        OnEntityDeleted  mOnEntityDeleted;
+        OnMeshDeleted  mOnEntityDeleted;
         OnDragDrop       mOnDragDrop;
         OnNewMesh        mOnNewMesh;
         OnNewLight       mOnNewLight;
