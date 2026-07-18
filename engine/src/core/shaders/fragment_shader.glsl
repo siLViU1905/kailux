@@ -59,7 +59,7 @@ layout (location = 7) in flat float fragAO;
 layout (location = 8) in flat uint fragMaterialIdx;
 layout (location = 9) in flat uint fragIdx;
 layout (location = 10) in vec2 fragTexCoord;
-layout (location = 11) in mat3 fragTBN;
+layout (location = 11) in vec4 fragTangent;
 
 layout (location = 0) out vec4 outColor;
 layout (location = 1) out uint outEntityId;
@@ -124,8 +124,13 @@ void main()
     float metallic  = texMetallic * fragMetallic;
     float ao        = texAO * fragAO;
 
+    vec3 Ng = normalize(fragNormal);
+    vec3 Tg = normalize(fragTangent.xyz - dot(fragTangent.xyz, Ng) * Ng);
+    vec3 Bg = cross(Ng, Tg) * fragTangent.w;
+    mat3 TBN = mat3(Tg, Bg, Ng);
+
     vec3 normalFromMap = texNormal * 2.0 - 1.0;
-    vec3 N = normalize(fragTBN * normalFromMap);
+    vec3 N = Ng;
     vec3 V = normalize(viewPos - fragPos);
     vec3 R = reflect(-V, N);
 

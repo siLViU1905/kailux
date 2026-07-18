@@ -17,7 +17,7 @@ layout (location = 7) out flat float fragAO;
 layout (location = 8) out flat uint fragMaterialIdx;
 layout (location = 9) out flat uint fragIdx;
 layout (location = 10) out vec2 fragTexCoord;
-layout (location = 11) out mat3 fragTBN;
+layout (location = 11) out vec4 fragTangent;
 
 layout (set = 0, binding = 0) uniform Camera
 {
@@ -65,13 +65,8 @@ void main()
 
     fragIdx = mData.idx;
 
-    vec3 T = normalize(vec3(model * vec4(aTangent.xyz, 0.0)));
-    vec3 N = normalize(vec3(model * vec4(aNormal, 0.0)));
-    T = normalize(T - dot(T, N) * N);
-    vec3 B = cross(N, T) * aTangent.w;
-    fragTBN = mat3(T, B, N);
-
     fragNormal = normalize(mat3(model) * aNormal);
+    fragTangent = vec4(normalize(mat3(model) * aTangent.xyz), aTangent.w);
     viewPos = camera.positionAndExposure.xyz;
     fragExposure = camera.positionAndExposure.w;
 

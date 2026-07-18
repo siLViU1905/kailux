@@ -100,6 +100,8 @@ namespace kailux
         void createPhysicsSystem();
         void createImGui(Window& window);
 
+        void seedDefaultTextures();
+
         void createSceneTextureIds();
 
         void createComputePicker();

@@ -129,6 +129,7 @@ namespace kailux
         engine.createComputePicker();
         engine.createComputeCuller();
         engine.createFrameResources();
+        engine.seedDefaultTextures();
         engine.createImGui(window);
         engine.createScene();
         engine.createSceneTextureIds();
@@ -300,6 +301,31 @@ namespace kailux
     void Engine::createImGui(Window &window)
     {
         mImGuiBackend = ImGuiBackend::create(window, mContext, mSwapchain, mSampleCount);
+    }
+
+    void Engine::seedDefaultTextures()
+    {
+        std::vector<DescriptorSetUpdateInfo> writes;
+        auto liveTextures = mTextureRegistry.getLiveTexures();
+        writes.reserve(liveTextures.size());
+
+        for (const auto& live : liveTextures)
+        {
+            const Texture& tex = live.texture;
+            writes.emplace_back(
+                MainPass::kMeshTextureBindStart,
+                live.slot,
+                DescriptorSetImageInfo(
+                    tex.getSampler(),
+                    tex.getImageView(),
+                    vk::ImageLayout::eShaderReadOnlyOptimal,
+                    1
+                )
+            );
+        }
+
+        for (const auto& frame : mFrames)
+            frame.getDescriptorSet().updateInfo(mContext, writes);
     }
 
     void Engine::createSceneTextureIds()
