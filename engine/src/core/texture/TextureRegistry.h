@@ -33,6 +33,12 @@ namespace kailux
         std::vector<Buffer>        staging;
     };
 
+    struct LiveTexture
+    {
+        uint32_t                              slot{~0u};
+        std::reference_wrapper<const Texture> texture;
+    };
+
     class TextureRegistry
     {
     public:
@@ -56,6 +62,8 @@ namespace kailux
         TextureHandle                 getDefaultTextureHandle(TextureType type) const;
 
         std::span<const MaterialSlot> viewMaterials() const;
+
+        std::vector<LiveTexture> getLiveTexures() const;
 
         const Texture& getAssetBrowserDirectoryIconTexture() const;
         const Texture& getAssetBrowserFileIconTexture() const;

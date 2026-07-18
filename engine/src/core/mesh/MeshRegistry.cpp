@@ -321,16 +321,7 @@ namespace kailux
                     static_cast<float>(j) / static_cast<float>(sectors),
                     static_cast<float>(i) / static_cast<float>(stacks)
                 );
-                glm::vec4 tangent(
-                    -radius * std::cos(stackAngle) * std::sin(sectorAngle),
-                    radius * std::cos(stackAngle) * std::cos(sectorAngle),
-                    0.f,
-                    1.f
-                );
-                if (glm::length(glm::vec3(tangent)) > 0.0001f)
-                    tangent = glm::vec4(glm::normalize(glm::vec3(tangent)), 1.0f);
-                else
-                    tangent = glm::vec4(1.f, 0.f, 0.f, 1.f);
+                glm::vec4 tangent{-std::sin(sectorAngle), std::cos(sectorAngle), 0.f, 1.f};
 
                 data.vertices.emplace_back(pos, normal, uv, tangent);
             }

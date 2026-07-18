@@ -155,6 +155,16 @@ namespace kailux
         return {mMaterials};
     }
 
+    std::vector<LiveTexture> TextureRegistry::getLiveTexures() const
+    {
+        std::vector<LiveTexture> liveTextures;
+        liveTextures.reserve(mTextures.size());
+        for (uint32_t i{}; i < static_cast<uint32_t>(mTextures.size()); ++i)
+            if (mTextureRefCount[i] > 0 && mTextures[i].has_value())
+                liveTextures.emplace_back(i, std::cref(*mTextures[i]));
+        return liveTextures;
+    }
+
     const Texture & TextureRegistry::getAssetBrowserDirectoryIconTexture() const
     {
         return mAssetBrowserDirectoryTexture;
