@@ -146,7 +146,7 @@ namespace kailux
             writes.push_back(make_texture_write(handle, textureRegistry.getTexture(handle)));
 
         for (const auto &frame: mFrames)
-            frame.getDescriptorSet().updateInfo(mContext, writes);
+            frame.getMeshDescriptorSet().updateInfo(mContext, writes);
 
         if (!result.uploads.empty())
             mTransferManager.get().enqueueImages(

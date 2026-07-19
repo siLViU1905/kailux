@@ -38,7 +38,7 @@ namespace kailux
         vk::CommandBuffer getImGuiCommandBuffer() const;
         vk::Fence         getFenceInFlight() const;
 
-        const DescriptorSet& getDescriptorSet() const;
+        const DescriptorSet& getMeshDescriptorSet() const;
         const DescriptorSet& getSkyboxDescriptorSet() const;
         const DescriptorSet& getGizmoDescriptorSet() const;
         const DescriptorSet& getPickerDescriptorSet() const;
@@ -75,7 +75,7 @@ namespace kailux
         void createCommandBuffer(const Context& context);
         void createImGuiCommandBuffer(const Context& context);
         void createSyncObjects(const Context& context);
-        void createDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
+        void createMeshDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
                                  DescriptorSetInfo> infos);
         void createSkyboxDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
                                        DescriptorSetInfo> infos);
@@ -104,7 +104,7 @@ namespace kailux
         static constexpr uint32_t kPickerDescriptorSetInfoCount = 1 + 1; // id image + out buffer
         static constexpr uint32_t kOutlineDescriptorSetInfoCount = 1; // id image
         static constexpr uint32_t kCullerDescriptorSetInfoCount = 4; // mesh data + template + out indirect + counter
-        std::array<DescriptorSetInfo, kDescriptorSetInfoCount>        makeDescriptorSetInfo(const SkyboxPass &skybox, const TextureRegistry &textureRegistry) const;
+        std::array<DescriptorSetInfo, kDescriptorSetInfoCount>        makeMeshDescriptorSetInfo(const SkyboxPass &skybox, const TextureRegistry &textureRegistry) const;
         std::array<DescriptorSetInfo, kSkyboxDescriptorSetInfoCount>  makeSkyboxDescriptorSetInfo(const Texture& skyboxTexture) const;
         std::array<DescriptorSetInfo, kGizmoDescriptorSetInfoCount>   makeGizmoDescriptorSetInfo() const;
         std::array<DescriptorSetInfo, kPickerDescriptorSetInfoCount>  makePickerDescriptorSetInfo() const;
@@ -119,7 +119,7 @@ namespace kailux
         vk::raii::CommandBuffer mImGuiCommandBuffer;
         vk::raii::Fence         mFenceInFlight;
 
-        DescriptorSet           mDescriptorSet;
+        DescriptorSet           mMeshDescriptorSet;
         DescriptorSet           mSkyboxDescriptorSet;
         DescriptorSet           mGizmoDescriptorSet;
         DescriptorSet           mPickerDescriptorSet;

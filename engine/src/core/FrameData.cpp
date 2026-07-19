@@ -25,7 +25,7 @@ namespace kailux
                                                        mCommandBuffer(std::move(other.mCommandBuffer)),
                                                        mImGuiCommandBuffer(std::move(other.mImGuiCommandBuffer)),
                                                        mFenceInFlight(std::move(other.mFenceInFlight)),
-                                                       mDescriptorSet(std::move(other.mDescriptorSet)),
+                                                       mMeshDescriptorSet(std::move(other.mMeshDescriptorSet)),
                                                        mSkyboxDescriptorSet(std::move(other.mSkyboxDescriptorSet)),
                                                        mGizmoDescriptorSet(std::move(other.mGizmoDescriptorSet)),
                                                        mPickerDescriptorSet(std::move(other.mPickerDescriptorSet)),
@@ -56,7 +56,7 @@ namespace kailux
             mCommandBuffer = std::move(other.mCommandBuffer);
             mImGuiCommandBuffer = std::move(other.mImGuiCommandBuffer);
             mFenceInFlight = std::move(other.mFenceInFlight);
-            mDescriptorSet = std::move(other.mDescriptorSet);
+            mMeshDescriptorSet = std::move(other.mMeshDescriptorSet);
             mSkyboxDescriptorSet = std::move(other.mSkyboxDescriptorSet);
             mGizmoDescriptorSet = std::move(other.mGizmoDescriptorSet);
             mPickerDescriptorSet = std::move(other.mPickerDescriptorSet);
@@ -106,8 +106,8 @@ namespace kailux
         frame.createCullerBuffers(context);
         frame.createSceneTexture(context, swapchain.getFormat());
         frame.createOutIdTexture(context);
-        auto descSetInfo = frame.makeDescriptorSetInfo(skybox, textureRegistry);
-        frame.createDescriptorSet(context, mainPass.getDescriptorLayout(), mainPass.getDescriptorPool(), descSetInfo);
+        auto descSetInfo = frame.makeMeshDescriptorSetInfo(skybox, textureRegistry);
+        frame.createMeshDescriptorSet(context, mainPass.getDescriptorLayout(), mainPass.getDescriptorPool(), descSetInfo);
         auto skyboxDescInfo = frame.makeSkyboxDescriptorSetInfo(skybox.getTexture());
         frame.createSkyboxDescriptorSet(context, skybox.getDescriptorLayout(), skybox.getDescriptorPool(),
                                         skyboxDescInfo);
@@ -185,9 +185,9 @@ namespace kailux
         return *mFenceInFlight;
     }
 
-    const DescriptorSet &FrameData::getDescriptorSet() const
+    const DescriptorSet &FrameData::getMeshDescriptorSet() const
     {
-        return mDescriptorSet;
+        return mMeshDescriptorSet;
     }
 
     const DescriptorSet &FrameData::getSkyboxDescriptorSet() const
@@ -442,10 +442,10 @@ namespace kailux
         mFenceInFlight = vk::raii::Fence(context.mDevice, vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled));
     }
 
-    void FrameData::createDescriptorSet(const Context &context, const DescriptorLayout &descriptorLayout,
+    void FrameData::createMeshDescriptorSet(const Context &context, const DescriptorLayout &descriptorLayout,
                                         const DescriptorPool &descriptorPool, std::span<const DescriptorSetInfo> infos)
     {
-        mDescriptorSet = DescriptorSet::create(context, descriptorLayout, descriptorPool, infos);
+        mMeshDescriptorSet = DescriptorSet::create(context, descriptorLayout, descriptorPool, infos);
     }
 
     void FrameData::createSkyboxDescriptorSet(const Context &context, const DescriptorLayout &descriptorLayout,
@@ -559,7 +559,7 @@ namespace kailux
         );
     }
 
-    std::array<DescriptorSetInfo, FrameData::kDescriptorSetInfoCount> FrameData::makeDescriptorSetInfo(
+    std::array<DescriptorSetInfo, FrameData::kDescriptorSetInfoCount> FrameData::makeMeshDescriptorSetInfo(
         const SkyboxPass &skybox, const TextureRegistry &textureRegistry) const
     {
         return {
