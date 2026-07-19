@@ -56,146 +56,22 @@ namespace kailux
 
             if (registry.all_of<TransformComponent>(mSelectedEntity) &&
                 !registry.any_of<PointLightData>(mSelectedEntity))
-            {
-                ImGui::Text("Gizmo Operation:");
-                if (ImGui::RadioButton("Translate", mCurrentGizmoOperation == ImGuizmo::TRANSLATE))
-                    mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
-                ImGui::SameLine();
-                if (ImGui::RadioButton("Rotate", mCurrentGizmoOperation == ImGuizmo::ROTATE))
-                    mCurrentGizmoOperation = ImGuizmo::ROTATE;
-                ImGui::SameLine();
-                if (ImGui::RadioButton("Scale", mCurrentGizmoOperation == ImGuizmo::SCALE))
-                    mCurrentGizmoOperation = ImGuizmo::SCALE;
+                renderMeshProperties(registry);
 
-                ImGui::Text("Gizmo Mode:");
-                if (ImGui::RadioButton("Local", mCurrentGizmoMode == ImGuizmo::LOCAL))
-                    mCurrentGizmoMode = ImGuizmo::LOCAL;
-                ImGui::SameLine();
-                if (ImGui::RadioButton("World", mCurrentGizmoMode == ImGuizmo::WORLD))
-                    mCurrentGizmoMode = ImGuizmo::WORLD;
+            if (registry.all_of<PhysicsComponent, PhysicsControlComponent>(mSelectedEntity))
+                renderBodyProperties(registry);
 
-                ImGui::Separator();
-
-                auto &transform = registry.get<TransformComponent>(mSelectedEntity).transform;
-                if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
-                {
-                    ImGui::InputFloat3("Translation", glm::value_ptr(transform.position));
-
-                    if (ImGui::InputFloat3("Rotation (Deg)", glm::value_ptr(mRotationDegrees)))
-                        transform.rotation = glm::quat(glm::radians(mRotationDegrees));
-
-                    auto oldScale = transform.scale;
-                    if (ImGui::InputFloat3("Scale", glm::value_ptr(transform.scale)))
-                    {
-                        if (mUniformScale)
-                        {
-                            float newValue = oldScale.x;
-                            if (transform.scale.x != oldScale.x)
-                                newValue = transform.scale.x;
-                            else if (transform.scale.y != oldScale.y)
-                                newValue = transform.scale.y;
-                            else if (transform.scale.z != oldScale.z)
-                                newValue = transform.scale.z;
-                            transform.scale = glm::vec3(newValue);
-                        }
-
-                    }
-                    if (ImGui::IsItemDeactivatedAfterEdit() && registry.all_of<PhysicsComponent>(mSelectedEntity))
-                        mOnBodyScaleChange(registry.get<PhysicsComponent>(mSelectedEntity), transform.scale);
-                    ImGui::SameLine();
-                    ImGui::Checkbox("##uniform", &mUniformScale);
-                    if (ImGui::IsItemHovered())
-                        ImGui::SetTooltip("Uniform Scale");
-                }
-            } if (registry.all_of<PhysicsComponent, PhysicsControlComponent>(mSelectedEntity))
-            {
-                if (ImGui::CollapsingHeader("Physics", ImGuiTreeNodeFlags_DefaultOpen))
-                {
-                    auto &physics = registry.get<PhysicsComponent>(mSelectedEntity);
-                    auto &control = registry.get<PhysicsControlComponent>(mSelectedEntity);
-
-                    ImGui::BeginDisabled(mSimulationRunning);
-
-                    int typeIndex = static_cast<int>(physics.type);
-                    if (ImGui::Combo("Body type", &typeIndex, HierarchyPanel::s_BodyTypeOptions.data()))
-                    {
-                        physics.type = static_cast<PhysicsBodyType>(typeIndex);
-                        mOnBodyTypeChange(physics, physics.type);
-                    }
-
-                    ImGui::InputFloat3("Velocity", glm::value_ptr(control.velocity));
-
-                    ImGui::EndDisabled();
-
-                    ImGui::InputFloat3("Force", glm::value_ptr(control.force));
-                    ImGui::Checkbox("Apply Force", &control.applyForce);
-
-                    ImGui::InputFloat3("Impulse", glm::value_ptr(control.impulse));
-                    control.applyImpulse = ImGui::Button("Apply Impulse");
-                }
-            }
             if (registry.all_of<MeshMaterialData>(mSelectedEntity))
-            {
-                if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
-                {
-                    auto &material = registry.get<MeshMaterialData>(mSelectedEntity);
-                    bool changed = false;
+                renderMaterialProperties(scene);
 
-                    float &roughness = material.albedoAndRoughness.w;
-                    changed |= ImGui::SliderFloat("Roughness", &roughness, 0.f, 1.f);
+            else if (registry.all_of<DirectionalLightData>(mSelectedEntity))
+                renderDirectionalLightProperties(registry);
 
-                    float &metallic = material.pbrParams.x;
-                    changed |= ImGui::SliderFloat("Metallic", &metallic, 0.f, 1.f);
+            else if (registry.all_of<PointLightData>(mSelectedEntity))
+                renderPointLightProperties(registry);
 
-                    float &ao = material.pbrParams.y;
-                    changed |= ImGui::SliderFloat("AO", &ao, 0.f, 1.f);
-
-                    changed |= ImGui::ColorPicker3("Albedo", glm::value_ptr(material.albedoAndRoughness));
-
-                    if (changed)
-                        propagate_material_to_children(scene, mSelectedEntity, material);
-                }
-            } else if (registry.all_of<DirectionalLightData>(mSelectedEntity))
-            {
-                auto &data = registry.get<DirectionalLightData>(mSelectedEntity);
-                if (ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen))
-                {
-                    ImGui::SliderFloat3("Direction", glm::value_ptr(data.directionAndIntensity), -1.f, 1.f);
-                    float &intensity = data.directionAndIntensity.w;
-                    ImGui::InputFloat("Intensity", &intensity);
-                    ImGui::ColorPicker3("Color", glm::value_ptr(data.colorAndEnabled));
-                    float &enableValue = data.colorAndEnabled.w;
-                    bool enabled = enableValue > 0.5f;
-                    if (ImGui::Checkbox("Enabled", &enabled))
-                        enabled ? enableValue = 1.f : enableValue = 0.f;
-                }
-            } else if (registry.all_of<PointLightData>(mSelectedEntity))
-            {
-                auto [light, transform] = registry.get<PointLightData, TransformComponent>(mSelectedEntity);
-                if (ImGui::CollapsingHeader("Point Light", ImGuiTreeNodeFlags_DefaultOpen))
-                {
-                    ImGui::InputFloat3("Position", glm::value_ptr(transform.transform.position));
-
-                    float &intensity = light.positionAndIntensity.w;
-                    ImGui::InputFloat("Intensity", &intensity);
-
-                    float &range = light.range.x;
-                    ImGui::InputFloat("Range", &range);
-
-                    ImGui::ColorPicker3("Color", glm::value_ptr(light.colorAndEnabled));
-                    registry.get<GizmoComponent>(mSelectedEntity).color = {glm::vec3(light.colorAndEnabled), 1.f};
-
-                    float &enableValue = light.colorAndEnabled.w;
-                    bool enabled = enableValue > 0.5f;
-                    if (ImGui::Checkbox("Enabled", &enabled))
-                        enableValue = enabled ? 1.f : 0.f;
-                }
-            } else if (registry.all_of<CameraComponent>(mSelectedEntity))
-            {
-                auto &camera = registry.get<CameraComponent>(mSelectedEntity);
-                if (ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen))
-                    ImGui::InputFloat("Exposure", &camera.exposure, 0.f, 0.f, "%.6f");
-            }
+            else if (registry.all_of<CameraComponent>(mSelectedEntity))
+                renderCameraProperties(registry);
         }
         ImGui::End();
         ImGui::PopStyleColor();
@@ -300,8 +176,159 @@ namespace kailux
         }
     }
 
+    void EntityEditorPanel::renderMeshProperties(entt::registry &registry)
+    {
+        ImGui::Text("Gizmo Operation:");
+                if (ImGui::RadioButton("Translate", mCurrentGizmoOperation == ImGuizmo::TRANSLATE))
+                    mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
+                ImGui::SameLine();
+                if (ImGui::RadioButton("Rotate", mCurrentGizmoOperation == ImGuizmo::ROTATE))
+                    mCurrentGizmoOperation = ImGuizmo::ROTATE;
+                ImGui::SameLine();
+                if (ImGui::RadioButton("Scale", mCurrentGizmoOperation == ImGuizmo::SCALE))
+                    mCurrentGizmoOperation = ImGuizmo::SCALE;
+
+                ImGui::Text("Gizmo Mode:");
+                if (ImGui::RadioButton("Local", mCurrentGizmoMode == ImGuizmo::LOCAL))
+                    mCurrentGizmoMode = ImGuizmo::LOCAL;
+                ImGui::SameLine();
+                if (ImGui::RadioButton("World", mCurrentGizmoMode == ImGuizmo::WORLD))
+                    mCurrentGizmoMode = ImGuizmo::WORLD;
+
+                ImGui::Separator();
+
+                auto &transform = registry.get<TransformComponent>(mSelectedEntity).transform;
+                if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+                {
+                    ImGui::InputFloat3("Translation", glm::value_ptr(transform.position));
+
+                    if (ImGui::InputFloat3("Rotation (Deg)", glm::value_ptr(mRotationDegrees)))
+                        transform.rotation = glm::quat(glm::radians(mRotationDegrees));
+
+                    auto oldScale = transform.scale;
+                    if (ImGui::InputFloat3("Scale", glm::value_ptr(transform.scale)))
+                    {
+                        if (mUniformScale)
+                        {
+                            float newValue = oldScale.x;
+                            if (transform.scale.x != oldScale.x)
+                                newValue = transform.scale.x;
+                            else if (transform.scale.y != oldScale.y)
+                                newValue = transform.scale.y;
+                            else if (transform.scale.z != oldScale.z)
+                                newValue = transform.scale.z;
+                            transform.scale = glm::vec3(newValue);
+                        }
+
+                    }
+                    if (ImGui::IsItemDeactivatedAfterEdit() && registry.all_of<PhysicsComponent>(mSelectedEntity))
+                        mOnBodyScaleChange(registry.get<PhysicsComponent>(mSelectedEntity), transform.scale);
+                    ImGui::SameLine();
+                    ImGui::Checkbox("##uniform", &mUniformScale);
+                    if (ImGui::IsItemHovered())
+                        ImGui::SetTooltip("Uniform Scale");
+                }
+    }
+
+    void EntityEditorPanel::renderBodyProperties(entt::registry &registry)
+    {
+        if (ImGui::CollapsingHeader("Physics", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            auto &physics = registry.get<PhysicsComponent>(mSelectedEntity);
+            auto &control = registry.get<PhysicsControlComponent>(mSelectedEntity);
+
+            ImGui::BeginDisabled(mSimulationRunning);
+
+            int typeIndex = static_cast<int>(physics.type);
+            if (ImGui::Combo("Body type", &typeIndex, HierarchyPanel::s_BodyTypeOptions.data()))
+            {
+                physics.type = static_cast<PhysicsBodyType>(typeIndex);
+                mOnBodyTypeChange(physics, physics.type);
+            }
+
+            ImGui::InputFloat3("Velocity", glm::value_ptr(control.velocity));
+
+            ImGui::EndDisabled();
+
+            ImGui::InputFloat3("Force", glm::value_ptr(control.force));
+            ImGui::Checkbox("Apply Force", &control.applyForce);
+
+            ImGui::InputFloat3("Impulse", glm::value_ptr(control.impulse));
+            control.applyImpulse = ImGui::Button("Apply Impulse");
+        }
+    }
+
+    void EntityEditorPanel::renderMaterialProperties(Scene &scene) const
+    {
+        if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            auto &material = scene.getEntityRegistry().get<MeshMaterialData>(mSelectedEntity);
+            bool changed = false;
+
+            float &roughness = material.albedoAndRoughness.w;
+            changed |= ImGui::SliderFloat("Roughness", &roughness, 0.f, 1.f);
+
+            float &metallic = material.pbrParams.x;
+            changed |= ImGui::SliderFloat("Metallic", &metallic, 0.f, 1.f);
+
+            float &ao = material.pbrParams.y;
+            changed |= ImGui::SliderFloat("AO", &ao, 0.f, 1.f);
+
+            changed |= ImGui::ColorPicker3("Albedo", glm::value_ptr(material.albedoAndRoughness));
+
+            if (changed)
+                propagate_material_to_children(scene, mSelectedEntity, material);
+        }
+    }
+
+    void EntityEditorPanel::renderDirectionalLightProperties(entt::registry &registry) const
+    {
+        auto &data = registry.get<DirectionalLightData>(mSelectedEntity);
+        if (ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            ImGui::SliderFloat3("Direction", glm::value_ptr(data.directionAndIntensity), -1.f, 1.f);
+            float &intensity = data.directionAndIntensity.w;
+            ImGui::InputFloat("Intensity", &intensity);
+            ImGui::ColorPicker3("Color", glm::value_ptr(data.colorAndEnabled));
+            float &enableValue = data.colorAndEnabled.w;
+            bool enabled = enableValue > 0.5f;
+            if (ImGui::Checkbox("Enabled", &enabled))
+                enabled ? enableValue = 1.f : enableValue = 0.f;
+        }
+    }
+
+    void EntityEditorPanel::renderPointLightProperties(entt::registry &registry) const
+    {
+        auto [light, transform] = registry.get<PointLightData, TransformComponent>(mSelectedEntity);
+        if (ImGui::CollapsingHeader("Point Light", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            ImGui::InputFloat3("Position", glm::value_ptr(transform.transform.position));
+
+            float &intensity = light.positionAndIntensity.w;
+            ImGui::InputFloat("Intensity", &intensity);
+
+            float &range = light.range.x;
+            ImGui::InputFloat("Range", &range);
+
+            ImGui::ColorPicker3("Color", glm::value_ptr(light.colorAndEnabled));
+            registry.get<GizmoComponent>(mSelectedEntity).color = {glm::vec3(light.colorAndEnabled), 1.f};
+
+            float &enableValue = light.colorAndEnabled.w;
+            bool enabled = enableValue > 0.5f;
+            if (ImGui::Checkbox("Enabled", &enabled))
+                enableValue = enabled ? 1.f : 0.f;
+        }
+    }
+
+    void EntityEditorPanel::renderCameraProperties(entt::registry &registry) const
+    {
+        auto &camera = registry.get<CameraComponent>(mSelectedEntity);
+        if (ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen))
+            ImGui::InputFloat("Exposure", &camera.exposure, 0.f, 0.f, "%.6f");
+    }
+
     void EntityEditorPanel::propagate_material_to_children(Scene &scene, entt::entity entity,
-        const MeshMaterialData &material)
+                                                           const MeshMaterialData &material)
     {
         auto& registry = scene.getEntityRegistry();
         auto* hierarchy = registry.try_get<HierarchyComponent>(entity);

@@ -29,6 +29,12 @@ namespace kailux
 
     private:
         void renderGizmo(Scene& scene);
+        void renderMeshProperties(entt::registry &registry);
+        void renderBodyProperties(entt::registry &registry);
+        void renderMaterialProperties(Scene &scene) const;
+        void renderDirectionalLightProperties(entt::registry &registry) const;
+        void renderPointLightProperties(entt::registry &registry) const;
+        void renderCameraProperties(entt::registry &registry) const;
 
         static void propagate_material_to_children(Scene &scene, entt::entity entity, const MeshMaterialData& material);
 
