@@ -1,7 +1,7 @@
 #pragma once
 #include <expected>
 
-#include "MeshRegistry.h"
+#include "MeshGeometry.h"
 #include <assimp/scene.h>
 
 #include "core/texture/TextureRegistry.h"
@@ -16,7 +16,7 @@ namespace kailux
         struct SubMeshData
         {
             std::string                   name;
-            MeshRegistry::MeshData        meshData;
+            MeshGeometry::MeshData        meshData;
             glm::vec4                     boundingSphere{};
             uint32_t                      materialIndex{};
             glm::mat4                     localTransform{1.0f};
@@ -52,7 +52,7 @@ namespace kailux
                                  std::string_view directoryPath
         );
         static void process_mesh(const aiMesh *mesh,
-                                 MeshRegistry::MeshData &outMeshData
+                                 MeshGeometry::MeshData &outMeshData
         );
         static void extract_material_paths(const aiMaterial *material,
                                            MaterialPaths &outPaths,

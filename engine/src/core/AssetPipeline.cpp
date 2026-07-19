@@ -194,13 +194,13 @@ namespace kailux
             case MeshType::Cube:
                 createMeshEntity(
                     meshRegistry.getBuiltins().cube,
-                    MeshRegistry::generate_cube().vertices
+                    MeshGeometry::generate_cube().vertices
                 );
                 break;
             case MeshType::Sphere:
                 createMeshEntity(
                     meshRegistry.getBuiltins().sphere,
-                    MeshRegistry::generate_sphere().vertices
+                    MeshGeometry::generate_sphere().vertices
                 );
                 break;
             default:

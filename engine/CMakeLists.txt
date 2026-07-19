@@ -48,6 +48,7 @@ add_library(kailux_engine STATIC
         src/core/gizmo/GizmoGeometry.cpp
         src/core/utilities/LinearZone.cpp
         src/core/gizmo/GizmoRegistry.cpp
+        src/core/mesh/MeshGeometry.cpp
 )
 
 target_compile_definitions(kailux_engine PUBLIC

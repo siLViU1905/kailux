@@ -3,6 +3,7 @@
 #include <deque>
 #include <list>
 
+#include "MeshGeometry.h"
 #include "Vertex.h"
 #include "core/Core.h"
 #include "core/buffer/Buffer.h"
@@ -121,18 +122,9 @@ namespace kailux
         BuiltinMeshes mBuiltins;
 
     public:
-        struct MeshData
-        {
-            std::vector<Vertex> vertices;
-            std::vector<IndexType> indices;
-        };
-
-        static MeshData generate_cube();
-        static MeshData generate_sphere(uint32_t sectors = 32, uint32_t stacks = 32);
-
         MeshHandle      upload(const Context &context,
                                vk::CommandBuffer cmd,
-                               const MeshData &data,
+                               const MeshGeometry::MeshData &data,
                                std::vector<Buffer> &stagingBuffer);
     };
 }
