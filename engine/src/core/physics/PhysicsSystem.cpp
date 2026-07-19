@@ -5,6 +5,7 @@
 #include "../components/entt/PhysicsComponent.h"
 #include "../components/entt/PhysicsControlComponent.h"
 #include "../components/gpu/TransformComponent.h"
+#include "core/components/entt/HierarchyComponent.h"
 
 namespace kailux
 {
@@ -106,13 +107,25 @@ namespace kailux
 
             if (physics.isDynamic())
             {
-                mPhysicsRegistry.get().getBodyTransform(
-                    physics.handle,
-                    transformComp.transform.position,
-                    transformComp.transform.rotation
-                );
+                glm::vec3 worldPos;
+                glm::quat worldRot;
+                mPhysicsRegistry.get().getBodyTransform(physics.handle, worldPos, worldRot);
 
-                transformComp.worldMatrix = transformComp.transform.getModelMatrix();
+                if (auto* h = registry.try_get<HierarchyComponent>(entity);
+                    h && h->parent != entt::null)
+                {
+                    const auto& parentWorld = registry.get<TransformComponent>(h->parent).worldMatrix;
+                    glm::mat4 worldM = glm::translate(glm::mat4(1.f), worldPos) * glm::toMat4(worldRot);
+                    glm::mat4 localM = glm::inverse(parentWorld) * worldM;
+
+                    transformComp.transform.position = glm::vec3(localM[3]);
+                    transformComp.transform.rotation = glm::quat_cast(localM);
+                }
+                else
+                {
+                    transformComp.transform.position = worldPos;
+                    transformComp.transform.rotation = worldRot;
+                }
             }
         }
     }

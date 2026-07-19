@@ -1,5 +1,7 @@
 #include "AssetPipeline.h"
 
+#include <glm/gtx/matrix_decompose.hpp>
+
 #include "Clock.h"
 #include "Geometry.h"
 #include "components/entt/CachedPhysicsData.h"
@@ -295,7 +297,13 @@ namespace kailux
                     ))
                     {
                         auto &childTransform = scene.getEntityRegistry().get<TransformComponent>(*childEntity);
-                        childTransform.submeshLocalMatrix = submesh.localTransform;
+                        glm::vec3 t, s, skew;
+                        glm::quat r;
+                        glm::vec4 persp;
+                        glm::decompose(submesh.localTransform, s, r, t, skew, persp);
+                        childTransform.transform.position = t;
+                        childTransform.transform.rotation = r;
+                        childTransform.transform.scale = s;
 
                         scene.getEntityRegistry().emplace<PendingUploadComponent>(*childEntity);
                         pendingEntities->push_back(*childEntity);

@@ -394,7 +394,7 @@ namespace kailux
         {
             if (auto* transform = mEntityRegistry.try_get<TransformComponent>(entity))
             {
-                transform->worldMatrix = parentWorldMatrix * transform->transform.getModelMatrix() * transform->submeshLocalMatrix;
+                transform->worldMatrix = parentWorldMatrix * transform->transform.getModelMatrix();
 
                 if (auto* hierarchy = mEntityRegistry.try_get<HierarchyComponent>(entity))
                     for (auto child : hierarchy->children)
