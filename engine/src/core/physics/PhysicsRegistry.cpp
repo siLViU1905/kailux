@@ -9,6 +9,7 @@
 #include <Jolt/Physics/Collision/Shape/MeshShape.h>
 #include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
 #include <Jolt/Physics/Collision/Shape/ScaledShape.h>
+#include <execution>
 
 namespace kailux
 {
@@ -343,54 +344,72 @@ namespace kailux
 
     JPH::ShapeRefC PhysicsRegistry::create_loaded_mesh_body(const PhysicsBodyInfo &info)
     {
-        JPH::StaticCompoundShapeSettings compoundSettings;
-        for (const auto& submesh: info.submeshes)
-        {
-            glm::vec3 lScale, lTrans, lSkew; glm::quat lRot; glm::vec4 lPersp;
-            glm::decompose(submesh.localTransform, lScale, lRot, lTrans, lSkew, lPersp);
+        auto submeshesCount = info.submeshes.size();
+        std::vector<ChildShapeResult> results(submeshesCount);
 
+        std::vector<size_t> indices(submeshesCount);
+        std::iota(indices.begin(), indices.end(), size_t{});
+
+        std::for_each(std::execution::par, indices.begin(), indices.end(),
+            [&info, &results](size_t idx)
+            {
+                build_submesh_shape(info, idx, results[idx]);
+            });
+
+        JPH::StaticCompoundShapeSettings compoundSettings;
+        for (const auto&[shape, trans, rot] : results)
+            if (shape)
+                compoundSettings.AddShape(trans, rot, shape);
+
+        return compoundSettings.Create().Get();
+    }
+
+    void PhysicsRegistry::build_submesh_shape(const PhysicsBodyInfo &info, size_t idx, ChildShapeResult &out)
+    {
+        const auto& submesh = info.submeshes[idx];
+
+        glm::vec3 lScale, lTrans, lSkew; glm::quat lRot; glm::vec4 lPersp;
+        glm::decompose(submesh.localTransform, lScale, lRot, lTrans, lSkew, lPersp);
+
+        JPH::ShapeRefC childShape;
+        if (info.options.bodyType == PhysicsBodyType::Static && !info.options.canBecomeDynamic)
+        {
             JPH::VertexList joltVertices;
             joltVertices.reserve(submesh.vertices.size());
-            for (const auto& vertex:submesh.vertices)
+            for (const auto& vertex : submesh.vertices)
                 joltVertices.emplace_back(
                     vertex.position.x * lScale.x,
                     vertex.position.y * lScale.y,
                     vertex.position.z * lScale.z
-                    );
+                );
 
-            JPH::ShapeRefC childShape;
-            if (info.options.bodyType == PhysicsBodyType::Static && !info.options.canBecomeDynamic)
-            {
-                JPH::IndexedTriangleList joltTriangles;
-                joltTriangles.reserve(submesh.indices.size() / 3);
-                for (size_t i = 0;i<submesh.indices.size();i+=3)
-                    joltTriangles.emplace_back(
-                        submesh.indices[i],
-                        submesh.indices[i + 1],
-                        submesh.indices[i + 2]
-                        );
-                childShape = JPH::MeshShapeSettings(joltVertices, joltTriangles).Create().Get();
-            }
-            else
-            {
-                JPH::Array<JPH::Vec3> hullVertices;
-                hullVertices.reserve(submesh.vertices.size());
-                for (const auto& vertex : submesh.vertices)
-                    hullVertices.emplace_back(
-                        vertex.position.x * lScale.x,
-                        vertex.position.y * lScale.y,
-                        vertex.position.z * lScale.z
-                    );
-                childShape = JPH::ConvexHullShapeSettings(hullVertices).Create().Get();
-            }
+            JPH::IndexedTriangleList joltTriangles;
+            joltTriangles.reserve(submesh.indices.size() / 3);
+            for (size_t i = 0; i < submesh.indices.size(); i += 3)
+                joltTriangles.emplace_back(
+                    submesh.indices[i],
+                    submesh.indices[i + 1],
+                    submesh.indices[i + 2]
+                );
 
-            if (childShape)
-                compoundSettings.AddShape(
-                    {lTrans.x, lTrans.y, lTrans.z},
-                    {lRot.x, lRot.y, lRot.z, lRot.w},
-                    childShape
-                    );
+            childShape = JPH::MeshShapeSettings(joltVertices, joltTriangles).Create().Get();
         }
-        return compoundSettings.Create().Get();
+        else
+        {
+            JPH::Array<JPH::Vec3> hullVertices;
+            hullVertices.reserve(submesh.vertices.size());
+            for (const auto& vertex : submesh.vertices)
+                hullVertices.emplace_back(
+                    vertex.position.x * lScale.x,
+                    vertex.position.y * lScale.y,
+                    vertex.position.z * lScale.z
+                );
+
+            childShape = JPH::ConvexHullShapeSettings(hullVertices).Create().Get();
+        }
+
+        out.shape = childShape;
+        out.trans = {lTrans.x, lTrans.y, lTrans.z};
+        out.rot   = {lRot.x, lRot.y, lRot.z, lRot.w};
     }
 }

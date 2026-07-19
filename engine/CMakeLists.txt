@@ -78,6 +78,7 @@ target_link_libraries(kailux_engine PUBLIC
         portable-file-dialogs::portable-file-dialogs
         nlohmann_json::nlohmann_json
         Jolt::Jolt
+        TBB::tbb
 )
 
 target_precompile_headers(kailux_engine PUBLIC

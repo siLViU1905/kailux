@@ -77,6 +77,7 @@ find_package(assimp REQUIRED)
 find_package(portable-file-dialogs REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(Jolt REQUIRED)
+find_package(TBB REQUIRED)
 
 set(GLSL_SOURCES
         "engine/src/core/shaders/vertex_shader.glsl"
