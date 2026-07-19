@@ -87,6 +87,14 @@ namespace kailux
         static JPH::ShapeRefC create_builtin_mesh_body(MeshType type, const MeshTransformData &transform);
         static JPH::ShapeRefC create_loaded_mesh_body(const PhysicsBodyInfo &info);
 
+        struct ChildShapeResult
+        {
+            JPH::ShapeRefC shape;
+            JPH::Vec3      trans{JPH::Vec3::sZero()};
+            JPH::Quat      rot{JPH::Quat::sIdentity()};
+        };
+        static void build_submesh_shape(const PhysicsBodyInfo &info, size_t idx, ChildShapeResult &out);
+
         Scoped<JPH::TempAllocatorImpl>              mAllocator;
         Scoped<JPH::JobSystemThreadPool>            mJobSystem;
         Scoped<impl::BroadPhaseLayer>               mBroadPhaseLayer;
