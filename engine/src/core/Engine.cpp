@@ -333,7 +333,7 @@ namespace kailux
         }
 
         for (const auto& frame : mFrames)
-            frame.getDescriptorSet().updateInfo(mContext, writes);
+            frame.getMeshDescriptorSet().updateInfo(mContext, writes);
     }
 
     void Engine::createSceneTextureIds()
@@ -876,7 +876,7 @@ namespace kailux
         const auto cmd = recorder.getCommandBuffer();
         mMainPass.bind(cmd);
         mMeshRegistry.bind(recorder.getCommandBuffer());
-        frame.getDescriptorSet().bind(mMainPass.getPipeline(), cmd);
+        frame.getMeshDescriptorSet().bind(mMainPass.getPipeline(), cmd);
 
         recorder.drawIndexedIndirectCount(
             frame.getIndirectBuffer(),
