@@ -54,7 +54,8 @@ namespace kailux
             ImGui::Text("Entity: %s", tag.name.c_str());
             ImGui::Separator();
 
-            if (registry.all_of<TransformComponent, MeshComponent>(mSelectedEntity))
+            if (registry.all_of<TransformComponent>(mSelectedEntity) &&
+                !registry.any_of<PointLightData>(mSelectedEntity))
             {
                 ImGui::Text("Gizmo Operation:");
                 if (ImGui::RadioButton("Translate", mCurrentGizmoOperation == ImGuizmo::TRANSLATE))
