@@ -159,7 +159,7 @@ namespace kailux
                 if (hierarchy->parent != entt::null)
                     parentWorld = registry.get<TransformComponent>(hierarchy->parent).worldMatrix;
 
-            auto localMatrix = glm::inverse(parentWorld) * modelMatrix * glm::inverse(transformComp.submeshLocalMatrix);
+            auto localMatrix = glm::inverse(parentWorld) * modelMatrix;
 
             glm::decompose(localMatrix, scale, rotation, translation, skew, perspective);
 
