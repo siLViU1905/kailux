@@ -2,6 +2,7 @@
 
 #include <imgui_internal.h>
 
+#include "core/components/entt/CachedPhysicsData.h"
 #include "core/components/entt/HierarchyComponent.h"
 #include "core/components/entt/MeshComponent.h"
 #include "core/components/entt/PhysicsComponent.h"
@@ -204,7 +205,7 @@ namespace kailux
     {
         if (registry.all_of<PhysicsComponent>(entity))
             return false;
-        if (!registry.all_of<TransformComponent, MeshComponent>(entity))
+        if (!registry.all_of<MeshComponent>(entity) && !registry.all_of<CachedPhysicsData>(entity))
             return false;
 
         const auto *h = registry.try_get<HierarchyComponent>(entity);

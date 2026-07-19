@@ -1130,7 +1130,10 @@ namespace kailux
 
     BodyHandle Engine::uploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo &data)
     {
-        return mPhysicsRegistry.createBody(data);
+        auto t = Clock::now();
+        auto handle = mPhysicsRegistry.createBody(data);
+        mOnInfoLog(std::format("Physics body attached in {:.3f}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(t)));
+        return handle;
     }
 
     void Engine::addPhysicsToEntity(entt::entity entity, PhysicsCreationOptions options)
