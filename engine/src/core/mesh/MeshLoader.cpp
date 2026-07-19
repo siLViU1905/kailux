@@ -72,7 +72,7 @@ namespace kailux
     }
 
     void MeshLoader::process_mesh(const aiMesh *mesh,
-                                  MeshRegistry::MeshData &outMeshData)
+                                  MeshGeometry::MeshData &outMeshData)
     {
         outMeshData.vertices.reserve(mesh->mNumVertices);
 
