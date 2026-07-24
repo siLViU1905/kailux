@@ -38,6 +38,7 @@ namespace kailux
             {
                 if (ImGui::MenuItem("Profiler"))
                     mShowProfiler = true;
+                mOnViewMenu();
                 ImGui::EndMenu();
             }
 
@@ -73,7 +74,12 @@ namespace kailux
         mOnSceneSave = std::move(callback);
     }
 
-    glm::vec3 MenuPanel::getOutlineColor() const
+    void MenuPanel::setOnViewMenu(OnViewMenu &&callback)
+    {
+        mOnViewMenu = std::move(callback);
+    }
+
+    const glm::vec3 &MenuPanel::getOutlineColor() const
     {
         return mOutlineColor;
     }

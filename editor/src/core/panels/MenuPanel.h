@@ -18,7 +18,10 @@ namespace kailux
         using OnSceneSave = std::move_only_function<void()>;
         void setOnSceneSave(OnSceneSave&& callback);
 
-        glm::vec3 getOutlineColor() const;
+        using OnViewMenu = std::move_only_function<void()>;
+        void setOnViewMenu(OnViewMenu&& callback);
+
+        const glm::vec3 &getOutlineColor() const;
 
     private:
         void renderProfilerWindow();
@@ -26,6 +29,8 @@ namespace kailux
         bool        mShowProfiler;
         OnSceneOpen mOnSceneOpen;
         OnSceneSave mOnSceneSave;
+
+        OnViewMenu  mOnViewMenu;
 
         glm::vec3   mOutlineColor;
     };

@@ -54,7 +54,7 @@ namespace kailux
     void EditorLayer::addPanels(ImTextureID directoryTextureId, ImTextureID fileTextureId)
     {
         emplacePanel<ViewportPanel>();
-        emplacePanel<MenuPanel>();
+        auto& menuPanel = emplacePanel<MenuPanel>();
         auto &hierarchyPanel = emplacePanel<HierarchyPanel>() = {
                                    s_HierarchyPanelName,
                                    s_PanelsBackgroundColor
@@ -76,5 +76,15 @@ namespace kailux
 
         projectPanel.getAssetBrowser().setDirectoryTextureId(directoryTextureId);
         projectPanel.getAssetBrowser().setFileTextureId(fileTextureId);
+
+        menuPanel.setOnViewMenu([&hierarchyPanel, &entityEditorPanel, &projectPanel]()
+        {
+            if (ImGui::MenuItem("Entities Hierarchy", nullptr, hierarchyPanel.isOpen()))
+                hierarchyPanel.toggle();
+            if (ImGui::MenuItem("Entity Editor", nullptr, entityEditorPanel.isOpen()))
+                entityEditorPanel.toggle();
+            if (ImGui::MenuItem("Project", nullptr, projectPanel.isOpen()))
+                projectPanel.toggle();
+        });
     }
 }
