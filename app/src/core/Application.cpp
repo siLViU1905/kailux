@@ -66,7 +66,7 @@ namespace kailux
 
     void Application::setCallbacks()
     {
-        auto &hierarchyPanel = mEditor.getLayer<EditorLayer>().getLayer().getPanel<HierarchyPanel>();
+        auto &hierarchyPanel = mEditor.getLayer<EditorLayer>().getPanel<HierarchyPanel>();
         hierarchyPanel.setOnMeshDeleted([this](const auto& meshComponent, auto cacheKey)
         {
             mEngine.unregisterMesh(meshComponent.handle, cacheKey);
@@ -120,7 +120,7 @@ namespace kailux
             mEngine.addPhysicsToEntity(entity, {bodyType, canBecomeDynamic});
         });
 
-        auto &menuPanel = mEditor.getLayer<EditorLayer>().getLayer().getPanel<MenuPanel>();
+        auto &menuPanel = mEditor.getLayer<EditorLayer>().getPanel<MenuPanel>();
         menuPanel.setOnSceneSave([this]()
         {
             mEngine.saveScene(AssetBrowser::s_DefaultPath);
@@ -130,7 +130,7 @@ namespace kailux
             mLoadSceneDialog.open("Choose a scene", {"Kailux Scene", "*.klx"});
         });
 
-        auto &projectPanel = mEditor.getLayer<EditorLayer>().getLayer().getPanel<ProjectPanel>();
+        auto &projectPanel = mEditor.getLayer<EditorLayer>().getPanel<ProjectPanel>();
         projectPanel.getAssetBrowser().setOnImportFiles([this]()
         {
             mImportFilesDialog.open("Choose what to copy to the workspace");
@@ -153,7 +153,7 @@ namespace kailux
             projectPanel.getConsole().log<LogSeverity::Error>(message);
         });
 
-        auto& entityEditor = mEditor.getLayer<EditorLayer>().getLayer().getPanel<EntityEditorPanel>();
+        auto& entityEditor = mEditor.getLayer<EditorLayer>().getPanel<EntityEditorPanel>();
         entityEditor.setOnBodyTypeChange([this](auto component, auto type)
         {
             mEngine.updateBodyType(component.handle, type);
@@ -163,7 +163,7 @@ namespace kailux
             mEngine.updateBodyScale(component.handle, scale);
         });
 
-        auto& viewportPanel = mEditor.getLayer<EditorLayer>().getLayer().getPanel<ViewportPanel>();
+        auto& viewportPanel = mEditor.getLayer<EditorLayer>().getPanel<ViewportPanel>();
         viewportPanel.setSceneTextureId(mEngine.getSceneTextureId());
 
         viewportPanel.setOnClick([this, &hierarchyPanel, &entityEditor]()
@@ -196,26 +196,26 @@ namespace kailux
 
         if (mImportFilesDialog.poll())
             while (auto path = mImportFilesDialog.tryPopPath())
-                mEditor.getLayer<EditorLayer>().getLayer().getPanel<ProjectPanel>().getAssetBrowser().import(*path);
+                mEditor.getLayer<EditorLayer>().getPanel<ProjectPanel>().getAssetBrowser().import(*path);
 
         if (mImportFolderDialog.poll())
             if (auto path = mImportFolderDialog.tryPopPath())
-                mEditor.getLayer<EditorLayer>().getLayer().getPanel<ProjectPanel>().getAssetBrowser().import(*path);
+                mEditor.getLayer<EditorLayer>().getPanel<ProjectPanel>().getAssetBrowser().import(*path);
     }
 
     void Application::updateEditor()
     {
         mEditor.update();
-        auto& viewportPanel = mEditor.getLayer<EditorLayer>().getLayer().getPanel<ViewportPanel>();
+        auto& viewportPanel = mEditor.getLayer<EditorLayer>().getPanel<ViewportPanel>();
         viewportPanel.setSceneTextureId(mEngine.getSceneTextureId());
     }
 
     void Application::updateEngine(float deltaTime, Window& window)
     {
         mEngine.update(deltaTime, window);
-        auto sceneViewportMousePos = mEditor.getLayer<EditorLayer>().getLayer().getPanel<ViewportPanel>().getScaledMousePos();
-        auto outlineColor = mEditor.getLayer<EditorLayer>().getLayer().getPanel<MenuPanel>().getOutlineColor();
-        auto selectedEntity = static_cast<uint32_t>(mEditor.getLayer<EditorLayer>().getLayer().getPanel<HierarchyPanel>().getSelectedEntity());
+        auto sceneViewportMousePos = mEditor.getLayer<EditorLayer>().getPanel<ViewportPanel>().getScaledMousePos();
+        auto outlineColor = mEditor.getLayer<EditorLayer>().getPanel<MenuPanel>().getOutlineColor();
+        auto selectedEntity = static_cast<uint32_t>(mEditor.getLayer<EditorLayer>().getPanel<HierarchyPanel>().getSelectedEntity());
         mEngine.setOutlineInfo(outlineColor, selectedEntity);
         mEngine.setSceneViewportMousePos(sceneViewportMousePos.x, sceneViewportMousePos.y);
     }

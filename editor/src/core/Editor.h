@@ -22,9 +22,9 @@ namespace kailux
             return std::get<Layer>(*mActiveLayer);
         }
 
-        void render(Scene& scene);
+        void render(Scene& scene) const;
 
-        void update();
+        void update() const;
 
     private:
         void createLayers(ImTextureID directoryTextureId, ImTextureID fileTextureId);

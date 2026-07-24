@@ -3,52 +3,47 @@
 
 namespace kailux
 {
-    template<class... Panels>
     class Layer
     {
     public:
-        Layer() : mPanels(create_scoped<std::tuple<Panels...>>())
-        {
-        }
-        Layer(const Layer&) = delete;
-        Layer& operator=(const Layer&) = delete;
-        Layer(Layer&& other) noexcept : mPanels(std::move(other.mPanels))
-        {
-        }
-        Layer& operator=(Layer&& other) noexcept
-        {
-            if (this != &other)
-            {
-                mPanels = std::move(other.mPanels);
-            }
-            return *this;
-        }
-        virtual ~Layer() = default;
+        KAILUX_DECLARE_NON_COPYABLE_MOVABLE(Layer)
 
-        void render(Scene& scene)
+        template<std::derived_from<Panel> TPanel, typename... Args>
+        TPanel& emplacePanel(Args&&... args)
         {
-            std::apply([&scene](auto&&... panel)
-            {
-                (panel.render(scene), ...);
-            }, *mPanels);
+            auto& panel = mPanels.emplace_back(create_scoped<TPanel>(std::forward<Args>(args)...));
+            return static_cast<TPanel &>(*panel);
         }
 
-        auto       &getPanels() {return *mPanels;}
-        const auto &getPanels() const {return *mPanels;}
-
-        template<typename _Panel>
-        auto& getPanel()
+        template<std::derived_from<Panel> TPanel>
+        TPanel& getPanel()
         {
-            return std::get<_Panel>(*mPanels);
+            auto* panel = tryGetPanel<TPanel>();
+            assert(panel != nullptr && "Panel not found");
+            return *panel;
         }
 
-        template<typename _Panel>
-        const auto& getPanel() const
+        template<std::derived_from<Panel> TPanel>
+        const TPanel& getPanel() const
         {
-            return std::get<_Panel>(*mPanels);
+            return const_cast<Layer*>(this)->getPanel<TPanel>();
         }
+
+    protected:
+        ~Layer() = default;
+
+        void renderPanels(Scene& scene) const;
 
     private:
-        Scoped<std::tuple<Panels...>> mPanels;
+        template<std::derived_from<Panel> TPanel>
+        TPanel* tryGetPanel()
+        {
+            for (auto& panel : mPanels)
+                if (typeid(*panel) == typeid(TPanel))
+                    return static_cast<TPanel *>(panel.get());
+            return nullptr;
+        }
+
+        std::vector<Scoped<Panel>> mPanels;
     };
 }
