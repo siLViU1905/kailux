@@ -17,6 +17,7 @@ namespace kailux
 
         void open();
         void close();
+        void toggle();
 
         bool isOpen() const;
 

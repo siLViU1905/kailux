@@ -34,6 +34,11 @@ namespace kailux
         mOpen = false;
     }
 
+    void Panel::toggle()
+    {
+        mOpen = !mOpen;
+    }
+
     bool Panel::isOpen() const
     {
         return mOpen;
