@@ -4,9 +4,7 @@
 
 namespace kailux
 {
-    Editor::Editor()
-    {
-    }
+    Editor::Editor() = default;
 
     Editor::Editor(Editor &&other) noexcept : mActiveLayer(std::move(other.mActiveLayer))
     {
@@ -28,7 +26,7 @@ namespace kailux
         return editor;
     }
 
-    void Editor::render(Scene &scene)
+    void Editor::render(Scene &scene) const
     {
         std::visit([&scene](auto& layer)
         {
@@ -36,7 +34,7 @@ namespace kailux
         }, *mActiveLayer);
     }
 
-    void Editor::update()
+    void Editor::update() const
     {
         std::visit([](auto& layer)
         {
@@ -46,7 +44,6 @@ namespace kailux
 
     void Editor::createLayers(ImTextureID directoryTextureId, ImTextureID fileTextureId)
     {
-        mActiveLayer = create_scoped<LayerTypes>();
-        mActiveLayer->emplace<EditorLayer>(EditorLayer::create(directoryTextureId, fileTextureId));
+        mActiveLayer = create_scoped<LayerTypes>(EditorLayer{directoryTextureId, fileTextureId});
     }
 }

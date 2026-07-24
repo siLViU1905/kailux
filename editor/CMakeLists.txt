@@ -1,6 +1,7 @@
 add_library(kailux_editor
         src/core/panels/HierarchyPanel.cpp
         src/core/panels/Panel.cpp
+        src/core/layers/Layer.cpp
         src/core/Editor.cpp
         src/core/layers/EditorLayer.cpp
         src/core/panels/EntityEditorPanel.cpp

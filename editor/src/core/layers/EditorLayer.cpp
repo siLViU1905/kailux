@@ -6,31 +6,27 @@
 
 namespace kailux
 {
-    EditorLayer::EditorLayer()
+    EditorLayer::EditorLayer(ImTextureID dirTex, ImTextureID fileTex)
     {
+        addPanels(dirTex, fileTex);
     }
 
-    EditorLayer::EditorLayer(EditorLayer &&other) noexcept : mLayer(std::move(other.mLayer))
+    void EditorLayer::render(Scene &scene) const
     {
+        render_dock_space();
+
+        renderPanels(scene);
     }
 
-    EditorLayer &EditorLayer::operator=(EditorLayer &&other) noexcept
+    void EditorLayer::update()
     {
-        if (this != &other)
-        {
-            mLayer = std::move(other.mLayer);
-        }
-        return *this;
+        getPanel<ProjectPanel>().useFullWidth(!getPanel<EntityEditorPanel>().isOpen());
+
+        bool isSimulationRunning = getPanel<ViewportPanel>().getSimulationState() != SimulationState::Paused;
+        getPanel<EntityEditorPanel>().setSimulationState(isSimulationRunning);
     }
 
-    EditorLayer EditorLayer::create(ImTextureID directoryTextureId, ImTextureID fileTextureId)
-    {
-        EditorLayer layer;
-        layer.addPanels(directoryTextureId, fileTextureId);
-        return layer;
-    }
-
-    void EditorLayer::render(Scene &scene)
+    void EditorLayer::render_dock_space()
     {
         const auto *viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(viewport->Pos);
@@ -53,32 +49,21 @@ namespace kailux
         ImGui::DockSpace(dockspace_id, ImVec2(0.f, 0.f));
 
         ImGui::End();
-
-        mLayer.render(scene);
-    }
-
-    void EditorLayer::update()
-    {
-        mLayer.getPanel<ProjectPanel>().useFullWidth(!mLayer.getPanel<EntityEditorPanel>().isOpen());
-
-        bool isSimulationRunning = mLayer.getPanel<ViewportPanel>().getSimulationState() != SimulationState::Paused;
-        mLayer.getPanel<EntityEditorPanel>().setSimulationState(isSimulationRunning);
     }
 
     void EditorLayer::addPanels(ImTextureID directoryTextureId, ImTextureID fileTextureId)
     {
-        auto &panels = mLayer.getPanels();
-        std::get<ViewportPanel>(panels) = {};
-        std::get<MenuPanel>(panels) = {};
-        auto &hierarchyPanel = std::get<HierarchyPanel>(panels) = {
+        emplacePanel<ViewportPanel>();
+        emplacePanel<MenuPanel>();
+        auto &hierarchyPanel = emplacePanel<HierarchyPanel>() = {
                                    s_HierarchyPanelName,
                                    s_PanelsBackgroundColor
                                };
-        auto &entityEditorPanel = std::get<EntityEditorPanel>(panels) = {
+        auto &entityEditorPanel = emplacePanel<EntityEditorPanel>() = {
                                       s_EntityEditorName,
                                       s_PanelsBackgroundColor
                                   };
-        auto &projectPanel = std::get<ProjectPanel>(panels) = {
+        auto &projectPanel = emplacePanel<ProjectPanel>() = {
                                  s_ProjectPanelName,
                                  s_PanelsBackgroundColor
                              };
