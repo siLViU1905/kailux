@@ -24,11 +24,11 @@ namespace kailux
     DescriptorLayout DescriptorLayout::create(const Context &context,
                                                     std::span<const DescriptorLayoutBinding> bindings)
     {
-        KAILUX_LOG_PARENT_CLR_GREEN("[DescriptorSetLayout]")
+        log::console.debug("descriptor layout: creating");
         DescriptorLayout layout;
 
         layout.createLayout(context, bindings);
-        KAILUX_LOG_CHILD_CLR_GREEN(std::format("Created descriptor layout with {} bindings", bindings.size()))
+        log::console.debug("descriptor layout: created with {} bindings", bindings.size());
 
         return layout;
     }

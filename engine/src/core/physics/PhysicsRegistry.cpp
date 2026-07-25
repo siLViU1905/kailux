@@ -53,12 +53,12 @@ namespace kailux
             joltInitialized = true;
         }
 
-        KAILUX_LOG_PARENT_CLR_MAGENTA("[PhysicsRegistry]")
+        log::console.debug("physics registry: creating");
         PhysicsRegistry registry;
         registry.mAllocator = create_scoped<JPH::TempAllocatorImpl>(kAllocatorSize);
 
         auto threads = pick_thread_count(2);
-        KAILUX_LOG_CHILD_CLR_MAGENTA(std::format("Created job system with {} threads", threads))
+        log::console.debug("physics registry: created job system with {} threads", threads);
         registry.mJobSystem = create_scoped<JPH::JobSystemThreadPool>(
             JPH::cMaxPhysicsJobs,
             JPH::cMaxPhysicsBarriers,
@@ -80,7 +80,7 @@ namespace kailux
             *registry.mObjectVsBroadPhaseLayer,
             *registry.mObjectPairFilter
         );
-        KAILUX_LOG_CHILD_CLR_MAGENTA("Physics system initialized")
+        log::console.debug("physics registry: physics system initialized");
 
         registry.allocResources();
 

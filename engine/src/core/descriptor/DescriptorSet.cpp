@@ -27,11 +27,11 @@ namespace kailux
                                         const DescriptorPool &pool,
                                         std::span<const DescriptorSetInfo> infos)
     {
-        KAILUX_LOG_PARENT_CLR_GREEN("[DescriptorSet]")
+        log::console.debug("descriptor set: creating");
         DescriptorSet set;
 
         set.createSet(context, layout, pool, infos);
-        KAILUX_LOG_CHILD_CLR_GREEN(std::format("Created descriptor set with {} bindings", infos.size()))
+        log::console.debug("descriptor set: created with {} bindings", infos.size());
 
         return set;
     }

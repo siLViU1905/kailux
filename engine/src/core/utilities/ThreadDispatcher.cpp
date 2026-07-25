@@ -21,9 +21,9 @@ namespace kailux
 
     ThreadDispatcher::ThreadDispatcher(uint32_t threads):mThreads(threads)
     {
-        KAILUX_LOG_PARENT_CLR_YELLOW("[ThreadDispatcher]")
+        log::console.debug("thread dispatcher: creating");
         createWorkers();
-        KAILUX_LOG_CHILD_CLR_YELLOW(std::format("Created dispatcher with {} threads", mWorkers.size()))
+        log::console.debug("thread dispatcher: created with {} threads", mWorkers.size());
     }
 
     void ThreadDispatcher::createWorkers()

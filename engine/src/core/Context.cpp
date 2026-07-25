@@ -46,29 +46,29 @@ namespace kailux
 
     Context Context::create(Window &window)
     {
-        KAILUX_LOG_PARENT_CLR_YELLOW("[CONTEXT]")
+        log::console.debug("context: creating");
         Context context;
 
         context.createInstance();
-        KAILUX_LOG_CHILD_CLR_YELLOW("Instance created")
+        log::console.debug("context: instance created");
 
         context.setupDebugMessenger();
-        KAILUX_LOG_CHILD_CLR_YELLOW("Debug messenger created")
+        log::console.debug("context: debug messenger created");
 
         context.createSurface(window);
-        KAILUX_LOG_CHILD_CLR_YELLOW("Surface created")
+        log::console.debug("context: surface created");
 
         context.pickPhysicalDevice();
-        KAILUX_LOG_CHILD_CLR_YELLOW("Suitable physical device found")
+        log::console.debug("context: suitable physical device found");
 
         context.createLogicalDevice();
-        KAILUX_LOG_CHILD_CLR_YELLOW("Logical device created")
+        log::console.debug("context: logical device created");
 
         context.createQueues();
-        KAILUX_LOG_CHILD_CLR_YELLOW("Queues created")
+        log::console.debug("context: queues created");
 
-        KAILUX_LOG_CHILD_CLR_YELLOW(std::format("Transfer queue: dedicated={}, family={}",
-            context.hasDedicatedTransferQueue(), context.mTransferQueueFamilyIndex))
+        log::console.debug("context: transfer queue: dedicated={}, family={}",
+            context.hasDedicatedTransferQueue(), context.mTransferQueueFamilyIndex);
 
         return context;
     }
@@ -161,7 +161,27 @@ namespace kailux
                                        const vk::DebugUtilsMessengerCallbackDataEXT *pCallbackData,
                                        void *pUser)
     {
-        std::println("Validation layer: type {} msg {}", to_string(type), pCallbackData->pMessage);
+        auto typeStr{to_string(type)};
+        std::string messageStr{pCallbackData->pMessage};
+
+        switch (severity)
+        {
+            case vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose:
+                log::console.debug("vulkan validation layer: type {} msg {}", typeStr, messageStr);
+                break;
+            case vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo:
+                log::console.info("vulkan validation layer: type {} msg {}", typeStr, messageStr);
+                break;
+            case vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning:
+                log::console.warning("vulkan validation layer: type {} msg {}", typeStr, messageStr);
+                break;
+            case vk::DebugUtilsMessageSeverityFlagBitsEXT::eError:
+                log::console.error("vulkan validation layer: type {} msg {}", typeStr, messageStr);
+                break;
+            default:
+                log::console.info("vulkan validation layer: type {} msg {}", typeStr, messageStr);
+                break;
+        }
 
         return VK_FALSE;
     }

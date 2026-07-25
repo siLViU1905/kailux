@@ -83,17 +83,17 @@ namespace kailux
 
     Window Window::create(int width, int height, std::string_view title)
     {
-        KAILUX_LOG_PARENT_CLR_BLUE("[WINDOW]")
+        log::console.debug("window: creating");
         Window window;
 
         window.initGLFW();
-        KAILUX_LOG_CHILD_CLR_BLUE("GLFW initialized")
+        log::console.debug("window: glfw initialized");
 
         window.createWindow(width, height, title);
-        KAILUX_LOG_CHILD_CLR_BLUE("Window created")
+        log::console.debug("window: window created");
 
         window.setCallbacks();
-        KAILUX_LOG_CHILD_CLR_BLUE("Callbacks set")
+        log::console.debug("window: callbacks set");
 
         return window;
     }
