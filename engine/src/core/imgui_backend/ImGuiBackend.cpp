@@ -50,20 +50,20 @@ namespace kailux
     ImGuiBackend ImGuiBackend::create(Window &window, const Context &context, const Swapchain &swapchain,
                                       vk::SampleCountFlagBits sampleCount)
     {
-        KAILUX_LOG_PARENT_CLR_MAGENTA("[IMGUI BACKEND]")
+        log::console.debug("imgui backend: creating");
         ImGuiBackend imguiBackend;
 
         imguiBackend.createImGuiContext();
-        KAILUX_LOG_CHILD_CLR_MAGENTA("ImGui context created")
+        log::console.debug("imgui backend: imgui context created");
 
         imguiBackend.createDescriptorPool(context);
-        KAILUX_LOG_CHILD_CLR_MAGENTA("Descriptor pool created")
+        log::console.debug("imgui backend: descriptor pool created");
 
         imguiBackend.createImGuiVulkanContext(window, context, swapchain, sampleCount);
-        KAILUX_LOG_CHILD_CLR_MAGENTA("ImGui Vulkan context created")
+        log::console.debug("imgui backend: imgui vulkan context created");
 
         imguiBackend.applyStyle();
-        KAILUX_LOG_CHILD_CLR_MAGENTA("Style applied")
+        log::console.debug("imgui backend: style applied");
 
         return imguiBackend;
     }

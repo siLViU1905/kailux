@@ -33,17 +33,16 @@ namespace kailux
                                       const PipelineInfo &pipelineInfo,
                                       std::span<const PushConstantRangeInfo> pushConstantRanges)
     {
-        KAILUX_LOG_PARENT_CLR_YELLOW("[Graphics Pipeline]")
         Pipeline pipeline;
 
         auto shaderModules = create_graphics_shader_modules(context, shaderInfo);
-        KAILUX_LOG_CHILD_CLR_YELLOW("Created shader modules")
+        log::console.debug("graphics pipeline: module shader created");
 
         pipeline.createLayout(context, descriptorSetLayout, pushConstantRanges);
-        KAILUX_LOG_CHILD_CLR_YELLOW("Created pipeline layout")
+        log::console.debug("graphics pipeline: layout created");
 
         pipeline.createGraphicsPipeline(context, swapchain, shaderModules, pipelineInfo);
-        KAILUX_LOG_CHILD_CLR_YELLOW("Created graphics pipeline")
+        log::console.debug("graphics pipeline: pipeline created");
 
         return pipeline;
     }
@@ -52,17 +51,17 @@ namespace kailux
                                      const ComputeShaderInfo &shaderInfo,
                                      std::span<const PushConstantRangeInfo> pushConstantRanges)
     {
-        KAILUX_LOG_PARENT_CLR_YELLOW("[Compute Pipeline]")
+        log::console.debug("compute pipeline: creating");
         Pipeline pipeline;
 
         auto shaderModule = create_shader_module(context, read_shader_from_file(shaderInfo.computeShaderPath));
-        KAILUX_LOG_CHILD_CLR_YELLOW("Created shader module")
+        log::console.debug("compute pipeline: shader module created");
 
         pipeline.createLayout(context, descriptorSetLayout, pushConstantRanges);
-        KAILUX_LOG_CHILD_CLR_YELLOW("Created pipeline layout")
+        log::console.debug("compute pipeline: layout created");
 
         pipeline.createComputePipeline(context, shaderModule);
-        KAILUX_LOG_CHILD_CLR_YELLOW("Created compute pipeline")
+        log::console.debug("compute pipeline: pipeline created");
 
         return pipeline;
     }

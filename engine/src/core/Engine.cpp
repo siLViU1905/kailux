@@ -1093,19 +1093,19 @@ namespace kailux
                 {
                     [](KeyPressed e)
                     {
-                        KAILUX_LOG_INFO("[Engine]", e.toString())
+                        log::console.trace("engine: {}", e.toString());
                     },
                     [](KeyReleased e)
                     {
-                        KAILUX_LOG_INFO("[Engine]", e.toString())
+                        log::console.trace("engine: {}", e.toString());
                     },
                     [](KeyRepeated e)
                     {
-                        KAILUX_LOG_INFO("[Engine]", e.toString())
+                        log::console.trace("engine: {}", e.toString());
                     },
                     [this, &window](ButtonPressed e)
                     {
-                        KAILUX_LOG_INFO("[Engine]", e.toString())
+                        log::console.trace("engine: {}", e.toString());
                         if (e.button == MouseButton::Middle)
                         {
                             (window.getCursorMode() == CursorMode::Normal)
@@ -1121,7 +1121,7 @@ namespace kailux
                     },
                     [](ButtonReleased e)
                     {
-                        KAILUX_LOG_INFO("[Engine]", e.toString())
+                        log::console.trace("engine: {}", e.toString());
                     }
                 },
                 *event

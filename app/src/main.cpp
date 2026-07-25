@@ -1,24 +1,28 @@
 #include <print>
 #include <iostream>
 #include "core/Application.h"
+#include "core/Log.h"
 
 int main()
 {
     try
     {
-       constexpr kailux::WindowInfo windowInfo(
-           700,
-           400,
-           "Kailux"
-           );
+        kailux::log::open_file("kailux.log");
+
+        constexpr kailux::WindowInfo windowInfo{
+            700,
+            400,
+            "Kailux"
+        };
         auto application = kailux::Application::create(windowInfo);
         application.run();
+
+        kailux::log::close_file();
     }
     catch (const std::exception& exception)
     {
-        std::println(stderr, "Error: {}", exception.what());
-        std::println("Press Enter to close...");
-        std::cin.get();
+        kailux::log::file.error("{}", exception.what());
+        kailux::log::close_file();
         return 1;
     }
 }

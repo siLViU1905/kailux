@@ -104,23 +104,23 @@ namespace kailux
 
     Swapchain Swapchain::create(Window &window, const Context &context, vk::SampleCountFlagBits sampleCount)
     {
-        KAILUX_LOG_PARENT_CLR_CYAN("[SWAPCHAIN]")
+        log::console.debug("swapchain: creating");
         Swapchain swapChain;
 
         swapChain.createSwapchain(window, context);
-        KAILUX_LOG_CHILD_CLR_CYAN("Swap chain created")
+        log::console.debug("swapchain: swap chain created");
 
         swapChain.createImageViews(context);
-        KAILUX_LOG_CHILD_CLR_CYAN("Image views created")
+        log::console.debug("swapchain: image views created");
 
         swapChain.createColorResources(context, sampleCount);
-        KAILUX_LOG_CHILD_CLR_CYAN("Color resources created")
+        log::console.debug("swapchain: color resources created");
 
         swapChain.createDepthResources(context, sampleCount);
-        KAILUX_LOG_CHILD_CLR_CYAN("Depth resources created")
+        log::console.debug("swapchain: depth resources created");
 
         swapChain.createSyncObjects(context);
-        KAILUX_LOG_CHILD_CLR_CYAN("Semaphores created")
+        log::console.debug("swapchain: semaphores created");
 
         return swapChain;
     }
@@ -153,8 +153,7 @@ namespace kailux
         createColorResources(context, sampleCount);
         createDepthResources(context, sampleCount);
         createSyncObjects(context);
-        KAILUX_LOG_INFO("[Swapchain]",
-                        std::format("Recreated with extent: x:{}, y:{}", mExtent.width, mExtent.height))
+        log::console.info("swapchain: recreated with extent: x:{}, y:{}", mExtent.width, mExtent.height);
     }
 
     vk::Format Swapchain::getFormat() const

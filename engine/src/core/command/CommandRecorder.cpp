@@ -132,8 +132,7 @@ namespace kailux
     {
         if (!mInRendering || mIsSecondary)
         {
-            KAILUX_LOG_WARNING("[CommandRecorder]",
-                               "endRendering() was called while the command was rendering or from a secondary buffer")
+            log::console.warning("command recorder: endRendering() was called while the command was not rendering or from a secondary buffer");
             return;
         }
 
