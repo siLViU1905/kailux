@@ -5,6 +5,7 @@
 #include <chrono>
 #include <source_location>
 #include <fstream>
+#include "Core.h"
 
 namespace kailux::log
 {
@@ -19,11 +20,15 @@ namespace kailux::log
 
     namespace details
     {
-#ifndef NDEBUG
-        constexpr auto kCompiledLevel{Level::Trace};
-#else
-        constexpr auto kCompiledLevel{Level::Info};
-#endif
+        consteval Level get_compiled_log_level()
+        {
+            if constexpr (kailux::details::kCompiledLevel == kailux::details::CompileLevel::Debug)
+                return Level::Trace;
+            else if constexpr (kailux::details::kCompiledLevel == kailux::details::CompileLevel::Release)
+                return Level::Info;
+            return Level::Trace;
+        }
+
         struct Style
         {
             std::string_view level;
@@ -98,7 +103,7 @@ namespace kailux::log
         template<Level L, typename... Args>
         void log(details::Fmt<Args...> fmt, Args&&... args)
         {
-            if constexpr (L >= details::kCompiledLevel)
+            if constexpr (L >= details::get_compiled_log_level())
                 write<L>(fmt.loc, std::format(fmt.fmt, std::forward<Args>(args)...));
         }
 

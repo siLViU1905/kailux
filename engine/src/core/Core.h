@@ -82,6 +82,18 @@ namespace kailux
 
 namespace kailux::details
 {
+    enum class CompileLevel : uint8_t
+    {
+        Debug,
+        Release
+    };
+
+#ifndef NDEBUG
+    constexpr auto kCompiledLevel{CompileLevel::Debug};
+#else
+    constexpr auto kCompiledLevel{CompileLevel::Release};
+#endif
+
     constexpr uint32_t kFramesInFlight{2};
 
     constexpr uint32_t kMaxMeshes{1'000};
