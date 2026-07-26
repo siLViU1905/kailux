@@ -17,8 +17,8 @@ namespace kailux
         }
 
     private:
-        static constexpr std::string_view kVertexShaderPath = "shaders/vertex_shader.spv";
-        static constexpr std::string_view kFragmentShaderPath = "shaders/fragment_shader.spv";
+        static constexpr std::string_view kVertexShaderPath = "shaders/vertex_shader.glsl";
+        static constexpr std::string_view kFragmentShaderPath = "shaders/fragment_shader.glsl";
 
         static constexpr std::array kDescriptorLayoutBindings = {
             DescriptorLayoutBinding(

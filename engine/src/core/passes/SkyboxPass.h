@@ -28,8 +28,8 @@ namespace kailux
         const Texture&          getBRDFLutTexture() const;
 
     private:
-        static constexpr std::string_view kVertexShaderPath = "shaders/skybox_vertex_shader.spv";
-        static constexpr std::string_view kFragmentShaderPath = "shaders/skybox_fragment_shader.spv";
+        static constexpr std::string_view kVertexShaderPath = "shaders/skybox_vertex_shader.glsl";
+        static constexpr std::string_view kFragmentShaderPath = "shaders/skybox_fragment_shader.glsl";
 
         static constexpr std::array<std::string_view, 6> kSkyboxTexturePaths = {
             "assets/cubemap/px.png",

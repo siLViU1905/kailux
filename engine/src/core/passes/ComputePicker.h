@@ -21,7 +21,7 @@ namespace kailux
         }
 
     private:
-        static constexpr std::string_view kPickerComputeShaderPath = "shaders/entity_picker_compute_shader.spv";
+        static constexpr std::string_view kPickerComputeShaderPath = "shaders/entity_picker_compute_shader.glsl";
 
         static constexpr std::array kDescriptorLayoutBindings = {
             DescriptorLayoutBinding(
