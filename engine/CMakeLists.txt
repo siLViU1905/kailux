@@ -49,6 +49,7 @@ add_library(kailux_engine STATIC
         src/core/utilities/LinearZone.cpp
         src/core/gizmo/GizmoRegistry.cpp
         src/core/mesh/MeshGeometry.cpp
+        src/core/Shader.cpp
 )
 
 target_compile_definitions(kailux_engine PUBLIC
@@ -79,6 +80,7 @@ target_link_libraries(kailux_engine PUBLIC
         nlohmann_json::nlohmann_json
         Jolt::Jolt
         TBB::tbb
+        shaderc::shaderc
 )
 
 target_precompile_headers(kailux_engine PUBLIC

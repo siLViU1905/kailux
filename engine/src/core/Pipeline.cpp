@@ -5,6 +5,7 @@
 
 #include "descriptor/DescriptorLayout.h"
 #include "Log.h"
+#include "Shader.h"
 #include "mesh/Vertex.h"
 
 namespace kailux
@@ -54,7 +55,8 @@ namespace kailux
         log::console.debug("compute pipeline: creating");
         Pipeline pipeline;
 
-        auto shaderModule = create_shader_module(context, read_shader_from_file(shaderInfo.computeShaderPath));
+        auto spirv = Shader::compile_from_file(shaderInfo.computeShaderPath, vk::ShaderStageFlagBits::eCompute);
+        auto shaderModule = Shader::create_module(context, spirv);
         log::console.debug("compute pipeline: shader module created");
 
         pipeline.createLayout(context, descriptorSetLayout, pushConstantRanges);
@@ -98,34 +100,6 @@ namespace kailux
         return stages;
     }
 
-    std::vector<char> Pipeline::read_shader_from_file(std::string_view path)
-    {
-        std::ifstream file(std::string(path), std::ios::ate | std::ios::binary);
-
-        if (!file.is_open())
-            throw std::runtime_error(std::format("Failed to open shader with path {}", path));
-
-        size_t fileSize = file.tellg();
-        std::vector<char> buffer(fileSize);
-
-        file.seekg(0);
-        file.read(buffer.data(), fileSize);
-
-        file.close();
-
-        return buffer;
-    }
-
-    vk::raii::ShaderModule Pipeline::create_shader_module(const Context &context, const std::vector<char> &code)
-    {
-        vk::ShaderModuleCreateInfo createInfo{};
-
-        createInfo.codeSize = code.size() * sizeof(char);
-        createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
-
-        return {context.mDevice, createInfo};
-    }
-
     Pipeline::ShaderModules Pipeline::create_graphics_shader_modules(const Context &context,
                                                                      const GraphicsShaderInfo &stages)
     {
@@ -134,8 +108,8 @@ namespace kailux
 
         for (const auto &[stage, path]: stages)
         {
-            auto code = read_shader_from_file(path);
-            auto module = create_shader_module(context, code);
+            auto spirv = Shader::compile_from_file(path, stage);
+            auto module = Shader::create_module(context, spirv);
 
             result.modules.emplace_back(stage, std::move(module));
         }

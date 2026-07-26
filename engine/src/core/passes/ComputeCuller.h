@@ -18,7 +18,7 @@ namespace kailux
         }
 
     private:
-        static constexpr std::string_view kComputeShaderPath = "shaders/cull_compute_shader.spv";
+        static constexpr std::string_view kComputeShaderPath = "shaders/cull_compute_shader.glsl";
 
         static constexpr std::array kDescriptorLayoutBindings = {
             DescriptorLayoutBinding(

@@ -78,58 +78,18 @@ find_package(portable-file-dialogs REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(Jolt REQUIRED)
 find_package(TBB REQUIRED)
+find_package(shaderc REQUIRED)
 
-set(GLSL_SOURCES
-        "engine/src/core/shaders/vertex_shader.glsl"
-        "engine/src/core/shaders/fragment_shader.glsl"
-        "engine/src/core/shaders/skybox_vertex_shader.glsl"
-        "engine/src/core/shaders/skybox_fragment_shader.glsl"
-        "engine/src/core/shaders/gizmo_vertex_shader.glsl"
-        "engine/src/core/shaders/gizmo_fragment_shader.glsl"
-        "engine/src/core/shaders/entity_picker_compute_shader.glsl"
-        "engine/src/core/shaders/outline_vertex_shader.glsl"
-        "engine/src/core/shaders/outline_fragment_shader.glsl"
-        "engine/src/core/shaders/cull_compute_shader.glsl"
+set(SHADERS_BINARY_DIR "${CMAKE_BINARY_DIR}/app/shaders")
+add_custom_target(CopyShaders ALL
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/engine/src/core/shaders"
+        "${SHADERS_BINARY_DIR}"
+        COMMENT "Copying shaders folder to ${SHADERS_BINARY_DIR}"
+        VERBATIM
 )
 
-set(SHADER_BINARY_DIR "${CMAKE_BINARY_DIR}/app/shaders")
-file(MAKE_DIRECTORY "${SHADER_BINARY_DIR}")
-set(ALL_SPIRV_OUTPUTS "")
-
-foreach(GLSL_SRC ${GLSL_SOURCES})
-    get_filename_component(ABS_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/${GLSL_SRC}" ABSOLUTE)
-
-    if(NOT EXISTS ${ABS_SOURCE})
-        message(FATAL_ERROR "GLSL file not found at: ${ABS_SOURCE}")
-    endif()
-
-    get_filename_component(FILE_NAME ${GLSL_SRC} NAME_WE)
-
-    if(${GLSL_SRC} MATCHES "vertex")
-        set(STAGE "vertex")
-    elseif(${GLSL_SRC} MATCHES "fragment")
-        set(STAGE "fragment")
-    elseif(${GLSL_SRC} MATCHES "compute")
-        set(STAGE "compute")
-    endif()
-
-    set(SPV_OUT "${SHADER_BINARY_DIR}/${FILE_NAME}.spv")
-
-    add_custom_command(
-            OUTPUT ${SPV_OUT}
-            COMMAND ${Vulkan_GLSLC_EXECUTABLE} -fshader-stage=${STAGE} "${ABS_SOURCE}" -o "${SPV_OUT}"
-            DEPENDS "${ABS_SOURCE}"
-            COMMENT "Compiling SPIR-V: ${FILE_NAME}.spv"
-            VERBATIM
-    )
-
-    list(APPEND ALL_SPIRV_OUTPUTS ${SPV_OUT})
-endforeach()
-
-add_custom_target(CompileShaders ALL DEPENDS ${ALL_SPIRV_OUTPUTS})
-
 set(ASSETS_BINARY_DIR "${CMAKE_BINARY_DIR}/app/assets")
-
 add_custom_target(CopyAssets ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/assets"
