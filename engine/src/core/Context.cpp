@@ -461,6 +461,11 @@ namespace kailux
                 vram += mem.memoryHeaps[i].size;
 
         info.vramSizeMB = static_cast<uint32_t>(vram / (1024 * 1024));
+
+        auto extensions = device.enumerateDeviceExtensionProperties();
+        for (const auto& extension : extensions)
+            info.extensions.emplace_back(extension.extensionName);
+
         return info;
     }
 }

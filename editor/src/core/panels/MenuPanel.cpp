@@ -130,6 +130,10 @@ namespace kailux
 
         ImGui::Separator();
 
+        if (ImGui::CollapsingHeader("Extensions"))
+            for (const auto& ext : mDeviceInfo.extensions)
+                ImGui::TextUnformatted(ext.c_str());
+
         ImGui::End();
     }
 
