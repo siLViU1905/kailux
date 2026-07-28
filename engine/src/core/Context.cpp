@@ -22,7 +22,8 @@ namespace kailux
                                                  mTransferQueue(std::move(other.mTransferQueue)),
                                                  mSurface(std::move(other.mSurface)),
                                                  mGraphicsQueueFamilyIndex(other.mGraphicsQueueFamilyIndex),
-                                                 mTransferQueueFamilyIndex(other.mTransferQueueFamilyIndex)
+                                                 mTransferQueueFamilyIndex(other.mTransferQueueFamilyIndex),
+                                                 mDeviceInfo(std::move(other.mDeviceInfo))
     {
     }
 
@@ -40,6 +41,7 @@ namespace kailux
             mSurface = std::move(other.mSurface);
             mGraphicsQueueFamilyIndex = other.mGraphicsQueueFamilyIndex;
             mTransferQueueFamilyIndex = other.mTransferQueueFamilyIndex;
+            mDeviceInfo = std::move(other.mDeviceInfo);
         }
         return *this;
     }
@@ -140,6 +142,11 @@ namespace kailux
     bool Context::hasDedicatedTransferQueue() const
     {
         return mTransferQueueFamilyIndex != mGraphicsQueueFamilyIndex;
+    }
+
+    DeviceInfo Context::getDeviceInfo() const
+    {
+        return extract_device_info(mPhysicalDevice);
     }
 
     std::vector<const char *> Context::get_required_extensions()
@@ -271,69 +278,17 @@ namespace kailux
 
     void Context::pickPhysicalDevice()
     {
-        auto devices = vk::raii::PhysicalDevices(mInstance);
-
+        auto devices = mInstance.enumeratePhysicalDevices();
         if (devices.empty())
             throw std::runtime_error("Failed to find GPUs with Vulkan support");
 
-        const auto devIter = std::ranges::find_if(devices,
-                                                  [&](auto const &device)
-                                                  {
-                                                      auto queueFamilies = device.getQueueFamilyProperties();
-                                                      bool isSuitable =
-                                                              device.getProperties().apiVersion >= VK_API_VERSION_1_3;
-                                                      const auto qfpIter = std::ranges::find_if(queueFamilies,
-                                                          [](vk::QueueFamilyProperties const &qfp)
-                                                          {
-                                                              return (qfp.queueFlags & vk::QueueFlagBits::eGraphics) !=
-                                                                     static_cast<vk::QueueFlags>(0);
-                                                          });
-                                                      isSuitable = isSuitable && (qfpIter != queueFamilies.end());
-                                                      auto extensions = device.enumerateDeviceExtensionProperties();
-                                                      bool found = true;
-                                                      for (auto const &extension: kDeviceExtensions)
-                                                      {
-                                                          auto extensionIter = std::ranges::find_if(
-                                                              extensions, [extension](auto const &ext)
-                                                              {
-                                                                  return strcmp(ext.extensionName, extension) == 0;
-                                                              });
-                                                          found = found && extensionIter != extensions.end();
-                                                      }
-                                                      isSuitable = isSuitable && found;
-                                                      if (isSuitable)
-                                                          mPhysicalDevice = device;
+        auto candidates = devices | std::views::filter(is_device_suitable);
 
-                                                      return isSuitable;
-                                                  });
-        if (devIter == devices.end())
-        {
-            throw std::runtime_error("failed to find a suitable GPU!");
-        }
-
-        std::multimap<int, vk::raii::PhysicalDevice> candidates;
-
-        for (const auto &device: devices)
-        {
-            auto deviceProperties = device.getProperties();
-            auto deviceFeatures = device.getFeatures();
-            uint32_t score = 0;
-
-            if (deviceProperties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
-                score += 1000;
-
-            score += deviceProperties.limits.maxImageDimension2D;
-
-            if (!deviceFeatures.geometryShader)
-                continue;
-
-            candidates.insert(std::make_pair(score, device));
-        }
-
-        if (candidates.rbegin()->first > 0)
-            mPhysicalDevice = std::move(candidates.rbegin()->second);
-        else
+        auto best = std::ranges::max_element(candidates, {}, score_device);
+        if (best == candidates.end())
             throw std::runtime_error("Failed to find a suitable GPU");
+
+        mPhysicalDevice = *best;
     }
 
     void Context::createLogicalDevice()
@@ -423,6 +378,41 @@ namespace kailux
         mTransferQueue = vk::raii::Queue(mDevice, mTransferQueueFamilyIndex, 0);
     }
 
+    bool Context::is_device_suitable(const vk::raii::PhysicalDevice &device)
+    {
+        if (device.getProperties().apiVersion < vk::ApiVersion13)
+            return false;
+
+        if (!device.getFeatures().geometryShader)
+            return false;
+
+        auto families = device.getQueueFamilyProperties();
+        bool hasGraphics = std::ranges::any_of(families, [](const auto& p)
+        {
+            return static_cast<bool>(p.queueFlags & vk::QueueFlagBits::eGraphics);
+        });
+        if (!hasGraphics)
+            return false;
+
+        const auto available = device.enumerateDeviceExtensionProperties();
+        return std::ranges::all_of(kDeviceExtensions, [&](const auto required)
+        {
+            return std::ranges::any_of(available, [&](const auto& ext)
+            {
+                return std::string_view(ext.extensionName) == required;
+            });
+        });
+    }
+
+    uint32_t Context::score_device(const vk::raii::PhysicalDevice &device)
+    {
+        auto props = device.getProperties();
+        uint32_t score = props.limits.maxImageDimension2D;
+        if (props.deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
+            score += 1000;
+        return score;
+    }
+
     std::optional<uint32_t> Context::find_graphics_family(const vk::raii::PhysicalDevice &device, const vk::raii::SurfaceKHR &surface)
     {
         auto families = device.getQueueFamilyProperties();
@@ -450,5 +440,32 @@ namespace kailux
             ++i;
         }
         return std::nullopt;
+    }
+
+    DeviceInfo Context::extract_device_info(const vk::raii::PhysicalDevice &device)
+    {
+        auto chain{device.getProperties2<vk::PhysicalDeviceProperties2, vk::PhysicalDeviceDriverProperties>()};
+
+        DeviceInfo info;
+        auto props{chain.get<vk::PhysicalDeviceProperties2>().properties};
+        info.deviceName = props.deviceName.data();
+
+        auto driver{chain.get<vk::PhysicalDeviceDriverProperties>()};
+        info.driverName = driver.driverName.data();
+        info.driverInfo = driver.driverInfo.data();
+
+        auto mem = device.getMemoryProperties();
+        vk::DeviceSize vram = 0;
+        for (uint32_t i = 0; i < mem.memoryHeapCount; ++i)
+            if (mem.memoryHeaps[i].flags & vk::MemoryHeapFlagBits::eDeviceLocal)
+                vram += mem.memoryHeaps[i].size;
+
+        info.vramSizeMB = static_cast<uint32_t>(vram / (1024 * 1024));
+
+        auto extensions = device.enumerateDeviceExtensionProperties();
+        for (const auto& extension : extensions)
+            info.extensions.emplace_back(extension.extensionName);
+
+        return info;
     }
 }

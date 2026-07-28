@@ -23,8 +23,13 @@ namespace kailux
 
         const glm::vec3 &getOutlineColor() const;
 
+        void setDeviceInfo(const DeviceInfo &info);
+
     private:
         void renderProfilerWindow();
+        void renderDeviceInfo();
+
+        static void text_centered(std::string_view text);
 
         bool        mShowProfiler;
         OnSceneOpen mOnSceneOpen;
@@ -33,5 +38,8 @@ namespace kailux
         OnViewMenu  mOnViewMenu;
 
         glm::vec3   mOutlineColor;
+
+        DeviceInfo mDeviceInfo;
+        bool       mShowDevicesInfo{};
     };
 }

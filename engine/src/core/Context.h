@@ -1,6 +1,7 @@
 #pragma once
 #include <vulkan/vulkan_raii.hpp>
 
+#include "DeviceInfo.h"
 #include "window/Window.h"
 
 namespace kailux
@@ -23,6 +24,8 @@ namespace kailux
         uint32_t                findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const;
         vk::SampleCountFlagBits getMaxUsableSampleCount() const;
         bool                    hasDedicatedTransferQueue() const;
+
+        DeviceInfo getDeviceInfo() const;
 
         friend class Swapchain;
         friend class FrameData;
@@ -52,19 +55,14 @@ namespace kailux
         void createLogicalDevice();
         void createQueues();
 
+        static bool     is_device_suitable(const vk::raii::PhysicalDevice& device);
+        static uint32_t score_device(const vk::raii::PhysicalDevice& device);
+
         static std::optional<uint32_t> find_graphics_family(const vk::raii::PhysicalDevice& device, const vk::raii::SurfaceKHR &surface);
         static std::optional<uint32_t> find_transfer_family(const vk::raii::PhysicalDevice& device);
 
-        vk::raii::Context                mContext;
-        vk::raii::Instance               mInstance;
-        vk::raii::DebugUtilsMessengerEXT mDebugMessenger;
-        vk::raii::PhysicalDevice         mPhysicalDevice;
-        vk::raii::Device                 mDevice;
-        vk::raii::Queue                  mGraphicsQueue;
-        vk::raii::Queue                  mTransferQueue;
-        vk::raii::SurfaceKHR             mSurface;
-        uint32_t                         mGraphicsQueueFamilyIndex;
-        uint32_t                         mTransferQueueFamilyIndex;
+        static DeviceInfo extract_device_info(const vk::raii::PhysicalDevice& device);
+
         static constexpr std::array      kValidationLayers = {
             "VK_LAYER_KHRONOS_validation"
             };
@@ -81,5 +79,23 @@ namespace kailux
             vk::KHRCreateRenderpass2ExtensionName,
             vk::KHRMaintenance7ExtensionName
         };
+
+        vk::raii::Context                mContext;
+        vk::raii::Instance               mInstance;
+
+        vk::raii::DebugUtilsMessengerEXT mDebugMessenger;
+
+        vk::raii::PhysicalDevice         mPhysicalDevice;
+        vk::raii::Device                 mDevice;
+
+        vk::raii::Queue                  mGraphicsQueue;
+        vk::raii::Queue                  mTransferQueue;
+
+        vk::raii::SurfaceKHR             mSurface;
+
+        uint32_t                         mGraphicsQueueFamilyIndex;
+        uint32_t                         mTransferQueueFamilyIndex;
+
+        DeviceInfo                       mDeviceInfo;
     };
 }
