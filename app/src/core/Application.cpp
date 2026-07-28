@@ -129,6 +129,7 @@ namespace kailux
         {
             mLoadSceneDialog.open("Choose a scene", {"Kailux Scene", "*.klx"});
         });
+        menuPanel.setDeviceInfo(mEngine.getDeviceInfo());
 
         auto &projectPanel = mEditor.getLayer<EditorLayer>().getPanel<ProjectPanel>();
         projectPanel.getAssetBrowser().setOnImportFiles([this]()

@@ -81,6 +81,8 @@ namespace kailux
 
         void addLightEntity(LightType type);
 
+        DeviceInfo getDeviceInfo() const;
+
     private:
         static constexpr std::string_view kDirectoryIconPath = "assets/icons/directory_icon.png";
         static constexpr std::string_view kFileIconPath = "assets/icons/file_icon.png";

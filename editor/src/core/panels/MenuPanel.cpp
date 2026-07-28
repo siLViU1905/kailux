@@ -38,6 +38,8 @@ namespace kailux
             {
                 if (ImGui::MenuItem("Profiler"))
                     mShowProfiler = true;
+                if (ImGui::MenuItem("Device"))
+                    mShowDevicesInfo = true;
                 mOnViewMenu();
                 ImGui::EndMenu();
             }
@@ -61,6 +63,8 @@ namespace kailux
 
             if (mShowProfiler)
                 renderProfilerWindow();
+            if (mShowDevicesInfo)
+                renderDeviceInfo();
         }
     }
 
@@ -82,6 +86,11 @@ namespace kailux
     const glm::vec3 &MenuPanel::getOutlineColor() const
     {
         return mOutlineColor;
+    }
+
+    void MenuPanel::setDeviceInfo(const DeviceInfo &info)
+    {
+        mDeviceInfo = info;
     }
 
     void MenuPanel::renderProfilerWindow()
@@ -108,5 +117,29 @@ namespace kailux
         ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
 
         ImGui::End();
+    }
+
+    void MenuPanel::renderDeviceInfo()
+    {
+        ImGui::Begin("Device", &mShowDevicesInfo);
+
+        text_centered(mDeviceInfo.deviceName);
+        ImGui::Text("Driver name: %s", mDeviceInfo.driverName.c_str());
+        ImGui::Text("Driver info: %s", mDeviceInfo.driverInfo.c_str());
+        ImGui::Text("VRAM: %uMB", mDeviceInfo.vramSizeMB);
+
+        ImGui::Separator();
+
+        ImGui::End();
+    }
+
+    void MenuPanel::text_centered(std::string_view text)
+    {
+        float avail = ImGui::GetContentRegionAvail().x;
+        float width = ImGui::CalcTextSize(text.data()).x;
+        float off   = (avail - width) * 0.5f;
+        if (off > 0.0f)
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
+        ImGui::TextUnformatted(text.data());
     }
 }

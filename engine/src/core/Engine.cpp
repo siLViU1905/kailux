@@ -1195,4 +1195,9 @@ namespace kailux
                 break;
         }
     }
+
+    DeviceInfo Engine::getDeviceInfo() const
+    {
+        return mContext.getDeviceInfo();
+    }
 }
