@@ -63,6 +63,8 @@ namespace kailux
         static std::vector<uint32_t> compile_from_file(const std::filesystem::path &path, vk::ShaderStageFlagBits stage,
                                                        const ShaderCompileInfo &info = {});
 
+        static void cache_spirv(const std::filesystem::path &path, std::span<const uint32_t> spirv);
+
         static std::vector<uint32_t> load_spirv(const std::filesystem::path &path);
 
         static vk::raii::ShaderModule create_module(const Context &context, std::span<const uint32_t> spirv);
