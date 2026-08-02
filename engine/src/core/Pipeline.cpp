@@ -55,7 +55,20 @@ namespace kailux
         log::console.debug("compute pipeline: creating");
         Pipeline pipeline;
 
-        auto spirv = Shader::compile_from_file(shaderInfo.computeShaderPath, vk::ShaderStageFlagBits::eCompute);
+        std::string_view shaderPath = shaderInfo.computeShaderPath;
+        std::string cacheFile{shaderPath.substr(0, shaderPath.find_last_of('.'))};
+        cacheFile += ".spv";
+        std::vector<uint32_t> spirv;
+        if (std::filesystem::exists(cacheFile))
+        {
+            spirv = Shader::load_spirv(cacheFile);
+            log::console.debug("Found cached spirv '{}'", cacheFile);
+        }
+        else
+        {
+            spirv = Shader::compile_from_file(shaderPath, vk::ShaderStageFlagBits::eCompute);
+            Shader::cache_spirv(cacheFile, spirv);
+        }
         auto shaderModule = Shader::create_module(context, spirv);
         log::console.debug("compute pipeline: shader module created");
 
@@ -108,7 +121,19 @@ namespace kailux
 
         for (const auto &[stage, path]: stages)
         {
-            auto spirv = Shader::compile_from_file(path, stage);
+            auto cacheFile = path.substr(0, path.find_last_of('.'));
+            cacheFile += ".spv";
+            std::vector<uint32_t> spirv;
+            if (std::filesystem::exists(cacheFile))
+            {
+                spirv = Shader::load_spirv(cacheFile);
+                log::console.debug("Found cached spirv '{}'", cacheFile);
+            }
+            else
+            {
+                spirv = Shader::compile_from_file(path, stage);
+                Shader::cache_spirv(cacheFile, spirv);
+            }
             auto module = Shader::create_module(context, spirv);
 
             result.modules.emplace_back(stage, std::move(module));

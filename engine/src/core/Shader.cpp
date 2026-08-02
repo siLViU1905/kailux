@@ -138,6 +138,13 @@ namespace kailux
         return spirv;
     }
 
+    void Shader::cache_spirv(const std::filesystem::path &path, std::span<const uint32_t> spirv)
+    {
+        std::ofstream out(path, std::ios::binary | std::ios::trunc);
+        out.write(reinterpret_cast<const char*>(spirv.data()), static_cast<std::streamsize>(spirv.size_bytes()));
+        log::console.debug("Cached shader file '{}'", path.filename().string());
+    }
+
     std::vector<uint32_t> Shader::load_spirv(const std::filesystem::path &path)
     {
         std::ifstream file(path, std::ios::binary | std::ios::ate);
