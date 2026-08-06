@@ -191,6 +191,25 @@ namespace kailux
         return mSceneTextureIds[mCurrentFrame];
     }
 
+    void Engine::onEvent(const Event &event, Window &window)
+    {
+        if (const auto* buttonPressed{std::get_if<ButtonPressed>(&event)})
+        {
+            if (buttonPressed->button == MouseButton::Middle)
+            {
+                (window.getCursorMode() == CursorMode::Normal)
+                                ? window.setCursorMode(CursorMode::Disabled)
+                                : window.setCursorMode(CursorMode::Normal);
+                auto view = mScene.getEntityRegistry().view<CameraComponent>();
+                for (auto entity: view)
+                {
+                    auto &focused = view.get<CameraComponent>(entity).focused;
+                    focused = !focused;
+                }
+            }
+        }
+    }
+
     void Engine::createRenderingContext(Window &window)
     {
         mContext = Context::create(window);
@@ -974,10 +993,8 @@ namespace kailux
         cmd.draw(3, 1, 0, 0);
     }
 
-    void Engine::update(float deltaTime, Window &window)
+    void Engine::update(float deltaTime, const Window &window)
     {
-        handleEvent(window);
-
         mAssetPipeline.poll();
         mTransferManager.poll(mContext);
         mDeferredResourceEraser.tick();
@@ -1083,49 +1100,6 @@ namespace kailux
     void Engine::readOutputBuffers(const FrameData &frame)
     {
         mPickedEntity = frame.getPickerBuffer().read<uint32_t>();
-    }
-
-    void Engine::handleEvent(Window &window)
-    {
-        if (auto event = window.getEvent())
-            std::visit(
-                VisitOverloads
-                {
-                    [](KeyPressed e)
-                    {
-                        log::console.trace("engine: {}", e.toString());
-                    },
-                    [](KeyReleased e)
-                    {
-                        log::console.trace("engine: {}", e.toString());
-                    },
-                    [](KeyRepeated e)
-                    {
-                        log::console.trace("engine: {}", e.toString());
-                    },
-                    [this, &window](ButtonPressed e)
-                    {
-                        log::console.trace("engine: {}", e.toString());
-                        if (e.button == MouseButton::Middle)
-                        {
-                            (window.getCursorMode() == CursorMode::Normal)
-                                ? window.setCursorMode(CursorMode::Disabled)
-                                : window.setCursorMode(CursorMode::Normal);
-                            auto view = mScene.getEntityRegistry().view<CameraComponent>();
-                            for (auto entity: view)
-                            {
-                                auto &focused = view.get<CameraComponent>(entity).focused;
-                                focused = !focused;
-                            }
-                        }
-                    },
-                    [](ButtonReleased e)
-                    {
-                        log::console.trace("engine: {}", e.toString());
-                    }
-                },
-                *event
-            );
     }
 
     BodyHandle Engine::uploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo &data)
