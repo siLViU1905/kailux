@@ -30,6 +30,8 @@ namespace kailux
         void updateEditor();
         void updateEngine(float deltaTime, Window& window);
 
+        void dispatchEvent(const Event& event);
+
         Window           mWindow;
         Engine           mEngine;
         Editor           mEditor;

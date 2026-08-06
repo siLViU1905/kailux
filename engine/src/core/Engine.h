@@ -51,7 +51,8 @@ namespace kailux
         ImTextureID getAssetBrowserFileTextureId() const;
         ImTextureID getSceneTextureId() const;
 
-        void update(float deltaTime, Window &window);
+        void onEvent(const Event& event, Window& window);
+        void update(float deltaTime, const Window &window);
         void render(const Window &window);
 
         static bool is_mesh_type_supported(std::string_view path);
@@ -129,8 +130,6 @@ namespace kailux
         void updateCullerBuffers(const FrameData& frame, const CommandRecorder &recorder);
 
         void readOutputBuffers(const FrameData& frame);
-
-        void handleEvent(Window &window);
 
         BodyHandle uploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo& data);
 

@@ -51,7 +51,14 @@ namespace kailux
             mClock.tick();
             mWindow.pollEvents();
             if (mWindow.isMinimized())
+            {
+                while (mWindow.getEvent()) {}
+                mWindow.waitForEvents();
                 continue;
+            }
+
+            while (auto event = mWindow.getEvent())
+                dispatchEvent(*event);
 
             pollDialogs();
 
@@ -219,5 +226,10 @@ namespace kailux
         auto selectedEntity = static_cast<uint32_t>(mEditor.getLayer<EditorLayer>().getPanel<HierarchyPanel>().getSelectedEntity());
         mEngine.setOutlineInfo(outlineColor, selectedEntity);
         mEngine.setSceneViewportMousePos(sceneViewportMousePos.x, sceneViewportMousePos.y);
+    }
+
+    void Application::dispatchEvent(const Event &event)
+    {
+        mEngine.onEvent(event, mWindow);
     }
 }
