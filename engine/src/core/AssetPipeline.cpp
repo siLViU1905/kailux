@@ -52,7 +52,7 @@ namespace kailux
         return mMeshCache.contains(std::string(path));
     }
 
-    void AssetPipeline::cacheMesh(std::string_view path, MeshHandle meshHandle, TextureSetHandle materialHandle)
+    void AssetPipeline::cacheMesh(std::string_view path, MeshHandle meshHandle, MaterialHandle materialHandle)
     {
         auto strPath = std::string(path);
         if (isCached(path))
@@ -229,7 +229,7 @@ namespace kailux
         auto firstSubmeshKey = std::format("{}_sub0", data.path);
         bool modelIsCached = isCached(firstSubmeshKey);
 
-        std::vector<TextureSetHandle> loadedMaterialHandles;
+        std::vector<MaterialHandle> loadedMaterialHandles;
         if (!modelIsCached)
             loadedMaterialHandles = loadAndRegisterMaterials(loadData.materials);
 

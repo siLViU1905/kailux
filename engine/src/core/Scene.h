@@ -28,7 +28,7 @@ namespace kailux
         std::optional<entt::entity> createMeshEntity(
             std::string_view name,
             const MeshComponent &component,
-            TextureSetHandle textureSetHandle,
+            MaterialHandle materialHandle,
             const MeshTransformData &transform,
             const MeshMaterialData &material,
             entt::entity parent = entt::null
@@ -65,6 +65,8 @@ namespace kailux
         void updateTransforms();
 
         std::string    mName{"Scene"};
+
+        std::filesystem::path mSavePath{};
 
         entt::registry mEntityRegistry;
         entt::entity   mMainCameraEntity{entt::null};

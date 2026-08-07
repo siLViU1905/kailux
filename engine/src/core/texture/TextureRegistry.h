@@ -12,7 +12,6 @@
 
 namespace kailux
 {
-    using TextureSetHandle = Handle;
     using TextureHandle = Handle;
     using MaterialHandle = Handle;
 
