@@ -14,7 +14,8 @@ int main()
             400,
             "Kailux"
         };
-        auto application = kailux::Application::create(windowInfo);
+
+        kailux::Application application{windowInfo};
         application.run();
 
         kailux::log::close_file();
