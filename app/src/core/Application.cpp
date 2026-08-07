@@ -130,7 +130,7 @@ namespace kailux
         auto &menuPanel = mEditor.getLayer<EditorLayer>().getPanel<MenuPanel>();
         menuPanel.setOnSceneSave([this]()
         {
-            mEngine.saveScene(AssetBrowser::s_DefaultPath);
+            mEngine.saveScene(details::kWorkspaceDefaultPath);
         });
         menuPanel.setOnSceneOpen([this]()
         {

@@ -27,7 +27,7 @@ namespace kailux
                 {
                     mOnSceneOpen();
                 }
-                if (ImGui::MenuItem("Save"))
+                if (ImGui::MenuItem("Save", "Ctrl+S"))
                 {
                     mOnSceneSave();
                 }

@@ -1,8 +1,9 @@
 #include "AssetBrowser.h"
+#include "core/Core.h"
 
 namespace kailux
 {
-    AssetBrowser::AssetBrowser() : mCurrentPath(s_DefaultPath),
+    AssetBrowser::AssetBrowser() : mCurrentPath(details::kWorkspaceDefaultPath),
                                    mDirectoryTextureId(0),
                                    mFileTextureId(0),
                                    mItemToRenamePath(""),
@@ -15,7 +16,7 @@ namespace kailux
 
     void AssetBrowser::render()
     {
-        if (mCurrentPath != s_DefaultPath)
+        if (mCurrentPath != details::kWorkspaceDefaultPath)
         {
             if (ImGui::Button("<- Back"))
                 mCurrentPath = mCurrentPath.parent_path();
