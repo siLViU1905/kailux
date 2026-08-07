@@ -17,11 +17,11 @@ namespace kailux
         void update();
 
     private:
-        static constexpr std::string_view s_HierarchyPanelName = "EntitiesHierarchy";
-        static constexpr std::string_view s_EntityEditorName = "EntityEditor";
-        static constexpr std::string_view s_ProjectPanelName = "ProjectPanel";
+        static constexpr std::string_view kHierarchyPanelName{"EntitiesHierarchy"};
+        static constexpr std::string_view kEntityEditorName{"EntityEditor"};
+        static constexpr std::string_view kProjectPanelName{"ProjectPanel"};
 
-        static constexpr ImVec4   s_PanelsBackgroundColor = {0.15f, 0.15f, 0.15f, 1.f};
+        static constexpr ImVec4 kPanelsBackgroundColor{0.122f, 0.122f, 0.122f, 1.f};
 
         static void render_dock_space();
 

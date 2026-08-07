@@ -56,16 +56,16 @@ namespace kailux
         emplacePanel<ViewportPanel>();
         auto& menuPanel = emplacePanel<MenuPanel>();
         auto &hierarchyPanel = emplacePanel<HierarchyPanel>() = {
-                                   s_HierarchyPanelName,
-                                   s_PanelsBackgroundColor
+                                   kHierarchyPanelName,
+                                   kPanelsBackgroundColor
                                };
         auto &entityEditorPanel = emplacePanel<EntityEditorPanel>() = {
-                                      s_EntityEditorName,
-                                      s_PanelsBackgroundColor
+                                      kEntityEditorName,
+                                      kPanelsBackgroundColor
                                   };
         auto &projectPanel = emplacePanel<ProjectPanel>() = {
-                                 s_ProjectPanelName,
-                                 s_PanelsBackgroundColor
+                                 kProjectPanelName,
+                                 kPanelsBackgroundColor
                              };
 
         hierarchyPanel.setOnEntitySelected([&entityEditorPanel](entt::entity entity, const Scene &scene)
