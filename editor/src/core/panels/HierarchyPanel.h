@@ -34,6 +34,8 @@ namespace kailux
         void         selectEntity(entt::entity entity);
         entt::entity getSelectedEntity() const;
 
+        void deleteSelectedEntity();
+
         friend class EntityEditorPanel;
 
     private:
@@ -45,9 +47,12 @@ namespace kailux
         };
 
         static bool on_entity_rename(entt::registry &registry, entt::entity entity);
-        static bool on_entity_delete(const Scene &scene, entt::entity entity);
+
+        static bool can_delete_entity(const Scene& scene, entt::entity entity);
 
         static bool can_attach_physics(const entt::registry &registry, entt::entity entity);
+
+        void onEntityDelete(Scene &scene, entt::entity entity);
 
         void notifyAndDestroyHierarchy(entt::registry& registry, entt::entity entity);
 
@@ -62,6 +67,7 @@ namespace kailux
         OnAddPhysics     mOnAddPhysics;
         entt::entity     mSelectedEntity;
         entt::entity     mLastSelectedEntity{entt::null};
+        entt::entity     mPendingDeleteEntity{entt::null};
 
         bool         mOpenPhysicsPopup{};
         entt::entity mPhysicsTargetEntity{entt::null};

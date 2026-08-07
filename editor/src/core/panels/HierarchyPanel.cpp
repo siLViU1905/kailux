@@ -103,6 +103,10 @@ namespace kailux
 
         ImGui::End();
         ImGui::PopStyleColor();
+
+        if (can_delete_entity(scene, mPendingDeleteEntity))
+            onEntityDelete(scene, mPendingDeleteEntity);
+        mPendingDeleteEntity = entt::null;
     }
 
     void HierarchyPanel::setOnEntitySelected(OnEntitySelected &&callback)
@@ -143,6 +147,11 @@ namespace kailux
     entt::entity HierarchyPanel::getSelectedEntity() const
     {
         return mSelectedEntity;
+    }
+
+    void HierarchyPanel::deleteSelectedEntity()
+    {
+        mPendingDeleteEntity = mSelectedEntity;
     }
 
     bool HierarchyPanel::on_entity_rename(entt::registry &registry, entt::entity entity)
@@ -187,18 +196,24 @@ namespace kailux
         return nameExistsError;
     }
 
-    bool HierarchyPanel::on_entity_delete(const Scene &scene, entt::entity entity)
+    bool HierarchyPanel::can_delete_entity(const Scene &scene, entt::entity entity)
     {
-        if (ImGui::MenuItem("Delete"))
+        return scene.getEntityRegistry().valid(entity) &&
+               entity != scene.getSun() &&
+               entity != scene.getMainCamera();
+    }
+
+    void HierarchyPanel::onEntityDelete(Scene &scene, entt::entity entity)
+    {
+        notifyAndDestroyHierarchy(scene.getEntityRegistry(), entity);
+
+        if (mSelectedEntity == entity)
         {
-            if (entity != scene.getSun())
-            {
-                ImGui::CloseCurrentPopup();
-                return true;
-            }
-            ImGui::CloseCurrentPopup();
+            mSelectedEntity = entt::null;
+            mLastSelectedEntity = entt::null;
+            mPendingDeleteEntity = entt::null;
+            mOnEntitySelected(mSelectedEntity, scene);
         }
-        return false;
     }
 
     bool HierarchyPanel::can_attach_physics(const entt::registry &registry, entt::entity entity)
@@ -279,21 +294,10 @@ namespace kailux
 
             ImGui::Separator();
 
-            if (on_entity_delete(scene, entity))
+            if (ImGui::MenuItem("Delete", "Del"))
             {
-                notifyAndDestroyHierarchy(registry, entity);
-
-                if (mSelectedEntity == entity)
-                {
-                    mSelectedEntity = entt::null;
-                    mLastSelectedEntity = entt::null;
-                    mOnEntitySelected(mSelectedEntity, scene);
-                }
-                ImGui::EndPopup();
-
-                if (opened)
-                    ImGui::TreePop();
-                return;
+                mPendingDeleteEntity = entity;
+                ImGui::CloseCurrentPopup();
             }
 
             if (can_attach_physics(registry, entity))

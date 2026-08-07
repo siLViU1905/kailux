@@ -230,6 +230,7 @@ namespace kailux
 
     void Application::dispatchEvent(const Event &event)
     {
+        mEditor.onEvent(event);
         mEngine.onEvent(event, mWindow);
     }
 }

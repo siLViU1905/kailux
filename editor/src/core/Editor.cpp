@@ -34,6 +34,22 @@ namespace kailux
         }, *mActiveLayer);
     }
 
+    void Editor::onEvent(const Event &event)
+    {
+        if (auto* editorLayer{std::get_if<EditorLayer>(mActiveLayer.get())})
+        {
+            if (const auto* keyReleased{std::get_if<KeyReleased>(&event)})
+                switch (keyReleased->key)
+                {
+                    case Key::Delete:
+                        editorLayer->getPanel<HierarchyPanel>().deleteSelectedEntity();
+                        break;
+                    default:
+                        break;
+                }
+        }
+    }
+
     void Editor::update() const
     {
         std::visit([](auto& layer)
