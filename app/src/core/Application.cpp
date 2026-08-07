@@ -128,9 +128,18 @@ namespace kailux
         });
 
         auto &menuPanel = mEditor.getLayer<EditorLayer>().getPanel<MenuPanel>();
-        menuPanel.setOnSceneSave([this]()
+        menuPanel.setOnSceneSave([this](const auto& path)
         {
-            mEngine.saveScene(details::kWorkspaceDefaultPath);
+            if (path.empty())
+            {
+                mSaveSceneDialog.open(
+                    "Choose where to save the scene",
+                    {},
+                    std::format("{}.{}", mEngine.getScene().getName(), Engine::kSceneFileExtension)
+                );
+                return;
+            }
+            mEngine.saveScene(path);
         });
         menuPanel.setOnSceneOpen([this]()
         {
@@ -202,6 +211,10 @@ namespace kailux
             if (auto path = mLoadSceneDialog.tryPopPath())
                 mEngine.loadScene(*path, mWindow.getWidth(), mWindow.getHeight());
 
+        if (mSaveSceneDialog.poll())
+            if (auto path = mSaveSceneDialog.tryPopPath())
+                mEngine.saveScene(*path);
+
         if (mImportFilesDialog.poll())
             while (auto path = mImportFilesDialog.tryPopPath())
                 mEditor.getLayer<EditorLayer>().getPanel<ProjectPanel>().getAssetBrowser().import(*path);
@@ -218,7 +231,7 @@ namespace kailux
         viewportPanel.setSceneTextureId(mEngine.getSceneTextureId());
     }
 
-    void Application::updateEngine(float deltaTime, Window& window)
+    void Application::updateEngine(float deltaTime, const Window& window)
     {
         mEngine.update(deltaTime, window);
         auto sceneViewportMousePos = mEditor.getLayer<EditorLayer>().getPanel<ViewportPanel>().getScaledMousePos();
@@ -232,5 +245,28 @@ namespace kailux
     {
         mEditor.onEvent(event);
         mEngine.onEvent(event, mWindow);
+
+        if (const auto* keyReleased{std::get_if<KeyReleased>(&event)})
+        {
+            const auto mods{keyReleased->mods};
+            switch (keyReleased->key)
+            {
+                case Key::S:
+                    if (mods == KeyMods::Control)
+                    {
+                        if (mEngine.getScene().getSavePath().empty())
+                            mSaveSceneDialog.open(
+                                "Choose where to save the scene",
+                                {},
+                                std::format("{}.{}", mEngine.getScene().getName(), Engine::kSceneFileExtension)
+                            );
+                        else
+                            mEngine.saveScene(mEngine.getScene().getSavePath());
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 }

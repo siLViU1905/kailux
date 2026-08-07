@@ -49,7 +49,9 @@ namespace kailux
         std::string           getMeshEntityName();
         std::string           getLightEntityName();
 
-        static constexpr std::string_view kSaveFolder = "scenes";
+        void                         setSavePath(const std::filesystem::path& path);
+        const std::filesystem::path& getSavePath() const;
+
         std::string           serialize() const;
         nlohmann::json        deserialize(std::string_view content, int windowWidth, int windowHeight);
 

@@ -208,19 +208,6 @@ namespace kailux
                 }
             }
         }
-        else if (const auto* keyReleased{std::get_if<KeyReleased>(&event)})
-        {
-            auto mods{keyReleased->mods};
-            switch (keyReleased->key)
-            {
-                case Key::S:
-                    if (mods == KeyMods::Control)
-                        saveScene(details::kWorkspaceDefaultPath);
-                    break;
-                default:
-                    break;
-            }
-        }
     }
 
     void Engine::createRenderingContext(Window &window)
@@ -597,15 +584,15 @@ namespace kailux
         return mAssetPipeline.isCached(path);
     }
 
-    void Engine::saveScene(std::string_view folder) const
+    const Scene & Engine::getScene() const
     {
-        std::filesystem::path savePath = folder;
-        savePath /= Scene::kSaveFolder;
-        if (!std::filesystem::exists(savePath))
-            std::filesystem::create_directory(savePath);
-        savePath /= std::string(mScene.getName().data()) + "." + kSceneFileExtension.data();
+        return mScene;
+    }
 
-        std::ofstream saveFile(savePath);
+    void Engine::saveScene(const std::filesystem::path &path)
+    {
+        mScene.setSavePath(path);
+        std::ofstream saveFile(path);
         if (saveFile.is_open())
             saveFile << mScene.serialize();
     }

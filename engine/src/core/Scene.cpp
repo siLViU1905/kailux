@@ -178,7 +178,7 @@ namespace kailux
         {
             auto light = view.get<PointLightData>(entity);
             const auto& transform = view.get<TransformComponent>(entity);
-            glm::vec3 pos = glm::vec3(transform.worldMatrix[3]);
+            auto pos = glm::vec3(transform.worldMatrix[3]);
             light.positionAndIntensity = glm::vec4(pos, light.positionAndIntensity.w);
             data.pointLights[index++] = light;
         }
@@ -201,6 +201,16 @@ namespace kailux
         return std::format("Light{}", mLightEntityNameCount++);
     }
 
+    void Scene::setSavePath(const std::filesystem::path &path)
+    {
+        mSavePath = path;
+    }
+
+    const std::filesystem::path & Scene::getSavePath() const
+    {
+        return mSavePath;
+    }
+
     std::string Scene::serialize() const
     {
         nlohmann::json js;
@@ -209,6 +219,7 @@ namespace kailux
         const auto &cameraComponent = mEntityRegistry.get<CameraComponent>(mMainCameraEntity);
         js["Scene"] = {
             {"name", mName},
+            {"save_path", mSavePath.string()},
             {"mesh_name_count", mMeshEntityNameCount},
             {"light_name_count", mLightEntityNameCount},
             {
@@ -331,6 +342,7 @@ namespace kailux
         mSun = createSunEntity({});
 
         mName = sceneJs.value("name", "Scene");
+        mSavePath = sceneJs.value("save_path", "");
         mMeshEntityNameCount = sceneJs.value("mesh_name_count", 0);
         mLightEntityNameCount = sceneJs.value("light_name_count", 0);
 

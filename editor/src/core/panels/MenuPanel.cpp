@@ -27,9 +27,10 @@ namespace kailux
                 {
                     mOnSceneOpen();
                 }
-                if (ImGui::MenuItem("Save", "Ctrl+S"))
+                const std::string_view saveLabel{scene.getSavePath().empty() ? "Save*" : "Save"};
+                if (ImGui::MenuItem(saveLabel.data(), "Ctrl+S"))
                 {
-                    mOnSceneSave();
+                    mOnSceneSave(scene.getSavePath());
                 }
                 ImGui::EndMenu();
             }
