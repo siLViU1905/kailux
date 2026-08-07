@@ -61,8 +61,9 @@ namespace kailux
         bool isMeshCached(std::string_view path) const;
 
         static constexpr std::string_view kSceneFileExtension = "klx";
-        void   saveScene(std::string_view folder) const;
-        void   loadScene(std::string_view path, int windowWidth, int windowHeight);
+        const Scene& getScene() const;
+        void         saveScene(const std::filesystem::path &path);
+        void         loadScene(std::string_view path, int windowWidth, int windowHeight);
 
         using OnLog = std::move_only_function<void(std::string_view)>;
         void setOnInfoLog(OnLog&& callback);

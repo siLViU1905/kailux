@@ -10,7 +10,8 @@ namespace kailux
     {
         SingleFile,
         MultipleFiles,
-        Folder
+        Folder,
+        SaveFile
     };
 
     template<DialogMode Mode>
@@ -28,7 +29,8 @@ namespace kailux
 
         void open(
             std::string_view title = kDefaultTitle,
-            const Filters &filters = std::ranges::to<Filters>(kDefaultFilters)
+            const Filters &filters = std::ranges::to<Filters>(kDefaultFilters),
+            std::string_view defaultPath = ""
         )
         {
             if constexpr (Mode == DialogMode::SingleFile)
@@ -37,13 +39,15 @@ namespace kailux
                 mDiagHandle.emplace(title.data(), "", filters, pfd::opt::multiselect);
             else if constexpr (Mode == DialogMode::Folder)
                 mDiagHandle.emplace(title.data(), "");
+            else
+                mDiagHandle.emplace(title.data(), defaultPath.data());
         }
 
         bool poll()
         {
             if (mDiagHandle && mDiagHandle->ready())
             {
-                if constexpr (Mode == DialogMode::Folder)
+                if constexpr (Mode == DialogMode::Folder || Mode == DialogMode::SaveFile)
                 {
                     auto result = mDiagHandle->result();
                     if (!result.empty())
@@ -78,7 +82,9 @@ namespace kailux
         using HandleType = std::conditional_t<
             Mode == DialogMode::Folder,
             pfd::select_folder,
-            pfd::open_file
+            std::conditional_t<
+                Mode == DialogMode::SaveFile, pfd::save_file,
+                pfd::open_file>
         >;
 
         std::optional<HandleType> mDiagHandle;

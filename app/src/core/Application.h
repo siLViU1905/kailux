@@ -28,7 +28,7 @@ namespace kailux
         void pollDialogs();
 
         void updateEditor();
-        void updateEngine(float deltaTime, Window& window);
+        void updateEngine(float deltaTime, const Window& window);
 
         void dispatchEvent(const Event& event);
 
@@ -42,6 +42,7 @@ namespace kailux
         Shared<ThreadDispatcher>  mThreadDispatcher;
 
         FileDialog<DialogMode::SingleFile>    mLoadSceneDialog;
+        FileDialog<DialogMode::SaveFile>      mSaveSceneDialog;
         FileDialog<DialogMode::MultipleFiles> mImportFilesDialog;
         FileDialog<DialogMode::Folder>        mImportFolderDialog;
     };

@@ -15,7 +15,7 @@ namespace kailux
         using OnSceneOpen = std::move_only_function<void()>;
         void setOnSceneOpen(OnSceneOpen&& callback);
 
-        using OnSceneSave = std::move_only_function<void()>;
+        using OnSceneSave = std::move_only_function<void(const std::filesystem::path&)>;
         void setOnSceneSave(OnSceneSave&& callback);
 
         using OnViewMenu = std::move_only_function<void()>;
