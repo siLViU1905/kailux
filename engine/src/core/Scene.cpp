@@ -16,6 +16,7 @@ namespace kailux
     Scene::Scene() = default;
 
     Scene::Scene(Scene &&other) noexcept : mName(std::move(other.mName)),
+                                           mSavePath(std::move(other.mSavePath)),
                                            mEntityRegistry(std::move(other.mEntityRegistry)),
                                            mMainCameraEntity(other.mMainCameraEntity),
                                            mSun(other.mSun),
@@ -29,6 +30,7 @@ namespace kailux
         if (this != &other)
         {
             mName = std::move(other.mName);
+            mSavePath = std::move(other.mSavePath);
             mEntityRegistry = std::move(other.mEntityRegistry);
             mMainCameraEntity = other.mMainCameraEntity;
             mSun = other.mSun;
@@ -70,7 +72,7 @@ namespace kailux
     std::optional<entt::entity> Scene::createMeshEntity(
         std::string_view name,
         const MeshComponent &component,
-        TextureSetHandle textureSetHandle,
+        MaterialHandle materialHandle,
         const MeshTransformData &transform,
         const MeshMaterialData &material,
         entt::entity parent
@@ -86,7 +88,7 @@ namespace kailux
         );
         mEntityRegistry.emplace<MaterialComponent>(
             entity,
-            textureSetHandle
+            materialHandle
         );
         mEntityRegistry.emplace<TransformComponent>(
             entity,

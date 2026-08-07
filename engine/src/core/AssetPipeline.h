@@ -64,7 +64,7 @@ namespace kailux
 
         MaterialHandle uploadMaterialDataToRegistry(const TextureRegistry::MaterialData &data);
 
-        void cacheMesh(std::string_view path, MeshHandle meshHandle, TextureSetHandle materialHandle);
+        void cacheMesh(std::string_view path, MeshHandle meshHandle, MaterialHandle materialHandle);
 
         static DescriptorSetUpdateInfo make_texture_write(TextureHandle handle, const Texture& texture);
 

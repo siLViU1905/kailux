@@ -5,6 +5,6 @@ namespace kailux
 {
     struct MaterialComponent
     {
-        TextureSetHandle handle;
+        MaterialHandle handle;
     };
 }
