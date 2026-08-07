@@ -24,6 +24,7 @@ namespace kailux
 
         void render(Scene& scene) const;
 
+        void onEvent(const Event& event);
         void update() const;
 
     private:

@@ -14,8 +14,6 @@ namespace kailux
         void setDirectoryTextureId(ImTextureID id);
         void setFileTextureId(ImTextureID id);
 
-        static constexpr std::string_view s_DefaultPath = "workspace";
-
         static constexpr std::string_view s_DragDropPayloadType = "CONTENT_BROWSER_ITEM";
 
         using OnImport = std::move_only_function<void()>;

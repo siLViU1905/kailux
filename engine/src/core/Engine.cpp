@@ -208,6 +208,19 @@ namespace kailux
                 }
             }
         }
+        else if (const auto* keyReleased{std::get_if<KeyReleased>(&event)})
+        {
+            auto mods{keyReleased->mods};
+            switch (keyReleased->key)
+            {
+                case Key::S:
+                    if (mods == KeyMods::Control)
+                        saveScene(details::kWorkspaceDefaultPath);
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
     void Engine::createRenderingContext(Window &window)
