@@ -591,14 +591,21 @@ namespace kailux
 
     void Engine::saveScene(const std::filesystem::path &path)
     {
+        auto t{Clock::now()};
         mScene.setSavePath(path);
         std::ofstream saveFile(path);
         if (saveFile.is_open())
+        {
             saveFile << mScene.serialize();
+            mOnInfoLog(std::format("Scene '{}' saved at '{}' in {}ms", mScene.getName(), path.string(), Clock::get_elapsed<float, TimeType::Milliseconds>(t)));
+        }
+        else
+            mOnErrorLog(std::format("Scene '{}' not saved", mScene.getName()));
     }
 
     void Engine::loadScene(std::string_view path, int windowWidth, int windowHeight)
     {
+        auto t{Clock::now()};
         std::ifstream saveFile(path.data(), std::ios::ate | std::ios::binary);
         if (saveFile.is_open())
         {
@@ -686,7 +693,10 @@ namespace kailux
                     light.range.x = lightJs.value("range", light.range.x);
                 }
             }
+            mOnInfoLog(std::format("Scene '{}' loaded in {}ms", mScene.getName(), Clock::get_elapsed<float, TimeType::Milliseconds>(t)));
         }
+        else
+            mOnErrorLog(std::format("Scene '{}' not loaded", path));
     }
 
     void Engine::setOnInfoLog(OnLog &&callback)
