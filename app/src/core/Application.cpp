@@ -5,43 +5,18 @@
 
 namespace kailux
 {
-    Application::Application()
+    Application::Application(const WindowInfo &windowInfo)
     {
-    }
-
-    Application::Application(Application &&other) noexcept : mWindow(std::move(other.mWindow)),
-                                                             mEngine(std::move(other.mEngine)),
-                                                             mEditor(std::move(other.mEditor)),
-                                                             mThreadDispatcher(std::move(other.mThreadDispatcher))
-    {
-    }
-
-    Application &Application::operator=(Application &&other) noexcept
-    {
-        if (this != &other)
-        {
-            mWindow = std::move(other.mWindow);
-            mEngine = std::move(other.mEngine);
-            mEditor = std::move(other.mEditor);
-            mThreadDispatcher = std::move(other.mThreadDispatcher);
-        }
-        return *this;
-    }
-
-    Application Application::create(const WindowInfo &windowInfo)
-    {
-        Application app;
-        app.mWindow = Window::create(windowInfo.width, windowInfo.height, windowInfo.title);
-        app.mWindow.updateUserPointer();
-        app.mEngine = Engine::create(app.mWindow);
-        app.mEditor = Editor::create(
-            app.mEngine.getAssetBrowserDirectoryTextureId(),
-            app.mEngine.getAssetBrowserFileTextureId()
+        mWindow = Window::create(windowInfo.width, windowInfo.height, windowInfo.title);
+        mWindow.updateUserPointer();
+        mEngine = Engine::create(mWindow);
+        mEditor = Editor::create(
+            mEngine.getAssetBrowserDirectoryTextureId(),
+            mEngine.getAssetBrowserFileTextureId()
         );
         ThreadDispatcher::kMaxThreads = kThreadCount;
-        app.mThreadDispatcher = ThreadDispatcher::get();
-        app.setCallbacks();
-        return app;
+        mThreadDispatcher = ThreadDispatcher::get();
+        setCallbacks();
     }
 
     void Application::run()

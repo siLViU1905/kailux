@@ -16,9 +16,7 @@ namespace kailux
     class Application
     {
     public:
-        KAILUX_DECLARE_NON_COPYABLE_MOVABLE(Application)
-
-        static Application create(const WindowInfo &windowInfo);
+        Application(const WindowInfo& windowInfo);
 
         void run();
 
