@@ -21,6 +21,8 @@
 #include "components/gpu/MeshData.h"
 #include "components/gpu/MeshTransformData.h"
 #include "components/gpu/TransformComponent.h"
+#include "scene/SceneInstantiator.h"
+#include "scene/SceneSerializer.h"
 #include "texture/TextureAllocator.h"
 
 namespace kailux
@@ -310,9 +312,9 @@ namespace kailux
         {
             mOnWarningLog(msg);
         });
-        mAssetPipeline.setOnAttachPhysics([this](auto entity, auto bodyType)
+        mAssetPipeline.setOnAttachPhysics([this](auto entity, auto physicsRecord)
         {
-            addPhysicsToEntity(entity, {bodyType, true});
+            addPhysicsToEntity(entity, {physicsRecord.type, physicsRecord.canBecomeDynamic});
         });
     }
 
@@ -593,110 +595,62 @@ namespace kailux
     {
         auto t{Clock::now()};
         mScene.setSavePath(path);
-        std::ofstream saveFile(path);
-        if (saveFile.is_open())
+        if (const auto result = SceneSerializer::save(mScene, path); !result)
         {
-            saveFile << mScene.serialize();
-            mOnInfoLog(std::format("Scene '{}' saved at '{}' in {}ms", mScene.getName(), path.string(), Clock::get_elapsed<float, TimeType::Milliseconds>(t)));
+            mOnErrorLog(std::format("Scene '{}' not saved: {}",
+                                    path.generic_string(), result.error()));
+            return;
         }
-        else
-            mOnErrorLog(std::format("Scene '{}' not saved", mScene.getName()));
+
+        mOnInfoLog(std::format("Scene '{}' saved to '{}'",
+                               mScene.getName(), path.generic_string()));
     }
 
-    void Engine::loadScene(std::string_view path, int windowWidth, int windowHeight)
+    void Engine::loadScene(const std::filesystem::path &path, int windowWidth, int windowHeight)
     {
         auto t{Clock::now()};
-        std::ifstream saveFile(path.data(), std::ios::ate | std::ios::binary);
-        if (saveFile.is_open())
+        const auto document = SceneSerializer::read_file(path);
+        if (!document)
         {
-            size_t fileSize = saveFile.tellg();
-            std::string content;
-            content.resize(fileSize);
-
-            saveFile.seekg(0);
-            saveFile.read(content.data(), fileSize);
-
-            auto js = mScene.deserialize(content, windowWidth, windowHeight);
-            if (js.contains("Mesh") && js["Mesh"].is_array())
-            {
-                for (const auto &meshJs: js["Mesh"])
-                {
-                    AssetPipeline::PendingMeshData pending;
-                    pending.path = meshJs.value("path", "");
-                    pending.name = meshJs.value("name", "");
-                    pending.type = meshJs.value("type", MeshType::Unknown);
-
-                    if (meshJs.contains("transform"))
-                    {
-                        auto &t = meshJs["transform"];
-                        pending.transform.position = {t["position"][0], t["position"][1], t["position"][2]};
-                        pending.transform.rotation = glm::quat(
-                            t["rotation"][3],
-                            t["rotation"][0],
-                            t["rotation"][1],
-                            t["rotation"][2]
-                        );
-                        pending.transform.scale = {t["scale"][0], t["scale"][1], t["scale"][2]};
-                    }
-
-                    if (meshJs.contains("material"))
-                    {
-                        auto &m = meshJs["material"];
-                        pending.material.albedoAndRoughness = {
-                            m["albedo"][0], m["albedo"][1], m["albedo"][2], m["roughness"]
-                        };
-                        pending.material.pbrParams = {
-                            m["metallic"], m["ao"], 0.f, 0.f
-                        };
-                    }
-
-                    if (meshJs.contains("physics"))
-                    {
-                        const auto &p = meshJs["physics"];
-                        pending.bodyType = static_cast<PhysicsBodyType>(p["body"]);
-                    }
-
-                    if (!isMeshCached(pending.path))
-                        if (auto loadData = MeshLoader::load(pending.path))
-                            pending.data = std::move(*loadData);
-
-                    mAssetPipeline.getPendingQueue().push(std::move(pending));
-                }
-            }
-            if (js.contains("PointLight") && js["PointLight"].is_array())
-            {
-                for (const auto &lightJs : js["PointLight"])
-                {
-                    glm::vec3 position{};
-                    if (lightJs.contains("position"))
-                        position = {lightJs["position"][0], lightJs["position"][1], lightJs["position"][2]};
-
-                    glm::vec3 color{1.f};
-                    if (lightJs.contains("color"))
-                        color = {lightJs["color"][0], lightJs["color"][1], lightJs["color"][2]};
-
-                    auto entity = mScene.createPointLightEntity(
-                        lightJs.value("name", mScene.getLightEntityName()),
-                        {mGizmoRegistry.getBuiltins().pointLight, 0.5f, glm::vec4(color, 1.f)},
-                        position);
-
-                    if (!entity)
-                    {
-                        mOnWarningLog("The maximum number of point lights has been reached");
-                        continue;
-                    }
-
-                    float enabled = lightJs.value("enabled", 1.f);
-                    auto &light = mScene.getEntityRegistry().get<PointLightData>(*entity);
-                    light.colorAndEnabled = glm::vec4(color, enabled);
-                    light.positionAndIntensity.w = lightJs.value("intensity", light.positionAndIntensity.w);
-                    light.range.x = lightJs.value("range", light.range.x);
-                }
-            }
-            mOnInfoLog(std::format("Scene '{}' loaded in {}ms", mScene.getName(), Clock::get_elapsed<float, TimeType::Milliseconds>(t)));
+            mOnErrorLog(std::format("Scene '{}' not loaded: {}",
+                                    path.generic_string(), document.error()));
+            return;
         }
-        else
-            mOnErrorLog(std::format("Scene '{}' not loaded", path));
+
+        Scene scene = Scene::create(document->meta.name);
+
+        auto requests = SceneInstantiator::apply(scene, *document, {mGizmoRegistry, windowWidth, windowHeight});
+
+        if (!requests)
+        {
+            mOnErrorLog(std::format("Scene '{}' not loaded: {}",
+                                    path.generic_string(), requests.error()));
+            return;
+        }
+
+        mScene = std::move(scene);
+        mScene.setSavePath(path);
+
+        for (const auto &request : *requests)
+        {
+            AssetPipeline::PendingMeshData pending;
+            pending.target    = request.target;
+            pending.name      = request.name;
+            pending.path      = request.record.path;
+            pending.type      = request.record.type;
+            pending.transform = request.transform;
+            pending.material  = request.material;
+            pending.physics   = request.physics;
+
+            if (!isMeshCached(pending.path))
+                if (auto data = MeshLoader::load(pending.path))
+                    pending.data = std::move(*data);
+
+            mAssetPipeline.getPendingQueue().push(std::move(pending));
+        }
+
+        mOnInfoLog(std::format("Scene '{}' loaded in {}ms", mScene.getName(),
+                               Clock::get_elapsed<float, TimeType::Milliseconds>(t)));
     }
 
     void Engine::setOnInfoLog(OnLog &&callback)
@@ -1143,11 +1097,11 @@ namespace kailux
                     options.canBecomeDynamic
                 }
             });
-        } else if (const auto *mesh = reg.try_get<MeshComponent>(entity))
+        } else if (const auto *source = reg.try_get<MeshSourceComponent>(entity))
         {
             handle = uploadPhysicsBodyDataToRegistry({
                 {},
-                mesh->type,
+                source->type,
                 transform,
                 {
                     options.bodyType,
@@ -1160,8 +1114,7 @@ namespace kailux
             return;
         }
 
-        reg.emplace<PhysicsComponent>(entity, handle, options.bodyType);
-        reg.emplace<PhysicsControlComponent>(entity);
+        mScene.attachPhysics(entity, {handle, options.bodyType, options.canBecomeDynamic});
     }
 
     void Engine::addLightEntity(LightType type)

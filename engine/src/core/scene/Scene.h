@@ -1,16 +1,18 @@
 #pragma once
 #include <entt/entt.hpp>
 
-#include "Camera.h"
-#include "Core.h"
-#include "components/entt/GizmoComponent.h"
-#include "components/entt/MeshComponent.h"
-#include "components/gpu/MeshTransformData.h"
-#include "components/gpu/MeshMaterialData.h"
-#include "components/gpu/SceneData.h"
-#include "mesh/MeshLoader.h"
-#include "mesh/MeshRegistry.h"
-#include "texture/TextureRegistry.h"
+#include "SceneDocument.h"
+#include "../Camera.h"
+#include "../Core.h"
+#include "../components/entt/GizmoComponent.h"
+#include "../components/entt/MeshComponent.h"
+#include "../components/gpu/MeshTransformData.h"
+#include "../components/gpu/MeshMaterialData.h"
+#include "../components/gpu/SceneData.h"
+#include "../mesh/MeshLoader.h"
+#include "../texture/TextureRegistry.h"
+#include "core/components/entt/MeshSourceComponent.h"
+#include "core/components/entt/PhysicsComponent.h"
 
 namespace kailux
 {
@@ -35,7 +37,7 @@ namespace kailux
         );
         entt::entity createParentEntity(std::string_view name);
 
-        std::optional<entt::entity> createPointLightEntity(std::string_view name, GizmoComponent component, const glm::vec3 &position);
+        std::optional<entt::entity> createPointLightEntity(std::string_view name, const GizmoComponent &component, const glm::vec3 &position);
 
         entt::registry&       getEntityRegistry();
         const entt::registry& getEntityRegistry() const;
@@ -52,8 +54,26 @@ namespace kailux
         void                         setSavePath(const std::filesystem::path& path);
         const std::filesystem::path& getSavePath() const;
 
-        std::string           serialize() const;
-        nlohmann::json        deserialize(std::string_view content, int windowWidth, int windowHeight);
+        void      setMeta(const SceneMeta& meta);
+        SceneMeta getMeta() const;
+
+        bool attachMesh(entt::entity entity,
+                        const MeshComponent          &component,
+                        MaterialHandle               materialHandle,
+                        const MeshMaterialData       &material);
+        bool attachMeshSource(entt::entity entity, const MeshSourceComponent& source);
+        bool attachPointLight(entt::entity            entity,
+                              const GizmoComponent   &component,
+                              const PointLightRecord &light);
+        void attachPhysics(entt::entity entity, PhysicsComponent component);
+        void attachCamera(entt::entity entity, const CameraComponent& component, int width, int height);
+
+        void setLocalTransform(entt::entity entity, const MeshTransformData &transform);
+        void setParent(entt::entity child, entt::entity parent);
+        void detachFromParent(entt::entity child);
+        void destroyEntity(entt::entity entity);
+
+        friend class SceneInstantiator;
 
     private:
         static constexpr std::string_view kSunName = "Sun";

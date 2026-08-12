@@ -109,21 +109,26 @@ namespace kailux
     entt::entity AssetPipeline::createParentMeshEntity(const PendingMeshData &data)
     {
         Scene &scene = mScene;
+        auto  &entityReg = scene.getEntityRegistry();
 
-        auto rootName = data.name.empty() ? scene.getMeshEntityName() : data.name;
-        auto parentEntity = scene.createParentEntity(rootName);
+        const MeshSourceComponent source{data.path, data.type};
 
-        auto &entityReg = scene.getEntityRegistry();
-        entityReg.emplace<HierarchyComponent>(parentEntity);
+        if (data.target != entt::null)
+        {
+            scene.attachMeshSource(data.target, source);
+            entityReg.emplace_or_replace<MeshMaterialData>(data.target, data.material);
+            return data.target;
+        }
 
-        auto &parentTransform = entityReg.emplace<TransformComponent>(parentEntity);
-        parentTransform.transform.position = data.transform.position;
-        parentTransform.transform.rotation = data.transform.rotation;
-        parentTransform.transform.scale = data.transform.scale;
+        const auto rootName     = data.name.empty() ? scene.getMeshEntityName() : data.name;
+        const auto parentEntity = scene.createParentEntity(rootName);
 
-        entityReg.emplace<MeshMaterialData>(parentEntity, data.material);
+        scene.setLocalTransform(parentEntity, data.transform);
+        scene.attachMeshSource(parentEntity, source);
+        entityReg.emplace_or_replace<MeshMaterialData>(parentEntity, data.material);
 
         return parentEntity;
+
     }
 
     std::vector<MaterialHandle> AssetPipeline::loadAndRegisterMaterials(
@@ -171,25 +176,42 @@ namespace kailux
         std::string meshName;
         auto createMeshEntity = [&](auto meshHandle, const auto &vertices)
         {
-            auto materialHandle = textureRegistry.getDefaultMaterialHandle();
+            const auto materialHandle = textureRegistry.getDefaultMaterialHandle();
+            const MeshComponent component{
+                meshHandle,
+                Geometry::computeBoundingSphere(vertices)
+            };
+            const MeshSourceComponent source{data.path, data.type};
 
-            meshName = data.name.empty() ? scene.getMeshEntityName() : data.name;
-            auto entity = scene.createMeshEntity(
-                meshName,
+            entt::entity entity{entt::null};
+
+            if (data.target != entt::null)
+            {
+                entity   = data.target;
+                meshName = scene.getEntityRegistry().get<TagComponent>(entity).name;
+
+                if (!scene.attachMesh(entity, component, materialHandle, data.material))
                 {
-                    meshHandle,
-                    data.path,
-                    data.type,
-                    Geometry::computeBoundingSphere(vertices)
-                },
-                materialHandle,
-                data.transform,
-                data.material
-            );
-            if (!entity)
-                mOnWarningLog("The maximum number of meshes has been reached");
-            else if (data.bodyType != PhysicsBodyType::Unknown)
-                mOnAttachPhysics(*entity, data.bodyType);
+                    mOnWarningLog("The maximum number of meshes has been reached");
+                    return;
+                }
+                scene.attachMeshSource(entity, source);
+            }
+            else
+            {
+                meshName = data.name.empty() ? scene.getMeshEntityName() : data.name;
+                const auto created = scene.createMeshEntity(meshName, component, materialHandle, data.transform, data.material);
+                if (!created)
+                {
+                    mOnWarningLog("The maximum number of meshes has been reached");
+                    return;
+                }
+                scene.attachMeshSource(*created, source);
+                entity = *created;
+            }
+
+            if (data.physics)
+                mOnAttachPhysics(entity, *data.physics);
         };
         switch (data.type)
         {
@@ -273,8 +295,8 @@ namespace kailux
                             vk::AccessFlagBits2::eIndexRead
                         );
                     }
-                    if (data.bodyType != PhysicsBodyType::Unknown)
-                        mOnAttachPhysics(parentEntity, data.bodyType);
+                    if (data.physics)
+                        mOnAttachPhysics(parentEntity, *data.physics);
 
                     cacheMesh(cacheKey, meshHandle, materialHandle);
 
@@ -286,8 +308,6 @@ namespace kailux
                         submeshName,
                         {
                             meshHandle,
-                            data.path,
-                            data.type,
                             submesh.boundingSphere
                         },
                         materialHandle,

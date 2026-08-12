@@ -60,6 +60,7 @@ namespace kailux
                 std::string pathStr = path.data();
                 if (mEngine.isMeshCached(pathStr))
                     mEngine.getPendingMeshDataQueue().emplace(
+                        entt::null,
                         std::move(pathStr),
                         MeshLoader::LoadData(),
                         "",
@@ -72,6 +73,7 @@ namespace kailux
                     {
                         if (auto data = MeshLoader::load(p))
                             mEngine.getPendingMeshDataQueue().emplace(
+                                entt::null,
                                 std::move(p),
                                 std::move(*data),
                                 "",
@@ -85,6 +87,7 @@ namespace kailux
         hierarchyPanel.setOnNewMesh([this](auto type)
         {
             mEngine.getPendingMeshDataQueue().emplace(
+                                entt::null,
                                 "",
                                 MeshLoader::LoadData(),
                                 "",

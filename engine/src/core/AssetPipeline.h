@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Scene.h"
+#include "scene/Scene.h"
 #include "mesh/MeshRegistry.h"
 #include "physics/PhysicsRegistry.h"
 #include "texture/TextureRegistry.h"
@@ -14,13 +14,14 @@ namespace kailux
     public:
         struct PendingMeshData
         {
+            entt::entity target{entt::null};
             std::string path;
             MeshLoader::LoadData data;
             std::string name;
             MeshTransformData transform;
             MeshMaterialData material;
             MeshType type{MeshType::Unknown};
-            PhysicsBodyType bodyType{PhysicsBodyType::Unknown};
+            std::optional<PhysicsRecord> physics{std::nullopt};
         };
 
         AssetPipeline(Context &context,
@@ -49,7 +50,7 @@ namespace kailux
         void setOnInfoLog(OnLog &&callback);
         void setOnWarningLog(OnLog &&callback);
 
-        using OnAttachPhysics = std::move_only_function<void(entt::entity, PhysicsBodyType)>;
+        using OnAttachPhysics = std::move_only_function<void(entt::entity, PhysicsRecord)>;
         void setOnAttachPhysics(OnAttachPhysics &&callback);
 
     private:

@@ -22,7 +22,7 @@ add_library(kailux_engine STATIC
         src/core/descriptor/DescriptorPool.cpp
         src/core/descriptor/DescriptorSet.cpp
         src/core/Clock.cpp
-        src/core/Scene.cpp
+        src/core/scene/Scene.cpp
         src/core/texture/Texture.cpp
         src/core/texture/TextureAllocator.cpp
         src/core/texture/ImageLoader.cpp
@@ -50,6 +50,8 @@ add_library(kailux_engine STATIC
         src/core/gizmo/GizmoRegistry.cpp
         src/core/mesh/MeshGeometry.cpp
         src/core/Shader.cpp
+        src/core/scene/SceneSerializer.cpp
+        src/core/scene/SceneInstantiator.cpp
 )
 
 target_compile_definitions(kailux_engine PUBLIC
