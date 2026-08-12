@@ -7,6 +7,7 @@ namespace kailux
     {
         BodyHandle      handle;
         PhysicsBodyType type{PhysicsBodyType::Static};
+        bool            canBecomeDynamic{false};
 
         constexpr bool isDynamic() const {return type == PhysicsBodyType::Dynamic;}
     };

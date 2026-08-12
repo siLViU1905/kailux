@@ -229,25 +229,31 @@ namespace kailux
 
     void HierarchyPanel::notifyAndDestroyHierarchy(entt::registry &registry, entt::entity entity)
     {
-        auto *hierarchy = registry.try_get<HierarchyComponent>(entity);
+        const auto *hierarchy = registry.try_get<HierarchyComponent>(entity);
 
-        auto *meshComponent = registry.try_get<MeshComponent>(entity);
-
-        if (meshComponent)
+        if (const auto *meshComponent = registry.try_get<MeshComponent>(entity))
         {
+            std::string_view path;
             uint32_t submeshIndex{~0u};
 
-            if (hierarchy && hierarchy->parent != entt::null)
+            if (const auto *source = registry.try_get<MeshSourceComponent>(entity))
+                path = source->path;
+            else if (hierarchy && hierarchy->parent != entt::null)
+            {
+                if (const auto *parentSource = registry.try_get<MeshSourceComponent>(hierarchy->parent))
+                    path = parentSource->path;
+
                 if (auto *parentHierarchy = registry.try_get<HierarchyComponent>(hierarchy->parent))
                 {
-                    auto it = std::ranges::find(parentHierarchy->children, entity);
+                    const auto it = std::ranges::find(parentHierarchy->children, entity);
                     if (it != parentHierarchy->children.end())
-                        submeshIndex = static_cast<uint32_t>(std::distance(parentHierarchy->children.begin(), it));
+                        submeshIndex = static_cast<uint32_t>(
+                            std::distance(parentHierarchy->children.begin(), it));
                 }
+            }
 
-            auto submeshCacheKey = std::format("{}_sub{}", meshComponent->path, submeshIndex);
-
-            mOnEntityDeleted(*meshComponent, submeshCacheKey);
+            if (!path.empty() && submeshIndex != ~0u)
+                mOnEntityDeleted(*meshComponent, std::format("{}_sub{}", path, submeshIndex));
         }
 
         if (hierarchy)

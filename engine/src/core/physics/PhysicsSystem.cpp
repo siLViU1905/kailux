@@ -154,11 +154,11 @@ namespace kailux
                 }
             });
         }
-        else if (const auto* mesh = reg.try_get<MeshComponent>(entity))
+        else if (const auto* source = reg.try_get<MeshSourceComponent>(entity))
         {
             handle = uploadPhysicsBodyDataToRegistry({
                 {},
-                mesh->type,
+                source->type,
                 transform,
                 {
                     options.bodyType,

@@ -15,7 +15,7 @@
 
 #include "AssetPipeline.h"
 #include "passes/ComputePicker.h"
-#include "Scene.h"
+#include "scene/Scene.h"
 #include "TransferManager.h"
 #include "mesh/MeshLoader.h"
 #include "passes/MainPass.h"
@@ -63,7 +63,7 @@ namespace kailux
         static constexpr std::string_view kSceneFileExtension = "klx";
         const Scene& getScene() const;
         void         saveScene(const std::filesystem::path &path);
-        void         loadScene(std::string_view path, int windowWidth, int windowHeight);
+        void         loadScene(const std::filesystem::path &path, int windowWidth, int windowHeight);
 
         using OnLog = std::move_only_function<void(std::string_view)>;
         void setOnInfoLog(OnLog&& callback);
