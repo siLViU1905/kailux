@@ -40,6 +40,8 @@ namespace kailux
         using OnEditorRender = std::move_only_function<void(Scene&)>;
         void setOnEditorRender(OnEditorRender&& callback);
 
+        void setSimulationViewActive(bool active);
+
         void waitIdle() const;
 
         Queue<AssetPipeline::PendingMeshData> &getPendingMeshDataQueue();
@@ -50,6 +52,7 @@ namespace kailux
         ImTextureID getAssetBrowserDirectoryTextureId() const;
         ImTextureID getAssetBrowserFileTextureId() const;
         ImTextureID getSceneTextureId() const;
+        ImTextureID getSimulationTextureId() const;
 
         void onEvent(const Event& event, Window& window);
         void update(float deltaTime, const Window &window);
@@ -106,7 +109,7 @@ namespace kailux
 
         void seedDefaultTextures();
 
-        void createSceneTextureIds();
+        void createEditorTextureIds();
 
         void createComputePicker();
         void createComputeCuller();
@@ -136,7 +139,10 @@ namespace kailux
 
         void executeCulling(const FrameData& frame, const CommandRecorder& recorder);
 
+        static void copy_scene_to_simulation_texture(const FrameData& frame, const CommandRecorder& recorder);
+
         void transitionForMainPass(const FrameData& frame, const CommandRecorder& recorder) const;
+        void transitionForGizmoPass(const FrameData& frame, const CommandRecorder& recorder) const;
         void transitionForOutlinePass(const FrameData& frame, const CommandRecorder& recorder, uint32_t imageIndex) const;
         void transitionForPickerAndPostProcess(const FrameData& frame, const CommandRecorder& recorder) const;
         void transitionForPresent(const CommandRecorder& recorder, uint32_t imageIndex) const;
@@ -160,10 +166,13 @@ namespace kailux
         std::array<FrameData, details::kFramesInFlight>    mFrames;
         uint32_t                                   mCurrentFrame;
 
-        std::array<ImTextureID, details::kFramesInFlight>  mSceneTextureIds;
+        std::array<ImTextureID, details::kFramesInFlight>  mSceneTextureIds{};
+        std::array<ImTextureID, details::kFramesInFlight>  mSimulationTextureIds{};
 
         Scene                                      mScene;
         OnEditorRender                             mOnEditorRender;
+
+        bool                                       mSimulationViewActive{};
 
         ComputePassesPushConstants::MouseCords     mSceneViewportMousePos;
         GraphicsPassesPushConstants::Outline       mOutlineInfo;

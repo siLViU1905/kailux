@@ -210,7 +210,7 @@ namespace kailux
         viewportPanel.setSceneTextureId(mEngine.getSceneTextureId());
 
         auto& simulationPanel = mEditor.getLayer<EditorLayer>().getPanel<SimulationPanel>();
-        simulationPanel.setTextureId(mEngine.getSceneTextureId());
+        simulationPanel.setTextureId(mEngine.getSimulationTextureId());
         simulationPanel.setAspectRatio(
             static_cast<float>(mWindow.getWidth()) / static_cast<float>(mWindow.getHeight())
         );
@@ -224,6 +224,7 @@ namespace kailux
         auto selectedEntity = static_cast<uint32_t>(mEditor.getLayer<EditorLayer>().getPanel<HierarchyPanel>().getSelectedEntity());
         mEngine.setOutlineInfo(outlineColor, selectedEntity);
         mEngine.setSceneViewportMousePos(sceneViewportMousePos.x, sceneViewportMousePos.y);
+        mEngine.setSimulationViewActive(mEditor.getLayer<EditorLayer>().getPanel<SimulationPanel>().isOpen());
     }
 
     void Application::dispatchEvent(const Event &event)

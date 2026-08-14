@@ -27,9 +27,6 @@ namespace kailux
 
         ImGui::End();
         ImGui::PopStyleVar();
-
-        if (!mOpen)
-            mOnStop();
     }
 
     void SimulationPanel::setTextureId(ImTextureID id)
@@ -45,10 +42,5 @@ namespace kailux
     bool SimulationPanel::isVisible() const
     {
         return mVisible;
-    }
-
-    void SimulationPanel::setOnStop(OnStop &&callback)
-    {
-        mOnStop = std::move(callback);
     }
 }

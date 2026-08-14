@@ -32,10 +32,11 @@ namespace kailux
     struct RenderingInfo
     {
         std::span<const ColorAttachmentInfo> colorAttachments;
-        vk::Extent2D extent;
+        vk::Extent2D                         extent;
 
-        vk::ImageView depthView{};
-        vk::ImageLayout depthLayout = vk::ImageLayout::eDepthAttachmentOptimal;
+        vk::ImageView         depthView{};
+        vk::ImageLayout       depthLayout{vk::ImageLayout::eDepthAttachmentOptimal};
+        vk::AttachmentLoadOp  depthLoadOp{vk::AttachmentLoadOp::eClear};
         vk::RenderingFlagBits renderFlags{};
     };
 

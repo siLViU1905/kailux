@@ -58,6 +58,7 @@ namespace kailux
         vk::Extent2D  getExtent() const;
 
         const Texture& getSceneTexture() const;
+        const Texture& getSimulationTexture() const;
         const Texture& getOutIdTexture() const;
         const Texture& getResolvedOutIdTexture() const;
 
@@ -96,6 +97,7 @@ namespace kailux
         void createCullerBuffers(const Context &context);
 
         void createSceneTexture(const Context& context, vk::Format format);
+        void createSimulationTexture(const Context& context, vk::Format format);
         void createOutIdTexture(const Context &context);
 
         static constexpr uint32_t kDescriptorSetInfoCount = 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1; // camera buffer + mesh data buffer + materials buffer + scene buffer + skybox sampler + irradiance map + prefiltered env + brdf lut + textures array
@@ -138,6 +140,7 @@ namespace kailux
         vk::Extent2D            mExtent;
 
         Texture                 mSceneTexture;
+        Texture                 mSimulationTexture;
         Texture                 mOutIdTexture;
         Texture                 mResolvedOutIdTexture;
     };

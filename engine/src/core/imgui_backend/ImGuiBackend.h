@@ -22,6 +22,7 @@ namespace kailux
         void shutdown();
 
         static ImTextureID get_texture_id_from_texture(const Texture &texture);
+        static void        remove_texture(ImTextureID id);
 
     private:
         static constexpr std::string_view kFontPath = "assets/fonts/JetBrainsMonoNL-Bold.ttf";

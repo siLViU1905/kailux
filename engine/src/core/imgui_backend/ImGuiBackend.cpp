@@ -106,6 +106,11 @@ namespace kailux
         return reinterpret_cast<ImTextureID>(descriptorSet);
     }
 
+    void ImGuiBackend::remove_texture(ImTextureID id)
+    {
+        ImGui_ImplVulkan_RemoveTexture(reinterpret_cast<VkDescriptorSet>(id));
+    }
+
     void ImGuiBackend::createDescriptorPool(const Context &context)
     {
         constexpr uint32_t descriptorCount = 1000;
