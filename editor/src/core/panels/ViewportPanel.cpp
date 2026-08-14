@@ -56,6 +56,14 @@ namespace kailux
         return mSimulationState;
     }
 
+    void ViewportPanel::requestSimulationState(SimulationState state)
+    {
+        if (mSimulationState == state)
+            return;
+        mSimulationState = state;
+        (state == SimulationState::Running) ? mOnSimulationStart() : mOnSimulationPause();
+    }
+
     void ViewportPanel::setOnSimulationStart(OnSimulationStart &&callback)
     {
         mOnSimulationStart = std::move(callback);
@@ -129,17 +137,9 @@ namespace kailux
 
         ImGui::SetCursorScreenPos(pos);
         if (ImGui::InvisibleButton("##sim_indicator", size))
-            switch (mSimulationState)
-            {
-            case SimulationState::Paused:
-                    mSimulationState = SimulationState::Running;
-                    mOnSimulationStart();
-                    break;
-            case SimulationState::Running:
-                    mSimulationState = SimulationState::Paused;
-                    mOnSimulationPause();
-                    break;
-            }
+            requestSimulationState(mSimulationState == SimulationState::Paused
+                                       ? SimulationState::Running
+                                       : SimulationState::Paused);
 
         if (ImGui::IsItemHovered())
         {

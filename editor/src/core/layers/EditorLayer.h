@@ -26,5 +26,7 @@ namespace kailux
         static void render_dock_space();
 
         void addPanels(ImTextureID directoryTextureId, ImTextureID fileTextureId);
+
+        bool mSimulationWasRunning{};
     };
 }
