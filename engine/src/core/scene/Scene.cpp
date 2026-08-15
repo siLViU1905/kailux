@@ -57,7 +57,7 @@ namespace kailux
     entt::entity Scene::createCameraEntity(std::string_view name, bool isPrimary, int width, int height)
     {
         auto entity = createEntity(name);
-        attachCamera(entity, {isPrimary}, width, height);
+        attachCamera(entity, {isPrimary});
         return entity;
     }
 
@@ -257,18 +257,12 @@ namespace kailux
         }
     }
 
-    void Scene::attachCamera(entt::entity entity, const CameraComponent &component, int width, int height)
+    void Scene::attachCamera(entt::entity entity, const CameraComponent &component)
     {
         if (!mEntityRegistry.valid(entity))
             return;
 
         mEntityRegistry.emplace_or_replace<CameraComponent>(entity, component);
-        mEntityRegistry.emplace_or_replace<CameraData>(
-            entity,
-            Camera::get_projection(component, width, height),
-            Camera::get_view(component),
-            glm::vec4(component.position, component.exposure)
-        );
     }
 
     void Scene::setLocalTransform(entt::entity entity, const MeshTransformData &transform)

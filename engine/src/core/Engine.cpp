@@ -148,6 +148,11 @@ namespace kailux
         mOnEditorRender = std::move(callback);
     }
 
+    CameraData Engine::getCameraData() const
+    {
+        return buildCameraData(mScene.getMainCamera(), mSwapchain.getExtent());
+    }
+
     void Engine::setSimulationViewActive(bool active)
     {
         mSimulationViewActive = active;
@@ -784,8 +789,8 @@ namespace kailux
         mComputeCuller.bind(cmd);
         frame.getCullerDescriptorSet().bind(mComputeCuller.getPipeline(), cmd, vk::PipelineBindPoint::eCompute);
 
-        const auto &camera = mScene.getEntityRegistry().get<CameraData>(mScene.getMainCamera());
-        auto planes = Camera::get_frustum_planes(camera.projection, camera.view);
+        const auto camera{buildCameraData(mScene.getMainCamera(), mSwapchain.getExtent())};
+        const auto planes{Camera::get_frustum_planes(camera.projection, camera.view)};
         mComputeCuller.push<ComputePassesPushConstants::CameraFrustum>(cmd, {planes, totalObjects});
 
         uint32_t groupX = (totalObjects + 255) / 256;
@@ -1108,6 +1113,20 @@ namespace kailux
         cmd.draw(3, 1, 0, 0);
     }
 
+    CameraData Engine::buildCameraData(entt::entity entity, vk::Extent2D extent) const
+    {
+        const auto& camera{mScene.getEntityRegistry().get<CameraComponent>(entity)};
+        const float aspect{static_cast<float>(extent.width) / static_cast<float>(extent.height)};
+        return {
+            Camera::get_projection(camera, static_cast<int>(extent.width), static_cast<int>(extent.height)),
+            Camera::get_view(camera),
+            {
+                camera.position,
+                camera.exposure
+            }
+        };
+    }
+
     void Engine::update(float deltaTime, const Window &window)
     {
         mAssetPipeline.poll();
@@ -1119,15 +1138,12 @@ namespace kailux
 
         mScene.update();
 
-        auto view = mScene.getEntityRegistry().view<CameraComponent, CameraData>();
+        auto view = mScene.getEntityRegistry().view<CameraComponent>();
         for (auto entity: view)
         {
             auto &camera = view.get<CameraComponent>(entity);
             Camera::update_movement(camera, window, deltaTime);
             Camera::update_look_at(camera, window, deltaTime);
-            auto &data = view.get<CameraData>(entity);
-            data.view = Camera::get_view(camera);
-            data.positionAndExposure = {camera.position, camera.exposure};
         }
     }
 
@@ -1144,7 +1160,7 @@ namespace kailux
 
     void Engine::updateCameraBuffer(FrameData &frame) const
     {
-        const auto &data = mScene.getEntityRegistry().get<CameraData>(mScene.getMainCamera());
+        const auto data{buildCameraData(mScene.getMainCamera(), mSwapchain.getExtent())};
         frame.getCameraBuffer().upload(
             &data,
             sizeof(CameraData)

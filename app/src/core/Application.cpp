@@ -206,10 +206,14 @@ namespace kailux
     void Application::updateEditor()
     {
         mEditor.update();
-        auto& viewportPanel = mEditor.getLayer<EditorLayer>().getPanel<ViewportPanel>();
+
+        auto& entityEditor{mEditor.getLayer<EditorLayer>().getPanel<EntityEditorPanel>()};
+        entityEditor.setCameraData(mEngine.getCameraData());
+
+        auto& viewportPanel{mEditor.getLayer<EditorLayer>().getPanel<ViewportPanel>()};
         viewportPanel.setSceneTextureId(mEngine.getSceneTextureId());
 
-        auto& simulationPanel = mEditor.getLayer<EditorLayer>().getPanel<SimulationPanel>();
+        auto& simulationPanel{mEditor.getLayer<EditorLayer>().getPanel<SimulationPanel>()};
         simulationPanel.setTextureId(mEngine.getSimulationTextureId());
         simulationPanel.setAspectRatio(
             static_cast<float>(mWindow.getWidth()) / static_cast<float>(mWindow.getHeight())

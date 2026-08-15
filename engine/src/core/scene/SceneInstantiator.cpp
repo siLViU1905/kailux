@@ -64,7 +64,7 @@ namespace kailux
                 );
 
             if (record.camera)
-                scene.attachCamera(entity, *record.camera, context.windowWidth, context.windowHeight);
+                scene.attachCamera(entity, *record.camera);
         }
 
         if (const auto it{remap.find(document.mainCamera)}; it != remap.end())

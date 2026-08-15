@@ -24,6 +24,7 @@
 #include "utilities/Queue.h"
 #include "utilities/ThreadDispatcher.h"
 #include "DeferredResourceEraser.h"
+#include "components/gpu/CameraData.h"
 #include "gizmo/GizmoRegistry.h"
 #include "passes/GizmoPass.h"
 
@@ -39,6 +40,8 @@ namespace kailux
 
         using OnEditorRender = std::move_only_function<void(Scene&)>;
         void setOnEditorRender(OnEditorRender&& callback);
+
+        CameraData getCameraData() const;
 
         void setSimulationViewActive(bool active);
 
@@ -124,6 +127,8 @@ namespace kailux
         void                                        recordImGuiData(const FrameData& frame);
         void                                        recordPicker(const FrameData& frame, const CommandRecorder &recorder) const;
         void                                        recordOutline(const FrameData& frame, const CommandRecorder &recorder) const;
+
+        CameraData buildCameraData(entt::entity entity, vk::Extent2D extent) const;
 
         void updateFrameBuffers(FrameData& frame, const CommandRecorder& recorder);
         void updateCameraBuffer(FrameData& frame) const;

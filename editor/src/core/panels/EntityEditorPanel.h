@@ -15,6 +15,8 @@ namespace kailux
 
         void render(Scene &scene) override;
 
+        void setCameraData(const CameraData& data);
+
         void setSelectedEntity(entt::entity entity, const Scene &scene);
 
         bool isGizmoInUse() const;
@@ -40,6 +42,8 @@ namespace kailux
 
         entt::entity mSelectedEntity;
         glm::vec3    mRotationDegrees;
+
+        CameraData   mCameraData;
 
         ImGuizmo::OPERATION mCurrentGizmoOperation;
         ImGuizmo::MODE      mCurrentGizmoMode;

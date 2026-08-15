@@ -79,6 +79,11 @@ namespace kailux
         renderGizmo(scene);
     }
 
+    void EntityEditorPanel::setCameraData(const CameraData &data)
+    {
+        mCameraData = data;
+    }
+
     void EntityEditorPanel::setSelectedEntity(entt::entity entity, const Scene &scene)
     {
         mSelectedEntity = entity;
@@ -125,11 +130,10 @@ namespace kailux
         auto &transform = transformComp.transform;
 
         auto modelMatrix = transformComp.worldMatrix;
-        const auto &cameraData = registry.get<CameraData>(scene.getMainCamera());
 
         ImGuizmo::Manipulate(
-            glm::value_ptr(cameraData.view),
-            glm::value_ptr(cameraData.projection),
+            glm::value_ptr(mCameraData.view),
+            glm::value_ptr(mCameraData.projection),
             operation,
             mCurrentGizmoMode,
             glm::value_ptr(modelMatrix)

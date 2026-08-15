@@ -66,7 +66,7 @@ namespace kailux
                               const GizmoComponent   &component,
                               const PointLightRecord &light);
         void attachPhysics(entt::entity entity, PhysicsComponent component);
-        void attachCamera(entt::entity entity, const CameraComponent& component, int width, int height);
+        void attachCamera(entt::entity entity, const CameraComponent &component);
 
         void setLocalTransform(entt::entity entity, const MeshTransformData &transform);
         void setParent(entt::entity child, entt::entity parent);
