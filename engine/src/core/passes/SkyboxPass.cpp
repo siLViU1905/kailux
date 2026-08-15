@@ -40,8 +40,8 @@ namespace kailux
             kVertexShaderPath,
             kFragmentShaderPath,
             make_pipeline_info(swapchain, context.getMaxUsableSampleCount()),
-            {}
-            );
+            kPushConstantRanges
+        );
         pass.createTexture(context);
         pass.createIrradianceTexture(context);
         pass.createPrefilteredEnvTexture(context);

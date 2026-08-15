@@ -58,7 +58,7 @@ layout (push_constant) uniform CameraProperties
 bool IsVisible(vec3 center, float radius)
 {
     for (int i = 0; i < 6; i++)
-    if (dot(frustumPlanes[i].xyz, center) + frustumPlanes[i].w < -radius)
+        if (dot(frustumPlanes[i].xyz, center) + frustumPlanes[i].w < -radius)
     return false;
 
     return true;

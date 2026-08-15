@@ -30,7 +30,7 @@ namespace kailux
             kVertexShaderPath,
             kFragmentShaderPath,
             make_pipeline_info(swapchain, context.getMaxUsableSampleCount()),
-            {}
+            kPushConstantRanges
             );
         return pass;
     }

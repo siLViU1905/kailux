@@ -1019,6 +1019,7 @@ namespace kailux
         mMainPass.bind(cmd);
         mMeshRegistry.bind(recorder.getCommandBuffer());
         frame.getMeshDescriptorSet().bind(mMainPass.getPipeline(), cmd);
+        mMainPass.push<uint32_t>(recorder.getCommandBuffer(), 0);
 
         recorder.drawIndexedIndirectCount(
             frame.getIndirectBuffer(),
@@ -1032,6 +1033,8 @@ namespace kailux
         const auto cmd = recorder.getCommandBuffer();
         mSkyboxPass.bind(cmd);
         frame.getSkyboxDescriptorSet().bind(mSkyboxPass.getPipeline(), cmd);
+        mSkyboxPass.push<uint32_t>(recorder.getCommandBuffer(), 0);
+
         auto cubeView = mMeshRegistry.view(mMeshRegistry.getBuiltins().cube);
         cmd.drawIndexed(
             cubeView.indexCount,
@@ -1048,14 +1051,16 @@ namespace kailux
         mGizmoPass.bind(cmd);
         mGizmoRegistry.bind(cmd);
         frame.getGizmoDescriptorSet().bind(mGizmoPass.getPipeline(), cmd);
+
         auto view = mScene.getEntityRegistry().view<GizmoComponent, TransformComponent>();
         view.each([&](const auto& component, const auto& transform)
         {
             auto gizmoView = mGizmoRegistry.view(component.handle);
 
-            GraphicsPassesPushConstants::Gizmo pc{
+            const GraphicsPassesPushConstants::Gizmo pc{
                 glm::vec4(transform.transform.position, component.scale),
-                component.color
+                component.color,
+                0
             };
 
             mGizmoPass.push(cmd, pc);

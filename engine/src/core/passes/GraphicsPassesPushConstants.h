@@ -15,6 +15,7 @@ namespace kailux
         {
             glm::vec4 positionAndScale{};
             glm::vec4 color{};
+            uint32_t  cameraIdx{};
         };
     };
 }

@@ -19,12 +19,23 @@ layout (location = 9) out flat uint fragIdx;
 layout (location = 10) out vec2 fragTexCoord;
 layout (location = 11) out vec4 fragTangent;
 
-layout (set = 0, binding = 0) uniform Camera
+struct CameraData
 {
     mat4 projection;
     mat4 view;
     vec4 positionAndExposure;
-} camera;
+};
+
+const uint kMaxCameraViews = 4;
+layout(set=0, binding=0) uniform Camera
+{
+    CameraData cameras[kMaxCameraViews];
+};
+
+layout (push_constant) uniform CameraIndex
+{
+    uint cameraIdx;
+};
 
 struct MeshMaterialData
 {
@@ -67,6 +78,8 @@ void main()
 
     fragNormal = normalize(mat3(model) * aNormal);
     fragTangent = vec4(normalize(mat3(model) * aTangent.xyz), aTangent.w);
+
+    CameraData camera = cameras[cameraIdx];
     viewPos = camera.positionAndExposure.xyz;
     fragExposure = camera.positionAndExposure.w;
 
