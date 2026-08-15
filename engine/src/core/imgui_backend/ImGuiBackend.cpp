@@ -13,6 +13,7 @@ namespace kailux
 
     ImGuiBackend::ImGuiBackend(ImGuiBackend &&other) noexcept : p_Context(other.p_Context),
                                                                 p_IO(other.p_IO),
+                                                                mColorAttachmentFormat(other.mColorAttachmentFormat),
                                                                 mDescriptorPool(std::move(other.mDescriptorPool))
     {
         other.p_Context = nullptr;
@@ -25,6 +26,7 @@ namespace kailux
         {
             p_Context = other.p_Context;
             p_IO = other.p_IO;
+            mColorAttachmentFormat = other.mColorAttachmentFormat;
             mDescriptorPool = std::move(other.mDescriptorPool);
 
             other.p_Context = nullptr;
@@ -66,6 +68,12 @@ namespace kailux
         log::console.debug("imgui backend: style applied");
 
         return imguiBackend;
+    }
+
+    void ImGuiBackend::updatePlatform()
+    {
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault();
     }
 
     void ImGuiBackend::beginFrame()
@@ -147,6 +155,7 @@ namespace kailux
 
         p_IO = &ImGui::GetIO();
         p_IO->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+        p_IO->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
         p_IO->IniFilename = "assets/ini/imgui.ini";
     }
@@ -177,10 +186,8 @@ namespace kailux
                 VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
         initInfo.PipelineInfoMain.PipelineRenderingCreateInfo.colorAttachmentCount = 1;
 
-        auto colorFormat = swapchain.getFormat();
-        initInfo.PipelineInfoMain.PipelineRenderingCreateInfo.pColorAttachmentFormats = reinterpret_cast<const VkFormat
-            *>(&colorFormat);
-        auto depthFormat = swapchain.getDepthFormat();
+        mColorAttachmentFormat = static_cast<VkFormat>(swapchain.getFormat());
+        initInfo.PipelineInfoMain.PipelineRenderingCreateInfo.pColorAttachmentFormats = &mColorAttachmentFormat;
         initInfo.PipelineInfoMain.PipelineRenderingCreateInfo.depthAttachmentFormat = VK_FORMAT_UNDEFINED;
 
         if (!ImGui_ImplVulkan_Init(&initInfo))

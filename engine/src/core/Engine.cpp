@@ -571,7 +571,7 @@ namespace kailux
 
             transitionForPickerAndPostProcess(frame, recorder);
 
-            std::array imguiOverlay{
+            const std::array imguiOverlay{
                 ColorAttachmentInfo
                 (mSwapchain.getImageView(acquired->imageIndex),
                  {},
@@ -600,6 +600,8 @@ namespace kailux
         }
 
         submit(mFrames[mCurrentFrame], acquired->imageAvailableSemaphore, renderFinishedSemaphore);
+
+        mImGuiBackend.updatePlatform();
 
         if (!mSwapchain.present(mContext, acquired->imageIndex, renderFinishedSemaphore))
         {
