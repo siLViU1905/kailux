@@ -66,21 +66,16 @@ namespace kailux
 
     void EditorLayer::addPanels(ImTextureID directoryTextureId, ImTextureID fileTextureId)
     {
-        auto& viewportPanel = emplacePanel<ViewportPanel>();
+        auto &viewportPanel = emplacePanel<ViewportPanel>(kViewportPanelName) ;
         auto& menuPanel = emplacePanel<MenuPanel>();
-        auto &hierarchyPanel = emplacePanel<HierarchyPanel>() = {
-                                   kHierarchyPanelName,
-                                   kPanelsBackgroundColor
-                               };
-        auto &entityEditorPanel = emplacePanel<EntityEditorPanel>() = {
-                                      kEntityEditorName,
-                                      kPanelsBackgroundColor
-                                  };
-        auto &projectPanel = emplacePanel<ProjectPanel>() = {
-                                 kProjectPanelName,
-                                 kPanelsBackgroundColor
-                             };
-        auto& simulationPanel = emplacePanel<SimulationPanel>();
+        auto &hierarchyPanel = emplacePanel<HierarchyPanel>(
+            kHierarchyPanelName,
+            kPanelsBackgroundColor);
+        auto &entityEditorPanel = emplacePanel<EntityEditorPanel>(kEntityEditorName,
+                                                                  kPanelsBackgroundColor);
+        auto &projectPanel = emplacePanel<ProjectPanel>(kProjectPanelName,
+                                                        kPanelsBackgroundColor);
+        auto &simulationPanel = emplacePanel<SimulationPanel>(kSimulationPanelName);
         simulationPanel.close();
 
         hierarchyPanel.setOnEntitySelected([&entityEditorPanel](entt::entity entity, const Scene &scene)

@@ -7,7 +7,7 @@ namespace kailux
     {
     public:
         Panel();
-        Panel(std::string_view name, ImVec4 backgroundColor, bool open = true);
+        Panel(std::string_view name, ImVec4 backgroundColor, bool open = true, bool focused = false);
         virtual ~Panel() = default;
 
         virtual void render(Scene& scene) = 0;
@@ -20,10 +20,12 @@ namespace kailux
         void toggle();
 
         bool isOpen() const;
+        bool isFocused() const;
 
     protected:
         std::string  mName;
-        ImVec4       mBackgroundColor;
-        bool         mOpen;
+        ImVec4       mBackgroundColor{};
+        bool         mOpen{true};
+        bool         mFocused{};
     };
 }

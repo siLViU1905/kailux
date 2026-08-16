@@ -104,6 +104,9 @@ namespace kailux::details
     constexpr uint32_t kMaxMaterials{kMaxMeshes};
     constexpr uint32_t kMaxPointLights{16};
     constexpr uint32_t kMaxCameras{4};
+
+    constexpr uint32_t kSceneCameraIndex{0};
+    constexpr uint32_t kSimulationCameraIndex{1};
 }
 
 namespace kailux::details

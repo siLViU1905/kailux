@@ -7,6 +7,7 @@ namespace kailux
     {
     public:
         ViewportPanel();
+        ViewportPanel(std::string_view name);
 
         void render(Scene &scene) override;
 

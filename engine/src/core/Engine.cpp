@@ -52,6 +52,7 @@ namespace kailux
                                               mSceneTextureIds(other.mSceneTextureIds),
                                               mSimulationTextureIds(other.mSimulationTextureIds),
                                               mScene(std::move(other.mScene)),
+                                              mControlledCamera(std::move(other.mControlledCamera)),
                                               mMainPass(std::move(other.mMainPass)),
                                               mSkyboxPass(std::move(other.mSkyboxPass)),
                                               mGizmoPass(std::move(other.mGizmoPass)),
@@ -88,6 +89,7 @@ namespace kailux
             mSceneTextureIds = other.mSceneTextureIds;
             mSimulationTextureIds = other.mSimulationTextureIds;
             mScene = std::move(other.mScene);
+            mControlledCamera = std::move(other.mControlledCamera);
             mMainPass = std::move(other.mMainPass);
             mSkyboxPass = std::move(other.mSkyboxPass);
             mGizmoPass = std::move(other.mGizmoPass);
@@ -135,9 +137,8 @@ namespace kailux
         engine.createFrameResources();
         engine.seedDefaultTextures();
         engine.createImGui(window);
-        engine.createScene();
+        engine.createScene(window);
         engine.createEditorTextureIds();
-        engine.createSceneEntities(window);
         engine.createAssetPipeline();
         engine.createPhysicsSystem();
         return engine;
@@ -150,12 +151,17 @@ namespace kailux
 
     CameraData Engine::getCameraData() const
     {
-        return buildCameraData(mScene.getMainCamera(), mSwapchain.getExtent());
+        return buildCameraData(mScene.getSceneCamera(), mSwapchain.getExtent());
     }
 
     void Engine::setSimulationViewActive(bool active)
     {
         mSimulationViewActive = active;
+    }
+
+    void Engine::setControlledCamera(entt::entity camera)
+    {
+        mControlledCamera = camera;
     }
 
     void Engine::waitIdle() const
@@ -219,12 +225,14 @@ namespace kailux
                 (window.getCursorMode() == CursorMode::Normal)
                                 ? window.setCursorMode(CursorMode::Disabled)
                                 : window.setCursorMode(CursorMode::Normal);
-                auto view = mScene.getEntityRegistry().view<CameraComponent>();
-                for (auto entity: view)
-                {
-                    auto &focused = view.get<CameraComponent>(entity).focused;
-                    focused = !focused;
-                }
+                const auto controlled{
+                    mControlledCamera == entt::null
+                        ? mScene.getSceneCamera()
+                        : mControlledCamera
+                };
+
+                if (auto* camera = mScene.getEntityRegistry().try_get<CameraComponent>(controlled))
+                    camera->focused = !camera->focused;
             }
         }
     }
@@ -398,22 +406,9 @@ namespace kailux
         mComputeCuller = ComputeCuller::create(mContext, details::kFramesInFlight);
     }
 
-    void Engine::createScene()
+    void Engine::createScene(const Window &window)
     {
-        mScene = Scene::create("MainScene");
-    }
-
-    void Engine::createSceneEntities(const Window &window)
-    {
-        int windowWidth, windowHeight;
-        window.getFramebufferSize(windowWidth, windowHeight);
-        auto cameraEntity = mScene.createCameraEntity(
-            "MainCamera",
-            true,
-            windowWidth,
-            windowHeight
-        );
-        mScene.setMainCamera(cameraEntity);
+        mScene = Scene::create("MainScene", window);
     }
 
     void Engine::submit(const FrameData &frame, vk::Semaphore imageAvailableSemaphore,
@@ -671,7 +666,7 @@ namespace kailux
                                mScene.getName(), path.generic_string()));
     }
 
-    void Engine::loadScene(const std::filesystem::path &path, int windowWidth, int windowHeight)
+    void Engine::loadScene(const std::filesystem::path &path, const Window &window)
     {
         auto t{Clock::now()};
         const auto document = SceneSerializer::read_file(path);
@@ -682,9 +677,11 @@ namespace kailux
             return;
         }
 
-        Scene scene = Scene::create(document->meta.name);
+        Scene scene = Scene::create(document->meta.name, window);
 
-        auto requests = SceneInstantiator::apply(scene, *document, {mGizmoRegistry, windowWidth, windowHeight});
+        int width, height;
+        window.getFramebufferSize(width, height);
+        auto requests = SceneInstantiator::apply(scene, *document, {mGizmoRegistry, width, height});
 
         if (!requests)
         {
@@ -789,7 +786,7 @@ namespace kailux
         mComputeCuller.bind(cmd);
         frame.getCullerDescriptorSet().bind(mComputeCuller.getPipeline(), cmd, vk::PipelineBindPoint::eCompute);
 
-        const auto camera{buildCameraData(mScene.getMainCamera(), mSwapchain.getExtent())};
+        const auto camera{buildCameraData(mScene.getSceneCamera(), mSwapchain.getExtent())};
         const auto planes{Camera::get_frustum_planes(camera.projection, camera.view)};
         mComputeCuller.push<ComputePassesPushConstants::CameraFrustum>(cmd, {planes, totalObjects});
 
@@ -1121,7 +1118,6 @@ namespace kailux
     CameraData Engine::buildCameraData(entt::entity entity, vk::Extent2D extent) const
     {
         const auto& camera{mScene.getEntityRegistry().get<CameraComponent>(entity)};
-        const float aspect{static_cast<float>(extent.width) / static_cast<float>(extent.height)};
         return {
             Camera::get_projection(camera, static_cast<int>(extent.width), static_cast<int>(extent.height)),
             Camera::get_view(camera),
@@ -1143,12 +1139,16 @@ namespace kailux
 
         mScene.update();
 
-        auto view = mScene.getEntityRegistry().view<CameraComponent>();
-        for (auto entity: view)
+        const auto controlled{
+            mControlledCamera == entt::null ?
+            mScene.getSceneCamera() :
+            mControlledCamera
+        };
+
+        if (auto* camera{mScene.getEntityRegistry().try_get<CameraComponent>(controlled)})
         {
-            auto &camera = view.get<CameraComponent>(entity);
-            Camera::update_movement(camera, window, deltaTime);
-            Camera::update_look_at(camera, window, deltaTime);
+            Camera::update_movement(*camera, window, deltaTime);
+            Camera::update_look_at(*camera, window, deltaTime);
         }
     }
 
@@ -1165,11 +1165,16 @@ namespace kailux
 
     void Engine::updateCameraBuffer(FrameData &frame) const
     {
-        const auto data{buildCameraData(mScene.getMainCamera(), mSwapchain.getExtent())};
+        std::array<CameraData, details::kMaxCameras> cameras{};
+        cameras[details::kSceneCameraIndex] =
+            buildCameraData(mScene.getSceneCamera(), mSwapchain.getExtent());
+        cameras[details::kSimulationCameraIndex] =
+            buildCameraData(mScene.getSimulationCamera(), mSwapchain.getExtent()/*mSimulationExtent*/);
+
         frame.getCameraBuffer().upload(
-            &data,
-            sizeof(CameraData)
-        );
+            cameras.data(),
+            sizeof(CameraData) * cameras.size()
+            );
     }
 
     void Engine::updateMeshDataBuffer(FrameData &frame) const

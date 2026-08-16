@@ -19,7 +19,8 @@ namespace kailux
     Scene::Scene(Scene &&other) noexcept : mName(std::move(other.mName)),
                                            mSavePath(std::move(other.mSavePath)),
                                            mEntityRegistry(std::move(other.mEntityRegistry)),
-                                           mMainCameraEntity(other.mMainCameraEntity),
+                                           mSceneCameraEntity(other.mSceneCameraEntity),
+                                           mSimulationCameraEntity(other.mSimulationCameraEntity),
                                            mSun(other.mSun),
                                            mMeshEntityNameCount(other.mMeshEntityNameCount),
                                            mLightEntityNameCount(other.mLightEntityNameCount)
@@ -33,7 +34,8 @@ namespace kailux
             mName = std::move(other.mName);
             mSavePath = std::move(other.mSavePath);
             mEntityRegistry = std::move(other.mEntityRegistry);
-            mMainCameraEntity = other.mMainCameraEntity;
+            mSceneCameraEntity = other.mSceneCameraEntity;
+            mSimulationCameraEntity = other.mSimulationCameraEntity;
             mSun = other.mSun;
             mMeshEntityNameCount = other.mMeshEntityNameCount;
             mLightEntityNameCount = other.mLightEntityNameCount;
@@ -41,11 +43,12 @@ namespace kailux
         return *this;
     }
 
-    Scene Scene::create(std::string_view name)
+    Scene Scene::create(std::string_view name, const Window &window)
     {
         Scene scene;
         scene.mName = name;
         scene.mSun = scene.createSunEntity({});
+        scene.createCameras(window);
         return scene;
     }
 
@@ -54,8 +57,11 @@ namespace kailux
         updateTransforms();
     }
 
-    entt::entity Scene::createCameraEntity(std::string_view name, bool isPrimary, int width, int height)
+    std::optional<entt::entity> Scene::createCameraEntity(std::string_view name, bool isPrimary, int width, int height)
     {
+        if (mEntityRegistry.view<CameraComponent>().size() >= details::kMaxCameras)
+            return std::nullopt;
+
         auto entity = createEntity(name);
         attachCamera(entity, {isPrimary});
         return entity;
@@ -124,14 +130,19 @@ namespace kailux
         return mEntityRegistry;
     }
 
-    entt::entity Scene::getMainCamera() const
+    entt::entity Scene::getSceneCamera() const
     {
-        return mMainCameraEntity;
+        return mSceneCameraEntity;
+    }
+
+    entt::entity Scene::getSimulationCamera() const
+    {
+        return mSimulationCameraEntity;
     }
 
     void Scene::setMainCamera(entt::entity camera)
     {
-        mMainCameraEntity = camera;
+        mSceneCameraEntity = camera;
     }
 
     entt::entity Scene::getSun() const
@@ -330,6 +341,25 @@ namespace kailux
             data
         );
         return entity;
+    }
+
+    void Scene::createCameras(const Window &window)
+    {
+        int width, height;
+        window.getFramebufferSize(width, height);
+        mSceneCameraEntity = *createCameraEntity(
+            "SceneCamera",
+            true,
+            width,
+            height
+        );
+
+        mSimulationCameraEntity = *createCameraEntity(
+            "SimulationCamera",
+            false,
+            width,
+            height
+        );
     }
 
     void Scene::updateTransforms()

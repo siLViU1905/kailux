@@ -7,10 +7,16 @@ namespace kailux
     {
     }
 
+    ViewportPanel::ViewportPanel(std::string_view name) : Panel(name, {}), mSceneTextureId(0), mSimulationState(SimulationState::Paused)
+    {
+    }
+
     void ViewportPanel::render(Scene &scene)
     {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-        if (ImGui::Begin("Viewport"))
+        const bool visible{ImGui::Begin(mName.c_str(), &mOpen)};
+        mFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+        if (visible)
         {
             auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
             auto viewportOffset = ImGui::GetWindowPos();

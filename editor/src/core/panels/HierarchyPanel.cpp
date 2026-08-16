@@ -31,7 +31,9 @@ namespace kailux
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, mBackgroundColor);
 
-        if (ImGui::Begin(mName.c_str(), &mOpen))
+        const bool visible{ImGui::Begin(mName.c_str(), &mOpen)};
+        mFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+        if (visible)
         {
             auto &registry = scene.getEntityRegistry();
 
@@ -200,7 +202,8 @@ namespace kailux
     {
         return scene.getEntityRegistry().valid(entity) &&
                entity != scene.getSun() &&
-               entity != scene.getMainCamera();
+               entity != scene.getSceneCamera() &&
+               entity != scene.getSimulationCamera();
     }
 
     void HierarchyPanel::onEntityDelete(Scene &scene, entt::entity entity)

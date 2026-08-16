@@ -21,11 +21,11 @@ namespace kailux
     public:
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(Scene)
 
-        static Scene create(std::string_view name);
+        static Scene create(std::string_view name, const Window &window);
 
         void update();
 
-        entt::entity createCameraEntity(std::string_view name, bool isPrimary, int width, int height);
+        std::optional<entt::entity> createCameraEntity(std::string_view name, bool isPrimary, int width, int height);
 
         std::optional<entt::entity> createMeshEntity(
             std::string_view name,
@@ -41,7 +41,8 @@ namespace kailux
 
         entt::registry&       getEntityRegistry();
         const entt::registry& getEntityRegistry() const;
-        entt::entity          getMainCamera() const;
+        entt::entity          getSceneCamera() const;
+        entt::entity          getSimulationCamera() const;
         void                  setMainCamera(entt::entity camera);
         entt::entity          getSun() const;
         SceneData             getData() const;
@@ -81,6 +82,7 @@ namespace kailux
         entt::entity createEntity(std::string_view name);
         using        SunData = DirectionalLightData;
         entt::entity createSunEntity(const SunData& data);
+        void         createCameras(const Window& window);
 
         LightsData getLightData() const;
 
@@ -91,7 +93,8 @@ namespace kailux
         std::filesystem::path mSavePath{};
 
         entt::registry mEntityRegistry;
-        entt::entity   mMainCameraEntity{entt::null};
+        entt::entity   mSceneCameraEntity{entt::null};
+        entt::entity   mSimulationCameraEntity{entt::null};
         entt::entity   mSun{entt::null};
 
         uint32_t mMeshEntityNameCount{};

@@ -44,6 +44,7 @@ namespace kailux
         CameraData getCameraData() const;
 
         void setSimulationViewActive(bool active);
+        void setControlledCamera(entt::entity camera);
 
         void waitIdle() const;
 
@@ -69,7 +70,7 @@ namespace kailux
         static constexpr std::string_view kSceneFileExtension = "klx";
         const Scene& getScene() const;
         void         saveScene(const std::filesystem::path &path);
-        void         loadScene(const std::filesystem::path &path, int windowWidth, int windowHeight);
+        void         loadScene(const std::filesystem::path &path, const Window &window);
 
         using OnLog = std::move_only_function<void(std::string_view)>;
         void setOnInfoLog(OnLog&& callback);
@@ -117,8 +118,7 @@ namespace kailux
         void createComputePicker();
         void createComputeCuller();
 
-        void createScene();
-        void createSceneEntities(const Window &window);
+        void createScene(const Window &window);
 
         void                                        submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
         void                                        recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const;
@@ -175,6 +175,7 @@ namespace kailux
         std::array<ImTextureID, details::kFramesInFlight>  mSimulationTextureIds{};
 
         Scene                                      mScene;
+        entt::entity                               mControlledCamera{entt::null};
         OnEditorRender                             mOnEditorRender;
 
         bool                                       mSimulationViewActive{};

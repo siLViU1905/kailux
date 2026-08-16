@@ -5,6 +5,9 @@ namespace kailux
 {
     void Camera::update_movement(CameraComponent& component, const Window& window, float deltaTime)
     {
+        if (!component.focused)
+            return;
+        
         component.right = glm::normalize(glm::cross(component.forward, component.up));
 
         float velocity = component.speed * deltaTime;

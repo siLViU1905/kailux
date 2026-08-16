@@ -6,6 +6,8 @@ namespace kailux
     class SimulationPanel final : public Panel
     {
     public:
+        SimulationPanel(std::string_view name);
+
         void render(Scene& scene) override;
 
         void setTextureId(ImTextureID id);

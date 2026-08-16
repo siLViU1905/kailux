@@ -188,7 +188,7 @@ namespace kailux
     {
         if (mLoadSceneDialog.poll())
             if (auto path = mLoadSceneDialog.tryPopPath())
-                mEngine.loadScene(*path, mWindow.getWidth(), mWindow.getHeight());
+                mEngine.loadScene(*path, mWindow);
 
         if (mSaveSceneDialog.poll())
             if (auto path = mSaveSceneDialog.tryPopPath())
@@ -222,13 +222,21 @@ namespace kailux
 
     void Application::updateEngine(float deltaTime, const Window& window)
     {
+        const auto& simulationPanel{mEditor.getLayer<EditorLayer>().getPanel<SimulationPanel>()};
+        mEngine.setSimulationViewActive(simulationPanel.isOpen());
+        mEngine.setControlledCamera(
+            simulationPanel.isOpen() && simulationPanel.isFocused()
+                ? mEngine.getScene().getSimulationCamera()
+                : mEngine.getScene().getSceneCamera()
+        );
+
         mEngine.update(deltaTime, window);
+
         auto sceneViewportMousePos = mEditor.getLayer<EditorLayer>().getPanel<ViewportPanel>().getScaledMousePos();
         auto outlineColor = mEditor.getLayer<EditorLayer>().getPanel<MenuPanel>().getOutlineColor();
         auto selectedEntity = static_cast<uint32_t>(mEditor.getLayer<EditorLayer>().getPanel<HierarchyPanel>().getSelectedEntity());
         mEngine.setOutlineInfo(outlineColor, selectedEntity);
         mEngine.setSceneViewportMousePos(sceneViewportMousePos.x, sceneViewportMousePos.y);
-        mEngine.setSimulationViewActive(mEditor.getLayer<EditorLayer>().getPanel<SimulationPanel>().isOpen());
     }
 
     void Application::dispatchEvent(const Event &event)

@@ -28,7 +28,7 @@ namespace kailux
         if (scene.getSun() != entt::null && registry.all_of<SunData>(scene.getSun()))
             document.sun = registry.get<SunData>(scene.getSun());
  
-        document.mainCamera = details::to_id(scene.getMainCamera());
+        document.mainCamera = details::to_id(scene.getSceneCamera());
  
         for (auto entity : registry.view<TagComponent>())
         {
