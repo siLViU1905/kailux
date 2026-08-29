@@ -11,18 +11,18 @@ namespace kailux
         component.right = glm::normalize(glm::cross(component.forward, component.up));
 
         float velocity = component.speed * deltaTime;
-        if (window.isKeyPressed(Key::W))
+        if (window.getInputSource().isKeyPressed(Key::W))
             component.position += component.forward * velocity;
-        if (window.isKeyPressed(Key::S))
+        if (window.getInputSource().isKeyPressed(Key::S))
             component.position -= component.forward * velocity;
-        if (window.isKeyPressed(Key::A))
+        if (window.getInputSource().isKeyPressed(Key::A))
             component.position -= component.right * velocity;
-        if (window.isKeyPressed(Key::D))
+        if (window.getInputSource().isKeyPressed(Key::D))
             component.position += component.right * velocity;
 
-        if (window.isKeyPressed(Key::Space))
+        if (window.getInputSource().isKeyPressed(Key::Space))
             component.position += glm::vec3(0.f, 1.f, 0.f) * velocity;
-        if (window.isKeyPressed(Key::LeftControl))
+        if (window.getInputSource().isKeyPressed(Key::LeftControl))
             component.position -= glm::vec3(0.f, 1.f, 0.f) * velocity;
     }
 
@@ -31,14 +31,13 @@ namespace kailux
         if (!component.focused)
             return;
 
-        double xpos, ypos;
-        window.getMousePos(xpos, ypos);
+        const auto mousePos{window.getInputSource().getMousePos()};
     
-        float xOffset = static_cast<float>(xpos - component.lastMousePosX);
-        float yOffset = static_cast<float>(component.lastMousePosY - ypos);
+        float xOffset = static_cast<float>(mousePos.x - component.lastMousePosX);
+        float yOffset = static_cast<float>(component.lastMousePosY - mousePos.y);
     
-        component.lastMousePosX = xpos;
-        component.lastMousePosY = ypos;
+        component.lastMousePosX = mousePos.x;
+        component.lastMousePosY = mousePos.y;
 
         component.yaw += xOffset * component.sensitivity * deltaTime;
         component.pitch += yOffset * component.sensitivity * deltaTime;

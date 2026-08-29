@@ -22,11 +22,11 @@ namespace kailux
 
     void Application::run()
     {
-        while (mWindow.isOpen())
+        while (mWindow.getInputSource().isOpen())
         {
             mClock.tick();
             mWindow.pollEvents();
-            if (mWindow.isMinimized())
+            if (mWindow.getInputSource().isMinimized())
             {
                 while (mWindow.getEvent()) {}
                 mWindow.waitForEvents();

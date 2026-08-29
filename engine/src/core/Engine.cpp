@@ -53,6 +53,7 @@ namespace kailux
                                               mSimulationTextureIds(other.mSimulationTextureIds),
                                               mScene(std::move(other.mScene)),
                                               mControlledCamera(other.mControlledCamera),
+                                              mMouseLookActive(other.mMouseLookActive),
                                               mSimulationView(std::move(other.mSimulationView)),
                                               mRequestedSimulationExtent(other.mRequestedSimulationExtent),
                                               mSimulationViewActive(other.mSimulationViewActive),
@@ -93,6 +94,7 @@ namespace kailux
             mSimulationTextureIds = other.mSimulationTextureIds;
             mScene = std::move(other.mScene);
             mControlledCamera = other.mControlledCamera;
+            mMouseLookActive = other.mMouseLookActive;
             mSimulationView = std::move(other.mSimulationView);
             mRequestedSimulationExtent = other.mRequestedSimulationExtent;
             mSimulationViewActive = other.mSimulationViewActive;
@@ -231,21 +233,15 @@ namespace kailux
     void Engine::onEvent(const Event &event, Window &window)
     {
         if (const auto* buttonPressed{std::get_if<ButtonPressed>(&event)})
-        {
             if (buttonPressed->button == MouseButton::Middle)
             {
-                (window.getCursorMode() == CursorMode::Normal)
-                                ? window.setCursorMode(CursorMode::Disabled)
-                                : window.setCursorMode(CursorMode::Normal);
-                const auto controlled{
-                    mControlledCamera == entt::null
-                        ? mScene.getSceneCamera()
-                        : mControlledCamera
-                };
-
-                if (auto* camera = mScene.getEntityRegistry().try_get<CameraComponent>(controlled))
-                    camera->focused = !camera->focused;
+                mMouseLookActive = !mMouseLookActive;
+                window.getInputSource().setCursorMode(mMouseLookActive ? CursorMode::Disabled : CursorMode::Normal);
             }
+        if (const auto* keyRelease{std::get_if<KeyReleased>(&event)})
+        {
+            mMouseLookActive = false;
+            window.getInputSource().setCursorMode(CursorMode::Normal);
         }
     }
 
@@ -705,9 +701,8 @@ namespace kailux
 
         Scene scene = Scene::create(document->meta.name, window);
 
-        int width, height;
-        window.getFramebufferSize(width, height);
-        auto requests = SceneInstantiator::apply(scene, *document, {mGizmoRegistry, width, height});
+        const auto fbSize{window.getInputSource().getFramebufferSize()};
+        auto requests = SceneInstantiator::apply(scene, *document, {mGizmoRegistry, fbSize.x, fbSize.y});
 
         if (!requests)
         {
@@ -1279,9 +1274,9 @@ namespace kailux
             mScene.getSceneCamera() :
             mControlledCamera
         };
-
         if (auto* camera{mScene.getEntityRegistry().try_get<CameraComponent>(controlled)})
         {
+            camera->focused = mMouseLookActive;
             Camera::update_movement(*camera, window, deltaTime);
             Camera::update_look_at(*camera, window, deltaTime);
         }

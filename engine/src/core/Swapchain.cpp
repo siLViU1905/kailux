@@ -127,16 +127,15 @@ namespace kailux
 
     void Swapchain::recreate(const Window &window, const Context &context, vk::SampleCountFlagBits sampleCount)
     {
-        int width = 0, height = 0;
-        window.getFramebufferSize(width, height);
+        auto fbSize{window.getInputSource().getFramebufferSize()};
 
-        if (static_cast<uint32_t>(width) == mExtent.width &&
-            static_cast<uint32_t>(height) == mExtent.height)
+        if (static_cast<uint32_t>(fbSize.x) == mExtent.width &&
+            static_cast<uint32_t>(fbSize.y) == mExtent.height)
             return;
 
-        while (width == 0 || height == 0)
+        while (fbSize.x == 0 || fbSize.y == 0)
         {
-            window.getFramebufferSize(width, height);
+            fbSize = window.getInputSource().getFramebufferSize();
             window.waitForEvents();
         }
 
@@ -267,12 +266,11 @@ namespace kailux
         if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
             return capabilities.currentExtent;
 
-        int width, height;
-        window.getFramebufferSize(width, height);
+        const auto fbSize{window.getInputSource().getFramebufferSize()};
 
         return {
-            std::clamp<uint32_t>(width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width),
-            std::clamp<uint32_t>(height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height)
+            std::clamp<uint32_t>(fbSize.x, capabilities.minImageExtent.width, capabilities.maxImageExtent.width),
+            std::clamp<uint32_t>(fbSize.y, capabilities.minImageExtent.height, capabilities.maxImageExtent.height)
         };
     }
 

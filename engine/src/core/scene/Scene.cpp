@@ -345,20 +345,19 @@ namespace kailux
 
     void Scene::createCameras(const Window &window)
     {
-        int width, height;
-        window.getFramebufferSize(width, height);
+        const auto fbSize{window.getInputSource().getFramebufferSize()};
         mSceneCameraEntity = *createCameraEntity(
             "SceneCamera",
             true,
-            width,
-            height
+            fbSize.x,
+            fbSize.y
         );
 
         mSimulationCameraEntity = *createCameraEntity(
             "SimulationCamera",
             false,
-            width,
-            height
+            fbSize.x,
+            fbSize.y
         );
     }
 

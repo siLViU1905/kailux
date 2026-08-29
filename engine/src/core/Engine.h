@@ -183,6 +183,7 @@ namespace kailux
 
         Scene                                      mScene;
         entt::entity                               mControlledCamera{entt::null};
+        bool                                       mMouseLookActive{};
         OnEditorRender                             mOnEditorRender;
 
         SimulationView                             mSimulationView;
