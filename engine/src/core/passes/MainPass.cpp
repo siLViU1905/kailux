@@ -37,7 +37,7 @@ namespace kailux
             context,
             swapchain,
             kVertexShaderPath,
-            kFragmentShaderPath,
+            kNoIdFragmentShaderPath,
             make_no_id_pipeline_info(swapchain, context.getMaxUsableSampleCount()),
             kPushConstantRanges
             );
