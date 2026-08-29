@@ -17,17 +17,9 @@ namespace kailux
 
         if (mVisible)
         {
-            const auto avail = ImGui::GetContentRegionAvail();
+            mExtent = ImGui::GetContentRegionAvail();
 
-            const auto size = (avail.x / avail.y > mAspectRatio)
-                ? ImVec2{avail.y * mAspectRatio, avail.y}
-                : ImVec2{avail.x, avail.x / mAspectRatio};
-
-            ImGui::SetCursorPos(ImVec2(
-                (avail.x - size.x) * 0.5f,
-                (avail.y - size.y) * 0.5f
-            ));
-            ImGui::Image(mTextureId, size);
+            ImGui::Image(mTextureId, mExtent);
         }
 
         ImGui::End();
@@ -39,9 +31,12 @@ namespace kailux
         mTextureId = id;
     }
 
-    void SimulationPanel::setAspectRatio(float ratio)
+    vk::Extent2D SimulationPanel::getExtent() const
     {
-        mAspectRatio = ratio;
+        return {
+            static_cast<uint32_t>(mExtent.x),
+            static_cast<uint32_t>(mExtent.y)
+        };
     }
 
     bool SimulationPanel::isVisible() const

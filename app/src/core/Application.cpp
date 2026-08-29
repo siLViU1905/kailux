@@ -215,15 +215,13 @@ namespace kailux
 
         auto& simulationPanel{mEditor.getLayer<EditorLayer>().getPanel<SimulationPanel>()};
         simulationPanel.setTextureId(mEngine.getSimulationTextureId());
-        simulationPanel.setAspectRatio(
-            static_cast<float>(mWindow.getWidth()) / static_cast<float>(mWindow.getHeight())
-        );
     }
 
     void Application::updateEngine(float deltaTime, const Window& window)
     {
         const auto& simulationPanel{mEditor.getLayer<EditorLayer>().getPanel<SimulationPanel>()};
         mEngine.setSimulationViewActive(simulationPanel.isOpen());
+        mEngine.setSimulationViewExtent(simulationPanel.getExtent());
         mEngine.setControlledCamera(
             simulationPanel.isOpen() && simulationPanel.isFocused()
                 ? mEngine.getScene().getSimulationCamera()
@@ -232,9 +230,9 @@ namespace kailux
 
         mEngine.update(deltaTime, window);
 
-        auto sceneViewportMousePos = mEditor.getLayer<EditorLayer>().getPanel<ViewportPanel>().getScaledMousePos();
-        auto outlineColor = mEditor.getLayer<EditorLayer>().getPanel<MenuPanel>().getOutlineColor();
-        auto selectedEntity = static_cast<uint32_t>(mEditor.getLayer<EditorLayer>().getPanel<HierarchyPanel>().getSelectedEntity());
+        const auto sceneViewportMousePos = mEditor.getLayer<EditorLayer>().getPanel<ViewportPanel>().getScaledMousePos();
+        const auto outlineColor = mEditor.getLayer<EditorLayer>().getPanel<MenuPanel>().getOutlineColor();
+        const auto selectedEntity = static_cast<uint32_t>(mEditor.getLayer<EditorLayer>().getPanel<HierarchyPanel>().getSelectedEntity());
         mEngine.setOutlineInfo(outlineColor, selectedEntity);
         mEngine.setSceneViewportMousePos(sceneViewportMousePos.x, sceneViewportMousePos.y);
     }

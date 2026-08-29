@@ -16,7 +16,7 @@ namespace kailux
 
     void MenuPanel::render(Scene &scene)
     {
-        const bool visible{ImGui::BeginMenuBar()};
+        const bool visible{ImGui::BeginMainMenuBar()};
         mFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
         if (visible)
         {

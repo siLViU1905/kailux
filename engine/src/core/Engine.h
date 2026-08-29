@@ -24,6 +24,7 @@
 #include "utilities/Queue.h"
 #include "utilities/ThreadDispatcher.h"
 #include "DeferredResourceEraser.h"
+#include "SimulationView.h"
 #include "components/gpu/CameraData.h"
 #include "gizmo/GizmoRegistry.h"
 #include "passes/GizmoPass.h"
@@ -43,6 +44,7 @@ namespace kailux
 
         CameraData getCameraData() const;
 
+        void setSimulationViewExtent(vk::Extent2D extent);
         void setSimulationViewActive(bool active);
         void setControlledCamera(entt::entity camera);
 
@@ -121,12 +123,13 @@ namespace kailux
         void createScene(const Window &window);
 
         void                                        submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
-        void                                        recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const;
-        void                                        recordSkybox(const FrameData &frame, const CommandRecorder &recorder) const;
+        void                                        recordMeshData(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex, bool writeIds) const;
+        void                                        recordSkybox(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex) const;
         void                                        recordGizmos(const FrameData &frame, const CommandRecorder &recorder) const;
         void                                        recordImGuiData(const FrameData& frame);
         void                                        recordPicker(const FrameData& frame, const CommandRecorder &recorder) const;
         void                                        recordOutline(const FrameData& frame, const CommandRecorder &recorder) const;
+        void                                        renderSimulationView(const FrameData &frame, CommandRecorder &recorder);
 
         CameraData buildCameraData(entt::entity entity, vk::Extent2D extent) const;
 
@@ -142,11 +145,15 @@ namespace kailux
 
         BodyHandle uploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo& data);
 
-        void executeCulling(const FrameData& frame, const CommandRecorder& recorder);
+        void executeCulling(const FrameData& frame, const CommandRecorder& recorder, entt::entity camera, vk::Extent2D extent);
+
+        void resizeSimulationView();
 
         static void copy_scene_to_simulation_texture(const FrameData& frame, const CommandRecorder& recorder);
+        static bool needs_resize(vk::Extent2D extentA, vk::Extent2D extentB);
 
         void transitionForMainPass(const FrameData& frame, const CommandRecorder& recorder) const;
+        void transitionForSimulationPass(const CommandRecorder &recorder) const;
         void transitionForGizmoPass(const FrameData& frame, const CommandRecorder& recorder) const;
         void transitionForOutlinePass(const FrameData& frame, const CommandRecorder& recorder, uint32_t imageIndex) const;
         void transitionForPickerAndPostProcess(const FrameData& frame, const CommandRecorder& recorder) const;
@@ -178,6 +185,8 @@ namespace kailux
         entt::entity                               mControlledCamera{entt::null};
         OnEditorRender                             mOnEditorRender;
 
+        SimulationView                             mSimulationView;
+        vk::Extent2D                               mRequestedSimulationExtent{};
         bool                                       mSimulationViewActive{};
 
         ComputePassesPushConstants::MouseCords     mSceneViewportMousePos;

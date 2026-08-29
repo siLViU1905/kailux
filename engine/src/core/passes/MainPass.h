@@ -16,6 +16,8 @@ namespace kailux
             pushImpl<kPushConstantRanges, Pcs...>(cmd, pcs...);
         }
 
+        void bind(vk::CommandBuffer cmd, bool writeIds = true) const;
+
     private:
         static constexpr std::string_view kVertexShaderPath = "shaders/vertex_shader.glsl";
         static constexpr std::string_view kFragmentShaderPath = "shaders/fragment_shader.glsl";
@@ -133,5 +135,13 @@ namespace kailux
 
     private:
         static PipelineInfo make_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits sampleCount);
+        static PipelineInfo make_no_id_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits sampleCount);
+
+        void createNoIdPipeline(const Context &context, const Swapchain &swapchain,
+                                      std::string_view vertShaderPath, std::string_view fragShaderPath,
+                                      const PipelineInfo &info,
+                                      std::span<const PushConstantRangeInfo> pushConstantRanges);
+
+        Pipeline mNoIdPipeline;
     };
 }

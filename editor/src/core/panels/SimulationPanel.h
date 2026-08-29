@@ -11,12 +11,14 @@ namespace kailux
         void render(Scene& scene) override;
 
         void setTextureId(ImTextureID id);
-        void setAspectRatio(float ratio);
+
+        vk::Extent2D getExtent() const;
+
         bool isVisible() const;
 
     private:
         ImTextureID mTextureId{};
-        float       mAspectRatio{};
+        ImVec2      mExtent{};
         bool        mVisible{};
     };
 }
