@@ -9,18 +9,18 @@ namespace kailux
     public:
         AssetBrowser();
 
-        void render();
+        void Render();
 
-        void setDirectoryTextureId(ImTextureID id);
-        void setFileTextureId(ImTextureID id);
+        void SetDirectoryTextureId(ImTextureID id);
+        void SetFileTextureId(ImTextureID id);
 
         static constexpr std::string_view s_DragDropPayloadType = "CONTENT_BROWSER_ITEM";
 
         using OnImport = std::move_only_function<void()>;
-        void setOnImportFiles(OnImport&& callback);
-        void setOnImportFolder(OnImport&& callback);
+        void SetOnImportFiles(OnImport&& callback);
+        void SetOnImportFolder(OnImport&& callback);
 
-        void import(std::string_view path) const;
+        void Import(std::string_view path) const;
 
     private:
         static constexpr float s_RelativeIconSize = 0.05f;

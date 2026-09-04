@@ -10,6 +10,6 @@ namespace kailux
         vk::DeviceSize capacity{};
         vk::DeviceSize cursor{};
 
-        vk::DeviceSize alloc(vk::DeviceSize size, vk::DeviceSize alignment = kDefaultAlignment);
+        vk::DeviceSize Alloc(vk::DeviceSize size, vk::DeviceSize alignment = kDefaultAlignment);
     };
 }

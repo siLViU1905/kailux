@@ -14,9 +14,9 @@ namespace kailux
             vk::raii::Sampler &&sampler
         );
 
-        vk::Image      getImage() const;
-        vk::ImageView  getImageView() const;
-        vk::Sampler    getSampler() const;
+        vk::Image      GetImage() const;
+        vk::ImageView  GetImageView() const;
+        vk::Sampler    GetSampler() const;
 
     private:
         vk::raii::Image        mImage;

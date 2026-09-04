@@ -11,9 +11,9 @@ namespace kailux
         static MainPass create(const Context& context, const Swapchain& swapchain, uint32_t maxFrames);
 
         template<typename... Pcs>
-        void push(vk::CommandBuffer cmd, const Pcs &... pcs) const
+        void Push(vk::CommandBuffer cmd, const Pcs &... pcs) const
         {
-            pushImpl<kPushConstantRanges, Pcs...>(cmd, pcs...);
+            PushImpl<kPushConstantRanges, Pcs...>(cmd, pcs...);
         }
 
         void bind(vk::CommandBuffer cmd, bool writeIds = true) const;
@@ -138,7 +138,7 @@ namespace kailux
         static PipelineInfo make_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits sampleCount);
         static PipelineInfo make_no_id_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits sampleCount);
 
-        void createNoIdPipeline(const Context &context, const Swapchain &swapchain,
+        void CreateNoIdPipeline(const Context &context, const Swapchain &swapchain,
                                       std::string_view vertShaderPath, std::string_view fragShaderPath,
                                       const PipelineInfo &info,
                                       std::span<const PushConstantRangeInfo> pushConstantRanges);

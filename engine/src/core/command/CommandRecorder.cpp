@@ -36,7 +36,7 @@ namespace kailux
         mCmd.end();
     }
 
-    void CommandRecorder::imageBarrier(const ImageBarrier &info) const
+    void CommandRecorder::ApplyImageBarrier(const ImageBarrier &info) const
     {
         vk::ImageMemoryBarrier2 imageBarrier{
             info.srcStage,
@@ -62,7 +62,7 @@ namespace kailux
         mCmd.pipelineBarrier2(depInfo);
     }
 
-    void CommandRecorder::bufferMemoryBarriers(std::span<const vk::BufferMemoryBarrier2> barriers) const
+    void CommandRecorder::BufferMemoryBarriers(std::span<const vk::BufferMemoryBarrier2> barriers) const
     {
         vk::DependencyInfo depInfo{};
         depInfo.setBufferMemoryBarriers(barriers);
@@ -70,7 +70,7 @@ namespace kailux
         mCmd.pipelineBarrier2(depInfo);
     }
 
-    void CommandRecorder::beginRendering(const RenderingInfo &info)
+    void CommandRecorder::BeginRendering(const RenderingInfo &info)
     {
         std::vector<vk::RenderingAttachmentInfo> vkColorAttachments;
         vkColorAttachments.reserve(info.colorAttachments.size());
@@ -128,11 +128,11 @@ namespace kailux
         mInRendering = true;
     }
 
-    void CommandRecorder::endRendering()
+    void CommandRecorder::EndRendering()
     {
         if (!mInRendering || mIsSecondary)
         {
-            log::console.warning("command recorder: endRendering() was called while the command was not rendering or from a secondary buffer");
+            log::console.Warning("command recorder: endRendering() was called while the command was not rendering or from a secondary buffer");
             return;
         }
 
@@ -140,19 +140,19 @@ namespace kailux
         mInRendering = false;
     }
 
-    void CommandRecorder::drawIndexedIndirectCount(const Buffer &indirectBuffer, const Buffer &countBuffer, uint32_t maxDrawCount) const
+    void CommandRecorder::DrawIndexedIndirectCount(const Buffer &indirectBuffer, const Buffer &countBuffer, uint32_t maxDrawCount) const
     {
         mCmd.drawIndexedIndirectCount(
-            indirectBuffer.getBuffer(),
+            indirectBuffer.GetBuffer(),
             {},
-            countBuffer.getBuffer(),
+            countBuffer.GetBuffer(),
             {},
             maxDrawCount,
             sizeof(vk::DrawIndexedIndirectCommand)
         );
     }
 
-    void CommandRecorder::setViewport(vk::Extent2D extent)
+    void CommandRecorder::SetViewport(vk::Extent2D extent)
     {
         vk::Viewport viewport{
             0.f,
@@ -166,13 +166,13 @@ namespace kailux
         mCmd.setViewport(0, viewport);
     }
 
-    void CommandRecorder::setScissor(vk::Extent2D extent)
+    void CommandRecorder::SetScissor(vk::Extent2D extent)
     {
         vk::Rect2D scissor{{0, 0}, extent};
         mCmd.setScissor(0, scissor);
     }
 
-    vk::CommandBuffer CommandRecorder::getCommandBuffer() const
+    vk::CommandBuffer CommandRecorder::GetCommandBuffer() const
     {
         return mCmd;
     }

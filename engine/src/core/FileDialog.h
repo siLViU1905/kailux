@@ -27,7 +27,7 @@ namespace kailux
 
         using Filters = std::vector<std::string>;
 
-        void open(
+        void Open(
             std::string_view title = kDefaultTitle,
             const Filters &filters = std::ranges::to<Filters>(kDefaultFilters),
             std::string_view defaultPath = ""
@@ -43,7 +43,7 @@ namespace kailux
                 mDiagHandle.emplace(title.data(), defaultPath.data());
         }
 
-        bool poll()
+        bool Poll()
         {
             if (mDiagHandle && mDiagHandle->ready())
             {
@@ -51,10 +51,10 @@ namespace kailux
                 {
                     auto result = mDiagHandle->result();
                     if (!result.empty())
-                        mPathsQueue.push(result);
+                        mPathsQueue.Push(result);
                 } else
                     for (const auto &path: mDiagHandle->result())
-                        mPathsQueue.push(clean_path(path));
+                        mPathsQueue.Push(clean_path(path));
 
                 mDiagHandle.reset();
                 return true;
@@ -63,9 +63,9 @@ namespace kailux
         }
 
         using PopPathResult = std::optional<std::string>;
-        PopPathResult tryPopPath()
+        PopPathResult TryPopPath()
         {
-            return mPathsQueue.tryPop();
+            return mPathsQueue.TryPop();
         }
 
     private:

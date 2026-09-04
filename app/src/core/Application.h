@@ -18,17 +18,17 @@ namespace kailux
     public:
         Application(const WindowInfo& windowInfo);
 
-        void run();
+        void Run();
 
     private:
-        void setCallbacks();
+        void SetCallbacks();
 
-        void pollDialogs();
+        void PollDialogs();
 
-        void updateEditor();
-        void updateEngine(float deltaTime, const Window& window);
+        void UpdateEditor();
+        void UpdateEngine(float deltaTime, const Window& window);
 
-        void dispatchEvent(const Event& event);
+        void DispatchEvent(const Event& event);
 
         Window           mWindow;
         Engine           mEngine;

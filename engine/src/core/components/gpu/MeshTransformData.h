@@ -15,7 +15,7 @@ namespace kailux
         glm::quat rotation = glm::identity<glm::quat>();
         glm::vec3 scale{1.f};
 
-        ModelMatrixType getModelMatrix() const
+        ModelMatrixType GetModelMatrix() const
         {
             return glm::translate(glm::mat4(1.f), position)
                    * glm::toMat4(rotation)

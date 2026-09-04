@@ -11,47 +11,47 @@ namespace kailux
     {
     }
 
-    void Panel::setName(std::string_view name)
+    void Panel::SetName(std::string_view name)
     {
         mName = name;
     }
 
-    void Panel::setBackgroundColor(ImVec4 backgroundColor)
+    void Panel::SetBackgroundColor(ImVec4 backgroundColor)
     {
         mBackgroundColor = backgroundColor;
     }
 
-    void Panel::open()
+    void Panel::Open()
     {
         mOpen = true;
     }
 
-    void Panel::close()
+    void Panel::Close()
     {
         mOpen = false;
     }
 
-    void Panel::toggle()
+    void Panel::Toggle()
     {
         mOpen = !mOpen;
     }
 
-    bool Panel::isOpen() const
+    bool Panel::IsOpen() const
     {
         return mOpen;
     }
 
-    bool Panel::isFocused() const
+    bool Panel::IsFocused() const
     {
         return mFocused;
     }
 
-    GLFWwindow * Panel::getPlatformWindow() const
+    GLFWwindow * Panel::GetPlatformWindow() const
     {
         return mPlatformWindow;
     }
 
-    bool Panel::consumeToggleMouseLook()
+    bool Panel::ConsumeToggleMouseLook()
     {
         return std::exchange(mToggleMouseLook, false);
     }

@@ -41,124 +41,124 @@ namespace kailux
         static Engine create(Window& window);
 
         using OnEditorRender = std::move_only_function<void(Scene&)>;
-        void setOnEditorRender(OnEditorRender&& callback);
+        void SetOnEditorRender(OnEditorRender&& callback);
 
-        CameraData getCameraData() const;
+        CameraData GetCameraData() const;
 
-        void setSimulationViewExtent(vk::Extent2D extent);
-        void setSimulationViewActive(bool active);
-        void setControlledCamera(entt::entity camera, InputSource source);
-        void toggleMouseLook();
+        void SetSimulationViewExtent(vk::Extent2D extent);
+        void SetSimulationViewActive(bool active);
+        void SetControlledCamera(entt::entity camera, InputSource source);
+        void ToggleMouseLook();
 
-        void waitIdle() const;
+        void WaitIdle() const;
 
-        Queue<AssetPipeline::PendingMeshData> &getPendingMeshDataQueue();
+        Queue<AssetPipeline::PendingMeshData> &GetPendingMeshDataQueue();
 
-        void unregisterMesh(MeshHandle handle, std::string_view path);
-        void unregisterMaterial(MaterialHandle handle);
+        void UnregisterMesh(MeshHandle handle, std::string_view path);
+        void UnregisterMaterial(MaterialHandle handle);
 
-        ImTextureID getAssetBrowserDirectoryTextureId() const;
-        ImTextureID getAssetBrowserFileTextureId() const;
-        ImTextureID getSceneTextureId() const;
-        ImTextureID getSimulationTextureId() const;
+        ImTextureID GetAssetBrowserDirectoryTextureId() const;
+        ImTextureID GetAssetBrowserFileTextureId() const;
+        ImTextureID GetSceneTextureId() const;
+        ImTextureID GetSimulationTextureId() const;
 
-        void onEvent(const Event& event, Window& window);
-        void update(float deltaTime);
-        void render(const Window &window);
+        void OnEvent(const Event& event, Window& window);
+        void Update(float deltaTime);
+        void Render(const Window &window);
 
         static bool is_mesh_type_supported(std::string_view path);
         static bool is_image_type_supported(std::string_view path);
 
-        bool isMeshCached(std::string_view path) const;
+        bool IsMeshCached(std::string_view path) const;
 
         static constexpr std::string_view kSceneFileExtension = "klx";
-        const Scene& getScene() const;
-        void         saveScene(const std::filesystem::path &path);
-        void         loadScene(const std::filesystem::path &path, const Window &window);
+        const Scene& GetScene() const;
+        void         SaveScene(const std::filesystem::path &path);
+        void         LoadScene(const std::filesystem::path &path, const Window &window);
 
         using OnLog = std::move_only_function<void(std::string_view)>;
-        void setOnInfoLog(OnLog&& callback);
-        void setOnWarningLog(OnLog&& callback);
-        void setOnErrorLog(OnLog&& callback);
+        void SetOnInfoLog(OnLog&& callback);
+        void SetOnWarningLog(OnLog&& callback);
+        void SetOnErrorLog(OnLog&& callback);
 
-        void setSceneViewportMousePos(uint32_t x, uint32_t y);
-        void setOutlineInfo(glm::vec3 color, uint32_t entity);
+        void SetSceneViewportMousePos(uint32_t x, uint32_t y);
+        void SetOutlineInfo(glm::vec3 color, uint32_t entity);
 
-        uint32_t getPickedEntity() const;
+        uint32_t GetPickedEntity() const;
 
-        void updateBodyType(BodyHandle handle, PhysicsBodyType type);
-        void updateBodyScale(BodyHandle handle, const glm::vec3& scale);
-        void setSimulationState(SimulationState state);
+        void UpdateBodyType(BodyHandle handle, PhysicsBodyType type);
+        void UpdateBodyScale(BodyHandle handle, const glm::vec3& scale);
+        void SetSimulationState(SimulationState state);
 
-        void addPhysicsToEntity(entt::entity entity, PhysicsCreationOptions options);
+        void AddPhysicsToEntity(entt::entity entity, PhysicsCreationOptions options);
 
-        void addLightEntity(LightType type);
+        void AddLightEntity(LightType type);
 
-        DeviceInfo getDeviceInfo() const;
+        DeviceInfo GetDeviceInfo() const;
 
     private:
         static constexpr std::string_view kDirectoryIconPath = "assets/icons/directory_icon.png";
         static constexpr std::string_view kFileIconPath = "assets/icons/file_icon.png";
 
-        void createRenderingContext(Window& window);
-        void createMainPass();
-        void createSkybox();
-        void createGizmoPass();
-        void createOutlinePass();
-        void createFrameResources();
-        void createTransferManager();
-        void createMeshRegistry();
-        void createTextureRegistry();
-        void createPhysicsRegistry();
-        void createGizmoRegistry();
-        void createAssetPipeline();
-        void createPhysicsSystem();
-        void createImGui(Window& window);
+        void CreateRenderingContext(Window& window);
+        void CreateMainPass();
+        void CreateSkybox();
+        void CreateGizmoPass();
+        void CreateOutlinePass();
+        void CreateFrameResources();
+        void CreateTransferManager();
+        void CreateMeshRegistry();
+        void CreateTextureRegistry();
+        void CreatePhysicsRegistry();
+        void CreateGizmoRegistry();
+        void CreateAssetPipeline();
+        void CreatePhysicsSystem();
+        void CreateImGui(Window& window);
 
-        void seedDefaultTextures();
+        void SeedDefaultTextures();
 
-        void createEditorTextureIds();
+        void CreateEditorTextureIds();
 
-        void createComputePicker();
-        void createComputeCuller();
+        void CreateComputePicker();
+        void CreateComputeCuller();
 
-        void createScene(const Window &window);
+        void CreateScene(const Window &window);
 
-        void                                        submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
-        void                                        recordMeshData(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex, bool writeIds) const;
-        void                                        recordSkybox(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex) const;
-        void                                        recordGizmos(const FrameData &frame, const CommandRecorder &recorder) const;
-        void                                        recordImGuiData(const FrameData& frame);
-        void                                        recordPicker(const FrameData& frame, const CommandRecorder &recorder) const;
-        void                                        recordOutline(const FrameData& frame, const CommandRecorder &recorder) const;
-        void                                        renderSimulationView(const FrameData &frame, CommandRecorder &recorder);
+        void                                        Submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
+        void                                        RecordMeshData(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex, bool writeIds) const;
+        void                                        RecordSkybox(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex) const;
+        void                                        RecordGizmos(const FrameData &frame, const CommandRecorder &recorder) const;
+        void                                        RecordImGuiData(const FrameData& frame);
+        void                                        RecordPicker(const FrameData& frame, const CommandRecorder &recorder) const;
+        void                                        RecordOutline(const FrameData& frame, const CommandRecorder &recorder) const;
+        void                                        RenderSimulationView(const FrameData &frame, CommandRecorder &recorder);
 
-        CameraData buildCameraData(entt::entity entity, vk::Extent2D extent) const;
+        CameraData BuildCameraData(entt::entity entity, vk::Extent2D extent) const;
 
-        void updateFrameBuffers(FrameData& frame, const CommandRecorder& recorder);
-        void updateCameraBuffer(FrameData& frame) const;
-        void updateMeshDataBuffer(FrameData& frame) const;
-        void updateMaterialBuffer(FrameData& frame) const;
+        void UpdateFrameBuffers(FrameData& frame, const CommandRecorder& recorder);
+        void UpdateCameraBuffer(FrameData& frame) const;
+        void UpdateMeshDataBuffer(FrameData& frame) const;
+        void UpdateMaterialBuffer(FrameData& frame) const;
 
-        void updateSceneBuffer(FrameData& frame) const;
-        void updateCullerBuffers(const FrameData& frame, const CommandRecorder &recorder);
+        void UpdateSceneBuffer(FrameData& frame) const;
+        void UpdateCullerBuffers(const FrameData& frame, const CommandRecorder &recorder);
 
-        void readOutputBuffers(const FrameData& frame);
+        void ReadOutputBuffers(const FrameData& frame);
 
-        void recreateSwapchainResources(const Window& window);
+        void RecreateSwapchainResources(const Window& window);
 
-        BodyHandle uploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo& data);
+        BodyHandle UploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo& data);
 
-        void executeCulling(const FrameData& frame, const CommandRecorder& recorder, entt::entity camera, vk::Extent2D extent);
+        void ExecuteCulling(const FrameData& frame, const CommandRecorder& recorder, entt::entity camera, vk::Extent2D extent);
 
-        void resizeSimulationView(vk::Extent2D extent);
+        void ResizeSimulationView(vk::Extent2D extent);
 
-        void transitionForMainPass(const FrameData& frame, const CommandRecorder& recorder) const;
-        void transitionForSimulationPass(const CommandRecorder &recorder) const;
-        void transitionForGizmoPass(const FrameData& frame, const CommandRecorder& recorder) const;
-        void transitionForOutlinePass(const FrameData& frame, const CommandRecorder& recorder, uint32_t imageIndex) const;
-        void transitionForPickerAndPostProcess(const FrameData& frame, const CommandRecorder& recorder) const;
-        void transitionForPresent(const CommandRecorder& recorder, uint32_t imageIndex) const;
+        void TransitionForMainPass(const FrameData& frame, const CommandRecorder& recorder) const;
+        void TransitionForSimulationPass(const CommandRecorder &recorder) const;
+        void TransitionForGizmoPass(const FrameData& frame, const CommandRecorder& recorder) const;
+        void TransitionForOutlinePass(const FrameData& frame, const CommandRecorder& recorder, uint32_t imageIndex) const;
+        void TransitionForPickerAndPostProcess(const FrameData& frame, const CommandRecorder& recorder) const;
+        void TransitionForPresent(const CommandRecorder& recorder, uint32_t imageIndex) const;
 
         Context                                    mContext;
         vk::SampleCountFlagBits                    mSampleCount;

@@ -50,23 +50,23 @@ namespace kailux
 
         static PhysicsRegistry create();
 
-        BodyHandle createBody(const PhysicsBodyInfo& info);
-        void       destroyBody(BodyHandle handle);
-        void       setBodyEnabled(BodyHandle handle, bool enabled = true);
-        bool       isBodyEnabled(BodyHandle handle) const;
-        void       setBodyType(BodyHandle handle, PhysicsBodyType type);
+        BodyHandle CreateBody(const PhysicsBodyInfo& info);
+        void       DestroyBody(BodyHandle handle);
+        void       SetBodyEnabled(BodyHandle handle, bool enabled = true);
+        bool       IsBodyEnabled(BodyHandle handle) const;
+        void       SetBodyType(BodyHandle handle, PhysicsBodyType type);
 
-        void      addForce(BodyHandle handle, const glm::vec3& force);
-        void      addImpulse(BodyHandle handle, const glm::vec3& impulse);
-        void      setLinearVelocity(BodyHandle handle, const glm::vec3& velocity);
-        glm::vec3 getLinearVelocity(BodyHandle handle) const;
+        void      AddForce(BodyHandle handle, const glm::vec3& force);
+        void      AddImpulse(BodyHandle handle, const glm::vec3& impulse);
+        void      SetLinearVelocity(BodyHandle handle, const glm::vec3& velocity);
+        glm::vec3 GetLinearVelocity(BodyHandle handle) const;
 
-        void setBodyTransform(BodyHandle handle, const glm::vec3& position, const glm::quat& rotation);
-        void getBodyTransform(BodyHandle handle, glm::vec3& outPosition, glm::quat& outRotation) const;
+        void SetBodyTransform(BodyHandle handle, const glm::vec3& position, const glm::quat& rotation);
+        void GetBodyTransform(BodyHandle handle, glm::vec3& outPosition, glm::quat& outRotation) const;
 
-        void updateBodyScale(BodyHandle handle, const glm::vec3& scale);
+        void UpdateBodyScale(BodyHandle handle, const glm::vec3& scale);
 
-        void update(float deltaTime);
+        void Update(float deltaTime);
 
     private:
         static constexpr uint32_t kAllocatorSize = 10 * 1024 * 1024;
@@ -80,9 +80,9 @@ namespace kailux
 
         static uint32_t pick_thread_count(uint32_t freeThreads);
 
-        void allocResources();
+        void AllocResources();
 
-        uint32_t acquireSlot();
+        uint32_t AcquireSlot();
 
         static JPH::ShapeRefC create_builtin_mesh_body(MeshType type, const MeshTransformData &transform);
         static JPH::ShapeRefC create_loaded_mesh_body(const PhysicsBodyInfo &info);

@@ -52,17 +52,17 @@ namespace kailux
         CommandRecorder(CommandRecorder&&) = delete;
         CommandRecorder& operator=(CommandRecorder&&) = delete;
 
-        void imageBarrier(const ImageBarrier& info) const;
-        void bufferMemoryBarriers(std::span<const vk::BufferMemoryBarrier2> barriers) const;
+        void ApplyImageBarrier(const ImageBarrier& info) const;
+        void BufferMemoryBarriers(std::span<const vk::BufferMemoryBarrier2> barriers) const;
 
-        void beginRendering(const RenderingInfo& info);
-        void endRendering();
-        void drawIndexedIndirectCount(const Buffer& indirectBuffer, const Buffer &countBuffer, uint32_t maxDrawCount) const;
+        void BeginRendering(const RenderingInfo& info);
+        void EndRendering();
+        void DrawIndexedIndirectCount(const Buffer& indirectBuffer, const Buffer &countBuffer, uint32_t maxDrawCount) const;
 
-        void setViewport(vk::Extent2D extent);
-        void setScissor(vk::Extent2D extent);
+        void SetViewport(vk::Extent2D extent);
+        void SetScissor(vk::Extent2D extent);
 
-        vk::CommandBuffer getCommandBuffer() const;
+        vk::CommandBuffer GetCommandBuffer() const;
 
     private:
         vk::CommandBuffer mCmd;

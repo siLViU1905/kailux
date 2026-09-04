@@ -14,7 +14,7 @@ namespace kailux
     {
     }
 
-    void MenuPanel::render(Scene &scene)
+    void MenuPanel::Render(Scene &scene)
     {
         const bool visible{ImGui::BeginMainMenuBar()};
         mFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
@@ -29,10 +29,10 @@ namespace kailux
                 {
                     mOnSceneOpen();
                 }
-                const std::string_view saveLabel{scene.getSavePath().empty() ? "Save*" : "Save"};
+                const std::string_view saveLabel{scene.GetSavePath().empty() ? "Save*" : "Save"};
                 if (ImGui::MenuItem(saveLabel.data(), "Ctrl+S"))
                 {
-                    mOnSceneSave(scene.getSavePath());
+                    mOnSceneSave(scene.GetSavePath());
                 }
                 ImGui::EndMenu();
             }
@@ -65,38 +65,38 @@ namespace kailux
             ImGui::EndMainMenuBar();
 
             if (mShowProfiler)
-                renderProfilerWindow();
+                RenderProfilerWindow();
             if (mShowDevicesInfo)
-                renderDeviceInfo();
+                RenderDeviceInfo();
         }
     }
 
-    void MenuPanel::setOnSceneOpen(OnSceneOpen &&callback)
+    void MenuPanel::SetOnSceneOpen(OnSceneOpen &&callback)
     {
         mOnSceneOpen = std::move(callback);
     }
 
-    void MenuPanel::setOnSceneSave(OnSceneSave &&callback)
+    void MenuPanel::SetOnSceneSave(OnSceneSave &&callback)
     {
         mOnSceneSave = std::move(callback);
     }
 
-    void MenuPanel::setOnViewMenu(OnViewMenu &&callback)
+    void MenuPanel::SetOnViewMenu(OnViewMenu &&callback)
     {
         mOnViewMenu = std::move(callback);
     }
 
-    const glm::vec3 &MenuPanel::getOutlineColor() const
+    const glm::vec3 &MenuPanel::GetOutlineColor() const
     {
         return mOutlineColor;
     }
 
-    void MenuPanel::setDeviceInfo(const DeviceInfo &info)
+    void MenuPanel::SetDeviceInfo(const DeviceInfo &info)
     {
         mDeviceInfo = info;
     }
 
-    void MenuPanel::renderProfilerWindow()
+    void MenuPanel::RenderProfilerWindow()
     {
         ImGui::Begin("Profiler", &mShowProfiler);
 
@@ -122,7 +122,7 @@ namespace kailux
         ImGui::End();
     }
 
-    void MenuPanel::renderDeviceInfo()
+    void MenuPanel::RenderDeviceInfo()
     {
         ImGui::Begin("Device", &mShowDevicesInfo);
 

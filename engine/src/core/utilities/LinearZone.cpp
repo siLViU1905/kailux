@@ -2,7 +2,7 @@
 
 namespace kailux
 {
-    vk::DeviceSize LinearZone::alloc(vk::DeviceSize size, vk::DeviceSize alignment)
+    vk::DeviceSize LinearZone::Alloc(vk::DeviceSize size, vk::DeviceSize alignment)
     {
         vk::DeviceSize aligned = ((cursor + alignment - 1) / alignment) * alignment;
         if (aligned + size > capacity)

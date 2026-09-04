@@ -15,12 +15,12 @@ namespace kailux
 
         static ImGuiBackend create(Window& window, const Context& context, const Swapchain& swapchain, vk::SampleCountFlagBits sampleCount);
 
-        void updatePlatform();
-        void beginFrame();
-        void endFrame();
-        void recordDrawData(vk::CommandBuffer cmd) const;
+        void UpdatePlatform();
+        void BeginFrame();
+        void EndFrame();
+        void RecordDrawData(vk::CommandBuffer cmd) const;
 
-        void shutdown();
+        void Shutdown();
 
         static ImTextureID get_texture_id_from_texture(const Texture &texture);
         static void        remove_texture(ImTextureID id);
@@ -28,10 +28,10 @@ namespace kailux
     private:
         static constexpr std::string_view kFontPath = "assets/fonts/JetBrainsMonoNL-Bold.ttf";
 
-        void createImGuiContext();
-        void createDescriptorPool(const Context& context);
-        void createImGuiVulkanContext(Window& window, const Context& context, const Swapchain& swapchain, vk::SampleCountFlagBits sampleCount);
-        void applyStyle();
+        void CreateImGuiContext();
+        void CreateDescriptorPool(const Context& context);
+        void CreateImGuiVulkanContext(Window& window, const Context& context, const Swapchain& swapchain, vk::SampleCountFlagBits sampleCount);
+        void ApplyStyle();
 
         ImGuiContext*            p_Context;
         ImGuiIO*                 p_IO;

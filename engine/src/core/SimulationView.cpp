@@ -57,32 +57,32 @@ namespace kailux
         return view;
     }
 
-    const Texture & SimulationView::getColorTexture() const
+    const Texture & SimulationView::GetColorTexture() const
     {
         return mColor;
     }
 
-    const Texture & SimulationView::getDepthTexture() const
+    const Texture & SimulationView::GetDepthTexture() const
     {
         return mDepth;
     }
 
-    const Texture & SimulationView::getResolvedTexture() const
+    const Texture & SimulationView::GetResolvedTexture() const
     {
         return mResolved;
     }
 
-    vk::Extent2D SimulationView::getExtent() const
+    vk::Extent2D SimulationView::GetExtent() const
     {
         return mExtent;
     }
 
-    ImTextureID SimulationView::getTextureId() const
+    ImTextureID SimulationView::GetTextureId() const
     {
         return mTextureId;
     }
 
-    void SimulationView::setTextureId(ImTextureID id)
+    void SimulationView::SetTextureId(ImTextureID id)
     {
         mTextureId = id;
     }

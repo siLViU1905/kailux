@@ -48,69 +48,69 @@ namespace kailux
 
     Context Context::create(Window &window)
     {
-        log::console.debug("context: creating");
+        log::console.Debug("context: creating");
         Context context;
 
-        context.createInstance();
-        log::console.debug("context: instance created");
+        context.CreateInstance();
+        log::console.Debug("context: instance created");
 
-        context.setupDebugMessenger();
-        log::console.debug("context: debug messenger created");
+        context.SetupDebugMessenger();
+        log::console.Debug("context: debug messenger created");
 
-        context.createSurface(window);
-        log::console.debug("context: surface created");
+        context.CreateSurface(window);
+        log::console.Debug("context: surface created");
 
-        context.pickPhysicalDevice();
-        log::console.debug("context: suitable physical device found");
+        context.PickPhysicalDevice();
+        log::console.Debug("context: suitable physical device found");
 
-        context.createLogicalDevice();
-        log::console.debug("context: logical device created");
+        context.CreateLogicalDevice();
+        log::console.Debug("context: logical device created");
 
-        context.createQueues();
-        log::console.debug("context: queues created");
+        context.CreateQueues();
+        log::console.Debug("context: queues created");
 
-        log::console.debug("context: transfer queue: dedicated={}, family={}",
-            context.hasDedicatedTransferQueue(), context.mTransferQueueFamilyIndex);
+        log::console.Debug("context: transfer queue: dedicated={}, family={}",
+            context.HasDedicatedTransferQueue(), context.mTransferQueueFamilyIndex);
 
         return context;
     }
 
-    vk::PhysicalDevice Context::getPhysicalDevice() const
+    vk::PhysicalDevice Context::GetPhysicalDevice() const
     {
         return *mPhysicalDevice;
     }
 
-    vk::Device Context::getDevice() const
+    vk::Device Context::GetDevice() const
     {
         return *mDevice;
     }
 
-    vk::SurfaceKHR Context::getSurface() const
+    vk::SurfaceKHR Context::GetSurface() const
     {
         return *mSurface;
     }
 
-    vk::Queue Context::getGraphicsQueue() const
+    vk::Queue Context::GetGraphicsQueue() const
     {
         return *mGraphicsQueue;
     }
 
-    vk::Queue Context::getTransferQueue() const
+    vk::Queue Context::GetTransferQueue() const
     {
         return *mTransferQueue;
     }
 
-    uint32_t Context::getGraphicsQueueFamilyIndex() const
+    uint32_t Context::GetGraphicsQueueFamilyIndex() const
     {
         return mGraphicsQueueFamilyIndex;
     }
 
-    uint32_t Context::getTransferQueueFamilyIndex() const
+    uint32_t Context::GetTransferQueueFamilyIndex() const
     {
         return mTransferQueueFamilyIndex;
     }
 
-    uint32_t Context::findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const
+    uint32_t Context::FindMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const
     {
         auto memProperties = mPhysicalDevice.getMemoryProperties();
 
@@ -122,7 +122,7 @@ namespace kailux
         throw std::runtime_error("Failed to find suitable memory type");
     }
 
-    vk::SampleCountFlagBits Context::getMaxUsableSampleCount() const
+    vk::SampleCountFlagBits Context::GetMaxUsableSampleCount() const
     {
         auto props = mPhysicalDevice.getProperties();
 
@@ -139,12 +139,12 @@ namespace kailux
         return vk::SampleCountFlagBits::e1;
     }
 
-    bool Context::hasDedicatedTransferQueue() const
+    bool Context::HasDedicatedTransferQueue() const
     {
         return mTransferQueueFamilyIndex != mGraphicsQueueFamilyIndex;
     }
 
-    DeviceInfo Context::getDeviceInfo() const
+    DeviceInfo Context::GetDeviceInfo() const
     {
         return extract_device_info(mPhysicalDevice);
     }
@@ -174,26 +174,26 @@ namespace kailux
         switch (severity)
         {
             case vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose:
-                log::console.debug("vulkan validation layer: type {} msg {}", typeStr, messageStr);
+                log::console.Debug("vulkan validation layer: type {} msg {}", typeStr, messageStr);
                 break;
             case vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo:
-                log::console.info("vulkan validation layer: type {} msg {}", typeStr, messageStr);
+                log::console.Info("vulkan validation layer: type {} msg {}", typeStr, messageStr);
                 break;
             case vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning:
-                log::console.warning("vulkan validation layer: type {} msg {}", typeStr, messageStr);
+                log::console.Warning("vulkan validation layer: type {} msg {}", typeStr, messageStr);
                 break;
             case vk::DebugUtilsMessageSeverityFlagBitsEXT::eError:
-                log::console.error("vulkan validation layer: type {} msg {}", typeStr, messageStr);
+                log::console.Error("vulkan validation layer: type {} msg {}", typeStr, messageStr);
                 break;
             default:
-                log::console.info("vulkan validation layer: type {} msg {}", typeStr, messageStr);
+                log::console.Info("vulkan validation layer: type {} msg {}", typeStr, messageStr);
                 break;
         }
 
         return VK_FALSE;
     }
 
-    void Context::createInstance()
+    void Context::CreateInstance()
     {
         constexpr vk::ApplicationInfo appInfo(
             "kailux",
@@ -243,7 +243,7 @@ namespace kailux
         mInstance = vk::raii::Instance(mContext, createInfo);
     }
 
-    void Context::setupDebugMessenger()
+    void Context::SetupDebugMessenger()
     {
         if constexpr (!kEnableValidationLayers)
             return;
@@ -266,17 +266,17 @@ namespace kailux
         mDebugMessenger = mInstance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT);
     }
 
-    void Context::createSurface(Window &window)
+    void Context::CreateSurface(Window &window)
     {
         VkSurfaceKHR surface;
 
-        if (glfwCreateWindowSurface(*mInstance, window.getGLFWWindow(), nullptr, &surface))
+        if (glfwCreateWindowSurface(*mInstance, window.GetGlfwWindow(), nullptr, &surface))
             throw std::runtime_error("failed to create window surface");
 
         mSurface = vk::raii::SurfaceKHR(mInstance, surface);
     }
 
-    void Context::pickPhysicalDevice()
+    void Context::PickPhysicalDevice()
     {
         auto devices = mInstance.enumeratePhysicalDevices();
         if (devices.empty())
@@ -291,7 +291,7 @@ namespace kailux
         mPhysicalDevice = *best;
     }
 
-    void Context::createLogicalDevice()
+    void Context::CreateLogicalDevice()
     {
         vk::StructureChain<
             vk::PhysicalDeviceFeatures2,
@@ -368,7 +368,7 @@ namespace kailux
         mDevice = vk::raii::Device(mPhysicalDevice, deviceCreateInfo);
     }
 
-    void Context::createQueues()
+    void Context::CreateQueues()
     {
         mGraphicsQueue = vk::raii::Queue(mDevice, mGraphicsQueueFamilyIndex, 0);
 

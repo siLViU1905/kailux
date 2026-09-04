@@ -16,7 +16,7 @@ namespace kailux
         ~ThreadDispatcher();
 
         template<typename Func, typename... Args>
-        auto enqueue(Func &&func, Args &&... args)
+        auto Enqueue(Func &&func, Args &&... args)
         {
             using ReturnType = std::invoke_result_t<Func, Args...>;
 
@@ -40,9 +40,9 @@ namespace kailux
     private:
         ThreadDispatcher(uint32_t threads);
 
-        void createWorkers();
+        void CreateWorkers();
 
-        void workerLoop(std::stop_token stopToken);
+        void WorkerLoop(std::stop_token stopToken);
 
         uint32_t                  mThreads;
         using Task = std::move_only_function<void()>;

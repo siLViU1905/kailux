@@ -13,8 +13,8 @@ namespace kailux
     public:
         EditorLayer(ImTextureID dirTex, ImTextureID fileTex);
 
-        void render(Scene& scene) const;
-        void update();
+        void Render(Scene& scene) const;
+        void Update();
 
     private:
         static constexpr std::string_view kHierarchyPanelName{"EntitiesHierarchy"};
@@ -28,7 +28,7 @@ namespace kailux
 
         static void render_dock_space();
 
-        void addPanels(ImTextureID directoryTextureId, ImTextureID fileTextureId);
+        void AddPanels(ImTextureID directoryTextureId, ImTextureID fileTextureId);
 
         bool mSimulationWasRunning{};
     };

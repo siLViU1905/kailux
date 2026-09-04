@@ -11,30 +11,30 @@ namespace kailux
         HierarchyPanel();
         HierarchyPanel(std::string_view name, ImVec4 backgroundColor);
 
-        void render(Scene &scene) override;
+        void Render(Scene &scene) override;
 
         using OnEntitySelected = std::move_only_function<void(entt::entity, const Scene&)>;
-        void  setOnEntitySelected(OnEntitySelected&& callback);
+        void  SetOnEntitySelected(OnEntitySelected&& callback);
 
         using OnMeshDeleted = std::move_only_function<void(MeshComponent, std::string_view)>;
-        void  setOnMeshDeleted(OnMeshDeleted&& callback);
+        void  SetOnMeshDeleted(OnMeshDeleted&& callback);
 
         using OnDragDrop = std::move_only_function<void(std::string_view)>;
-        void  setOnDragDrop(OnDragDrop&& callback);
+        void  SetOnDragDrop(OnDragDrop&& callback);
 
         using OnNewMesh = std::move_only_function<void(MeshType)>;
-        void  setOnNewMesh(OnNewMesh&& callback);
+        void  SetOnNewMesh(OnNewMesh&& callback);
 
         using OnNewLight = std::move_only_function<void(LightType)>;
-        void  setOnNewLight(OnNewLight&& callback);
+        void  SetOnNewLight(OnNewLight&& callback);
 
         using OnAddPhysics = std::move_only_function<void(entt::entity, PhysicsBodyType, bool)>;
-        void setOnAddPhysics(OnAddPhysics&& callback);
+        void SetOnAddPhysics(OnAddPhysics&& callback);
 
-        void         selectEntity(entt::entity entity);
-        entt::entity getSelectedEntity() const;
+        void         SelectEntity(entt::entity entity);
+        entt::entity GetSelectedEntity() const;
 
-        void deleteSelectedEntity();
+        void DeleteSelectedEntity();
 
         friend class EntityEditorPanel;
 
@@ -52,12 +52,12 @@ namespace kailux
 
         static bool can_attach_physics(const entt::registry &registry, entt::entity entity);
 
-        void onEntityDelete(Scene &scene, entt::entity entity);
+        void OnEntityDelete(Scene &scene, entt::entity entity);
 
-        void notifyAndDestroyHierarchy(entt::registry& registry, entt::entity entity);
+        void NotifyAndDestroyHierarchy(entt::registry& registry, entt::entity entity);
 
-        void renderEntityNode(Scene& scene, entt::entity entity);
-        void renderAddPhysicsPopup(const Scene &scene);
+        void RenderEntityNode(Scene& scene, entt::entity entity);
+        void RenderAddPhysicsPopup(const Scene &scene);
 
         OnEntitySelected mOnEntitySelected;
         OnMeshDeleted  mOnEntityDeleted;

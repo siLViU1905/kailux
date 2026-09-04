@@ -24,15 +24,15 @@ namespace kailux
         static OneTimeCommand create(const Context& context, QueueType type = QueueType::Graphics);
 
         //already calls end()
-        void submit(const Context& context) const;
-        void submitAsync(const Context& context) const;
+        void Submit(const Context& context) const;
+        void SubmitAsync(const Context& context) const;
 
-        vk::CommandBuffer getCommandBuffer() const;
-        vk::Fence         getFence() const;
+        vk::CommandBuffer GetCommandBuffer() const;
+        vk::Fence         GetFence() const;
 
     private:
-        void createBuffer(const Context& context);
-        void createFence(const Context& context);
+        void CreateBuffer(const Context& context);
+        void CreateFence(const Context& context);
 
         inline static vk::raii::CommandPool   kGraphicsPool{nullptr};
         inline static vk::raii::CommandPool   kTransferPool{nullptr};

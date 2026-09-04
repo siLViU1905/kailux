@@ -13,30 +13,30 @@ namespace kailux
         EntityEditorPanel();
         EntityEditorPanel(std::string_view name, ImVec4 backgroundColor);
 
-        void render(Scene &scene) override;
+        void Render(Scene &scene) override;
 
-        void setCameraData(const CameraData& data);
+        void SetCameraData(const CameraData& data);
 
-        void setSelectedEntity(entt::entity entity, const Scene &scene);
+        void SetSelectedEntity(entt::entity entity, const Scene &scene);
 
-        bool isGizmoInUse() const;
+        bool IsGizmoInUse() const;
 
-        void setSimulationState(bool running);
+        void SetSimulationState(bool running);
 
         using OnBodyTypeChange = std::move_only_function<void(PhysicsComponent, PhysicsBodyType)>;
-        void setOnBodyTypeChange(OnBodyTypeChange&& callback);
+        void SetOnBodyTypeChange(OnBodyTypeChange&& callback);
 
         using OnBodyScaleChange = std::move_only_function<void(PhysicsComponent, const glm::vec3&)>;
-        void setOnBodyScaleChange(OnBodyScaleChange&& callback);
+        void SetOnBodyScaleChange(OnBodyScaleChange&& callback);
 
     private:
-        void renderGizmo(Scene& scene);
-        void renderMeshProperties(entt::registry &registry);
-        void renderBodyProperties(entt::registry &registry);
-        void renderMaterialProperties(Scene &scene) const;
-        void renderDirectionalLightProperties(entt::registry &registry) const;
-        void renderPointLightProperties(entt::registry &registry) const;
-        void renderCameraProperties(entt::registry &registry) const;
+        void RenderGizmo(Scene& scene);
+        void RenderMeshProperties(entt::registry &registry);
+        void RenderBodyProperties(entt::registry &registry);
+        void RenderMaterialProperties(Scene &scene) const;
+        void RenderDirectionalLightProperties(entt::registry &registry) const;
+        void RenderPointLightProperties(entt::registry &registry) const;
+        void RenderCameraProperties(entt::registry &registry) const;
 
         static void propagate_material_to_children(Scene &scene, entt::entity entity, const MeshMaterialData& material);
 

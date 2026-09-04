@@ -44,17 +44,17 @@ namespace kailux
             mMemory.unmapMemory();
     }
 
-    vk::Buffer Buffer::getBuffer() const
+    vk::Buffer Buffer::GetBuffer() const
     {
         return *mBuffer;
     }
 
-    vk::DeviceSize Buffer::getSize() const
+    vk::DeviceSize Buffer::GetSize() const
     {
         return mSize;
     }
 
-    void Buffer::upload(const void *data, vk::DeviceSize byte_size, vk::DeviceSize offset) const
+    void Buffer::Upload(const void *data, vk::DeviceSize byte_size, vk::DeviceSize offset) const
     {
         assert(mMapped && "Buffer is not host-visible");
         assert(offset + byte_size <= mSize && "Upload exceeds buffer size");

@@ -39,7 +39,7 @@ namespace kailux
     {
         if (p_Context)
         {
-            shutdown();
+            Shutdown();
 
             ImGui::DestroyContext(p_Context);
 
@@ -52,31 +52,31 @@ namespace kailux
     ImGuiBackend ImGuiBackend::create(Window &window, const Context &context, const Swapchain &swapchain,
                                       vk::SampleCountFlagBits sampleCount)
     {
-        log::console.debug("imgui backend: creating");
+        log::console.Debug("imgui backend: creating");
         ImGuiBackend imguiBackend;
 
-        imguiBackend.createImGuiContext();
-        log::console.debug("imgui backend: imgui context created");
+        imguiBackend.CreateImGuiContext();
+        log::console.Debug("imgui backend: imgui context created");
 
-        imguiBackend.createDescriptorPool(context);
-        log::console.debug("imgui backend: descriptor pool created");
+        imguiBackend.CreateDescriptorPool(context);
+        log::console.Debug("imgui backend: descriptor pool created");
 
-        imguiBackend.createImGuiVulkanContext(window, context, swapchain, sampleCount);
-        log::console.debug("imgui backend: imgui vulkan context created");
+        imguiBackend.CreateImGuiVulkanContext(window, context, swapchain, sampleCount);
+        log::console.Debug("imgui backend: imgui vulkan context created");
 
-        imguiBackend.applyStyle();
-        log::console.debug("imgui backend: style applied");
+        imguiBackend.ApplyStyle();
+        log::console.Debug("imgui backend: style applied");
 
         return imguiBackend;
     }
 
-    void ImGuiBackend::updatePlatform()
+    void ImGuiBackend::UpdatePlatform()
     {
         ImGui::UpdatePlatformWindows();
         ImGui::RenderPlatformWindowsDefault();
     }
 
-    void ImGuiBackend::beginFrame()
+    void ImGuiBackend::BeginFrame()
     {
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -86,17 +86,17 @@ namespace kailux
         ImGuizmo::BeginFrame();
     }
 
-    void ImGuiBackend::endFrame()
+    void ImGuiBackend::EndFrame()
     {
         ImGui::Render();
     }
 
-    void ImGuiBackend::recordDrawData(vk::CommandBuffer cmd) const
+    void ImGuiBackend::RecordDrawData(vk::CommandBuffer cmd) const
     {
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd);
     }
 
-    void ImGuiBackend::shutdown()
+    void ImGuiBackend::Shutdown()
     {
         ImGui_ImplVulkan_Shutdown();
 
@@ -106,8 +106,8 @@ namespace kailux
     ImTextureID ImGuiBackend::get_texture_id_from_texture(const Texture &texture)
     {
         auto descriptorSet = ImGui_ImplVulkan_AddTexture(
-            texture.getSampler(),
-            texture.getImageView(),
+            texture.GetSampler(),
+            texture.GetImageView(),
             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         );
 
@@ -119,7 +119,7 @@ namespace kailux
         ImGui_ImplVulkan_RemoveTexture(reinterpret_cast<VkDescriptorSet>(id));
     }
 
-    void ImGuiBackend::createDescriptorPool(const Context &context)
+    void ImGuiBackend::CreateDescriptorPool(const Context &context)
     {
         constexpr uint32_t descriptorCount = 1000;
 
@@ -147,7 +147,7 @@ namespace kailux
         mDescriptorPool = vk::raii::DescriptorPool(context.mDevice, poolInfo);
     }
 
-    void ImGuiBackend::createImGuiContext()
+    void ImGuiBackend::CreateImGuiContext()
     {
         IMGUI_CHECKVERSION();
 
@@ -160,21 +160,21 @@ namespace kailux
         p_IO->IniFilename = "imgui.ini";
     }
 
-    void ImGuiBackend::createImGuiVulkanContext(Window &window, const Context &context, const Swapchain &swapchain,
+    void ImGuiBackend::CreateImGuiVulkanContext(Window &window, const Context &context, const Swapchain &swapchain,
                                                 vk::SampleCountFlagBits sampleCount)
     {
-        ImGui_ImplGlfw_InitForVulkan(window.getGLFWWindow(), true);
+        ImGui_ImplGlfw_InitForVulkan(window.GetGlfwWindow(), true);
 
         ImGui_ImplVulkan_InitInfo initInfo{};
 
         initInfo.Instance = *context.mInstance;
         initInfo.PhysicalDevice = *context.mPhysicalDevice;
         initInfo.Device = *context.mDevice;
-        initInfo.QueueFamily = context.getGraphicsQueueFamilyIndex();
+        initInfo.QueueFamily = context.GetGraphicsQueueFamilyIndex();
         initInfo.Queue = *context.mGraphicsQueue;
         initInfo.DescriptorPool = *mDescriptorPool;
-        initInfo.MinImageCount = swapchain.getImageCount();
-        initInfo.ImageCount = swapchain.getImageCount();
+        initInfo.MinImageCount = swapchain.GetImageCount();
+        initInfo.ImageCount = swapchain.GetImageCount();
         initInfo.PipelineInfoMain.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
         initInfo.Allocator = nullptr;
         initInfo.CheckVkResultFn = nullptr;
@@ -186,7 +186,7 @@ namespace kailux
                 VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
         initInfo.PipelineInfoMain.PipelineRenderingCreateInfo.colorAttachmentCount = 1;
 
-        mColorAttachmentFormat = static_cast<VkFormat>(swapchain.getFormat());
+        mColorAttachmentFormat = static_cast<VkFormat>(swapchain.GetFormat());
         initInfo.PipelineInfoMain.PipelineRenderingCreateInfo.pColorAttachmentFormats = &mColorAttachmentFormat;
         initInfo.PipelineInfoMain.PipelineRenderingCreateInfo.depthAttachmentFormat = VK_FORMAT_UNDEFINED;
 
@@ -194,7 +194,7 @@ namespace kailux
             throw std::runtime_error("Failed to initialize ImGui for Vulkan");
     }
 
-    void ImGuiBackend::applyStyle()
+    void ImGuiBackend::ApplyStyle()
     {
         p_IO->Fonts->AddFontFromFileTTF(kFontPath.data(), 20.f);
 

@@ -51,7 +51,7 @@ namespace kailux
 
         uint32_t index = kInvalidIndex;
 
-        constexpr bool valid() const { return index != kInvalidIndex; }
+        constexpr bool Valid() const { return index != kInvalidIndex; }
     };
 }
 

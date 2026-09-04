@@ -32,39 +32,39 @@ namespace kailux
     SkyboxPass SkyboxPass::create(const Context &context, const Swapchain &swapchain, uint32_t maxFrames)
     {
         SkyboxPass pass;
-        pass.createDescriptorLayout(context, kDescriptorLayoutBindings);
-        pass.createDescriptorPool(context, maxFrames, kDescriptorPoolSizes);
-        pass.createPipeline(
+        pass.CreateDescriptorLayout(context, kDescriptorLayoutBindings);
+        pass.CreateDescriptorPool(context, maxFrames, kDescriptorPoolSizes);
+        pass.CreatePipeline(
             context,
             swapchain,
             kVertexShaderPath,
             kFragmentShaderPath,
-            make_pipeline_info(swapchain, context.getMaxUsableSampleCount()),
+            make_pipeline_info(swapchain, context.GetMaxUsableSampleCount()),
             kPushConstantRanges
         );
-        pass.createTexture(context);
-        pass.createIrradianceTexture(context);
-        pass.createPrefilteredEnvTexture(context);
-        pass.createBRDFLutTexture(context);
+        pass.CreateTexture(context);
+        pass.CreateIrradianceTexture(context);
+        pass.CreatePrefilteredEnvTexture(context);
+        pass.CreateBrdfLutTexture(context);
         return pass;
     }
 
-    const Texture &SkyboxPass::getTexture() const
+    const Texture &SkyboxPass::GetTexture() const
     {
         return mTexture;
     }
 
-    const Texture & SkyboxPass::getIrradianceMapTexture() const
+    const Texture & SkyboxPass::GetIrradianceMapTexture() const
     {
         return mIrradianceMapTexture;
     }
 
-    const Texture & SkyboxPass::getPrefilteredEnvTexture() const
+    const Texture & SkyboxPass::GetPrefilteredEnvTexture() const
     {
         return mPrefilteredEnvTexture;
     }
 
-    const Texture & SkyboxPass::getBRDFLutTexture() const
+    const Texture & SkyboxPass::GetBrdfLutTexture() const
     {
         return mBRDFLutTexture;
     }
@@ -100,7 +100,7 @@ namespace kailux
         colorAttachment.blendEnable = vk::False;
 
         info.colorBlendAttachments.push_back(colorAttachment);
-        info.colorFormats.push_back(swapchain.getFormat());
+        info.colorFormats.push_back(swapchain.GetFormat());
 
         vk::PipelineColorBlendAttachmentState idAttachment;
         idAttachment.blendEnable = vk::False;
@@ -121,7 +121,7 @@ namespace kailux
         return info;
     }
 
-    void SkyboxPass::createTexture(const Context &context)
+    void SkyboxPass::CreateTexture(const Context &context)
     {
         std::array<ImageLoader::ImageData, 6> faces;
         int i = 0;
@@ -136,7 +136,7 @@ namespace kailux
         mTexture = TextureAllocator::create_cubemap(context, faces);
     }
 
-    void SkyboxPass::createIrradianceTexture(const Context &context)
+    void SkyboxPass::CreateIrradianceTexture(const Context &context)
     {
         std::array<ImageLoader::ImageData, 6> faces;
         int i = 0;
@@ -151,7 +151,7 @@ namespace kailux
         mIrradianceMapTexture = TextureAllocator::create_cubemap(context, faces);
     }
 
-    void SkyboxPass::createPrefilteredEnvTexture(const Context &context)
+    void SkyboxPass::CreatePrefilteredEnvTexture(const Context &context)
     {
         static constexpr std::array<std::string_view, 6> faceNames = {
             "px", "nx", "py", "ny", "pz", "nz"
@@ -178,7 +178,7 @@ namespace kailux
         mPrefilteredEnvTexture = TextureAllocator::create_cubemap_with_mips(context, mips);
     }
 
-    void SkyboxPass::createBRDFLutTexture(const Context &context)
+    void SkyboxPass::CreateBrdfLutTexture(const Context &context)
     {
         if (auto data = ImageLoader::load_image(kBRDFLutPath))
             mBRDFLutTexture = TextureAllocator::create_from_image_data(context, *data);

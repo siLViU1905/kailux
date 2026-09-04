@@ -42,7 +42,7 @@ namespace kailux
         auto uploadShape = [&](auto genFn, GizmoHandle &out)
         {
             auto data = genFn();
-            out = registry.upload(context, cmd, data, stagingBuffers);
+            out = registry.Upload(context, cmd, data, stagingBuffers);
         };
 
         uploadShape([]() { return GizmoGeometry::generate_point_light_gizmo(); }, registry.mBuiltins.pointLight);
@@ -51,9 +51,9 @@ namespace kailux
         return registry;
     }
 
-    GizmoRegistry::GizmoView GizmoRegistry::view(GizmoHandle handle) const
+    GizmoRegistry::GizmoView GizmoRegistry::View(GizmoHandle handle) const
     {
-        assert(handle.valid());
+        assert(handle.Valid());
         const auto &alloc = mAllocs[handle.index];
         return {
             static_cast<uint32_t>(alloc.indexOffset / sizeof(GizmoGeometry::IndexType)),
@@ -62,24 +62,24 @@ namespace kailux
         };
     }
 
-    void GizmoRegistry::bind(vk::CommandBuffer cmd) const
+    void GizmoRegistry::Bind(vk::CommandBuffer cmd) const
     {
-        cmd.bindVertexBuffers(0, mVertexBuffer.getBuffer(), {0});
-        cmd.bindIndexBuffer(mIndexBuffer.getBuffer(), 0, vk::IndexType::eUint32);
+        cmd.bindVertexBuffers(0, mVertexBuffer.GetBuffer(), {0});
+        cmd.bindIndexBuffer(mIndexBuffer.GetBuffer(), 0, vk::IndexType::eUint32);
     }
 
-    GizmoRegistry::BuiltinGizmos GizmoRegistry::getBuiltins() const
+    GizmoRegistry::BuiltinGizmos GizmoRegistry::GetBuiltins() const
     {
         return mBuiltins;
     }
 
-    GizmoHandle GizmoRegistry::allocSlot()
+    GizmoHandle GizmoRegistry::AllocSlot()
     {
         mAllocs.emplace_back();
         return {static_cast<uint32_t>(mAllocs.size() - 1)};
     }
 
-    GizmoHandle GizmoRegistry::upload(const Context &context, vk::CommandBuffer cmd,
+    GizmoHandle GizmoRegistry::Upload(const Context &context, vk::CommandBuffer cmd,
                                                      const GizmoGeometry::GizmoData &data, std::vector<Buffer> &stagingBuffers)
     {
         const auto& vertices = data.vertices;
@@ -87,13 +87,13 @@ namespace kailux
         vk::DeviceSize vsize = vertices.size() * sizeof(GizmoVertex);
         vk::DeviceSize isize = indices.size() * sizeof(GizmoGeometry::IndexType);
 
-        auto vOffset = mBuiltinVertexZone.alloc(vsize, sizeof(GizmoVertex));
-        auto iOffset = mBuiltinIndexZone.alloc(isize, sizeof(GizmoGeometry::IndexType));
+        auto vOffset = mBuiltinVertexZone.Alloc(vsize, sizeof(GizmoVertex));
+        auto iOffset = mBuiltinIndexZone.Alloc(isize, sizeof(GizmoGeometry::IndexType));
 
         upload_buffer_region(vertices.data(), vsize, mVertexBuffer, vOffset, context, cmd, stagingBuffers);
         upload_buffer_region(indices.data(), isize, mIndexBuffer, iOffset, context, cmd, stagingBuffers);
 
-        auto handle = allocSlot();
+        auto handle = AllocSlot();
         mAllocs[handle.index] = {
             vOffset,
             static_cast<uint32_t>(vertices.size()),
@@ -107,9 +107,9 @@ namespace kailux
         vk::DeviceSize dstOffset, const Context &context, vk::CommandBuffer cmd, std::vector<Buffer> &stagingBuffers)
     {
         auto &staging = stagingBuffers.emplace_back(BufferAllocator::alloc_staging(context, size));
-        staging.upload(data, size);
+        staging.Upload(data, size);
 
         vk::BufferCopy region(0, dstOffset, size);
-        cmd.copyBuffer(staging.getBuffer(), dst.getBuffer(), region);
+        cmd.copyBuffer(staging.GetBuffer(), dst.GetBuffer(), region);
     }
 }

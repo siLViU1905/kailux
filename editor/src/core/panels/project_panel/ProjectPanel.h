@@ -12,12 +12,12 @@ namespace kailux
         ProjectPanel();
         ProjectPanel(std::string_view name, ImVec4 backgroundColor);
 
-        void render(Scene &scene) override;
+        void Render(Scene &scene) override;
 
-        void useFullWidth(bool use = true);
+        void UseFullWidth(bool use = true);
 
-        AssetBrowser& getAssetBrowser();
-        Console&      getConsole();
+        AssetBrowser& GetAssetBrowser();
+        Console&      GetConsole();
 
     private:
         bool         mUseFullWidth;

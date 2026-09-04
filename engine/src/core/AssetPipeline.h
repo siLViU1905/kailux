@@ -31,11 +31,11 @@ namespace kailux
                       Scene &scene,
                       std::span<FrameData> frames);
 
-        void poll();
+        void Poll();
 
-        Queue<PendingMeshData> &getPendingQueue();
+        Queue<PendingMeshData> &GetPendingQueue();
 
-        bool isCached(std::string_view path) const;
+        bool IsCached(std::string_view path) const;
 
         struct MeshCache
         {
@@ -44,28 +44,28 @@ namespace kailux
             uint32_t       count{1};
         };
 
-        std::optional<MeshCache> uncache(std::string_view path);
+        std::optional<MeshCache> Uncache(std::string_view path);
 
         using OnLog = std::move_only_function<void(std::string_view)>;
-        void setOnInfoLog(OnLog &&callback);
-        void setOnWarningLog(OnLog &&callback);
+        void SetOnInfoLog(OnLog &&callback);
+        void SetOnWarningLog(OnLog &&callback);
 
         using OnAttachPhysics = std::move_only_function<void(entt::entity, PhysicsRecord)>;
-        void setOnAttachPhysics(OnAttachPhysics &&callback);
+        void SetOnAttachPhysics(OnAttachPhysics &&callback);
 
     private:
-        void processBuiltinMesh(const PendingMeshData &data);
+        void ProcessBuiltinMesh(const PendingMeshData &data);
 
-        void processLoadedMesh(const PendingMeshData &data);
+        void ProcessLoadedMesh(const PendingMeshData &data);
 
-        entt::entity createParentMeshEntity(const PendingMeshData &data);
+        entt::entity CreateParentMeshEntity(const PendingMeshData &data);
 
-        std::vector<MaterialHandle> loadAndRegisterMaterials(
+        std::vector<MaterialHandle> LoadAndRegisterMaterials(
             std::span<const TextureRegistry::MaterialData> materials);
 
-        MaterialHandle uploadMaterialDataToRegistry(const TextureRegistry::MaterialData &data);
+        MaterialHandle UploadMaterialDataToRegistry(const TextureRegistry::MaterialData &data);
 
-        void cacheMesh(std::string_view path, MeshHandle meshHandle, MaterialHandle materialHandle);
+        void CacheMesh(std::string_view path, MeshHandle meshHandle, MaterialHandle materialHandle);
 
         static DescriptorSetUpdateInfo make_texture_write(TextureHandle handle, const Texture& texture);
 

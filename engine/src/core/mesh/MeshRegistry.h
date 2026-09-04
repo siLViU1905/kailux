@@ -52,14 +52,14 @@ namespace kailux
         static MeshRegistry  create(const Context &context,
                                    vk::CommandBuffer cmd,
                                    std::vector<Buffer> &stagingBuffers);
-        void                  destroy(MeshHandle handle);
-        MeshView              view(MeshHandle handle) const;
-        void                  bind(vk::CommandBuffer cmd) const;
-        uint32_t              getMeshCount() const;
+        void                  Destroy(MeshHandle handle);
+        MeshView              View(MeshHandle handle) const;
+        void                  Bind(vk::CommandBuffer cmd) const;
+        uint32_t              GetMeshCount() const;
 
-        BuiltinMeshes getBuiltins() const;
+        BuiltinMeshes GetBuiltins() const;
 
-        MeshBufferRegions getRegions(MeshHandle handle) const;
+        MeshBufferRegions GetRegions(MeshHandle handle) const;
 
     private:
         struct Block
@@ -77,9 +77,9 @@ namespace kailux
             std::list<Block> freeBlocks;
             std::list<Block> usedBlocks;
 
-            vk::DeviceSize alloc(vk::DeviceSize size, vk::DeviceSize alignment = kDefaultAlignment);
+            vk::DeviceSize Alloc(vk::DeviceSize size, vk::DeviceSize alignment = kDefaultAlignment);
 
-            void free(vk::DeviceSize offset);
+            void Free(vk::DeviceSize offset);
         };
 
         struct MeshAlloc
@@ -92,8 +92,8 @@ namespace kailux
         };
 
     private:
-        MeshHandle allocSlot();
-        MeshHandle uploadInternal(std::span<const Vertex> vertices,
+        MeshHandle AllocSlot();
+        MeshHandle UploadInternal(std::span<const Vertex> vertices,
                                   std::span<const IndexType> indices,
                                   const Context &context,
                                   vk::CommandBuffer cmd,
@@ -122,7 +122,7 @@ namespace kailux
         BuiltinMeshes mBuiltins;
 
     public:
-        MeshHandle      upload(const Context &context,
+        MeshHandle      Upload(const Context &context,
                                vk::CommandBuffer cmd,
                                const MeshGeometry::MeshData &data,
                                std::vector<Buffer> &stagingBuffer);

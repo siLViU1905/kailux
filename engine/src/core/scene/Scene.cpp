@@ -47,27 +47,27 @@ namespace kailux
     {
         Scene scene;
         scene.mName = name;
-        scene.mSun = scene.createSunEntity({});
-        scene.createCameras(window);
+        scene.mSun = scene.CreateSunEntity({});
+        scene.CreateCameras(window);
         return scene;
     }
 
-    void Scene::update()
+    void Scene::Update()
     {
-        updateTransforms();
+        UpdateTransforms();
     }
 
-    std::optional<entt::entity> Scene::createCameraEntity(std::string_view name, bool isPrimary, int width, int height)
+    std::optional<entt::entity> Scene::CreateCameraEntity(std::string_view name, bool isPrimary, int width, int height)
     {
         if (mEntityRegistry.view<CameraComponent>().size() >= details::kMaxCameras)
             return std::nullopt;
 
-        auto entity = createEntity(name);
-        attachCamera(entity, {isPrimary});
+        auto entity = CreateEntity(name);
+        AttachCamera(entity, {isPrimary});
         return entity;
     }
 
-    std::optional<entt::entity> Scene::createMeshEntity(
+    std::optional<entt::entity> Scene::CreateMeshEntity(
         std::string_view name,
         const MeshComponent &component,
         MaterialHandle materialHandle,
@@ -79,33 +79,33 @@ namespace kailux
         if (mEntityRegistry.view<MeshComponent>().size() >= details::kMaxMeshes)
             return std::nullopt;
 
-        auto entity = createEntity(name);
-        setLocalTransform(entity, transform);
+        auto entity = CreateEntity(name);
+        SetLocalTransform(entity, transform);
 
-        if (!attachMesh(entity, component, materialHandle, material))
+        if (!AttachMesh(entity, component, materialHandle, material))
         {
-            destroyEntity(entity);
+            DestroyEntity(entity);
             return std::nullopt;
         }
 
         if (parent != entt::null)
-            setParent(entity, parent);
+            SetParent(entity, parent);
 
         return entity;
     }
 
-    entt::entity Scene::createParentEntity(std::string_view name)
+    entt::entity Scene::CreateParentEntity(std::string_view name)
     {
-        return createEntity(name);
+        return CreateEntity(name);
     }
 
-    std::optional<entt::entity> Scene::createPointLightEntity(std::string_view name, const GizmoComponent &component, const glm::vec3 &position)
+    std::optional<entt::entity> Scene::CreatePointLightEntity(std::string_view name, const GizmoComponent &component, const glm::vec3 &position)
     {
         if (mEntityRegistry.view<PointLightData>().size() >= details::kMaxPointLights)
             return std::nullopt;
-        auto entity = createEntity(name);
+        auto entity = CreateEntity(name);
 
-        attachPointLight(entity, component, {});
+        AttachPointLight(entity, component, {});
 
         MeshTransformData transform;
         transform.position = position;
@@ -113,49 +113,49 @@ namespace kailux
             entity,
             transform,
             glm::mat4(1.f),
-            transform.getModelMatrix()
+            transform.GetModelMatrix()
         );
         mEntityRegistry.emplace<HierarchyComponent>(entity);
 
         return entity;
     }
 
-    entt::registry &Scene::getEntityRegistry()
+    entt::registry &Scene::GetEntityRegistry()
     {
         return mEntityRegistry;
     }
 
-    const entt::registry &Scene::getEntityRegistry() const
+    const entt::registry &Scene::GetEntityRegistry() const
     {
         return mEntityRegistry;
     }
 
-    entt::entity Scene::getSceneCamera() const
+    entt::entity Scene::GetSceneCamera() const
     {
         return mSceneCameraEntity;
     }
 
-    entt::entity Scene::getSimulationCamera() const
+    entt::entity Scene::GetSimulationCamera() const
     {
         return mSimulationCameraEntity;
     }
 
-    void Scene::setMainCamera(entt::entity camera)
+    void Scene::SetMainCamera(entt::entity camera)
     {
         mSceneCameraEntity = camera;
     }
 
-    entt::entity Scene::getSun() const
+    entt::entity Scene::GetSun() const
     {
         return mSun;
     }
 
-    SceneData Scene::getData() const
+    SceneData Scene::GetData() const
     {
-        return {getLightData()};
+        return {GetLightData()};
     }
 
-    LightsData Scene::getLightData() const
+    LightsData Scene::GetLightData() const
     {
         LightsData data;
         data.directional = mEntityRegistry.get<SunData>(mSun);
@@ -173,32 +173,32 @@ namespace kailux
         return data;
     }
 
-    std::string_view Scene::getName() const
+    std::string_view Scene::GetName() const
     {
         return mName;
     }
 
-    std::string Scene::getMeshEntityName()
+    std::string Scene::GetMeshEntityName()
     {
         return std::format("Mesh{}", mMeshEntityNameCount++);
     }
 
-    std::string Scene::getLightEntityName()
+    std::string Scene::GetLightEntityName()
     {
         return std::format("Light{}", mLightEntityNameCount++);
     }
 
-    void Scene::setSavePath(const std::filesystem::path &path)
+    void Scene::SetSavePath(const std::filesystem::path &path)
     {
         mSavePath = path;
     }
 
-    const std::filesystem::path & Scene::getSavePath() const
+    const std::filesystem::path & Scene::GetSavePath() const
     {
         return mSavePath;
     }
 
-    void Scene::setMeta(const SceneMeta &meta)
+    void Scene::SetMeta(const SceneMeta &meta)
     {
         mName                 = meta.name;
         mSavePath             = meta.savePath;
@@ -206,7 +206,7 @@ namespace kailux
         mLightEntityNameCount = meta.lightNameCount;
     }
 
-    SceneMeta Scene::getMeta() const
+    SceneMeta Scene::GetMeta() const
     {
         return {
             mName,
@@ -216,7 +216,7 @@ namespace kailux
         };
     }
 
-    bool Scene::attachMesh(entt::entity entity, const MeshComponent &component, MaterialHandle materialHandle,
+    bool Scene::AttachMesh(entt::entity entity, const MeshComponent &component, MaterialHandle materialHandle,
                            const MeshMaterialData &material)
     {
         if (!mEntityRegistry.valid(entity))
@@ -232,7 +232,7 @@ namespace kailux
 
     }
 
-    bool Scene::attachMeshSource(entt::entity entity, const MeshSourceComponent &source)
+    bool Scene::AttachMeshSource(entt::entity entity, const MeshSourceComponent &source)
     {
         if (mEntityRegistry.valid(entity))
         {
@@ -242,7 +242,7 @@ namespace kailux
         return false;
     }
 
-    bool Scene::attachPointLight(entt::entity entity, const GizmoComponent &component, const PointLightRecord &light)
+    bool Scene::AttachPointLight(entt::entity entity, const GizmoComponent &component, const PointLightRecord &light)
     {
         if (!mEntityRegistry.valid(entity))
             return false;
@@ -259,7 +259,7 @@ namespace kailux
         return true;
     }
 
-    void Scene::attachPhysics(entt::entity entity, PhysicsComponent component)
+    void Scene::AttachPhysics(entt::entity entity, PhysicsComponent component)
     {
         if (mEntityRegistry.valid(entity))
         {
@@ -268,7 +268,7 @@ namespace kailux
         }
     }
 
-    void Scene::attachCamera(entt::entity entity, const CameraComponent &component)
+    void Scene::AttachCamera(entt::entity entity, const CameraComponent &component)
     {
         if (!mEntityRegistry.valid(entity))
             return;
@@ -276,29 +276,29 @@ namespace kailux
         mEntityRegistry.emplace_or_replace<CameraComponent>(entity, component);
     }
 
-    void Scene::setLocalTransform(entt::entity entity, const MeshTransformData &transform)
+    void Scene::SetLocalTransform(entt::entity entity, const MeshTransformData &transform)
     {
         if (!mEntityRegistry.valid(entity))
             return;
 
         auto& component = mEntityRegistry.emplace_or_replace<TransformComponent>(entity);
         component.transform = transform;
-        component.worldMatrix = transform.getModelMatrix();
+        component.worldMatrix = transform.GetModelMatrix();
     }
 
-    void Scene::setParent(entt::entity child, entt::entity parent)
+    void Scene::SetParent(entt::entity child, entt::entity parent)
     {
         if (child == parent || !mEntityRegistry.valid(child))
             return;
 
-        detachFromParent(child);
+        DetachFromParent(child);
         if (parent == entt::null || !mEntityRegistry.valid(parent))
             return;
 
         mEntityRegistry.get_or_emplace<HierarchyComponent>(child).parent = parent;
         mEntityRegistry.get_or_emplace<HierarchyComponent>(parent).children.push_back(child);
     }
-    void Scene::detachFromParent(entt::entity child)
+    void Scene::DetachFromParent(entt::entity child)
     {
         auto *hierarchy = mEntityRegistry.try_get<HierarchyComponent>(child);
         if (!hierarchy || hierarchy->parent == entt::null)
@@ -310,7 +310,7 @@ namespace kailux
         hierarchy->parent = entt::null;
     }
 
-    void Scene::destroyEntity(entt::entity entity)
+    void Scene::DestroyEntity(entt::entity entity)
     {
         if (!mEntityRegistry.valid(entity))
             return;
@@ -319,23 +319,23 @@ namespace kailux
         {
             auto children = hierarchy->children;
             for (auto child : children)
-                destroyEntity(child);
+                DestroyEntity(child);
         }
 
-        detachFromParent(entity);
+        DetachFromParent(entity);
         mEntityRegistry.destroy(entity);
     }
 
-    entt::entity Scene::createEntity(std::string_view name)
+    entt::entity Scene::CreateEntity(std::string_view name)
     {
         auto entity = mEntityRegistry.create();
         mEntityRegistry.emplace<TagComponent>(entity, std::string(name));
         return entity;
     }
 
-    entt::entity Scene::createSunEntity(const SunData &data)
+    entt::entity Scene::CreateSunEntity(const SunData &data)
     {
-        auto entity = createEntity(kSunName);
+        auto entity = CreateEntity(kSunName);
         mEntityRegistry.emplace<SunData>(
             entity,
             data
@@ -343,17 +343,17 @@ namespace kailux
         return entity;
     }
 
-    void Scene::createCameras(const Window &window)
+    void Scene::CreateCameras(const Window &window)
     {
-        const auto fbSize{window.getInputSource().getFramebufferSize()};
-        mSceneCameraEntity = *createCameraEntity(
+        const auto fbSize{window.GetInputSource().GetFramebufferSize()};
+        mSceneCameraEntity = *CreateCameraEntity(
             "SceneCamera",
             true,
             fbSize.x,
             fbSize.y
         );
 
-        mSimulationCameraEntity = *createCameraEntity(
+        mSimulationCameraEntity = *CreateCameraEntity(
             "SimulationCamera",
             false,
             fbSize.x,
@@ -361,7 +361,7 @@ namespace kailux
         );
     }
 
-    void Scene::updateTransforms()
+    void Scene::UpdateTransforms()
     {
         const auto walk = [this](this auto &&self, entt::entity entity, const glm::mat4 &parentWorld)-> void
         {
@@ -369,7 +369,7 @@ namespace kailux
 
             if (auto *transform = mEntityRegistry.try_get<TransformComponent>(entity))
             {
-                world = parentWorld * transform->transform.getModelMatrix();
+                world = parentWorld * transform->transform.GetModelMatrix();
                 transform->worldMatrix = world;
             }
 

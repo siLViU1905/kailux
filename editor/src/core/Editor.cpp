@@ -22,19 +22,19 @@ namespace kailux
     Editor Editor::create(ImTextureID directoryTextureId, ImTextureID fileTextureId)
     {
         Editor editor;
-        editor.createLayers(directoryTextureId, fileTextureId);
+        editor.CreateLayers(directoryTextureId, fileTextureId);
         return editor;
     }
 
-    void Editor::render(Scene &scene) const
+    void Editor::Render(Scene &scene) const
     {
         std::visit([&scene](auto& layer)
         {
-            layer.render(scene);
+            layer.Render(scene);
         }, *mActiveLayer);
     }
 
-    void Editor::onEvent(const Event &event)
+    void Editor::OnEvent(const Event &event)
     {
         if (auto* editorLayer{std::get_if<EditorLayer>(mActiveLayer.get())})
         {
@@ -42,7 +42,7 @@ namespace kailux
                 switch (keyReleased->key)
                 {
                     case Key::Delete:
-                        editorLayer->getPanel<HierarchyPanel>().deleteSelectedEntity();
+                        editorLayer->GetPanel<HierarchyPanel>().DeleteSelectedEntity();
                         break;
                     default:
                         break;
@@ -50,15 +50,15 @@ namespace kailux
         }
     }
 
-    void Editor::update() const
+    void Editor::Update() const
     {
         std::visit([](auto& layer)
         {
-            layer.update();
+            layer.Update();
         }, *mActiveLayer);
     }
 
-    void Editor::createLayers(ImTextureID directoryTextureId, ImTextureID fileTextureId)
+    void Editor::CreateLayers(ImTextureID directoryTextureId, ImTextureID fileTextureId)
     {
         mActiveLayer = create_scoped<LayerTypes>(EditorLayer{directoryTextureId, fileTextureId});
     }
