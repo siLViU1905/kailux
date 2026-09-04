@@ -10,16 +10,16 @@ namespace kailux
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(GraphicsPass)
         virtual ~GraphicsPass() = default;
 
-        void bind(vk::CommandBuffer cmd) const;
+        void Bind(vk::CommandBuffer cmd) const;
 
-        const DescriptorLayout& getDescriptorLayout() const;
-        const DescriptorPool&   getDescriptorPool() const;
-        const Pipeline&         getPipeline() const;
+        const DescriptorLayout& GetDescriptorLayout() const;
+        const DescriptorPool&   GetDescriptorPool() const;
+        const Pipeline&         GetPipeline() const;
 
     protected:
-        void createDescriptorLayout(const Context &context, std::span<const DescriptorLayoutBinding> bindings);
-        void createDescriptorPool(const Context &context, uint32_t frameCount, std::span<const DescriptorPoolSize> sizes);
-        void createPipeline(const Context &context, const Swapchain &swapchain, std::string_view vertShaderPath, std::string_view fragShaderPath, const PipelineInfo& info, std::span<const PushConstantRangeInfo> pushConstantRanges);
+        void CreateDescriptorLayout(const Context &context, std::span<const DescriptorLayoutBinding> bindings);
+        void CreateDescriptorPool(const Context &context, uint32_t frameCount, std::span<const DescriptorPoolSize> sizes);
+        void CreatePipeline(const Context &context, const Swapchain &swapchain, std::string_view vertShaderPath, std::string_view fragShaderPath, const PipelineInfo& info, std::span<const PushConstantRangeInfo> pushConstantRanges);
 
         static constexpr bool check_descriptor_layout_bindings_and_pool_sizes_match(std::span<const DescriptorLayoutBinding> bindings, std::span<const DescriptorPoolSize> sizes)
         {
@@ -35,7 +35,7 @@ namespace kailux
         }
 
         template<auto PcRanges, typename... Pcs>
-        void pushImpl(vk::CommandBuffer cmd, const Pcs &... pcs) const
+        void PushImpl(vk::CommandBuffer cmd, const Pcs &... pcs) const
         {
             static_assert(sizeof...(Pcs) == PcRanges.size(),
                   "Number of push constants doesnt correspond with kPushConstantRanges");
@@ -47,7 +47,7 @@ namespace kailux
                 assert(sizeof(Pcs) == PcRanges[index].size);
 
                 cmd.pushConstants(
-                    mPipeline.getLayout(),
+                    mPipeline.GetLayout(),
                     PcRanges[index].shaderStage,
                     currentOffset,
                     static_cast<uint32_t>(sizeof(Pcs)),

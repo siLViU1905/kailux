@@ -20,9 +20,9 @@ namespace kailux
     OutlinePass OutlinePass::create(const Context &context, const Swapchain &swapchain, uint32_t frameCount)
     {
         OutlinePass pass;
-        pass.createDescriptorLayout(context, kDescriptorLayoutBindings);
-        pass.createDescriptorPool(context, frameCount, kDescriptorPoolSizes);
-        pass.createPipeline(context, swapchain, kOutlineVertexShaderPath, kOutlineFragmentShaderPath, make_pipeline_info(swapchain), kPushConstantRanges);
+        pass.CreateDescriptorLayout(context, kDescriptorLayoutBindings);
+        pass.CreateDescriptorPool(context, frameCount, kDescriptorPoolSizes);
+        pass.CreatePipeline(context, swapchain, kOutlineVertexShaderPath, kOutlineFragmentShaderPath, make_pipeline_info(swapchain), kPushConstantRanges);
         return pass;
     }
 
@@ -57,7 +57,7 @@ namespace kailux
 
         info.colorBlendAttachments = {blendAttachment};
         
-        info.colorFormats = {swapchain.getFormat()};
+        info.colorFormats = {swapchain.GetFormat()};
         info.samples = vk::SampleCountFlagBits::e1;
         
         info.depthStencilInfo.depthTestEnable = vk::False;

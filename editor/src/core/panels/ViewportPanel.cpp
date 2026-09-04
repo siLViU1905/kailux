@@ -11,7 +11,7 @@ namespace kailux
     {
     }
 
-    void ViewportPanel::render(Scene &scene)
+    void ViewportPanel::Render(Scene &scene)
     {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
         const bool visible{ImGui::Begin(mName.c_str(), &mOpen)};
@@ -37,7 +37,7 @@ namespace kailux
                     mToggleMouseLook = true;
             }
 
-            renderSimulationIndicator(minBound, viewportSize);
+            RenderSimulationIndicator(minBound, viewportSize);
 
             ImGuizmo::SetDrawlist();
             ImGuizmo::SetRect(minBound.x, minBound.y, viewportSize.x, viewportSize.y);
@@ -46,27 +46,27 @@ namespace kailux
         ImGui::PopStyleVar();
     }
 
-    void ViewportPanel::setSceneTextureId(ImTextureID id)
+    void ViewportPanel::SetSceneTextureId(ImTextureID id)
     {
         mSceneTextureId = id;
     }
 
-    ViewportPanel::MousePosition ViewportPanel::getScaledMousePos() const
+    ViewportPanel::MousePosition ViewportPanel::GetScaledMousePos() const
     {
         return mMousePos;
     }
 
-    void ViewportPanel::setOnClick(OnClick &&callback)
+    void ViewportPanel::SetOnClick(OnClick &&callback)
     {
         mOnClick = std::move(callback);
     }
 
-    SimulationState ViewportPanel::getSimulationState() const
+    SimulationState ViewportPanel::GetSimulationState() const
     {
         return mSimulationState;
     }
 
-    void ViewportPanel::requestSimulationState(SimulationState state)
+    void ViewportPanel::RequestSimulationState(SimulationState state)
     {
         if (mSimulationState == state)
             return;
@@ -74,12 +74,12 @@ namespace kailux
         (state == SimulationState::Running) ? mOnSimulationStart() : mOnSimulationPause();
     }
 
-    void ViewportPanel::setOnSimulationStart(OnSimulationStart &&callback)
+    void ViewportPanel::SetOnSimulationStart(OnSimulationStart &&callback)
     {
         mOnSimulationStart = std::move(callback);
     }
 
-    void ViewportPanel::setOnSimulationPause(OnSimulationPause &&callback)
+    void ViewportPanel::SetOnSimulationPause(OnSimulationPause &&callback)
     {
         mOnSimulationPause = std::move(callback);
     }
@@ -100,7 +100,7 @@ namespace kailux
         return {scaledX, scaledY};
     }
 
-    void ViewportPanel::renderSimulationIndicator(ImVec2 minBound, ImVec2 viewportSize)
+    void ViewportPanel::RenderSimulationIndicator(ImVec2 minBound, ImVec2 viewportSize)
     {
         constexpr float padding = 8.f;
         constexpr ImVec2 size{26.f, 26.f};
@@ -147,7 +147,7 @@ namespace kailux
 
         ImGui::SetCursorScreenPos(pos);
         if (ImGui::InvisibleButton("##sim_indicator", size))
-            requestSimulationState(mSimulationState == SimulationState::Paused
+            RequestSimulationState(mSimulationState == SimulationState::Paused
                                        ? SimulationState::Running
                                        : SimulationState::Paused);
 

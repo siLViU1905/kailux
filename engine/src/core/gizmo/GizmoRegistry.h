@@ -39,19 +39,19 @@ namespace kailux
             int32_t vertexOffset{};
         };
 
-        GizmoView view(GizmoHandle handle) const;
+        GizmoView View(GizmoHandle handle) const;
 
-        void bind(vk::CommandBuffer cmd) const;
+        void Bind(vk::CommandBuffer cmd) const;
 
-        BuiltinGizmos getBuiltins() const;
+        BuiltinGizmos GetBuiltins() const;
 
     private:
         static constexpr vk::DeviceSize kVertexAlignment  = sizeof(GizmoVertex);
         static constexpr vk::DeviceSize kBuiltinZoneSize  = (4 * 1024 * 1024 / kVertexAlignment) * kVertexAlignment;
 
-        GizmoHandle allocSlot();
+        GizmoHandle AllocSlot();
 
-        GizmoHandle upload(const Context &context,
+        GizmoHandle Upload(const Context &context,
                            vk::CommandBuffer cmd,
                            const GizmoGeometry::GizmoData &data,
                            std::vector<Buffer> &stagingBuffers);

@@ -53,12 +53,12 @@ namespace kailux
             joltInitialized = true;
         }
 
-        log::console.debug("physics registry: creating");
+        log::console.Debug("physics registry: creating");
         PhysicsRegistry registry;
         registry.mAllocator = create_scoped<JPH::TempAllocatorImpl>(kAllocatorSize);
 
         auto threads = pick_thread_count(2);
-        log::console.debug("physics registry: created job system with {} threads", threads);
+        log::console.Debug("physics registry: created job system with {} threads", threads);
         registry.mJobSystem = create_scoped<JPH::JobSystemThreadPool>(
             JPH::cMaxPhysicsJobs,
             JPH::cMaxPhysicsBarriers,
@@ -80,16 +80,16 @@ namespace kailux
             *registry.mObjectVsBroadPhaseLayer,
             *registry.mObjectPairFilter
         );
-        log::console.debug("physics registry: physics system initialized");
+        log::console.Debug("physics registry: physics system initialized");
 
-        registry.allocResources();
+        registry.AllocResources();
 
         return registry;
     }
 
-    BodyHandle PhysicsRegistry::createBody(const PhysicsBodyInfo &info)
+    BodyHandle PhysicsRegistry::CreateBody(const PhysicsBodyInfo &info)
     {
-        auto slot = acquireSlot();
+        auto slot = AcquireSlot();
         if (slot == BodyHandle::kInvalidIndex)
             return {};
 
@@ -119,9 +119,9 @@ namespace kailux
         return {slot};
     }
 
-    void PhysicsRegistry::destroyBody(BodyHandle handle)
+    void PhysicsRegistry::DestroyBody(BodyHandle handle)
     {
-        assert(handle.valid());
+        assert(handle.Valid());
         auto id = mBodyIds[handle.index];
 
         auto& bodyInterface = mPhysicsSystem->GetBodyInterface();
@@ -135,9 +135,9 @@ namespace kailux
         mFreeSlots.push_back(handle.index);
     }
 
-    void PhysicsRegistry::setBodyEnabled(BodyHandle handle, bool enabled)
+    void PhysicsRegistry::SetBodyEnabled(BodyHandle handle, bool enabled)
     {
-        assert(handle.valid());
+        assert(handle.Valid());
         auto id = mBodyIds[handle.index];
 
         auto& bodyInterface = mPhysicsSystem->GetBodyInterface();
@@ -148,16 +148,16 @@ namespace kailux
             bodyInterface.RemoveBody(id);
     }
 
-    bool PhysicsRegistry::isBodyEnabled(BodyHandle handle) const
+    bool PhysicsRegistry::IsBodyEnabled(BodyHandle handle) const
     {
-        assert(handle.valid());
+        assert(handle.Valid());
         auto id = mBodyIds[handle.index];
         return mPhysicsSystem->GetBodyInterface().IsAdded(id);
     }
 
-    void PhysicsRegistry::setBodyType(BodyHandle handle, PhysicsBodyType type)
+    void PhysicsRegistry::SetBodyType(BodyHandle handle, PhysicsBodyType type)
     {
-        assert(handle.valid());
+        assert(handle.Valid());
         auto id = mBodyIds[handle.index];
         auto& bodyInterface = mPhysicsSystem->GetBodyInterface();
 
@@ -171,38 +171,38 @@ namespace kailux
         bodyInterface.SetObjectLayer(id, layer);
     }
 
-    void PhysicsRegistry::addForce(BodyHandle handle, const glm::vec3 &force)
+    void PhysicsRegistry::AddForce(BodyHandle handle, const glm::vec3 &force)
     {
-        assert(handle.valid());
+        assert(handle.Valid());
         auto id = mBodyIds[handle.index];
         mPhysicsSystem->GetBodyInterface().AddForce(id, {force.x, force.y, force.z});
     }
 
-    void PhysicsRegistry::addImpulse(BodyHandle handle, const glm::vec3 &impulse)
+    void PhysicsRegistry::AddImpulse(BodyHandle handle, const glm::vec3 &impulse)
     {
-        assert(handle.valid());
+        assert(handle.Valid());
         auto id = mBodyIds[handle.index];
         mPhysicsSystem->GetBodyInterface().AddImpulse(id, {impulse.x, impulse.y, impulse.z});
     }
 
-    void PhysicsRegistry::setLinearVelocity(BodyHandle handle, const glm::vec3 &velocity)
+    void PhysicsRegistry::SetLinearVelocity(BodyHandle handle, const glm::vec3 &velocity)
     {
-        assert(handle.valid());
+        assert(handle.Valid());
         auto id = mBodyIds[handle.index];
         mPhysicsSystem->GetBodyInterface().AddImpulse(id, {velocity.x, velocity.y, velocity.z});
     }
 
-    glm::vec3 PhysicsRegistry::getLinearVelocity(BodyHandle handle) const
+    glm::vec3 PhysicsRegistry::GetLinearVelocity(BodyHandle handle) const
     {
-        assert(handle.valid());
+        assert(handle.Valid());
         auto id = mBodyIds[handle.index];
         auto velocity = mPhysicsSystem->GetBodyInterface().GetLinearVelocity(id);
         return {velocity.GetX(), velocity.GetY(), velocity.GetZ()};
     }
 
-    void PhysicsRegistry::setBodyTransform(BodyHandle handle, const glm::vec3 &position, const glm::quat &rotation)
+    void PhysicsRegistry::SetBodyTransform(BodyHandle handle, const glm::vec3 &position, const glm::quat &rotation)
     {
-        assert(handle.valid());
+        assert(handle.Valid());
         auto id = mBodyIds[handle.index];
 
         auto& bodyInterface = mPhysicsSystem->GetBodyInterface();
@@ -218,9 +218,9 @@ namespace kailux
         bodyInterface.SetPositionAndRotation(id, joltPos, joltRot, activation);
     }
 
-    void PhysicsRegistry::getBodyTransform(BodyHandle handle, glm::vec3 &outPosition, glm::quat &outRotation) const
+    void PhysicsRegistry::GetBodyTransform(BodyHandle handle, glm::vec3 &outPosition, glm::quat &outRotation) const
     {
-        assert(handle.valid());
+        assert(handle.Valid());
         auto id = mBodyIds[handle.index];
 
         JPH::BodyLockRead lock(mPhysicsSystem->GetBodyLockInterface(), id);
@@ -236,9 +236,9 @@ namespace kailux
         }
     }
 
-    void PhysicsRegistry::updateBodyScale(BodyHandle handle, const glm::vec3 &scale)
+    void PhysicsRegistry::UpdateBodyScale(BodyHandle handle, const glm::vec3 &scale)
     {
-        assert(handle.valid());
+        assert(handle.Valid());
         auto id = mBodyIds[handle.index];
 
         auto& bodyInterface = mPhysicsSystem->GetBodyInterface();
@@ -281,7 +281,7 @@ namespace kailux
             );
     }
 
-    void PhysicsRegistry::update(float deltaTime)
+    void PhysicsRegistry::Update(float deltaTime)
     {
         mPhysicsSystem->Update(
             deltaTime,
@@ -300,7 +300,7 @@ namespace kailux
         return threads;
     }
 
-    void PhysicsRegistry::allocResources()
+    void PhysicsRegistry::AllocResources()
     {
         mBodyIds.resize(kMaxBodies, JPH::BodyID(JPH::BodyID::cInvalidBodyID));
 
@@ -308,7 +308,7 @@ namespace kailux
             mFreeSlots.push_back(i);
     }
 
-    uint32_t PhysicsRegistry::acquireSlot()
+    uint32_t PhysicsRegistry::AcquireSlot()
     {
         if (mFreeSlots.empty())
             return BodyHandle::kInvalidIndex;

@@ -30,79 +30,79 @@ namespace kailux
                                 const TextureRegistry &textureRegistry
         );
 
-        void reset(const Context& context) const;
+        void Reset(const Context& context) const;
 
-        void recreateTextures(const Context& context, const Swapchain& swapchain);
+        void RecreateTextures(const Context& context, const Swapchain& swapchain);
 
-        vk::CommandBuffer getCommandBuffer() const;
-        vk::CommandBuffer getImGuiCommandBuffer() const;
-        vk::Fence         getFenceInFlight() const;
+        vk::CommandBuffer GetCommandBuffer() const;
+        vk::CommandBuffer GetImGuiCommandBuffer() const;
+        vk::Fence         GetFenceInFlight() const;
 
-        const DescriptorSet& getMeshDescriptorSet() const;
-        const DescriptorSet& getSkyboxDescriptorSet() const;
-        const DescriptorSet& getGizmoDescriptorSet() const;
-        const DescriptorSet& getPickerDescriptorSet() const;
-        const DescriptorSet& getOutlineDescriptorSet() const;
-        const DescriptorSet& getCullerDescriptorSet() const;
+        const DescriptorSet& GetMeshDescriptorSet() const;
+        const DescriptorSet& GetSkyboxDescriptorSet() const;
+        const DescriptorSet& GetGizmoDescriptorSet() const;
+        const DescriptorSet& GetPickerDescriptorSet() const;
+        const DescriptorSet& GetOutlineDescriptorSet() const;
+        const DescriptorSet& GetCullerDescriptorSet() const;
 
-        Buffer&       getCameraBuffer();
-        Buffer&       getModelBuffer();
-        Buffer&       getMaterialBuffer();
-        Buffer&       getIndirectBuffer();
-        const Buffer& getIndirectBuffer() const;
-        Buffer&       getSceneBuffer();
-        const Buffer& getPickerBuffer() const;
-        const Buffer& getCullerInputCommandsBuffer() const;
-        const Buffer& getCullerCountBuffer() const;
+        Buffer&       GetCameraBuffer();
+        Buffer&       GetModelBuffer();
+        Buffer&       GetMaterialBuffer();
+        Buffer&       GetIndirectBuffer();
+        const Buffer& GetIndirectBuffer() const;
+        Buffer&       GetSceneBuffer();
+        const Buffer& GetPickerBuffer() const;
+        const Buffer& GetCullerInputCommandsBuffer() const;
+        const Buffer& GetCullerCountBuffer() const;
 
-        vk::Extent2D  getExtent() const;
+        vk::Extent2D  GetExtent() const;
 
-        const Texture& getSceneTexture() const;
-        const Texture& getOutIdTexture() const;
-        const Texture& getResolvedOutIdTexture() const;
+        const Texture& GetSceneTexture() const;
+        const Texture& GetOutIdTexture() const;
+        const Texture& GetResolvedOutIdTexture() const;
 
         static constexpr uint32_t kBufferMemoryBarriersCount{1 + 1 + 1 + 1 + 1}; // camera buffer + mesh data buffer + materials buffer + culler input buffer + scene buffer
-        std::array<vk::BufferMemoryBarrier2, kBufferMemoryBarriersCount>       getBufferMemoryBarriers() const;
+        std::array<vk::BufferMemoryBarrier2, kBufferMemoryBarriersCount>       GetBufferMemoryBarriers() const;
 
-        vk::BufferMemoryBarrier2                                               getPickerBufferMemoryBarrier() const;
+        vk::BufferMemoryBarrier2                                               GetPickerBufferMemoryBarrier() const;
 
         static constexpr uint32_t kCullerBufferMemoryBarriersCount{1 + 1}; // indirect buffer + culler count buffer
-        std::array<vk::BufferMemoryBarrier2, kCullerBufferMemoryBarriersCount> getCullerBufferMemoryBarriers() const;
+        std::array<vk::BufferMemoryBarrier2, kCullerBufferMemoryBarriersCount> GetCullerBufferMemoryBarriers() const;
 
-        vk::BufferMemoryBarrier2                                               getCullerCountBufferFillMemoryBarrier() const;
+        vk::BufferMemoryBarrier2                                               GetCullerCountBufferFillMemoryBarrier() const;
 
         static constexpr uint32_t kIndirectReadToWriteMemoryBarriersCount{1 + 1}; // indirect buffer + culler count buffer
-        std::array<vk::BufferMemoryBarrier2, kIndirectReadToWriteMemoryBarriersCount> getIndirectReadToWriteBarriers() const;
+        std::array<vk::BufferMemoryBarrier2, kIndirectReadToWriteMemoryBarriersCount> GetIndirectReadToWriteBarriers() const;
 
     private:
-        void createCommandPool(const Context& context);
+        void CreateCommandPool(const Context& context);
         //Separate command pool for future imgui separate thread integration
-        void createImGuiCommandPool(const Context& context);
-        void createCommandBuffer(const Context& context);
-        void createImGuiCommandBuffer(const Context& context);
-        void createSyncObjects(const Context& context);
-        void createMeshDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
+        void CreateImGuiCommandPool(const Context& context);
+        void CreateCommandBuffer(const Context& context);
+        void CreateImGuiCommandBuffer(const Context& context);
+        void CreateSyncObjects(const Context& context);
+        void CreateMeshDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
                                  DescriptorSetInfo> infos);
-        void createSkyboxDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
+        void CreateSkyboxDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
                                        DescriptorSetInfo> infos);
-        void createGizmoDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
+        void CreateGizmoDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
                                        DescriptorSetInfo> infos);
-        void createPickerDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
+        void CreatePickerDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
                                        DescriptorSetInfo> infos);
-        void createOutlineDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
+        void CreateOutlineDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
                                        DescriptorSetInfo> infos);
-        void createCullerDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
+        void CreateCullerDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
                                        DescriptorSetInfo> infos);
-        void createCameraBuffer(const Context& context);
-        void createMeshDataBuffer(const Context &context);
-        void createMaterialsBuffer(const Context &context);
-        void createIndirectBuffer(const Context &context);
-        void createSceneBuffer(const Context& context);
-        void createPickerBuffer(const Context& context);
-        void createCullerBuffers(const Context &context);
+        void CreateCameraBuffer(const Context& context);
+        void CreateMeshDataBuffer(const Context &context);
+        void CreateMaterialsBuffer(const Context &context);
+        void CreateIndirectBuffer(const Context &context);
+        void CreateSceneBuffer(const Context& context);
+        void CreatePickerBuffer(const Context& context);
+        void CreateCullerBuffers(const Context &context);
 
-        void createSceneTexture(const Context& context, vk::Format format);
-        void createOutIdTexture(const Context &context);
+        void CreateSceneTexture(const Context& context, vk::Format format);
+        void CreateOutIdTexture(const Context &context);
 
         static constexpr uint32_t kDescriptorSetInfoCount = 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1; // camera buffer + mesh data buffer + materials buffer + scene buffer + skybox sampler + irradiance map + prefiltered env + brdf lut + textures array
         static constexpr uint32_t kSkyboxDescriptorSetInfoCount = 1 + 1; // camera buffer + cube texture
@@ -110,12 +110,12 @@ namespace kailux
         static constexpr uint32_t kPickerDescriptorSetInfoCount = 1 + 1; // id image + out buffer
         static constexpr uint32_t kOutlineDescriptorSetInfoCount = 1; // id image
         static constexpr uint32_t kCullerDescriptorSetInfoCount = 4; // mesh data + template + out indirect + counter
-        std::array<DescriptorSetInfo, kDescriptorSetInfoCount>        makeMeshDescriptorSetInfo(const SkyboxPass &skybox, const TextureRegistry &textureRegistry) const;
-        std::array<DescriptorSetInfo, kSkyboxDescriptorSetInfoCount>  makeSkyboxDescriptorSetInfo(const Texture& skyboxTexture) const;
-        std::array<DescriptorSetInfo, kGizmoDescriptorSetInfoCount>   makeGizmoDescriptorSetInfo() const;
-        std::array<DescriptorSetInfo, kPickerDescriptorSetInfoCount>  makePickerDescriptorSetInfo() const;
-        std::array<DescriptorSetInfo, kOutlineDescriptorSetInfoCount> makeOutlineDescriptorSetInfo() const;
-        std::array<DescriptorSetInfo, kCullerDescriptorSetInfoCount>  makeCullerDescriptorSetInfo() const;
+        std::array<DescriptorSetInfo, kDescriptorSetInfoCount>        MakeMeshDescriptorSetInfo(const SkyboxPass &skybox, const TextureRegistry &textureRegistry) const;
+        std::array<DescriptorSetInfo, kSkyboxDescriptorSetInfoCount>  MakeSkyboxDescriptorSetInfo(const Texture& skyboxTexture) const;
+        std::array<DescriptorSetInfo, kGizmoDescriptorSetInfoCount>   MakeGizmoDescriptorSetInfo() const;
+        std::array<DescriptorSetInfo, kPickerDescriptorSetInfoCount>  MakePickerDescriptorSetInfo() const;
+        std::array<DescriptorSetInfo, kOutlineDescriptorSetInfoCount> MakeOutlineDescriptorSetInfo() const;
+        std::array<DescriptorSetInfo, kCullerDescriptorSetInfoCount>  MakeCullerDescriptorSetInfo() const;
         static constexpr uint32_t kPickerResolvedViewDescriptorSetBinding = 0;
         static constexpr uint32_t kOutlineIdResolvedViewDescriptorSetBinding = 0;
 

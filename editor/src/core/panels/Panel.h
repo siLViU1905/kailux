@@ -10,21 +10,21 @@ namespace kailux
         Panel(std::string_view name, ImVec4 backgroundColor, bool open = true, bool focused = false);
         virtual ~Panel() = default;
 
-        virtual void render(Scene& scene) = 0;
+        virtual void Render(Scene& scene) = 0;
 
-        void setName(std::string_view name);
-        void setBackgroundColor(ImVec4 backgroundColor);
+        void SetName(std::string_view name);
+        void SetBackgroundColor(ImVec4 backgroundColor);
 
-        void open();
-        void close();
-        void toggle();
+        void Open();
+        void Close();
+        void Toggle();
 
-        bool isOpen() const;
-        bool isFocused() const;
+        bool IsOpen() const;
+        bool IsFocused() const;
 
-        GLFWwindow* getPlatformWindow() const;
+        GLFWwindow* GetPlatformWindow() const;
 
-        bool consumeToggleMouseLook();
+        bool ConsumeToggleMouseLook();
 
     protected:
         std::string  mName;

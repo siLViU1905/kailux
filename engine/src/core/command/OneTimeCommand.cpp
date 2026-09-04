@@ -27,7 +27,7 @@ namespace kailux
             context.mDevice,
             {
                 vk::CommandPoolCreateFlagBits::eTransient,
-                context.getGraphicsQueueFamilyIndex()
+                context.GetGraphicsQueueFamilyIndex()
             }
         );
 
@@ -35,7 +35,7 @@ namespace kailux
             context.mDevice,
             {
                 vk::CommandPoolCreateFlagBits::eTransient,
-                context.getTransferQueueFamilyIndex()
+                context.GetTransferQueueFamilyIndex()
             }
         );
     }
@@ -50,21 +50,21 @@ namespace kailux
     {
         OneTimeCommand otc;
         otc.mQueueType = type;
-        otc.createBuffer(context);
-        otc.createFence(context);
+        otc.CreateBuffer(context);
+        otc.CreateFence(context);
         otc.mCommandBuffer.begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
         return otc;
     }
 
-    void OneTimeCommand::submit(const Context &context) const
+    void OneTimeCommand::Submit(const Context &context) const
     {
         mCommandBuffer.end();
 
         const auto queue = (mQueueType == QueueType::Transfer)
-                        ? context.getTransferQueue()
-                        : context.getGraphicsQueue();
+                        ? context.GetTransferQueue()
+                        : context.GetGraphicsQueue();
 
-        vk::CommandBufferSubmitInfo cmdInfo(getCommandBuffer());
+        vk::CommandBufferSubmitInfo cmdInfo(GetCommandBuffer());
         vk::SubmitInfo2 submitInfo(
             {},
             {},
@@ -75,31 +75,31 @@ namespace kailux
         queue.waitIdle();
     }
 
-    void OneTimeCommand::submitAsync(const Context &context) const
+    void OneTimeCommand::SubmitAsync(const Context &context) const
     {
         mCommandBuffer.end();
 
         auto queue = (mQueueType == QueueType::Transfer)
-                        ? context.getTransferQueue()
-                        : context.getGraphicsQueue();
+                        ? context.GetTransferQueue()
+                        : context.GetGraphicsQueue();
 
-        vk::CommandBufferSubmitInfo cmdInfo(getCommandBuffer());
+        vk::CommandBufferSubmitInfo cmdInfo(GetCommandBuffer());
         vk::SubmitInfo2 submitInfo({}, {}, cmdInfo, {});
 
         queue.submit2(submitInfo, *mFence);
     }
 
-    vk::CommandBuffer OneTimeCommand::getCommandBuffer() const
+    vk::CommandBuffer OneTimeCommand::GetCommandBuffer() const
     {
         return *mCommandBuffer;
     }
 
-    vk::Fence OneTimeCommand::getFence() const
+    vk::Fence OneTimeCommand::GetFence() const
     {
         return *mFence;
     }
 
-    void OneTimeCommand::createBuffer(const Context &context)
+    void OneTimeCommand::CreateBuffer(const Context &context)
     {
         const auto &pool = (mQueueType == QueueType::Transfer) ? kTransferPool : kGraphicsPool;
         mCommandBuffer = std::move(vk::raii::CommandBuffers(
@@ -112,7 +112,7 @@ namespace kailux
         ).front());
     }
 
-    void OneTimeCommand::createFence(const Context &context)
+    void OneTimeCommand::CreateFence(const Context &context)
     {
         mFence = vk::raii::Fence(context.mDevice, vk::FenceCreateInfo{});
     }

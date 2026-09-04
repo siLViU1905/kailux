@@ -9,12 +9,12 @@ namespace kailux
     {
     public:
         using Task = std::move_only_function<void()>;
-        void enqueue(Task&& task)
+        void Enqueue(Task&& task)
         {
             mTasks.emplace_back(std::move(task), Delay);
         }
 
-        void tick()
+        void Tick()
         {
             std::erase_if(mTasks, [](auto &pending)
             {

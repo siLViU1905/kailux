@@ -2,7 +2,7 @@
 
 namespace kailux
 {
-    glm::vec4 Geometry::computeBoundingSphere(std::span<const Vertex> vertices)
+    glm::vec4 Geometry::compute_bounding_sphere(std::span<const Vertex> vertices)
     {
         if (vertices.empty())
             return {0.f, 0.f, 0.f, 0.f};

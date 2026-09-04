@@ -12,7 +12,7 @@ namespace kailux
 
         if (!file.is_open())
         {
-            log::console.error("Failed to open shader file {}", path.string());
+            log::console.Error("Failed to open shader file {}", path.string());
             return {};
         }
 
@@ -41,7 +41,7 @@ namespace kailux
                 return shaderc_compute_shader;
                 break;
             default:
-                log::console.error("Shader type unknown");
+                log::console.Error("Shader type unknown");
                 return std::nullopt;
                 break;
         }
@@ -96,7 +96,7 @@ namespace kailux
         shaderc::Compiler compiler;
         if (!compiler.IsValid())
         {
-            log::console.error("Shader compiler failed to initialize");
+            log::console.Error("Shader compiler failed to initialize");
             return {};
         }
 
@@ -114,11 +114,11 @@ namespace kailux
             );
 
         if (result.GetNumWarnings() > 0)
-            log::console.warning("Shader '{}' warning : {}", name, result.GetErrorMessage());
+            log::console.Warning("Shader '{}' warning : {}", name, result.GetErrorMessage());
 
         if (result.GetCompilationStatus() != shaderc_compilation_status_success)
         {
-            log::console.error("Failed to compile shader '{}':\n{}", name, result.GetErrorMessage());
+            log::console.Error("Failed to compile shader '{}':\n{}", name, result.GetErrorMessage());
             return {};
         }
         return {result.cbegin(), result.cend()};
@@ -133,7 +133,7 @@ namespace kailux
 
         auto spirv = compile_from_source(source, path.string(), stage, info);
         if (!spirv.empty())
-            log::console.debug("shader: compiled '{}' ({} words)", path.string(), spirv.size());
+            log::console.Debug("shader: compiled '{}' ({} words)", path.string(), spirv.size());
 
         return spirv;
     }
@@ -142,7 +142,7 @@ namespace kailux
     {
         std::ofstream out(path, std::ios::binary | std::ios::trunc);
         out.write(reinterpret_cast<const char*>(spirv.data()), static_cast<std::streamsize>(spirv.size_bytes()));
-        log::console.debug("Cached shader file '{}'", path.filename().string());
+        log::console.Debug("Cached shader file '{}'", path.filename().string());
     }
 
     std::vector<uint32_t> Shader::load_spirv(const std::filesystem::path &path)
@@ -150,14 +150,14 @@ namespace kailux
         std::ifstream file(path, std::ios::binary | std::ios::ate);
         if (!file)
         {
-            log::console.error("Failed to open shader file {}", path.string());
+            log::console.Error("Failed to open shader file {}", path.string());
             return {};
         }
 
         auto byteSize = static_cast<size_t>(file.tellg());
         if (byteSize == 0 || byteSize % sizeof(uint32_t) != 0)
             {
-            log::console.error("'{}' is not a valid SPIR-V binary", path.string());
+            log::console.Error("'{}' is not a valid SPIR-V binary", path.string());
             return {};
         }
 

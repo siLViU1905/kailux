@@ -15,27 +15,27 @@ namespace kailux
         ~Window();
 
         static Window create(int width, int height, std::string_view title);
-        void updateUserPointer();
+        void UpdateUserPointer();
 
-        void close();
-        void pollEvents() const;
-        void waitForEvents() const;
-        std::optional<Event> getEvent();
+        void Close();
+        void PollEvents() const;
+        void WaitForEvents() const;
+        std::optional<Event> GetEvent();
 
-        bool wasResized();
-        void maximize();
-        void restore();
-        void resize(int width, int height);
+        bool WasResized();
+        void Maximize();
+        void Restore();
+        void Resize(int width, int height);
 
-        GLFWwindow* getGLFWWindow();
+        GLFWwindow* GetGlfwWindow();
 
-        InputSource getInputSource();
-        InputSource getInputSource() const;
+        InputSource GetInputSource();
+        InputSource GetInputSource() const;
 
     private:
-        void initGLFW();
-        void createWindow(int width, int height, std::string_view title);
-        void setCallbacks() const;
+        void InitGlfw();
+        void CreateWindow(int width, int height, std::string_view title);
+        void SetCallbacks() const;
 
         static void glfw_framebuffer_callback(GLFWwindow* window, int width, int height);
         static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);

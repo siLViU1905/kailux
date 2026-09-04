@@ -11,24 +11,24 @@ namespace kailux
         static Editor create(ImTextureID directoryTextureId, ImTextureID fileTextureId);
 
         template<typename Layer>
-        auto& getLayer()
+        auto& GetLayer()
         {
             return std::get<Layer>(*mActiveLayer);
         }
 
         template<typename Layer>
-        const auto& getLayer() const
+        const auto& GetLayer() const
         {
             return std::get<Layer>(*mActiveLayer);
         }
 
-        void render(Scene& scene) const;
+        void Render(Scene& scene) const;
 
-        void onEvent(const Event& event);
-        void update() const;
+        void OnEvent(const Event& event);
+        void Update() const;
 
     private:
-        void createLayers(ImTextureID directoryTextureId, ImTextureID fileTextureId);
+        void CreateLayers(ImTextureID directoryTextureId, ImTextureID fileTextureId);
 
         using LayerTypes = std::variant<EditorLayer>;
         Scoped<LayerTypes> mActiveLayer;

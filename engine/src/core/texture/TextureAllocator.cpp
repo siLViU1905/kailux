@@ -9,7 +9,7 @@ namespace kailux
     {
         vk::DeviceSize imageSize = data.pixels.size() * sizeof(ImageLoader::ImageData::Pixel);
         auto stagingBuffer = BufferAllocator::alloc_staging(context, imageSize);
-        stagingBuffer.upload(data.pixels.data(), imageSize);
+        stagingBuffer.Upload(data.pixels.data(), imageSize);
 
         auto texture = alloc(
             context,
@@ -25,8 +25,8 @@ namespace kailux
 
         auto otc = OneTimeCommand::create(context);
         transition_layout(
-            otc.getCommandBuffer(),
-            texture.getImage(),
+            otc.GetCommandBuffer(),
+            texture.GetImage(),
             data.mipLevels,
             1,
             vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal
@@ -38,21 +38,21 @@ namespace kailux
         region.imageSubresource.layerCount = 1;
         region.imageExtent = vk::Extent3D(data.width, data.height, 1);
 
-        otc.getCommandBuffer().copyBufferToImage(
-            stagingBuffer.getBuffer(),
-            texture.getImage(),
+        otc.GetCommandBuffer().copyBufferToImage(
+            stagingBuffer.GetBuffer(),
+            texture.GetImage(),
             vk::ImageLayout::eTransferDstOptimal,
             region
         );
 
         generate_mipmaps(
-            otc.getCommandBuffer(),
-            texture.getImage(),
+            otc.GetCommandBuffer(),
+            texture.GetImage(),
             data.width,
             data.height,
             data.mipLevels
         );
-        otc.submit(context);
+        otc.Submit(context);
 
         return texture;
     }
@@ -62,7 +62,7 @@ namespace kailux
     {
         vk::DeviceSize imageSize = data.pixels.size() * sizeof(ImageLoader::ImageData::Pixel);
         auto stagingBuffer = BufferAllocator::alloc_staging(context, imageSize);
-        stagingBuffer.upload(data.pixels.data(), imageSize);
+        stagingBuffer.Upload(data.pixels.data(), imageSize);
 
         auto texture = alloc(
             context,
@@ -99,7 +99,7 @@ namespace kailux
         auto stagingBuffer = BufferAllocator::alloc_staging(context, totalSize);
 
         for (uint32_t i = 0; i < 6; ++i)
-            stagingBuffer.upload(faces[i].pixels.data(), layerSize, i * layerSize);
+            stagingBuffer.Upload(faces[i].pixels.data(), layerSize, i * layerSize);
 
         vk::ImageCreateInfo imageInfo{};
         imageInfo.imageType = vk::ImageType::e2D;
@@ -119,14 +119,14 @@ namespace kailux
         auto memRequirements = image.getMemoryRequirements();
         vk::MemoryAllocateInfo allocInfo{
             memRequirements.size,
-            context.findMemoryType(memRequirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)
+            context.FindMemoryType(memRequirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)
         };
         vk::raii::DeviceMemory memory(context.mDevice, allocInfo);
         image.bindMemory(*memory, 0);
 
         auto otc = OneTimeCommand::create(context);
         transition_layout(
-            otc.getCommandBuffer(),
+            otc.GetCommandBuffer(),
             *image,
             mipLevels,
             6,
@@ -141,13 +141,13 @@ namespace kailux
         region.imageSubresource.layerCount = 6;
         region.imageExtent = imageInfo.extent;
 
-        otc.getCommandBuffer().copyBufferToImage(stagingBuffer.getBuffer(), *image,
+        otc.GetCommandBuffer().copyBufferToImage(stagingBuffer.GetBuffer(), *image,
                                                  vk::ImageLayout::eTransferDstOptimal, region);
 
         for (uint32_t face = 0; face < 6; ++face)
-            generate_mipmaps_cubemap(otc.getCommandBuffer(), *image, width, height, mipLevels, face);
+            generate_mipmaps_cubemap(otc.GetCommandBuffer(), *image, width, height, mipLevels, face);
 
-        otc.submit(context);
+        otc.Submit(context);
 
         vk::ImageViewCreateInfo viewInfo{};
         viewInfo.image = *image;
@@ -220,7 +220,7 @@ namespace kailux
             {
                 const auto &faceData = mips[mip][face];
                 vk::DeviceSize faceSize = faceData.pixels.size() * sizeof(ImageLoader::ImageData::Pixel);
-                stagingBuffer.upload(faceData.pixels.data(), faceSize, offsets[mip * 6 + face]);
+                stagingBuffer.Upload(faceData.pixels.data(), faceSize, offsets[mip * 6 + face]);
             }
 
         vk::ImageCreateInfo imageInfo{};
@@ -241,7 +241,7 @@ namespace kailux
         auto memRequirements = image.getMemoryRequirements();
         vk::MemoryAllocateInfo allocInfo{
             memRequirements.size,
-            context.findMemoryType(memRequirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)
+            context.FindMemoryType(memRequirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)
         };
         vk::raii::DeviceMemory memory(context.mDevice, allocInfo);
         image.bindMemory(*memory, 0);
@@ -249,7 +249,7 @@ namespace kailux
         auto otc = OneTimeCommand::create(context);
 
         transition_layout(
-            otc.getCommandBuffer(),
+            otc.GetCommandBuffer(),
             *image,
             mipLevels,
             6,
@@ -285,15 +285,15 @@ namespace kailux
                 mipHeight /= 2;
         }
 
-        otc.getCommandBuffer().copyBufferToImage(
-            stagingBuffer.getBuffer(),
+        otc.GetCommandBuffer().copyBufferToImage(
+            stagingBuffer.GetBuffer(),
             *image,
             vk::ImageLayout::eTransferDstOptimal,
             regions
         );
 
         transition_layout(
-            otc.getCommandBuffer(),
+            otc.GetCommandBuffer(),
             *image,
             mipLevels,
             6,
@@ -301,7 +301,7 @@ namespace kailux
             vk::ImageLayout::eShaderReadOnlyOptimal
         );
 
-        otc.submit(context);
+        otc.Submit(context);
 
 
         vk::ImageViewCreateInfo viewInfo{};
@@ -396,7 +396,7 @@ namespace kailux
         auto memRequirements = image.getMemoryRequirements();
         vk::MemoryAllocateInfo allocInfo{};
         allocInfo.allocationSize = memRequirements.size;
-        allocInfo.memoryTypeIndex = context.findMemoryType(
+        allocInfo.memoryTypeIndex = context.FindMemoryType(
             memRequirements.memoryTypeBits,
             vk::MemoryPropertyFlagBits::eDeviceLocal
         );

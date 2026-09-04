@@ -15,48 +15,48 @@ namespace kailux
     {
     }
 
-    void PhysicsSystem::setOnWarningLog(OnLog&& callback)
+    void PhysicsSystem::SetOnWarningLog(OnLog&& callback)
     {
         mOnWarningLog = std::move(callback);
     }
 
-    SimulationState PhysicsSystem::getSimulationState() const
+    SimulationState PhysicsSystem::GetSimulationState() const
     {
         return mSimulationState;
     }
 
-    void PhysicsSystem::setSimulationState(SimulationState state)
+    void PhysicsSystem::SetSimulationState(SimulationState state)
     {
         mSimulationState = state;
         if (mSimulationState == SimulationState::Running)
-            onSimulationStart();
+            OnSimulationStart();
     }
 
-    void PhysicsSystem::update(float deltaTime)
+    void PhysicsSystem::Update(float deltaTime)
     {
-        updateControls();
-        updateTransforms();
-        mPhysicsRegistry.get().update(deltaTime);
+        UpdateControls();
+        UpdateTransforms();
+        mPhysicsRegistry.get().Update(deltaTime);
     }
 
-    void PhysicsSystem::updateBodyType(BodyHandle handle, PhysicsBodyType type)
+    void PhysicsSystem::UpdateBodyType(BodyHandle handle, PhysicsBodyType type)
     {
-        mPhysicsRegistry.get().setBodyType(handle, type);
+        mPhysicsRegistry.get().SetBodyType(handle, type);
     }
 
-    void PhysicsSystem::updateBodyScale(BodyHandle handle, const glm::vec3& scale)
+    void PhysicsSystem::UpdateBodyScale(BodyHandle handle, const glm::vec3& scale)
     {
-        mPhysicsRegistry.get().updateBodyScale(handle, scale);
+        mPhysicsRegistry.get().UpdateBodyScale(handle, scale);
     }
 
-    BodyHandle PhysicsSystem::uploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo& data)
+    BodyHandle PhysicsSystem::UploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo& data)
     {
-        return mPhysicsRegistry.get().createBody(data);
+        return mPhysicsRegistry.get().CreateBody(data);
     }
 
-    void PhysicsSystem::onSimulationStart()
+    void PhysicsSystem::OnSimulationStart()
     {
-        auto& registry = mScene.get().getEntityRegistry();
+        auto& registry = mScene.get().GetEntityRegistry();
         auto view = registry.view<TransformComponent, PhysicsComponent>();
 
         for (auto entity : view)
@@ -64,20 +64,20 @@ namespace kailux
             const auto& transformComp = view.get<TransformComponent>(entity);
             const auto& physicsComp = view.get<PhysicsComponent>(entity);
 
-            mPhysicsRegistry.get().setBodyTransform(
+            mPhysicsRegistry.get().SetBodyTransform(
                 physicsComp.handle,
                 transformComp.transform.position,
                 transformComp.transform.rotation
             );
 
-            if (physicsComp.isDynamic())
-                mPhysicsRegistry.get().setLinearVelocity(physicsComp.handle, glm::vec3(0.f));
+            if (physicsComp.IsDynamic())
+                mPhysicsRegistry.get().SetLinearVelocity(physicsComp.handle, glm::vec3(0.f));
         }
     }
 
-    void PhysicsSystem::updateControls()
+    void PhysicsSystem::UpdateControls()
     {
-        auto& registry = mScene.get().getEntityRegistry();
+        auto& registry = mScene.get().GetEntityRegistry();
         auto view = registry.view<PhysicsComponent, PhysicsControlComponent>();
 
         for (auto entity : view)
@@ -85,19 +85,19 @@ namespace kailux
             auto phys = view.get<PhysicsComponent>(entity);
             auto& control = view.get<PhysicsControlComponent>(entity);
 
-            control.velocity = mPhysicsRegistry.get().getLinearVelocity(phys.handle);
+            control.velocity = mPhysicsRegistry.get().GetLinearVelocity(phys.handle);
 
             if (control.applyForce)
-                mPhysicsRegistry.get().addForce(phys.handle, control.force);
+                mPhysicsRegistry.get().AddForce(phys.handle, control.force);
 
             if (control.applyImpulse)
-                mPhysicsRegistry.get().addImpulse(phys.handle, control.impulse);
+                mPhysicsRegistry.get().AddImpulse(phys.handle, control.impulse);
         }
     }
 
-    void PhysicsSystem::updateTransforms()
+    void PhysicsSystem::UpdateTransforms()
     {
-        auto& registry = mScene.get().getEntityRegistry();
+        auto& registry = mScene.get().GetEntityRegistry();
         auto view = registry.view<TransformComponent, PhysicsComponent>();
 
         for (auto entity : view)
@@ -105,11 +105,11 @@ namespace kailux
             auto& transformComp = view.get<TransformComponent>(entity);
             auto physics = view.get<PhysicsComponent>(entity);
 
-            if (physics.isDynamic())
+            if (physics.IsDynamic())
             {
                 glm::vec3 worldPos;
                 glm::quat worldRot;
-                mPhysicsRegistry.get().getBodyTransform(physics.handle, worldPos, worldRot);
+                mPhysicsRegistry.get().GetBodyTransform(physics.handle, worldPos, worldRot);
 
                 if (auto* h = registry.try_get<HierarchyComponent>(entity);
                     h && h->parent != entt::null)
@@ -130,9 +130,9 @@ namespace kailux
         }
     }
 
-    void PhysicsSystem::addPhysicsToEntity(entt::entity entity, PhysicsCreationOptions options)
+    void PhysicsSystem::AddPhysicsToEntity(entt::entity entity, PhysicsCreationOptions options)
     {
-        auto& reg = mScene.get().getEntityRegistry();
+        auto& reg = mScene.get().GetEntityRegistry();
 
         const auto& transform = reg.get<TransformComponent>(entity).transform;
 
@@ -144,7 +144,7 @@ namespace kailux
             for (const auto& sm : cache->submeshes)
                 infos.emplace_back(sm.vertices, sm.indices, sm.localTransform);
 
-            handle = uploadPhysicsBodyDataToRegistry({
+            handle = UploadPhysicsBodyDataToRegistry({
                 std::move(infos),
                 cache->meshType,
                 transform,
@@ -156,7 +156,7 @@ namespace kailux
         }
         else if (const auto* source = reg.try_get<MeshSourceComponent>(entity))
         {
-            handle = uploadPhysicsBodyDataToRegistry({
+            handle = UploadPhysicsBodyDataToRegistry({
                 {},
                 source->type,
                 transform,

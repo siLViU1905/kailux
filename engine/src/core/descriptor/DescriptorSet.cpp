@@ -27,26 +27,26 @@ namespace kailux
                                         const DescriptorPool &pool,
                                         std::span<const DescriptorSetInfo> infos)
     {
-        log::console.debug("descriptor set: creating");
+        log::console.Debug("descriptor set: creating");
         DescriptorSet set;
 
-        set.createSet(context, layout, pool, infos);
-        log::console.debug("descriptor set: created with {} bindings", infos.size());
+        set.CreateSet(context, layout, pool, infos);
+        log::console.Debug("descriptor set: created with {} bindings", infos.size());
 
         return set;
     }
 
-    vk::DescriptorSet DescriptorSet::getDescriptorSet() const
+    vk::DescriptorSet DescriptorSet::GetDescriptorSet() const
     {
         return *mSet;
     }
 
-    void DescriptorSet::bind(const Pipeline &pipeline, vk::CommandBuffer cmd, vk::PipelineBindPoint bindPoint) const
+    void DescriptorSet::Bind(const Pipeline &pipeline, vk::CommandBuffer cmd, vk::PipelineBindPoint bindPoint) const
     {
-        cmd.bindDescriptorSets(bindPoint, pipeline.getLayout(), 0, *mSet, {});
+        cmd.bindDescriptorSets(bindPoint, pipeline.GetLayout(), 0, *mSet, {});
     }
 
-    void DescriptorSet::updateInfo(const Context &context, std::span<const DescriptorSetUpdateInfo> updateInfos) const
+    void DescriptorSet::UpdateInfo(const Context &context, std::span<const DescriptorSetUpdateInfo> updateInfos) const
     {
         std::vector<vk::WriteDescriptorSet> descriptorWrites;
         std::vector<vk::DescriptorBufferInfo> bufferInfos;
@@ -104,12 +104,12 @@ namespace kailux
         context.mDevice.updateDescriptorSets(descriptorWrites, {});
     }
 
-    void DescriptorSet::createSet(const Context &context, const DescriptorLayout &layout, const DescriptorPool &pool,
+    void DescriptorSet::CreateSet(const Context &context, const DescriptorLayout &layout, const DescriptorPool &pool,
                                   std::span<const DescriptorSetInfo> infos)
     {
-        auto layoutHandle = layout.getLayout();
+        auto layoutHandle = layout.GetLayout();
         vk::DescriptorSetAllocateInfo allocInfo(
-            pool.getPool(),
+            pool.GetPool(),
             1,
             &layoutHandle
         );

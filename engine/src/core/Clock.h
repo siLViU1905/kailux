@@ -15,16 +15,16 @@ namespace kailux
     public:
         Clock();
 
-        void tick();
+        void Tick();
 
         template<typename Ty, TimeType timeType>
-        Ty getDeltaTime() const
+        Ty GetDeltaTime() const
         {
             return convert<Ty, timeType>(mDeltaTime);
         }
 
         template<typename Ty, TimeType timeType>
-        Ty getElapsedTime() const
+        Ty GetElapsedTime() const
         {
             return convert<Ty, timeType>(std::chrono::steady_clock::now() - mStart);
         }

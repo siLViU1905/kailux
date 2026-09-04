@@ -8,7 +8,7 @@ namespace kailux
         mLastTick = mStart;
     }
 
-    void Clock::tick()
+    void Clock::Tick()
     {
         auto now = std::chrono::steady_clock::now();
         mDeltaTime = now - mLastTick;

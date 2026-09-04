@@ -38,7 +38,7 @@ namespace kailux
         return loadData;
     }
 
-    glm::mat4 MeshLoader::aiMatrix4x4_to_glm(const aiMatrix4x4 &m)
+    glm::mat4 MeshLoader::ai_matrix4x4_to_glm(const aiMatrix4x4 &m)
     {
         return glm::transpose(glm::make_mat4(&m.a1));
     }
@@ -50,7 +50,7 @@ namespace kailux
                                   std::string_view directoryPath
     )
     {
-        auto worldMatrix = parentMatrix * aiMatrix4x4_to_glm(node->mTransformation);
+        auto worldMatrix = parentMatrix * ai_matrix4x4_to_glm(node->mTransformation);
 
         for (uint32_t i = 0; i < node->mNumMeshes; i++)
         {
@@ -62,7 +62,7 @@ namespace kailux
 
             process_mesh(mesh, submesh.meshData);
 
-            submesh.boundingSphere = Geometry::computeBoundingSphere(submesh.meshData.vertices);
+            submesh.boundingSphere = Geometry::compute_bounding_sphere(submesh.meshData.vertices);
 
             outLoadData.submeshes.push_back(std::move(submesh));
         }

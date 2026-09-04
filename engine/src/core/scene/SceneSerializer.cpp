@@ -22,17 +22,17 @@ namespace kailux
     {
         SceneDocument document;
         document.version = kSceneVersion;
-        document.meta = scene.getMeta();
+        document.meta = scene.GetMeta();
 
-        const auto& registry = scene.getEntityRegistry();
-        if (scene.getSun() != entt::null && registry.all_of<SunData>(scene.getSun()))
-            document.sun = registry.get<SunData>(scene.getSun());
+        const auto& registry = scene.GetEntityRegistry();
+        if (scene.GetSun() != entt::null && registry.all_of<SunData>(scene.GetSun()))
+            document.sun = registry.get<SunData>(scene.GetSun());
  
-        document.mainCamera = details::to_id(scene.getSceneCamera());
+        document.mainCamera = details::to_id(scene.GetSceneCamera());
  
         for (auto entity : registry.view<TagComponent>())
         {
-            if (entity == scene.getSun())
+            if (entity == scene.GetSun())
                 continue;
 
             if (registry.all_of<MeshComponent>(entity) &&
@@ -79,7 +79,7 @@ namespace kailux
         return nlohmann::json(document).dump(indent);
     }
 
-    std::expected<void, SceneSerializer::Error> SceneSerializer::writeFile(const SceneDocument &document,
+    std::expected<void, SceneSerializer::Error> SceneSerializer::write_file(const SceneDocument &document,
         const std::filesystem::path &path, int indent)
     {
         std::ofstream file(path, std::ios::binary | std::ios::trunc);
@@ -150,6 +150,6 @@ namespace kailux
     std::expected<void, SceneSerializer::Error> SceneSerializer::save(const Scene &scene,
         const std::filesystem::path &path)
     {
-        return writeFile(to_document(scene), path);
+        return write_file(to_document(scene), path);
     }
 }

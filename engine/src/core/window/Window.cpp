@@ -40,22 +40,22 @@ namespace kailux
         }
     }
 
-    GLFWwindow *Window::getGLFWWindow()
+    GLFWwindow *Window::GetGlfwWindow()
     {
         return mWindowHandle;
     }
 
-    InputSource Window::getInputSource()
+    InputSource Window::GetInputSource()
     {
         return {mWindowHandle};
     }
 
-    InputSource Window::getInputSource() const
+    InputSource Window::GetInputSource() const
     {
         return {mWindowHandle};
     }
 
-    void Window::initGLFW()
+    void Window::InitGlfw()
     {
         if (!glfwInit())
             throw std::runtime_error("Failed to init GLFW");
@@ -64,7 +64,7 @@ namespace kailux
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     }
 
-    void Window::createWindow(int width, int height, std::string_view title)
+    void Window::CreateWindow(int width, int height, std::string_view title)
     {
         mWindowHandle = glfwCreateWindow(width, height, title.data(), nullptr, nullptr);
         if (!mWindowHandle)
@@ -74,7 +74,7 @@ namespace kailux
         }
     }
 
-    void Window::setCallbacks() const
+    void Window::SetCallbacks() const
     {
         glfwSetFramebufferSizeCallback(mWindowHandle, glfw_framebuffer_callback);
         glfwSetKeyCallback(mWindowHandle, glfw_key_callback);
@@ -83,32 +83,32 @@ namespace kailux
 
     Window Window::create(int width, int height, std::string_view title)
     {
-        log::console.debug("window: creating");
+        log::console.Debug("window: creating");
         Window window;
 
-        window.initGLFW();
-        log::console.debug("window: glfw initialized");
+        window.InitGlfw();
+        log::console.Debug("window: glfw initialized");
 
-        window.createWindow(width, height, title);
-        log::console.debug("window: window created");
+        window.CreateWindow(width, height, title);
+        log::console.Debug("window: window created");
 
-        window.setCallbacks();
-        log::console.debug("window: callbacks set");
+        window.SetCallbacks();
+        log::console.Debug("window: callbacks set");
 
         return window;
     }
 
-    void Window::updateUserPointer()
+    void Window::UpdateUserPointer()
     {
         glfwSetWindowUserPointer(mWindowHandle, this);
     }
 
-    void Window::close()
+    void Window::Close()
     {
         glfwSetWindowShouldClose(mWindowHandle, true);
     }
 
-    bool Window::wasResized()
+    bool Window::WasResized()
     {
         bool temp = mFramebufferResized;
 
@@ -117,32 +117,32 @@ namespace kailux
         return temp;
     }
 
-    void Window::maximize()
+    void Window::Maximize()
     {
         glfwMaximizeWindow(mWindowHandle);
     }
 
-    void Window::restore()
+    void Window::Restore()
     {
         glfwRestoreWindow(mWindowHandle);
     }
 
-    void Window::resize(int width, int height)
+    void Window::Resize(int width, int height)
     {
         glfwSetWindowSize(mWindowHandle, width, height);
     }
 
-    void Window::pollEvents() const
+    void Window::PollEvents() const
     {
         glfwPollEvents();
     }
 
-    void Window::waitForEvents() const
+    void Window::WaitForEvents() const
     {
         glfwWaitEvents();
     }
 
-    std::optional<Event> Window::getEvent()
+    std::optional<Event> Window::GetEvent()
     {
         if (!mEventQueue.empty())
         {

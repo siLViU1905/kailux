@@ -23,11 +23,11 @@ namespace kailux
 
         static Scene create(std::string_view name, const Window &window);
 
-        void update();
+        void Update();
 
-        std::optional<entt::entity> createCameraEntity(std::string_view name, bool isPrimary, int width, int height);
+        std::optional<entt::entity> CreateCameraEntity(std::string_view name, bool isPrimary, int width, int height);
 
-        std::optional<entt::entity> createMeshEntity(
+        std::optional<entt::entity> CreateMeshEntity(
             std::string_view name,
             const MeshComponent &component,
             MaterialHandle materialHandle,
@@ -35,58 +35,58 @@ namespace kailux
             const MeshMaterialData &material,
             entt::entity parent = entt::null
         );
-        entt::entity createParentEntity(std::string_view name);
+        entt::entity CreateParentEntity(std::string_view name);
 
-        std::optional<entt::entity> createPointLightEntity(std::string_view name, const GizmoComponent &component, const glm::vec3 &position);
+        std::optional<entt::entity> CreatePointLightEntity(std::string_view name, const GizmoComponent &component, const glm::vec3 &position);
 
-        entt::registry&       getEntityRegistry();
-        const entt::registry& getEntityRegistry() const;
-        entt::entity          getSceneCamera() const;
-        entt::entity          getSimulationCamera() const;
-        void                  setMainCamera(entt::entity camera);
-        entt::entity          getSun() const;
-        SceneData             getData() const;
+        entt::registry&       GetEntityRegistry();
+        const entt::registry& GetEntityRegistry() const;
+        entt::entity          GetSceneCamera() const;
+        entt::entity          GetSimulationCamera() const;
+        void                  SetMainCamera(entt::entity camera);
+        entt::entity          GetSun() const;
+        SceneData             GetData() const;
 
-        std::string_view      getName() const;
+        std::string_view      GetName() const;
 
-        std::string           getMeshEntityName();
-        std::string           getLightEntityName();
+        std::string           GetMeshEntityName();
+        std::string           GetLightEntityName();
 
-        void                         setSavePath(const std::filesystem::path& path);
-        const std::filesystem::path& getSavePath() const;
+        void                         SetSavePath(const std::filesystem::path& path);
+        const std::filesystem::path& GetSavePath() const;
 
-        void      setMeta(const SceneMeta& meta);
-        SceneMeta getMeta() const;
+        void      SetMeta(const SceneMeta& meta);
+        SceneMeta GetMeta() const;
 
-        bool attachMesh(entt::entity entity,
+        bool AttachMesh(entt::entity entity,
                         const MeshComponent          &component,
                         MaterialHandle               materialHandle,
                         const MeshMaterialData       &material);
-        bool attachMeshSource(entt::entity entity, const MeshSourceComponent& source);
-        bool attachPointLight(entt::entity            entity,
+        bool AttachMeshSource(entt::entity entity, const MeshSourceComponent& source);
+        bool AttachPointLight(entt::entity            entity,
                               const GizmoComponent   &component,
                               const PointLightRecord &light);
-        void attachPhysics(entt::entity entity, PhysicsComponent component);
-        void attachCamera(entt::entity entity, const CameraComponent &component);
+        void AttachPhysics(entt::entity entity, PhysicsComponent component);
+        void AttachCamera(entt::entity entity, const CameraComponent &component);
 
-        void setLocalTransform(entt::entity entity, const MeshTransformData &transform);
-        void setParent(entt::entity child, entt::entity parent);
-        void detachFromParent(entt::entity child);
-        void destroyEntity(entt::entity entity);
+        void SetLocalTransform(entt::entity entity, const MeshTransformData &transform);
+        void SetParent(entt::entity child, entt::entity parent);
+        void DetachFromParent(entt::entity child);
+        void DestroyEntity(entt::entity entity);
 
         friend class SceneInstantiator;
 
     private:
         static constexpr std::string_view kSunName = "Sun";
 
-        entt::entity createEntity(std::string_view name);
+        entt::entity CreateEntity(std::string_view name);
         using        SunData = DirectionalLightData;
-        entt::entity createSunEntity(const SunData& data);
-        void         createCameras(const Window& window);
+        entt::entity CreateSunEntity(const SunData& data);
+        void         CreateCameras(const Window& window);
 
-        LightsData getLightData() const;
+        LightsData GetLightData() const;
 
-        void updateTransforms();
+        void UpdateTransforms();
 
         std::string    mName{"Scene"};
 

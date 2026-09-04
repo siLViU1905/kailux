@@ -2,7 +2,7 @@
 
 namespace kailux
 {
-    void Console::render()
+    void Console::Render()
     {
         ImGui::BeginChild("ConsoleLogRegion", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
 

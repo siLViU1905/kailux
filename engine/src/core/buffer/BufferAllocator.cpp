@@ -62,7 +62,7 @@ namespace kailux
         auto memory = vk::raii::DeviceMemory(context.mDevice,
                                              vk::MemoryAllocateInfo(
                                                  reqs.size,
-                                                 context.findMemoryType(reqs.memoryTypeBits, props)
+                                                 context.FindMemoryType(reqs.memoryTypeBits, props)
                                              )
         );
         buffer.bindMemory(*memory, 0);

@@ -62,12 +62,12 @@ namespace kailux
         return *this;
     }
 
-    void Swapchain::createSwapchain(const Window &window, const Context &context)
+    void Swapchain::CreateSwapchain(const Window &window, const Context &context)
     {
-        auto surfaceCapabilities = context.getPhysicalDevice().getSurfaceCapabilitiesKHR(context.getSurface());
+        auto surfaceCapabilities = context.GetPhysicalDevice().getSurfaceCapabilitiesKHR(context.GetSurface());
 
         mSurfaceFormat = choose_swap_surface_format(
-            context.getPhysicalDevice().getSurfaceFormatsKHR(context.getSurface()));
+            context.GetPhysicalDevice().getSurfaceFormatsKHR(context.GetSurface()));
 
         mExtent = choose_swap_extent(surfaceCapabilities, window);
 
@@ -80,7 +80,7 @@ namespace kailux
 
         vk::SwapchainCreateInfoKHR swapChainCreateInfo{
             vk::SwapchainCreateFlagsKHR(),
-            context.getSurface(),
+            context.GetSurface(),
             requestedImageCount,
             mSurfaceFormat.format,
             mSurfaceFormat.colorSpace,
@@ -93,7 +93,7 @@ namespace kailux
         swapChainCreateInfo.preTransform = surfaceCapabilities.currentTransform;
         swapChainCreateInfo.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
         swapChainCreateInfo.presentMode = choose_swap_present_mode(
-            context.getPhysicalDevice().getSurfacePresentModesKHR(context.getSurface()));
+            context.GetPhysicalDevice().getSurfacePresentModesKHR(context.GetSurface()));
         swapChainCreateInfo.clipped = true;
         swapChainCreateInfo.oldSwapchain = *mSwapchain;
 
@@ -104,30 +104,30 @@ namespace kailux
 
     Swapchain Swapchain::create(Window &window, const Context &context, vk::SampleCountFlagBits sampleCount)
     {
-        log::console.debug("swapchain: creating");
+        log::console.Debug("swapchain: creating");
         Swapchain swapChain;
 
-        swapChain.createSwapchain(window, context);
-        log::console.debug("swapchain: swap chain created");
+        swapChain.CreateSwapchain(window, context);
+        log::console.Debug("swapchain: swap chain created");
 
-        swapChain.createImageViews(context);
-        log::console.debug("swapchain: image views created");
+        swapChain.CreateImageViews(context);
+        log::console.Debug("swapchain: image views created");
 
-        swapChain.createColorResources(context, sampleCount);
-        log::console.debug("swapchain: color resources created");
+        swapChain.CreateColorResources(context, sampleCount);
+        log::console.Debug("swapchain: color resources created");
 
-        swapChain.createDepthResources(context, sampleCount);
-        log::console.debug("swapchain: depth resources created");
+        swapChain.CreateDepthResources(context, sampleCount);
+        log::console.Debug("swapchain: depth resources created");
 
-        swapChain.createSyncObjects(context);
-        log::console.debug("swapchain: semaphores created");
+        swapChain.CreateSyncObjects(context);
+        log::console.Debug("swapchain: semaphores created");
 
         return swapChain;
     }
 
-    void Swapchain::recreate(const Window &window, const Context &context, vk::SampleCountFlagBits sampleCount)
+    void Swapchain::Recreate(const Window &window, const Context &context, vk::SampleCountFlagBits sampleCount)
     {
-        auto fbSize{window.getInputSource().getFramebufferSize()};
+        auto fbSize{window.GetInputSource().GetFramebufferSize()};
 
         if (static_cast<uint32_t>(fbSize.x) == mExtent.width &&
             static_cast<uint32_t>(fbSize.y) == mExtent.height)
@@ -135,11 +135,11 @@ namespace kailux
 
         while (fbSize.x == 0 || fbSize.y == 0)
         {
-            fbSize = window.getInputSource().getFramebufferSize();
-            window.waitForEvents();
+            fbSize = window.GetInputSource().GetFramebufferSize();
+            window.WaitForEvents();
         }
 
-        context.getDevice().waitIdle();
+        context.GetDevice().waitIdle();
 
         mImageViews.clear();
         mImages.clear();
@@ -147,65 +147,65 @@ namespace kailux
         mPresentSemaphores.clear();
         mSemaphoreIndex = 0;
 
-        createSwapchain(window, context);
-        createImageViews(context);
-        createColorResources(context, sampleCount);
-        createDepthResources(context, sampleCount);
-        createSyncObjects(context);
-        log::console.info("swapchain: recreated with extent: x:{}, y:{}", mExtent.width, mExtent.height);
+        CreateSwapchain(window, context);
+        CreateImageViews(context);
+        CreateColorResources(context, sampleCount);
+        CreateDepthResources(context, sampleCount);
+        CreateSyncObjects(context);
+        log::console.Info("swapchain: recreated with extent: x:{}, y:{}", mExtent.width, mExtent.height);
     }
 
-    vk::Format Swapchain::getFormat() const
+    vk::Format Swapchain::GetFormat() const
     {
         return mImageFormat;
     }
 
-    vk::Format Swapchain::getDepthFormat() const
+    vk::Format Swapchain::GetDepthFormat() const
     {
         return mDepthFormat;
     }
 
-    vk::Extent2D Swapchain::getExtent() const
+    vk::Extent2D Swapchain::GetExtent() const
     {
         return mExtent;
     }
 
-    vk::Image Swapchain::getImage(uint32_t index) const
+    vk::Image Swapchain::GetImage(uint32_t index) const
     {
         return mImages[index];
     }
 
-    vk::Image Swapchain::getColorImage() const
+    vk::Image Swapchain::GetColorImage() const
     {
         return *mColorImage;
     }
 
-    vk::Image Swapchain::getDepthImage() const
+    vk::Image Swapchain::GetDepthImage() const
     {
         return *mDepthImage;
     }
 
-    vk::ImageView Swapchain::getImageView(uint32_t index) const
+    vk::ImageView Swapchain::GetImageView(uint32_t index) const
     {
         return *mImageViews[index];
     }
 
-    vk::ImageView Swapchain::getColorImageView() const
+    vk::ImageView Swapchain::GetColorImageView() const
     {
         return *mColorImageView;
     }
 
-    vk::ImageView Swapchain::getDepthImageView() const
+    vk::ImageView Swapchain::GetDepthImageView() const
     {
         return *mDepthImageView;
     }
 
-    uint32_t Swapchain::getImageCount() const
+    uint32_t Swapchain::GetImageCount() const
     {
         return static_cast<uint32_t>(mImages.size());
     }
 
-    std::optional<Swapchain::AcquireResult> Swapchain::acquire()
+    std::optional<Swapchain::AcquireResult> Swapchain::Acquire()
     {
         auto semaphore = *mAcquireSemaphores[mSemaphoreIndex];
         try
@@ -224,12 +224,12 @@ namespace kailux
         }
     }
 
-    vk::Semaphore Swapchain::getPresentSemaphore(uint32_t index) const
+    vk::Semaphore Swapchain::GetPresentSemaphore(uint32_t index) const
     {
         return *mPresentSemaphores[index];
     }
 
-    bool Swapchain::present(const Context &context, uint32_t imageIndex, vk::Semaphore renderFinishedSemaphore) const
+    bool Swapchain::Present(const Context &context, uint32_t imageIndex, vk::Semaphore renderFinishedSemaphore) const
     {
         vk::PresentInfoKHR presentInfo{
             renderFinishedSemaphore,
@@ -239,7 +239,7 @@ namespace kailux
 
         try
         {
-            auto result = context.getGraphicsQueue().presentKHR(presentInfo);
+            auto result = context.GetGraphicsQueue().presentKHR(presentInfo);
             if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR)
                 return false;
         } catch (const vk::OutOfDateKHRError &)
@@ -266,7 +266,7 @@ namespace kailux
         if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
             return capabilities.currentExtent;
 
-        const auto fbSize{window.getInputSource().getFramebufferSize()};
+        const auto fbSize{window.GetInputSource().GetFramebufferSize()};
 
         return {
             std::clamp<uint32_t>(fbSize.x, capabilities.minImageExtent.width, capabilities.maxImageExtent.width),
@@ -298,7 +298,7 @@ namespace kailux
 
         for (vk::Format format: candidates)
         {
-            auto props = context.getPhysicalDevice().getFormatProperties(format);
+            auto props = context.GetPhysicalDevice().getFormatProperties(format);
             if (props.optimalTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment)
                 return format;
         }
@@ -306,7 +306,7 @@ namespace kailux
         throw std::runtime_error("Couldnt find a supported depth format");
     }
 
-    void Swapchain::createImageViews(const Context &context)
+    void Swapchain::CreateImageViews(const Context &context)
     {
         mImageViews.clear();
         mImageViews.reserve(mImages.size());
@@ -330,7 +330,7 @@ namespace kailux
         }
     }
 
-    void Swapchain::createColorResources(const Context &context, vk::SampleCountFlagBits sampleCount)
+    void Swapchain::CreateColorResources(const Context &context, vk::SampleCountFlagBits sampleCount)
     {
         if (sampleCount == vk::SampleCountFlagBits::e1)
             return;
@@ -353,7 +353,7 @@ namespace kailux
         mColorImageMemory = vk::raii::DeviceMemory(context.mDevice,
                                                     {
                                                         memReqs.size,
-                                                        context.findMemoryType(
+                                                        context.FindMemoryType(
                                                             memReqs.memoryTypeBits,
                                                             vk::MemoryPropertyFlagBits::eDeviceLocal)
                                                     });
@@ -376,7 +376,7 @@ namespace kailux
                                                });
     }
 
-    void Swapchain::createDepthResources(const Context &context, vk::SampleCountFlagBits sampleCount)
+    void Swapchain::CreateDepthResources(const Context &context, vk::SampleCountFlagBits sampleCount)
     {
         mDepthFormat = find_depth_format(context);
 
@@ -396,7 +396,7 @@ namespace kailux
         vk::MemoryRequirements memReqs = mDepthImage.getMemoryRequirements();
         vk::MemoryAllocateInfo allocInfo{
             memReqs.size,
-            context.findMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)
+            context.FindMemoryType(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)
         };
         mDepthImageMemory = vk::raii::DeviceMemory(context.mDevice, allocInfo);
         mDepthImage.bindMemory(*mDepthImageMemory, 0);
@@ -413,7 +413,7 @@ namespace kailux
         mDepthImageView = vk::raii::ImageView(context.mDevice, viewInfo);
     }
 
-    void Swapchain::createSyncObjects(const Context &context)
+    void Swapchain::CreateSyncObjects(const Context &context)
     {
         mAcquireSemaphores.reserve(mImages.size());
         mPresentSemaphores.reserve(mImages.size());

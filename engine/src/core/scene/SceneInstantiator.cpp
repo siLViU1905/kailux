@@ -21,10 +21,10 @@ namespace kailux
             return std::unexpected(std::format(
                 "Scene contains {} point lights, limit is {}", lightCount, details::kMaxPointLights));
 
-        scene.setMeta(document.meta);
+        scene.SetMeta(document.meta);
 
-        if (scene.getSun() != entt::null)
-            scene.getEntityRegistry().get<SunData>(scene.getSun()) = document.sun;
+        if (scene.GetSun() != entt::null)
+            scene.GetEntityRegistry().get<SunData>(scene.GetSun()) = document.sun;
 
         std::unordered_map<uint32_t, entt::entity> remap;
         remap.reserve(document.entities.size());
@@ -34,10 +34,10 @@ namespace kailux
 
         for (const auto &record : document.entities)
         {
-            const auto entity = scene.createEntity(record.name);
+            const auto entity = scene.CreateEntity(record.name);
 
             if (record.transform)
-                scene.setLocalTransform(entity, *record.transform);
+                scene.SetLocalTransform(entity, *record.transform);
 
             if (record.id != kNoEntity)
                 remap.emplace(record.id, entity);
@@ -46,11 +46,11 @@ namespace kailux
             if (record.light)
             {
                 GizmoComponent gizmo{
-                    gizmoRegistry.getBuiltins().pointLight,
+                    gizmoRegistry.GetBuiltins().pointLight,
                     0.5f,
                     glm::vec4(glm::vec3(record.light->colorAndEnabled), 1.f)
                 };
-                scene.attachPointLight(entity, gizmo, *record.light);
+                scene.AttachPointLight(entity, gizmo, *record.light);
             }
 
             if (record.mesh)
@@ -64,17 +64,17 @@ namespace kailux
                 );
 
             if (record.camera)
-                scene.attachCamera(entity, *record.camera);
+                scene.AttachCamera(entity, *record.camera);
         }
 
         if (const auto it{remap.find(document.mainCamera)}; it != remap.end())
-            scene.setMainCamera(it->second);
+            scene.SetMainCamera(it->second);
         else
         {
-            log::console.warning("No camera found in scene '{}'. Falling back...", scene.getName());
-            const auto fallback = scene.createCameraEntity(
+            log::console.Warning("No camera found in scene '{}'. Falling back...", scene.GetName());
+            const auto fallback = scene.CreateCameraEntity(
                 "MainCamera", true, context.windowWidth, context.windowHeight);
-            scene.setMainCamera(*fallback);
+            scene.SetMainCamera(*fallback);
         }
 
         for (const auto& record : document.entities)
@@ -87,10 +87,10 @@ namespace kailux
             if (child == remap.end() || parent == remap.end())
                 continue;
 
-            scene.setParent(child->second, parent->second);
+            scene.SetParent(child->second, parent->second);
         }
 
-        scene.update();
+        scene.Update();
         return requests;
     }
 }

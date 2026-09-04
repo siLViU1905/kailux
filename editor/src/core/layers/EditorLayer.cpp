@@ -9,32 +9,32 @@ namespace kailux
 {
     EditorLayer::EditorLayer(ImTextureID dirTex, ImTextureID fileTex)
     {
-        addPanels(dirTex, fileTex);
+        AddPanels(dirTex, fileTex);
     }
 
-    void EditorLayer::render(Scene &scene) const
+    void EditorLayer::Render(Scene &scene) const
     {
         render_dock_space();
 
-        renderPanels(scene);
+        RenderPanels(scene);
     }
 
-    void EditorLayer::update()
+    void EditorLayer::Update()
     {
-        getPanel<ProjectPanel>().useFullWidth(!getPanel<EntityEditorPanel>().isOpen());
+        GetPanel<ProjectPanel>().UseFullWidth(!GetPanel<EntityEditorPanel>().IsOpen());
 
-        auto& viewport = getPanel<ViewportPanel>();
-        auto& simulation = getPanel<SimulationPanel>();
+        auto& viewport = GetPanel<ViewportPanel>();
+        auto& simulation = GetPanel<SimulationPanel>();
 
-        const bool isSimulationRunning = viewport.getSimulationState() != SimulationState::Paused;
-        getPanel<EntityEditorPanel>().setSimulationState(isSimulationRunning);
+        const bool isSimulationRunning = viewport.GetSimulationState() != SimulationState::Paused;
+        GetPanel<EntityEditorPanel>().SetSimulationState(isSimulationRunning);
 
         if (!isSimulationRunning)
-            simulation.close();
+            simulation.Close();
         else if (!mSimulationWasRunning)
-            simulation.open();
-        else if (!simulation.isOpen())
-            viewport.requestSimulationState(SimulationState::Paused);
+            simulation.Open();
+        else if (!simulation.IsOpen())
+            viewport.RequestSimulationState(SimulationState::Paused);
 
         mSimulationWasRunning = isSimulationRunning;
     }
@@ -64,37 +64,37 @@ namespace kailux
         ImGui::End();
     }
 
-    void EditorLayer::addPanels(ImTextureID directoryTextureId, ImTextureID fileTextureId)
+    void EditorLayer::AddPanels(ImTextureID directoryTextureId, ImTextureID fileTextureId)
     {
-        auto &viewportPanel = emplacePanel<ViewportPanel>(kViewportPanelName) ;
-        auto& menuPanel = emplacePanel<MenuPanel>();
-        auto &hierarchyPanel = emplacePanel<HierarchyPanel>(
+        auto &viewportPanel = EmplacePanel<ViewportPanel>(kViewportPanelName) ;
+        auto& menuPanel = EmplacePanel<MenuPanel>();
+        auto &hierarchyPanel = EmplacePanel<HierarchyPanel>(
             kHierarchyPanelName,
             kPanelsBackgroundColor);
-        auto &entityEditorPanel = emplacePanel<EntityEditorPanel>(kEntityEditorName,
+        auto &entityEditorPanel = EmplacePanel<EntityEditorPanel>(kEntityEditorName,
                                                                   kPanelsBackgroundColor);
-        auto &projectPanel = emplacePanel<ProjectPanel>(kProjectPanelName,
+        auto &projectPanel = EmplacePanel<ProjectPanel>(kProjectPanelName,
                                                         kPanelsBackgroundColor);
-        auto &simulationPanel = emplacePanel<SimulationPanel>(kSimulationPanelName);
-        simulationPanel.close();
+        auto &simulationPanel = EmplacePanel<SimulationPanel>(kSimulationPanelName);
+        simulationPanel.Close();
 
-        hierarchyPanel.setOnEntitySelected([&entityEditorPanel](entt::entity entity, const Scene &scene)
+        hierarchyPanel.SetOnEntitySelected([&entityEditorPanel](entt::entity entity, const Scene &scene)
         {
-            entityEditorPanel.open();
-            entityEditorPanel.setSelectedEntity(entity, scene);
+            entityEditorPanel.Open();
+            entityEditorPanel.SetSelectedEntity(entity, scene);
         });
 
-        projectPanel.getAssetBrowser().setDirectoryTextureId(directoryTextureId);
-        projectPanel.getAssetBrowser().setFileTextureId(fileTextureId);
+        projectPanel.GetAssetBrowser().SetDirectoryTextureId(directoryTextureId);
+        projectPanel.GetAssetBrowser().SetFileTextureId(fileTextureId);
 
-        menuPanel.setOnViewMenu([&hierarchyPanel, &entityEditorPanel, &projectPanel]()
+        menuPanel.SetOnViewMenu([&hierarchyPanel, &entityEditorPanel, &projectPanel]()
         {
-            if (ImGui::MenuItem("Entities Hierarchy", nullptr, hierarchyPanel.isOpen()))
-                hierarchyPanel.toggle();
-            if (ImGui::MenuItem("Entity Editor", nullptr, entityEditorPanel.isOpen()))
-                entityEditorPanel.toggle();
-            if (ImGui::MenuItem("Project", nullptr, projectPanel.isOpen()))
-                projectPanel.toggle();
+            if (ImGui::MenuItem("Entities Hierarchy", nullptr, hierarchyPanel.IsOpen()))
+                hierarchyPanel.Toggle();
+            if (ImGui::MenuItem("Entity Editor", nullptr, entityEditorPanel.IsOpen()))
+                entityEditorPanel.Toggle();
+            if (ImGui::MenuItem("Project", nullptr, projectPanel.IsOpen()))
+                projectPanel.Toggle();
         });
     }
 }

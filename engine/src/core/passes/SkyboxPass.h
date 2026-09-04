@@ -17,15 +17,15 @@ namespace kailux
         static SkyboxPass create(const Context& context, const Swapchain& swapchain, uint32_t maxFrames);
 
         template<typename... Pcs>
-        void push(vk::CommandBuffer cmd, const Pcs &... pcs) const
+        void Push(vk::CommandBuffer cmd, const Pcs &... pcs) const
         {
-            pushImpl<kPushConstantRanges, Pcs...>(cmd, pcs...);
+            PushImpl<kPushConstantRanges, Pcs...>(cmd, pcs...);
         }
 
-        const Texture&          getTexture() const;
-        const Texture&          getIrradianceMapTexture() const;
-        const Texture&          getPrefilteredEnvTexture() const;
-        const Texture&          getBRDFLutTexture() const;
+        const Texture&          GetTexture() const;
+        const Texture&          GetIrradianceMapTexture() const;
+        const Texture&          GetPrefilteredEnvTexture() const;
+        const Texture&          GetBrdfLutTexture() const;
 
     private:
         static constexpr std::string_view kVertexShaderPath = "shaders/skybox_vertex_shader.glsl";
@@ -87,10 +87,10 @@ namespace kailux
 
         static PipelineInfo make_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits samples);
 
-        void createTexture(const Context &context);
-        void createIrradianceTexture(const Context& context);
-        void createPrefilteredEnvTexture(const Context& context);
-        void createBRDFLutTexture(const Context& context);
+        void CreateTexture(const Context &context);
+        void CreateIrradianceTexture(const Context& context);
+        void CreatePrefilteredEnvTexture(const Context& context);
+        void CreateBrdfLutTexture(const Context& context);
 
         Texture          mTexture;
         Texture          mIrradianceMapTexture;

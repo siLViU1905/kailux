@@ -24,21 +24,21 @@ namespace kailux
     DescriptorLayout DescriptorLayout::create(const Context &context,
                                                     std::span<const DescriptorLayoutBinding> bindings)
     {
-        log::console.debug("descriptor layout: creating");
+        log::console.Debug("descriptor layout: creating");
         DescriptorLayout layout;
 
-        layout.createLayout(context, bindings);
-        log::console.debug("descriptor layout: created with {} bindings", bindings.size());
+        layout.CreateLayout(context, bindings);
+        log::console.Debug("descriptor layout: created with {} bindings", bindings.size());
 
         return layout;
     }
 
-    vk::DescriptorSetLayout DescriptorLayout::getLayout() const
+    vk::DescriptorSetLayout DescriptorLayout::GetLayout() const
     {
         return *mLayout;
     }
 
-    void DescriptorLayout::createLayout(const Context &context, std::span<const DescriptorLayoutBinding> bindings)
+    void DescriptorLayout::CreateLayout(const Context &context, std::span<const DescriptorLayoutBinding> bindings)
     {
         std::vector<vk::DescriptorSetLayoutBinding> vkBindings;
         std::vector<vk::DescriptorBindingFlags> bindingFlagsArr;
