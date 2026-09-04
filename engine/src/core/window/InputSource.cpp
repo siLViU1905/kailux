@@ -8,6 +8,11 @@ namespace kailux
     {
     }
 
+    bool InputSource::valid() const
+    {
+        return mHandle != nullptr;
+    }
+
     bool InputSource::isOpen() const
     {
         return !glfwWindowShouldClose(mHandle);
@@ -57,4 +62,6 @@ namespace kailux
         glfwGetFramebufferSize(mHandle, &width, &height);
         return {width, height};
     }
+
+    bool InputSource::operator==(const InputSource &other) const = default;
 }

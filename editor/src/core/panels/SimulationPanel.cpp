@@ -14,12 +14,18 @@ namespace kailux
         constexpr auto flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoScrollbar;
         mVisible = ImGui::Begin(mName.data(), &mOpen, flags);
         mFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+        mPlatformWindow = static_cast<GLFWwindow*>(ImGui::GetWindowViewport()->PlatformHandle);
 
         if (mVisible)
         {
             mExtent = ImGui::GetContentRegionAvail();
+            if (mTextureId)
+                ImGui::Image(mTextureId, mExtent);
+            else
+                ImGui::Dummy(mExtent);
 
-            ImGui::Image(mTextureId, mExtent);
+            if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Middle))
+                mToggleMouseLook = true;
         }
 
         ImGui::End();

@@ -219,16 +219,26 @@ namespace kailux
 
     void Application::updateEngine(float deltaTime, const Window& window)
     {
-        const auto& simulationPanel{mEditor.getLayer<EditorLayer>().getPanel<SimulationPanel>()};
-        mEngine.setSimulationViewActive(simulationPanel.isOpen());
-        mEngine.setSimulationViewExtent(simulationPanel.getExtent());
+        auto& editorLayer{mEditor.getLayer<EditorLayer>()};
+        auto& simulation{editorLayer.getPanel<SimulationPanel>()};
+        auto& viewport{editorLayer.getPanel<ViewportPanel>()};
+
+        mEngine.setSimulationViewActive(simulation.isOpen());
+        mEngine.setSimulationViewExtent(simulation.getExtent());
+
+        const bool simulationHasInput = simulation.isOpen() && simulation.isFocused();
+
         mEngine.setControlledCamera(
-            simulationPanel.isOpen() && simulationPanel.isFocused()
-                ? mEngine.getScene().getSimulationCamera()
-                : mEngine.getScene().getSceneCamera()
+            simulationHasInput ? mEngine.getScene().getSimulationCamera()
+                               : mEngine.getScene().getSceneCamera(),
+            InputSource(simulationHasInput ? simulation.getPlatformWindow()
+                                           : viewport.getPlatformWindow())
         );
 
-        mEngine.update(deltaTime, window);
+        if (simulation.consumeToggleMouseLook() || viewport.consumeToggleMouseLook())
+            mEngine.toggleMouseLook();
+
+        mEngine.update(deltaTime);
 
         const auto sceneViewportMousePos = mEditor.getLayer<EditorLayer>().getPanel<ViewportPanel>().getScaledMousePos();
         const auto outlineColor = mEditor.getLayer<EditorLayer>().getPanel<MenuPanel>().getOutlineColor();

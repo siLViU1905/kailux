@@ -10,7 +10,7 @@ namespace kailux
                                                                       mDepth(std::move(other.mDepth)),
                                                                       mResolved(std::move(other.mResolved)),
                                                                       mExtent(other.mExtent),
-                                                                      mTextureId(other.mTextureId)
+                                                                      mTextureId(std::exchange(other.mTextureId, {}))
     {
     }
 

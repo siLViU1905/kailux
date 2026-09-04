@@ -53,6 +53,7 @@ namespace kailux
                                               mSimulationTextureIds(other.mSimulationTextureIds),
                                               mScene(std::move(other.mScene)),
                                               mControlledCamera(other.mControlledCamera),
+                                              mInputSource(other.mInputSource),
                                               mMouseLookActive(other.mMouseLookActive),
                                               mSimulationView(std::move(other.mSimulationView)),
                                               mRequestedSimulationExtent(other.mRequestedSimulationExtent),
@@ -94,6 +95,7 @@ namespace kailux
             mSimulationTextureIds = other.mSimulationTextureIds;
             mScene = std::move(other.mScene);
             mControlledCamera = other.mControlledCamera;
+            mInputSource = other.mInputSource;
             mMouseLookActive = other.mMouseLookActive;
             mSimulationView = std::move(other.mSimulationView);
             mRequestedSimulationExtent = other.mRequestedSimulationExtent;
@@ -173,9 +175,34 @@ namespace kailux
         mSimulationViewActive = active;
     }
 
-    void Engine::setControlledCamera(entt::entity camera)
+    void Engine::setControlledCamera(entt::entity camera, InputSource source)
     {
-        mControlledCamera = camera;
+        if (mControlledCamera == camera && mInputSource == source)
+            return;
+
+        if (mMouseLookActive && mInputSource.valid())
+            mInputSource.setCursorMode(CursorMode::Normal);
+
+         mControlledCamera = camera;
+         mInputSource      = source;
+         mMouseLookActive  = false;
+    }
+
+    void Engine::toggleMouseLook()
+    {
+        if (!mInputSource.valid())
+            return;
+
+        mMouseLookActive = !mMouseLookActive;
+        mInputSource.setCursorMode(mMouseLookActive ? CursorMode::Disabled : CursorMode::Normal);
+
+        if (mMouseLookActive)
+            if (auto* camera = mScene.getEntityRegistry().try_get<CameraComponent>(mControlledCamera))
+            {
+                const auto mousePos{mInputSource.getMousePos()};
+                camera->lastMousePosX = mousePos.x;
+                camera->lastMousePosY = mousePos.y;
+            }
     }
 
     void Engine::waitIdle() const
@@ -227,22 +254,14 @@ namespace kailux
 
     ImTextureID Engine::getSimulationTextureId() const
     {
-        return mSimulationTextureIds[mCurrentFrame];
+        return mSimulationView.getTextureId();
     }
 
     void Engine::onEvent(const Event &event, Window &window)
     {
-        if (const auto* buttonPressed{std::get_if<ButtonPressed>(&event)})
-            if (buttonPressed->button == MouseButton::Middle)
-            {
-                mMouseLookActive = !mMouseLookActive;
-                window.getInputSource().setCursorMode(mMouseLookActive ? CursorMode::Disabled : CursorMode::Normal);
-            }
-        if (const auto* keyRelease{std::get_if<KeyReleased>(&event)})
-        {
-            mMouseLookActive = false;
-            window.getInputSource().setCursorMode(CursorMode::Normal);
-        }
+        if (const auto* keyReleased{std::get_if<KeyReleased>(&event)})
+            if (keyReleased->key == Key::Escape && mMouseLookActive)
+                toggleMouseLook();
     }
 
     void Engine::createRenderingContext(Window &window)
@@ -396,11 +415,8 @@ namespace kailux
         {
             if (mSceneTextureIds[i])
                 ImGuiBackend::remove_texture(mSceneTextureIds[i]);
-            if (mSimulationTextureIds[i])
-                ImGuiBackend::remove_texture(mSimulationTextureIds[i]);
 
-            mSceneTextureIds[i]      = ImGuiBackend::get_texture_id_from_texture(mFrames[i].getSceneTexture());
-            mSimulationTextureIds[i] = ImGuiBackend::get_texture_id_from_texture(mFrames[i].getSimulationTexture());
+            mSceneTextureIds[i] = ImGuiBackend::get_texture_id_from_texture(mFrames[i].getSceneTexture());
         }
     }
 
@@ -521,9 +537,6 @@ namespace kailux
             recordSkybox(frame, recorder, details::kSceneCameraIndex);
 
             recorder.endRendering();
-
-            if (mSimulationViewActive)
-                copy_scene_to_simulation_texture(frame, recorder);
 
             transitionForGizmoPass(frame, recorder);
 
@@ -819,80 +832,20 @@ namespace kailux
 
     void Engine::resizeSimulationView()
     {
-        mDeferredResourceEraser.enqueue([old = std::move(mSimulationView)]
-        {
-            if (old.getTextureId())
-                ImGuiBackend::remove_texture(old.getTextureId());
-        });
+        waitIdle();
+
+        if (mSimulationView.getTextureId())
+            ImGuiBackend::remove_texture(mSimulationView.getTextureId());
 
         mSimulationView = SimulationView::create(
-            mContext,
-            mSwapchain.getFormat(),
-            mSwapchain.getDepthFormat(),
-            mRequestedSimulationExtent,
-            mSampleCount
-        );
-        mSimulationView.setTextureId(ImGuiBackend::get_texture_id_from_texture(mSimulationView.getResolvedTexture()));
-    }
-
-    void Engine::copy_scene_to_simulation_texture(const FrameData &frame, const CommandRecorder &recorder)
-    {
-        recorder.imageBarrier({
-            frame.getSceneTexture().getImage(),
-            vk::ImageLayout::eColorAttachmentOptimal,
-            vk::ImageLayout::eTransferSrcOptimal,
-            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-            vk::PipelineStageFlagBits2::eCopy,
-            vk::AccessFlagBits2::eColorAttachmentWrite,
-            vk::AccessFlagBits2::eTransferRead
-        });
-
-        recorder.imageBarrier({
-            frame.getSimulationTexture().getImage(),
-            vk::ImageLayout::eUndefined,
-            vk::ImageLayout::eTransferDstOptimal,
-            vk::PipelineStageFlagBits2::eFragmentShader,
-            vk::PipelineStageFlagBits2::eCopy,
-            vk::AccessFlagBits2::eShaderRead,
-            vk::AccessFlagBits2::eTransferWrite
-        });
-
-        constexpr vk::ImageSubresourceLayers layers{vk::ImageAspectFlagBits::eColor, 0, 0, 1};
-        const vk::ImageCopy region{
-            layers,
-            {},
-            layers,
-            {},
-            vk::Extent3D{frame.getExtent().width, frame.getExtent().height, 1}
-        };
-
-        recorder.getCommandBuffer().copyImage(
-            frame.getSceneTexture().getImage(),
-            vk::ImageLayout::eTransferSrcOptimal,
-            frame.getSimulationTexture().getImage(),
-            vk::ImageLayout::eTransferDstOptimal,
-            region
-            );
-
-        recorder.imageBarrier({
-            frame.getSceneTexture().getImage(),
-            vk::ImageLayout::eTransferSrcOptimal,
-            vk::ImageLayout::eColorAttachmentOptimal,
-            vk::PipelineStageFlagBits2::eCopy,
-            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-            vk::AccessFlagBits2::eTransferRead,
-            vk::AccessFlagBits2::eColorAttachmentWrite
-        });
-
-        recorder.imageBarrier({
-            frame.getSimulationTexture().getImage(),
-            vk::ImageLayout::eTransferDstOptimal,
-            vk::ImageLayout::eShaderReadOnlyOptimal,
-            vk::PipelineStageFlagBits2::eCopy,
-            vk::PipelineStageFlagBits2::eFragmentShader,
-            vk::AccessFlagBits2::eTransferWrite,
-            vk::AccessFlagBits2::eShaderRead
-        });
+           mContext,
+           mSwapchain.getFormat(),
+           mSwapchain.getDepthFormat(),
+           mRequestedSimulationExtent,
+           mSampleCount
+       );
+        mSimulationView.setTextureId(
+            ImGuiBackend::get_texture_id_from_texture(mSimulationView.getResolvedTexture()));
     }
 
     bool Engine::needs_resize(vk::Extent2D extentA, vk::Extent2D extentB)
@@ -1202,6 +1155,7 @@ namespace kailux
     {
         const auto extent{mSimulationView.getExtent()};
 
+        recorder.bufferMemoryBarriers(frame.getIndirectReadToWriteBarriers());
         executeCulling(frame, recorder, mScene.getSimulationCamera(), extent);
 
         transitionForSimulationPass(recorder);
@@ -1258,7 +1212,7 @@ namespace kailux
         };
     }
 
-    void Engine::update(float deltaTime, const Window &window)
+    void Engine::update(float deltaTime)
     {
         mAssetPipeline.poll();
         mTransferManager.poll(mContext);
@@ -1269,6 +1223,9 @@ namespace kailux
 
         mScene.update();
 
+        if (!mInputSource.valid())
+            return;
+
         const auto controlled{
             mControlledCamera == entt::null ?
             mScene.getSceneCamera() :
@@ -1277,8 +1234,8 @@ namespace kailux
         if (auto* camera{mScene.getEntityRegistry().try_get<CameraComponent>(controlled)})
         {
             camera->focused = mMouseLookActive;
-            Camera::update_movement(*camera, window, deltaTime);
-            Camera::update_look_at(*camera, window, deltaTime);
+            Camera::update_movement(*camera, mInputSource, deltaTime);
+            Camera::update_look_at(*camera, mInputSource, deltaTime);
         }
     }
 
@@ -1295,11 +1252,17 @@ namespace kailux
 
     void Engine::updateCameraBuffer(FrameData &frame) const
     {
+        const auto simulationExtent{
+            mSimulationView.getExtent().width > 0 && mSimulationView.getExtent().height > 0
+                ? mSimulationView.getExtent()
+                : mSwapchain.getExtent()
+        };
+
         std::array<CameraData, details::kMaxCameras> cameras{};
         cameras[details::kSceneCameraIndex] =
-            buildCameraData(mScene.getSceneCamera(), mSwapchain.getExtent());
+                buildCameraData(mScene.getSceneCamera(), mSwapchain.getExtent());
         cameras[details::kSimulationCameraIndex] =
-            buildCameraData(mScene.getSimulationCamera(), mSwapchain.getExtent()/*mSimulationExtent*/);
+                buildCameraData(mScene.getSimulationCamera(), simulationExtent);
 
         frame.getCameraBuffer().upload(
             cameras.data(),

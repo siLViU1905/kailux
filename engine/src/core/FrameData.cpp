@@ -42,7 +42,6 @@ namespace kailux
                                                        mCullerCountBuffer(std::move(other.mCullerCountBuffer)),
                                                        mExtent(other.mExtent),
                                                        mSceneTexture(std::move(other.mSceneTexture)),
-                                                       mSimulationTexture(std::move(other.mSimulationTexture)),
                                                        mOutIdTexture(std::move(other.mOutIdTexture)),
                                                        mResolvedOutIdTexture(std::move(other.mResolvedOutIdTexture))
     {
@@ -73,7 +72,6 @@ namespace kailux
             mCullerCountBuffer = std::move(other.mCullerCountBuffer);
             mExtent = other.mExtent;
             mSceneTexture = std::move(other.mSceneTexture);
-            mSimulationTexture = std::move(other.mSimulationTexture);
             mOutIdTexture = std::move(other.mOutIdTexture);
             mResolvedOutIdTexture = std::move(other.mResolvedOutIdTexture);
         }
@@ -107,7 +105,6 @@ namespace kailux
         frame.createPickerBuffer(context);
         frame.createCullerBuffers(context);
         frame.createSceneTexture(context, swapchain.getFormat());
-        frame.createSimulationTexture(context, swapchain.getFormat());
         frame.createOutIdTexture(context);
         auto descSetInfo = frame.makeMeshDescriptorSetInfo(skybox, textureRegistry);
         frame.createMeshDescriptorSet(context, mainPass.getDescriptorLayout(), mainPass.getDescriptorPool(), descSetInfo);
@@ -144,7 +141,6 @@ namespace kailux
         mExtent = swapchain.getExtent();
 
         createSceneTexture(context, swapchain.getFormat());
-        createSimulationTexture(context, swapchain.getFormat());
 
         createOutIdTexture(context);
         std::array pickerInfo{
@@ -272,11 +268,6 @@ namespace kailux
     const Texture &FrameData::getSceneTexture() const
     {
         return mSceneTexture;
-    }
-
-    const Texture & FrameData::getSimulationTexture() const
-    {
-        return mSimulationTexture;
     }
 
     const Texture &FrameData::getOutIdTexture() const
@@ -410,6 +401,24 @@ namespace kailux
         };
     }
 
+    std::array<vk::BufferMemoryBarrier2, FrameData::kIndirectReadToWriteMemoryBarriersCount> FrameData::getIndirectReadToWriteBarriers() const
+    {
+        return {
+            vk::BufferMemoryBarrier2{ // indirect buffer
+                vk::PipelineStageFlagBits2::eDrawIndirect, vk::AccessFlagBits2::eIndirectCommandRead,
+                vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eTransferWrite,
+                vk::QueueFamilyIgnored, vk::QueueFamilyIgnored,
+                mIndirectBuffer.getBuffer(), 0, vk::WholeSize
+            },
+            vk::BufferMemoryBarrier2{  // culler count
+                vk::PipelineStageFlagBits2::eDrawIndirect, vk::AccessFlagBits2::eIndirectCommandRead,
+                vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eTransferWrite,
+                vk::QueueFamilyIgnored, vk::QueueFamilyIgnored,
+                mCullerCountBuffer.getBuffer(), 0, vk::WholeSize
+            }
+        };
+    }
+
     void FrameData::createCommandPool(const Context &context)
     {
         vk::CommandPoolCreateInfo poolInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
@@ -539,20 +548,7 @@ namespace kailux
             mExtent.width,
             mExtent.height,
             format,
-            vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferSrc,
-            vk::ImageAspectFlagBits::eColor,
-            vk::SampleCountFlagBits::e1
-        );
-    }
-
-    void FrameData::createSimulationTexture(const Context &context, vk::Format format)
-    {
-        mSimulationTexture = TextureAllocator::create_empty(
-            context,
-            mExtent.width,
-            mExtent.height,
-            format,
-            vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
+            vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
             vk::ImageAspectFlagBits::eColor,
             vk::SampleCountFlagBits::e1
         );

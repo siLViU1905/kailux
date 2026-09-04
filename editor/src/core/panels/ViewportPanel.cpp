@@ -16,6 +16,8 @@ namespace kailux
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
         const bool visible{ImGui::Begin(mName.c_str(), &mOpen)};
         mFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+        mPlatformWindow = static_cast<GLFWwindow*>(ImGui::GetWindowViewport()->PlatformHandle);
+
         if (visible)
         {
             auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
@@ -31,6 +33,8 @@ namespace kailux
                 mMousePos = compute_relative_mouse_pos(minBound, viewportSize);
                 if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
                     mOnClick();
+                else if (ImGui::IsMouseClicked(ImGuiMouseButton_Middle))
+                    mToggleMouseLook = true;
             }
 
             renderSimulationIndicator(minBound, viewportSize);

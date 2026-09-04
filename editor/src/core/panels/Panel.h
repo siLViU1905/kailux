@@ -22,10 +22,16 @@ namespace kailux
         bool isOpen() const;
         bool isFocused() const;
 
+        GLFWwindow* getPlatformWindow() const;
+
+        bool consumeToggleMouseLook();
+
     protected:
         std::string  mName;
         ImVec4       mBackgroundColor{};
         bool         mOpen{true};
         bool         mFocused{};
+        GLFWwindow*  mPlatformWindow{};
+        bool         mToggleMouseLook{};
     };
 }

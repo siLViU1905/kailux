@@ -10,6 +10,8 @@ namespace kailux
         InputSource();
         InputSource(GLFWwindow* handle);
 
+        bool valid() const;
+
         bool isOpen() const;
 
         bool isMaximized() const;
@@ -23,6 +25,8 @@ namespace kailux
         CursorMode getCursorMode() const;
 
         glm::ivec2 getFramebufferSize() const;
+
+        bool operator==(const InputSource& other) const;
 
     private:
         GLFWwindow* mHandle{};

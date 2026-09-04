@@ -45,4 +45,14 @@ namespace kailux
     {
         return mFocused;
     }
+
+    GLFWwindow * Panel::getPlatformWindow() const
+    {
+        return mPlatformWindow;
+    }
+
+    bool Panel::consumeToggleMouseLook()
+    {
+        return std::exchange(mToggleMouseLook, false);
+    }
 }

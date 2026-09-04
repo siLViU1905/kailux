@@ -3,7 +3,7 @@
 
 namespace kailux
 {
-    void Camera::update_movement(CameraComponent& component, const Window& window, float deltaTime)
+    void Camera::update_movement(CameraComponent& component, InputSource source, float deltaTime)
     {
         if (!component.focused)
             return;
@@ -11,30 +11,30 @@ namespace kailux
         component.right = glm::normalize(glm::cross(component.forward, component.up));
 
         float velocity = component.speed * deltaTime;
-        if (window.getInputSource().isKeyPressed(Key::W))
+        if (source.isKeyPressed(Key::W))
             component.position += component.forward * velocity;
-        if (window.getInputSource().isKeyPressed(Key::S))
+        if (source.isKeyPressed(Key::S))
             component.position -= component.forward * velocity;
-        if (window.getInputSource().isKeyPressed(Key::A))
+        if (source.isKeyPressed(Key::A))
             component.position -= component.right * velocity;
-        if (window.getInputSource().isKeyPressed(Key::D))
+        if (source.isKeyPressed(Key::D))
             component.position += component.right * velocity;
 
-        if (window.getInputSource().isKeyPressed(Key::Space))
+        if (source.isKeyPressed(Key::Space))
             component.position += glm::vec3(0.f, 1.f, 0.f) * velocity;
-        if (window.getInputSource().isKeyPressed(Key::LeftControl))
+        if (source.isKeyPressed(Key::LeftControl))
             component.position -= glm::vec3(0.f, 1.f, 0.f) * velocity;
     }
 
-    void Camera::update_look_at(CameraComponent& component, const Window& window, float deltaTime)
+    void Camera::update_look_at(CameraComponent& component, InputSource source, float deltaTime)
     {
         if (!component.focused)
             return;
 
-        const auto mousePos{window.getInputSource().getMousePos()};
-    
-        float xOffset = static_cast<float>(mousePos.x - component.lastMousePosX);
-        float yOffset = static_cast<float>(component.lastMousePosY - mousePos.y);
+        const auto mousePos{source.getMousePos()};
+
+        const auto xOffset{static_cast<float>(mousePos.x - component.lastMousePosX)};
+        const auto yOffset{static_cast<float>(component.lastMousePosY - mousePos.y)};
     
         component.lastMousePosX = mousePos.x;
         component.lastMousePosY = mousePos.y;
@@ -86,9 +86,9 @@ namespace kailux
     void Camera::update_vectors(CameraComponent &component)
     {
         glm::vec3 front;
-        front.x = cos(glm::radians(component.yaw)) * cos(glm::radians(component.pitch));
-        front.y = sin(glm::radians(component.pitch));
-        front.z = sin(glm::radians(component.yaw)) * cos(glm::radians(component.pitch));
+        front.x = std::cos(glm::radians(component.yaw)) * std::cos(glm::radians(component.pitch));
+        front.y = std::sin(glm::radians(component.pitch));
+        front.z = std::sin(glm::radians(component.yaw)) * std::cos(glm::radians(component.pitch));
     
         component.forward = glm::normalize(front);
         component.right = glm::normalize(glm::cross(component.forward, component.up));

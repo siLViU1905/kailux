@@ -46,7 +46,8 @@ namespace kailux
 
         void setSimulationViewExtent(vk::Extent2D extent);
         void setSimulationViewActive(bool active);
-        void setControlledCamera(entt::entity camera);
+        void setControlledCamera(entt::entity camera, InputSource source);
+        void toggleMouseLook();
 
         void waitIdle() const;
 
@@ -61,7 +62,7 @@ namespace kailux
         ImTextureID getSimulationTextureId() const;
 
         void onEvent(const Event& event, Window& window);
-        void update(float deltaTime, const Window &window);
+        void update(float deltaTime);
         void render(const Window &window);
 
         static bool is_mesh_type_supported(std::string_view path);
@@ -149,7 +150,6 @@ namespace kailux
 
         void resizeSimulationView();
 
-        static void copy_scene_to_simulation_texture(const FrameData& frame, const CommandRecorder& recorder);
         static bool needs_resize(vk::Extent2D extentA, vk::Extent2D extentB);
 
         void transitionForMainPass(const FrameData& frame, const CommandRecorder& recorder) const;
@@ -183,6 +183,7 @@ namespace kailux
 
         Scene                                      mScene;
         entt::entity                               mControlledCamera{entt::null};
+        InputSource                                mInputSource;
         bool                                       mMouseLookActive{};
         OnEditorRender                             mOnEditorRender;
 
