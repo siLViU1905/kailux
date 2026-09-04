@@ -56,7 +56,8 @@ namespace kailux
                                               mInputSource(other.mInputSource),
                                               mMouseLookActive(other.mMouseLookActive),
                                               mSimulationView(std::move(other.mSimulationView)),
-                                              mRequestedSimulationExtent(other.mRequestedSimulationExtent),
+                                              mRetiredSimulationView(std::move(other.mRetiredSimulationView)),
+                                              mSimulationResize(other.mSimulationResize),
                                               mSimulationViewActive(other.mSimulationViewActive),
                                               mMainPass(std::move(other.mMainPass)),
                                               mSkyboxPass(std::move(other.mSkyboxPass)),
@@ -98,7 +99,8 @@ namespace kailux
             mInputSource = other.mInputSource;
             mMouseLookActive = other.mMouseLookActive;
             mSimulationView = std::move(other.mSimulationView);
-            mRequestedSimulationExtent = other.mRequestedSimulationExtent;
+            mRetiredSimulationView = std::move(other.mRetiredSimulationView);
+            mSimulationResize = other.mSimulationResize;
             mSimulationViewActive = other.mSimulationViewActive;
             mMainPass = std::move(other.mMainPass);
             mSkyboxPass = std::move(other.mSkyboxPass);
@@ -167,7 +169,7 @@ namespace kailux
 
     void Engine::setSimulationViewExtent(vk::Extent2D extent)
     {
-        mRequestedSimulationExtent = extent;
+       mSimulationResize.request(extent);
     }
 
     void Engine::setSimulationViewActive(bool active)
@@ -472,20 +474,13 @@ namespace kailux
         auto acquired = mSwapchain.acquire();
         if (!acquired)
         {
-            mSwapchain.recreate(window, mContext, mSampleCount);
-            for (auto &f: mFrames)
-                f.recreateTextures(mContext, mSwapchain);
-            createEditorTextureIds();
+            recreateSwapchainResources(window);
             return;
         }
 
-        if (mSimulationViewActive &&
-            mRequestedSimulationExtent.width > 0 &&
-            mRequestedSimulationExtent.height > 0 &&
-            needs_resize(mSimulationView.getExtent(), mRequestedSimulationExtent))
-        {
-            resizeSimulationView();
-        }
+        if (mSimulationViewActive)
+            if (const auto extent{mSimulationResize.poll(mSimulationView.getExtent())})
+                resizeSimulationView(*extent);
 
         const auto renderFinishedSemaphore = mSwapchain.getPresentSemaphore(acquired->imageIndex); {
             CommandRecorder recorder(frame.getCommandBuffer());
@@ -637,14 +632,15 @@ namespace kailux
         submit(mFrames[mCurrentFrame], acquired->imageAvailableSemaphore, renderFinishedSemaphore);
 
         mImGuiBackend.updatePlatform();
+        if (mRetiredSimulationView.getTextureId())
+        {
+            waitIdle();
+            ImGuiBackend::remove_texture(mRetiredSimulationView.getTextureId());
+            mRetiredSimulationView = {};
+        }
 
         if (!mSwapchain.present(mContext, acquired->imageIndex, renderFinishedSemaphore))
-        {
-            mSwapchain.recreate(window, mContext, mSampleCount);
-            for (auto &f: mFrames)
-                f.recreateTextures(mContext, mSwapchain);
-            createEditorTextureIds();
-        }
+            recreateSwapchainResources(window);
 
         mCurrentFrame = (mCurrentFrame + 1) % details::kFramesInFlight;
     }
@@ -830,32 +826,21 @@ namespace kailux
         recorder.bufferMemoryBarriers(frame.getCullerBufferMemoryBarriers());
     }
 
-    void Engine::resizeSimulationView()
+    void Engine::resizeSimulationView(vk::Extent2D extent)
     {
         waitIdle();
 
-        if (mSimulationView.getTextureId())
-            ImGuiBackend::remove_texture(mSimulationView.getTextureId());
+        mRetiredSimulationView = std::move(mSimulationView);
 
         mSimulationView = SimulationView::create(
            mContext,
            mSwapchain.getFormat(),
            mSwapchain.getDepthFormat(),
-           mRequestedSimulationExtent,
+           extent,
            mSampleCount
        );
         mSimulationView.setTextureId(
             ImGuiBackend::get_texture_id_from_texture(mSimulationView.getResolvedTexture()));
-    }
-
-    bool Engine::needs_resize(vk::Extent2D extentA, vk::Extent2D extentB)
-    {
-        const int widthDiff{static_cast<int>(extentB.width) - static_cast<int>(extentA.width)};
-        const int heightDiff{static_cast<int>(extentB.height) - static_cast<int>(extentA.height)};
-
-        constexpr int pixelThreshold{2};
-        return std::abs(widthDiff) > pixelThreshold ||
-               std::abs(heightDiff) > pixelThreshold;
     }
 
     void Engine::transitionForMainPass(const FrameData &frame, const CommandRecorder &recorder) const
@@ -1334,6 +1319,14 @@ namespace kailux
     void Engine::readOutputBuffers(const FrameData &frame)
     {
         mPickedEntity = frame.getPickerBuffer().read<uint32_t>();
+    }
+
+    void Engine::recreateSwapchainResources(const Window &window)
+    {
+        mSwapchain.recreate(window, mContext, mSampleCount);
+        for (auto &f : mFrames)
+            f.recreateTextures(mContext, mSwapchain);
+        createEditorTextureIds();
     }
 
     BodyHandle Engine::uploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo &data)

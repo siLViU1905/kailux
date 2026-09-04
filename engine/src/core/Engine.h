@@ -24,6 +24,7 @@
 #include "utilities/Queue.h"
 #include "utilities/ThreadDispatcher.h"
 #include "DeferredResourceEraser.h"
+#include "ResizeDebouncer.h"
 #include "SimulationView.h"
 #include "components/gpu/CameraData.h"
 #include "gizmo/GizmoRegistry.h"
@@ -144,13 +145,13 @@ namespace kailux
 
         void readOutputBuffers(const FrameData& frame);
 
+        void recreateSwapchainResources(const Window& window);
+
         BodyHandle uploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo& data);
 
         void executeCulling(const FrameData& frame, const CommandRecorder& recorder, entt::entity camera, vk::Extent2D extent);
 
-        void resizeSimulationView();
-
-        static bool needs_resize(vk::Extent2D extentA, vk::Extent2D extentB);
+        void resizeSimulationView(vk::Extent2D extent);
 
         void transitionForMainPass(const FrameData& frame, const CommandRecorder& recorder) const;
         void transitionForSimulationPass(const CommandRecorder &recorder) const;
@@ -188,7 +189,8 @@ namespace kailux
         OnEditorRender                             mOnEditorRender;
 
         SimulationView                             mSimulationView;
-        vk::Extent2D                               mRequestedSimulationExtent{};
+        SimulationView                             mRetiredSimulationView;
+        ResizeDebouncer<>                          mSimulationResize;
         bool                                       mSimulationViewActive{};
 
         ComputePassesPushConstants::MouseCords     mSceneViewportMousePos;
