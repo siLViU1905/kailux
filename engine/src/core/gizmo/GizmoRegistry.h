@@ -21,6 +21,7 @@ namespace kailux
         struct BuiltinGizmos
         {
             GizmoHandle pointLight;
+            GizmoHandle camera;
         };
 
         struct GizmoAlloc

@@ -46,6 +46,7 @@ namespace kailux
         };
 
         uploadShape([]() { return GizmoGeometry::generate_point_light_gizmo(); }, registry.mBuiltins.pointLight);
+        uploadShape([]() { return GizmoGeometry::generate_camera_gizmo(); }, registry.mBuiltins.camera);
 
         return registry;
     }
