@@ -14,6 +14,7 @@ namespace kailux
         };
 
         static GizmoData generate_point_light_gizmo(glm::vec3 color = {1.f, 0.9f, 0.3f});
+        static GizmoData generate_camera_gizmo(glm::vec3 color = {1.f, 0.9f, 0.3f});
 
     private:
         static void append_segment(GizmoData &data,
