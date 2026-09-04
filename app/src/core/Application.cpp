@@ -9,58 +9,58 @@ namespace kailux
     Application::Application(const WindowInfo &windowInfo)
     {
         mWindow = Window::create(windowInfo.width, windowInfo.height, windowInfo.title);
-        mWindow.updateUserPointer();
+        mWindow.UpdateUserPointer();
         mEngine = Engine::create(mWindow);
         mEditor = Editor::create(
-            mEngine.getAssetBrowserDirectoryTextureId(),
-            mEngine.getAssetBrowserFileTextureId()
+            mEngine.GetAssetBrowserDirectoryTextureId(),
+            mEngine.GetAssetBrowserFileTextureId()
         );
         ThreadDispatcher::kMaxThreads = kThreadCount;
         mThreadDispatcher = ThreadDispatcher::get();
-        setCallbacks();
+        SetCallbacks();
     }
 
-    void Application::run()
+    void Application::Run()
     {
-        while (mWindow.getInputSource().isOpen())
+        while (mWindow.GetInputSource().IsOpen())
         {
-            mClock.tick();
-            mWindow.pollEvents();
-            if (mWindow.getInputSource().isMinimized())
+            mClock.Tick();
+            mWindow.PollEvents();
+            if (mWindow.GetInputSource().IsMinimized())
             {
-                while (mWindow.getEvent()) {}
-                mWindow.waitForEvents();
+                while (mWindow.GetEvent()) {}
+                mWindow.WaitForEvents();
                 continue;
             }
 
-            while (auto event = mWindow.getEvent())
-                dispatchEvent(*event);
+            while (auto event = mWindow.GetEvent())
+                DispatchEvent(*event);
 
-            pollDialogs();
+            PollDialogs();
 
-            auto deltaTime = mClock.getDeltaTime<float, TimeType::Seconds>();
-            updateEditor();
+            auto deltaTime = mClock.GetDeltaTime<float, TimeType::Seconds>();
+            UpdateEditor();
 
-            updateEngine(deltaTime, mWindow);
-            mEngine.render(mWindow);
+            UpdateEngine(deltaTime, mWindow);
+            mEngine.Render(mWindow);
         }
-        mEngine.waitIdle();
+        mEngine.WaitIdle();
     }
 
-    void Application::setCallbacks()
+    void Application::SetCallbacks()
     {
-        auto &hierarchyPanel = mEditor.getLayer<EditorLayer>().getPanel<HierarchyPanel>();
-        hierarchyPanel.setOnMeshDeleted([this](const auto& meshComponent, auto cacheKey)
+        auto &hierarchyPanel = mEditor.GetLayer<EditorLayer>().GetPanel<HierarchyPanel>();
+        hierarchyPanel.SetOnMeshDeleted([this](const auto& meshComponent, auto cacheKey)
         {
-            mEngine.unregisterMesh(meshComponent.handle, cacheKey);
+            mEngine.UnregisterMesh(meshComponent.handle, cacheKey);
         });
-        hierarchyPanel.setOnDragDrop([this](std::string_view path)
+        hierarchyPanel.SetOnDragDrop([this](std::string_view path)
         {
             if (Engine::is_mesh_type_supported(path))
             {
                 std::string pathStr = path.data();
-                if (mEngine.isMeshCached(pathStr))
-                    mEngine.getPendingMeshDataQueue().emplace(
+                if (mEngine.IsMeshCached(pathStr))
+                    mEngine.GetPendingMeshDataQueue().Emplace(
                         entt::null,
                         std::move(pathStr),
                         MeshLoader::LoadData(),
@@ -70,10 +70,10 @@ namespace kailux
                         MeshType::Loaded
                     );
                 else
-                    mThreadDispatcher->enqueue([this, p = pathStr]()
+                    mThreadDispatcher->Enqueue([this, p = pathStr]()
                     {
                         if (auto data = MeshLoader::load(p))
-                            mEngine.getPendingMeshDataQueue().emplace(
+                            mEngine.GetPendingMeshDataQueue().Emplace(
                                 entt::null,
                                 std::move(p),
                                 std::move(*data),
@@ -85,9 +85,9 @@ namespace kailux
                     });
             }
         });
-        hierarchyPanel.setOnNewMesh([this](auto type)
+        hierarchyPanel.SetOnNewMesh([this](auto type)
         {
-            mEngine.getPendingMeshDataQueue().emplace(
+            mEngine.GetPendingMeshDataQueue().Emplace(
                                 entt::null,
                                 "",
                                 MeshLoader::LoadData(),
@@ -97,160 +97,160 @@ namespace kailux
                                 type
                             );
         });
-        hierarchyPanel.setOnNewLight([this](auto type)
+        hierarchyPanel.SetOnNewLight([this](auto type)
         {
-            mEngine.addLightEntity(type);
+            mEngine.AddLightEntity(type);
         });
-        hierarchyPanel.setOnAddPhysics([this](auto entity, auto bodyType, auto canBecomeDynamic)
+        hierarchyPanel.SetOnAddPhysics([this](auto entity, auto bodyType, auto canBecomeDynamic)
         {
-            mEngine.addPhysicsToEntity(entity, {bodyType, canBecomeDynamic});
+            mEngine.AddPhysicsToEntity(entity, {bodyType, canBecomeDynamic});
         });
 
-        auto &menuPanel = mEditor.getLayer<EditorLayer>().getPanel<MenuPanel>();
-        menuPanel.setOnSceneSave([this](const auto& path)
+        auto &menuPanel = mEditor.GetLayer<EditorLayer>().GetPanel<MenuPanel>();
+        menuPanel.SetOnSceneSave([this](const auto& path)
         {
             if (path.empty())
             {
-                mSaveSceneDialog.open(
+                mSaveSceneDialog.Open(
                     "Choose where to save the scene",
                     {},
-                    std::format("{}.{}", mEngine.getScene().getName(), Engine::kSceneFileExtension)
+                    std::format("{}.{}", mEngine.GetScene().GetName(), Engine::kSceneFileExtension)
                 );
                 return;
             }
-            mEngine.saveScene(path);
+            mEngine.SaveScene(path);
         });
-        menuPanel.setOnSceneOpen([this]()
+        menuPanel.SetOnSceneOpen([this]()
         {
-            mLoadSceneDialog.open("Choose a scene", {"Kailux Scene", "*.klx"});
+            mLoadSceneDialog.Open("Choose a scene", {"Kailux Scene", "*.klx"});
         });
-        menuPanel.setDeviceInfo(mEngine.getDeviceInfo());
+        menuPanel.SetDeviceInfo(mEngine.GetDeviceInfo());
 
-        auto &projectPanel = mEditor.getLayer<EditorLayer>().getPanel<ProjectPanel>();
-        projectPanel.getAssetBrowser().setOnImportFiles([this]()
+        auto &projectPanel = mEditor.GetLayer<EditorLayer>().GetPanel<ProjectPanel>();
+        projectPanel.GetAssetBrowser().SetOnImportFiles([this]()
         {
-            mImportFilesDialog.open("Choose what to copy to the workspace");
+            mImportFilesDialog.Open("Choose what to copy to the workspace");
         });
-        projectPanel.getAssetBrowser().setOnImportFolder([this]()
+        projectPanel.GetAssetBrowser().SetOnImportFolder([this]()
         {
-            mImportFolderDialog.open("Choose what to copy to the workspace");
-        });
-
-        mEngine.setOnInfoLog([&projectPanel](auto message)
-        {
-            projectPanel.getConsole().log<LogSeverity::Info>(message);
-        });
-        mEngine.setOnWarningLog([&projectPanel](auto message)
-        {
-            projectPanel.getConsole().log<LogSeverity::Warning>(message);
-        });
-        mEngine.setOnErrorLog([&projectPanel](auto message)
-        {
-            projectPanel.getConsole().log<LogSeverity::Error>(message);
+            mImportFolderDialog.Open("Choose what to copy to the workspace");
         });
 
-        auto& entityEditor = mEditor.getLayer<EditorLayer>().getPanel<EntityEditorPanel>();
-        entityEditor.setOnBodyTypeChange([this](auto component, auto type)
+        mEngine.SetOnInfoLog([&projectPanel](auto message)
         {
-            mEngine.updateBodyType(component.handle, type);
+            projectPanel.GetConsole().Log<LogSeverity::Info>(message);
         });
-        entityEditor.setOnBodyScaleChange([this](auto component, const auto& scale)
+        mEngine.SetOnWarningLog([&projectPanel](auto message)
         {
-            mEngine.updateBodyScale(component.handle, scale);
+            projectPanel.GetConsole().Log<LogSeverity::Warning>(message);
+        });
+        mEngine.SetOnErrorLog([&projectPanel](auto message)
+        {
+            projectPanel.GetConsole().Log<LogSeverity::Error>(message);
         });
 
-        auto& viewportPanel = mEditor.getLayer<EditorLayer>().getPanel<ViewportPanel>();
-        viewportPanel.setSceneTextureId(mEngine.getSceneTextureId());
-
-        viewportPanel.setOnClick([this, &hierarchyPanel, &entityEditor]()
+        auto& entityEditor = mEditor.GetLayer<EditorLayer>().GetPanel<EntityEditorPanel>();
+        entityEditor.SetOnBodyTypeChange([this](auto component, auto type)
         {
-            if (entityEditor.isGizmoInUse())
+            mEngine.UpdateBodyType(component.handle, type);
+        });
+        entityEditor.SetOnBodyScaleChange([this](auto component, const auto& scale)
+        {
+            mEngine.UpdateBodyScale(component.handle, scale);
+        });
+
+        auto& viewportPanel = mEditor.GetLayer<EditorLayer>().GetPanel<ViewportPanel>();
+        viewportPanel.SetSceneTextureId(mEngine.GetSceneTextureId());
+
+        viewportPanel.SetOnClick([this, &hierarchyPanel, &entityEditor]()
+        {
+            if (entityEditor.IsGizmoInUse())
                 return;
-            auto entity = static_cast<entt::entity>(mEngine.getPickedEntity());
-            hierarchyPanel.selectEntity(entity);
+            auto entity = static_cast<entt::entity>(mEngine.GetPickedEntity());
+            hierarchyPanel.SelectEntity(entity);
         });
-        viewportPanel.setOnSimulationStart([this]()
+        viewportPanel.SetOnSimulationStart([this]()
         {
-            mEngine.setSimulationState(SimulationState::Running);
+            mEngine.SetSimulationState(SimulationState::Running);
         });
-        viewportPanel.setOnSimulationPause([this]()
+        viewportPanel.SetOnSimulationPause([this]()
         {
-            mEngine.setSimulationState(SimulationState::Paused);
+            mEngine.SetSimulationState(SimulationState::Paused);
         });
 
-        mEngine.setOnEditorRender([this](Scene &scene)
+        mEngine.SetOnEditorRender([this](Scene &scene)
         {
-            mEditor.render(scene);
+            mEditor.Render(scene);
         });
     }
 
-    void Application::pollDialogs()
+    void Application::PollDialogs()
     {
-        if (mLoadSceneDialog.poll())
-            if (auto path = mLoadSceneDialog.tryPopPath())
-                mEngine.loadScene(*path, mWindow);
+        if (mLoadSceneDialog.Poll())
+            if (auto path = mLoadSceneDialog.TryPopPath())
+                mEngine.LoadScene(*path, mWindow);
 
-        if (mSaveSceneDialog.poll())
-            if (auto path = mSaveSceneDialog.tryPopPath())
-                mEngine.saveScene(*path);
+        if (mSaveSceneDialog.Poll())
+            if (auto path = mSaveSceneDialog.TryPopPath())
+                mEngine.SaveScene(*path);
 
-        if (mImportFilesDialog.poll())
-            while (auto path = mImportFilesDialog.tryPopPath())
-                mEditor.getLayer<EditorLayer>().getPanel<ProjectPanel>().getAssetBrowser().import(*path);
+        if (mImportFilesDialog.Poll())
+            while (auto path = mImportFilesDialog.TryPopPath())
+                mEditor.GetLayer<EditorLayer>().GetPanel<ProjectPanel>().GetAssetBrowser().Import(*path);
 
-        if (mImportFolderDialog.poll())
-            if (auto path = mImportFolderDialog.tryPopPath())
-                mEditor.getLayer<EditorLayer>().getPanel<ProjectPanel>().getAssetBrowser().import(*path);
+        if (mImportFolderDialog.Poll())
+            if (auto path = mImportFolderDialog.TryPopPath())
+                mEditor.GetLayer<EditorLayer>().GetPanel<ProjectPanel>().GetAssetBrowser().Import(*path);
     }
 
-    void Application::updateEditor()
+    void Application::UpdateEditor()
     {
-        mEditor.update();
+        mEditor.Update();
 
-        auto& entityEditor{mEditor.getLayer<EditorLayer>().getPanel<EntityEditorPanel>()};
-        entityEditor.setCameraData(mEngine.getCameraData());
+        auto& entityEditor{mEditor.GetLayer<EditorLayer>().GetPanel<EntityEditorPanel>()};
+        entityEditor.SetCameraData(mEngine.GetCameraData());
 
-        auto& viewportPanel{mEditor.getLayer<EditorLayer>().getPanel<ViewportPanel>()};
-        viewportPanel.setSceneTextureId(mEngine.getSceneTextureId());
+        auto& viewportPanel{mEditor.GetLayer<EditorLayer>().GetPanel<ViewportPanel>()};
+        viewportPanel.SetSceneTextureId(mEngine.GetSceneTextureId());
 
-        auto& simulationPanel{mEditor.getLayer<EditorLayer>().getPanel<SimulationPanel>()};
-        simulationPanel.setTextureId(mEngine.getSimulationTextureId());
+        auto& simulationPanel{mEditor.GetLayer<EditorLayer>().GetPanel<SimulationPanel>()};
+        simulationPanel.SetTextureId(mEngine.GetSimulationTextureId());
     }
 
-    void Application::updateEngine(float deltaTime, const Window& window)
+    void Application::UpdateEngine(float deltaTime, const Window& window)
     {
-        auto& editorLayer{mEditor.getLayer<EditorLayer>()};
-        auto& simulation{editorLayer.getPanel<SimulationPanel>()};
-        auto& viewport{editorLayer.getPanel<ViewportPanel>()};
+        auto& editorLayer{mEditor.GetLayer<EditorLayer>()};
+        auto& simulation{editorLayer.GetPanel<SimulationPanel>()};
+        auto& viewport{editorLayer.GetPanel<ViewportPanel>()};
 
-        mEngine.setSimulationViewActive(simulation.isOpen());
-        mEngine.setSimulationViewExtent(simulation.getExtent());
+        mEngine.SetSimulationViewActive(simulation.IsOpen());
+        mEngine.SetSimulationViewExtent(simulation.GetExtent());
 
-        const bool simulationHasInput = simulation.isOpen() && simulation.isFocused();
+        const bool simulationHasInput = simulation.IsOpen() && simulation.IsFocused();
 
-        mEngine.setControlledCamera(
-            simulationHasInput ? mEngine.getScene().getSimulationCamera()
-                               : mEngine.getScene().getSceneCamera(),
-            InputSource(simulationHasInput ? simulation.getPlatformWindow()
-                                           : viewport.getPlatformWindow())
+        mEngine.SetControlledCamera(
+            simulationHasInput ? mEngine.GetScene().GetSimulationCamera()
+                               : mEngine.GetScene().GetSceneCamera(),
+            InputSource(simulationHasInput ? simulation.GetPlatformWindow()
+                                           : viewport.GetPlatformWindow())
         );
 
-        if (simulation.consumeToggleMouseLook() || viewport.consumeToggleMouseLook())
-            mEngine.toggleMouseLook();
+        if (simulation.ConsumeToggleMouseLook() || viewport.ConsumeToggleMouseLook())
+            mEngine.ToggleMouseLook();
 
-        mEngine.update(deltaTime);
+        mEngine.Update(deltaTime);
 
-        const auto sceneViewportMousePos = mEditor.getLayer<EditorLayer>().getPanel<ViewportPanel>().getScaledMousePos();
-        const auto outlineColor = mEditor.getLayer<EditorLayer>().getPanel<MenuPanel>().getOutlineColor();
-        const auto selectedEntity = static_cast<uint32_t>(mEditor.getLayer<EditorLayer>().getPanel<HierarchyPanel>().getSelectedEntity());
-        mEngine.setOutlineInfo(outlineColor, selectedEntity);
-        mEngine.setSceneViewportMousePos(sceneViewportMousePos.x, sceneViewportMousePos.y);
+        const auto sceneViewportMousePos = mEditor.GetLayer<EditorLayer>().GetPanel<ViewportPanel>().GetScaledMousePos();
+        const auto outlineColor = mEditor.GetLayer<EditorLayer>().GetPanel<MenuPanel>().GetOutlineColor();
+        const auto selectedEntity = static_cast<uint32_t>(mEditor.GetLayer<EditorLayer>().GetPanel<HierarchyPanel>().GetSelectedEntity());
+        mEngine.SetOutlineInfo(outlineColor, selectedEntity);
+        mEngine.SetSceneViewportMousePos(sceneViewportMousePos.x, sceneViewportMousePos.y);
     }
 
-    void Application::dispatchEvent(const Event &event)
+    void Application::DispatchEvent(const Event &event)
     {
-        mEditor.onEvent(event);
-        mEngine.onEvent(event, mWindow);
+        mEditor.OnEvent(event);
+        mEngine.OnEvent(event, mWindow);
 
         if (const auto* keyReleased{std::get_if<KeyReleased>(&event)})
         {
@@ -260,14 +260,14 @@ namespace kailux
                 case Key::S:
                     if (mods == KeyMods::Control)
                     {
-                        if (mEngine.getScene().getSavePath().empty())
-                            mSaveSceneDialog.open(
+                        if (mEngine.GetScene().GetSavePath().empty())
+                            mSaveSceneDialog.Open(
                                 "Choose where to save the scene",
                                 {},
-                                std::format("{}.{}", mEngine.getScene().getName(), Engine::kSceneFileExtension)
+                                std::format("{}.{}", mEngine.GetScene().GetName(), Engine::kSceneFileExtension)
                             );
                         else
-                            mEngine.saveScene(mEngine.getScene().getSavePath());
+                            mEngine.SaveScene(mEngine.GetScene().GetSavePath());
                     }
                     break;
                 default:

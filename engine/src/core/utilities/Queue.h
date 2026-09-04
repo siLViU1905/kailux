@@ -32,20 +32,20 @@ namespace kailux
             return *this;
         }
 
-        void push(const T& val)
+        void Push(const T& val)
         {
             auto tail = mTail.load(std::memory_order_relaxed);
             mBuffer[tail & kMask] = val;
             mTail.store(tail + 1, std::memory_order_release);
         }
-        void push(T&& val)
+        void Push(T&& val)
         {
             auto tail = mTail.load(std::memory_order_relaxed);
             mBuffer[tail & kMask] = std::move(val);
             mTail.store(tail + 1, std::memory_order_release);
         }
         template<typename... Args>
-        void emplace(Args&&... args)
+        void Emplace(Args&&... args)
         {
             auto tail = mTail.load(std::memory_order_relaxed);
             mBuffer[tail & kMask] = T(std::forward<Args>(args)...);
@@ -53,7 +53,7 @@ namespace kailux
         }
 
         using PopResult = std::optional<T>;
-        PopResult tryPop()
+        PopResult TryPop()
         {
             auto head = mHead.load(std::memory_order_relaxed);
             if (head == mTail.load(std::memory_order_acquire))

@@ -34,7 +34,7 @@ namespace kailux
         static constexpr float        kScaleFactor = 0.1f;
         inline static const glm::mat4 kParentMatrix = glm::scale(glm::mat4(1.f), glm::vec3(kScaleFactor));
 
-        static glm::mat4 aiMatrix4x4_to_glm(const aiMatrix4x4 &m);
+        static glm::mat4 ai_matrix4x4_to_glm(const aiMatrix4x4 &m);
 
         struct MaterialPaths
         {

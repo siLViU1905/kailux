@@ -6,7 +6,7 @@ namespace kailux
     {
     }
 
-    void SimulationPanel::render(Scene &scene)
+    void SimulationPanel::Render(Scene &scene)
     {
         ImGui::SetNextWindowSize(ImVec2(1280, 720), ImGuiCond_FirstUseEver);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{});
@@ -32,12 +32,12 @@ namespace kailux
         ImGui::PopStyleVar();
     }
 
-    void SimulationPanel::setTextureId(ImTextureID id)
+    void SimulationPanel::SetTextureId(ImTextureID id)
     {
         mTextureId = id;
     }
 
-    vk::Extent2D SimulationPanel::getExtent() const
+    vk::Extent2D SimulationPanel::GetExtent() const
     {
         return {
             static_cast<uint32_t>(mExtent.x),
@@ -45,7 +45,7 @@ namespace kailux
         };
     }
 
-    bool SimulationPanel::isVisible() const
+    bool SimulationPanel::IsVisible() const
     {
         return mVisible;
     }

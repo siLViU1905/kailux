@@ -13,7 +13,7 @@ namespace kailux
     {
     }
 
-    void ProjectPanel::render(Scene &scene)
+    void ProjectPanel::Render(Scene &scene)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, mBackgroundColor);
 
@@ -25,13 +25,13 @@ namespace kailux
             {
                 if (ImGui::BeginTabItem("Asset Browser"))
                 {
-                    mAssetBrowser.render();
+                    mAssetBrowser.Render();
                     ImGui::EndTabItem();
                 }
 
                 if (ImGui::BeginTabItem("Console"))
                 {
-                    mConsole.render();
+                    mConsole.Render();
                     ImGui::EndTabItem();
                 }
 
@@ -42,17 +42,17 @@ namespace kailux
         ImGui::PopStyleColor();
     }
 
-    void ProjectPanel::useFullWidth(bool use)
+    void ProjectPanel::UseFullWidth(bool use)
     {
         mUseFullWidth = use;
     }
 
-    AssetBrowser &ProjectPanel::getAssetBrowser()
+    AssetBrowser &ProjectPanel::GetAssetBrowser()
     {
         return mAssetBrowser;
     }
 
-    Console &ProjectPanel::getConsole()
+    Console &ProjectPanel::GetConsole()
     {
         return mConsole;
     }

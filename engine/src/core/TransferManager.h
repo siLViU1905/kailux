@@ -41,25 +41,25 @@ namespace kailux
 
         using OnComplete = std::move_only_function<void()>;
 
-        void enqueueBuffer(
+        void EnqueueBuffer(
             const Context& context,
             OnRecord &&record,
             OnComplete &&onComplete
         );
-        void enqueueImages(
+        void EnqueueImages(
             const Context &context,
             std::vector<ImageUpload> &&images,
             std::vector<Buffer> &&stagingOwnership,
             OnComplete &&onComplete
         );
 
-        void poll(const Context& context);
+        void Poll(const Context& context);
 
-        void drain(const Context& context);
+        void Drain(const Context& context);
 
-        bool hasPending() const;
+        bool HasPending() const;
 
-        void clear();
+        void Clear();
 
     private:
         struct PendingTransfer
@@ -70,7 +70,7 @@ namespace kailux
             std::vector<Buffer>             staging;
             std::move_only_function<void()> onComplete;
         };
-        void submitTransfer(
+        void SubmitTransfer(
             const Context &context,
             OneTimeCommand &&transferCmd,
             OneTimeCommand &&graphicsCmd,

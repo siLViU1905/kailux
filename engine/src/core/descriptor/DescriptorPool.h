@@ -18,10 +18,10 @@ namespace kailux
 
         static DescriptorPool create(const Context& context, uint32_t sets, std::span<const DescriptorPoolSize> sizes);
 
-        vk::DescriptorPool getPool() const;
+        vk::DescriptorPool GetPool() const;
 
     private:
-        void createPool(const Context& context, uint32_t sets, std::span<const DescriptorPoolSize> sizes);
+        void CreatePool(const Context& context, uint32_t sets, std::span<const DescriptorPoolSize> sizes);
 
         vk::raii::DescriptorPool mPool;
     };

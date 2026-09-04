@@ -10,24 +10,24 @@ namespace kailux
         MenuPanel();
         MenuPanel(std::string_view name, ImVec4 backgroundColor);
 
-        void render(Scene &scene) override;
+        void Render(Scene &scene) override;
 
         using OnSceneOpen = std::move_only_function<void()>;
-        void setOnSceneOpen(OnSceneOpen&& callback);
+        void SetOnSceneOpen(OnSceneOpen&& callback);
 
         using OnSceneSave = std::move_only_function<void(const std::filesystem::path&)>;
-        void setOnSceneSave(OnSceneSave&& callback);
+        void SetOnSceneSave(OnSceneSave&& callback);
 
         using OnViewMenu = std::move_only_function<void()>;
-        void setOnViewMenu(OnViewMenu&& callback);
+        void SetOnViewMenu(OnViewMenu&& callback);
 
-        const glm::vec3 &getOutlineColor() const;
+        const glm::vec3 &GetOutlineColor() const;
 
-        void setDeviceInfo(const DeviceInfo &info);
+        void SetDeviceInfo(const DeviceInfo &info);
 
     private:
-        void renderProfilerWindow();
-        void renderDeviceInfo();
+        void RenderProfilerWindow();
+        void RenderDeviceInfo();
 
         static void text_centered(std::string_view text);
 

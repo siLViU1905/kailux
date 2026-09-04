@@ -23,22 +23,22 @@ namespace kailux
     MainPass MainPass::create(const Context &context, const Swapchain &swapchain, uint32_t maxFrames)
     {
         MainPass pass;
-        pass.createDescriptorLayout(context, kDescriptorLayoutBindings);
-        pass.createDescriptorPool(context, maxFrames, kDescriptorPoolSizes);
-        pass.createPipeline(
+        pass.CreateDescriptorLayout(context, kDescriptorLayoutBindings);
+        pass.CreateDescriptorPool(context, maxFrames, kDescriptorPoolSizes);
+        pass.CreatePipeline(
             context,
             swapchain,
             kVertexShaderPath,
             kFragmentShaderPath,
-            make_pipeline_info(swapchain, context.getMaxUsableSampleCount()),
+            make_pipeline_info(swapchain, context.GetMaxUsableSampleCount()),
             kPushConstantRanges
             );
-        pass.createNoIdPipeline(
+        pass.CreateNoIdPipeline(
             context,
             swapchain,
             kVertexShaderPath,
             kNoIdFragmentShaderPath,
-            make_no_id_pipeline_info(swapchain, context.getMaxUsableSampleCount()),
+            make_no_id_pipeline_info(swapchain, context.GetMaxUsableSampleCount()),
             kPushConstantRanges
             );
         return pass;
@@ -46,7 +46,7 @@ namespace kailux
 
     void MainPass::bind(vk::CommandBuffer cmd, bool writeIds) const
     {
-        writeIds ? mPipeline.bindGraphics(cmd) : mNoIdPipeline.bindGraphics(cmd);
+        writeIds ? mPipeline.BindGraphics(cmd) : mNoIdPipeline.BindGraphics(cmd);
     }
 
     PipelineInfo MainPass::make_pipeline_info(const Swapchain &swapchain, vk::SampleCountFlagBits sampleCount)
@@ -86,7 +86,7 @@ namespace kailux
         colorAttachment.alphaBlendOp = vk::BlendOp::eAdd;
 
         info.colorBlendAttachments.push_back(colorAttachment);
-        info.colorFormats.push_back(swapchain.getFormat());
+        info.colorFormats.push_back(swapchain.GetFormat());
 
         vk::PipelineColorBlendAttachmentState idAttachment{};
         idAttachment.colorWriteMask = vk::ColorComponentFlagBits::eR;
@@ -143,7 +143,7 @@ namespace kailux
         colorAttachment.alphaBlendOp = vk::BlendOp::eAdd;
 
         info.colorBlendAttachments.push_back(colorAttachment);
-        info.colorFormats.push_back(swapchain.getFormat());
+        info.colorFormats.push_back(swapchain.GetFormat());
 
         info.samples = sampleCount;
 
@@ -156,7 +156,7 @@ namespace kailux
         return info;
     }
 
-    void MainPass::createNoIdPipeline(const Context &context, const Swapchain &swapchain,
+    void MainPass::CreateNoIdPipeline(const Context &context, const Swapchain &swapchain,
         std::string_view vertShaderPath, std::string_view fragShaderPath, const PipelineInfo &info,
         std::span<const PushConstantRangeInfo> pushConstantRanges)
     {
@@ -166,7 +166,7 @@ namespace kailux
         if (!fragShaderPath.empty())
             shaderInfo.emplace_back(vk::ShaderStageFlagBits::eFragment, fragShaderPath.data());
 
-        mNoIdPipeline = Pipeline::createGraphics(
+        mNoIdPipeline = Pipeline::create_graphics(
             context,
             swapchain,
             mDescriptorLayout,

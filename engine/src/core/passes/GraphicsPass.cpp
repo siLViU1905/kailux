@@ -24,38 +24,38 @@ namespace kailux
         return *this;
     }
 
-    void GraphicsPass::bind(vk::CommandBuffer cmd) const
+    void GraphicsPass::Bind(vk::CommandBuffer cmd) const
     {
-        mPipeline.bindGraphics(cmd);
+        mPipeline.BindGraphics(cmd);
     }
 
-    const DescriptorLayout &GraphicsPass::getDescriptorLayout() const
+    const DescriptorLayout &GraphicsPass::GetDescriptorLayout() const
     {
         return mDescriptorLayout;
     }
 
-    const DescriptorPool &GraphicsPass::getDescriptorPool() const
+    const DescriptorPool &GraphicsPass::GetDescriptorPool() const
     {
         return mDescriptorPool;
     }
 
-    const Pipeline &GraphicsPass::getPipeline() const
+    const Pipeline &GraphicsPass::GetPipeline() const
     {
         return mPipeline;
     }
 
-    void GraphicsPass::createDescriptorLayout(const Context &context, std::span<const DescriptorLayoutBinding> bindings)
+    void GraphicsPass::CreateDescriptorLayout(const Context &context, std::span<const DescriptorLayoutBinding> bindings)
     {
         mDescriptorLayout = DescriptorLayout::create(context, bindings);
     }
 
-    void GraphicsPass::createDescriptorPool(const Context &context, uint32_t frameCount,
+    void GraphicsPass::CreateDescriptorPool(const Context &context, uint32_t frameCount,
                                             std::span<const DescriptorPoolSize> sizes)
     {
         mDescriptorPool = DescriptorPool::create(context, frameCount, sizes);
     }
 
-    void GraphicsPass::createPipeline(const Context &context, const Swapchain &swapchain,
+    void GraphicsPass::CreatePipeline(const Context &context, const Swapchain &swapchain,
                                       std::string_view vertShaderPath, std::string_view fragShaderPath,
                                       const PipelineInfo &info,
                                       std::span<const PushConstantRangeInfo> pushConstantRanges)
@@ -66,7 +66,7 @@ namespace kailux
         if (!fragShaderPath.empty())
             shaderInfo.emplace_back(vk::ShaderStageFlagBits::eFragment, fragShaderPath.data());
 
-        mPipeline = Pipeline::createGraphics(
+        mPipeline = Pipeline::create_graphics(
             context,
             swapchain,
             mDescriptorLayout,

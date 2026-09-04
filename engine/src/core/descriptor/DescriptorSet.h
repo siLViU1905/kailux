@@ -41,13 +41,13 @@ namespace kailux
         static DescriptorSet create(const Context &context, const DescriptorLayout &layout, const DescriptorPool &pool,
                                     std::span<const DescriptorSetInfo> infos);
 
-        vk::DescriptorSet getDescriptorSet() const;
+        vk::DescriptorSet GetDescriptorSet() const;
 
-        void bind(const Pipeline& pipeline, vk::CommandBuffer cmd, vk::PipelineBindPoint bindPoint = vk::PipelineBindPoint::eGraphics) const;
-        void updateInfo(const Context& context, std::span<const DescriptorSetUpdateInfo> updateInfos) const;
+        void Bind(const Pipeline& pipeline, vk::CommandBuffer cmd, vk::PipelineBindPoint bindPoint = vk::PipelineBindPoint::eGraphics) const;
+        void UpdateInfo(const Context& context, std::span<const DescriptorSetUpdateInfo> updateInfos) const;
 
     private:
-        void createSet(const Context &context, const DescriptorLayout &layout, const DescriptorPool &pool,
+        void CreateSet(const Context &context, const DescriptorLayout &layout, const DescriptorPool &pool,
                        std::span<const DescriptorSetInfo> infos);
 
         vk::raii::DescriptorSet mSet;

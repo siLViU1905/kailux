@@ -15,9 +15,9 @@ namespace kailux
         static ComputePicker create(const Context &context, uint32_t frameCount);
 
         template<typename... Pcs>
-        void push(vk::CommandBuffer cmd, const Pcs &... pcs) const
+        void Push(vk::CommandBuffer cmd, const Pcs &... pcs) const
         {
-            pushImpl<kPushConstantRanges, Pcs...>(cmd, pcs...);
+            PushImpl<kPushConstantRanges, Pcs...>(cmd, pcs...);
         }
 
     private:

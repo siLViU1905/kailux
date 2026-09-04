@@ -5,27 +5,27 @@
 
 namespace kailux
 {
-    std::string KeyPressed::toString() const
+    std::string KeyPressed::ToString() const
     {
         return std::format("KeyPressed(key:{}, scancode:{}, mods:{})", magic_enum::enum_name(key), scancode, magic_enum::enum_name(mods));
     }
 
-    std::string KeyReleased::toString() const
+    std::string KeyReleased::ToString() const
     {
         return std::format("KeyReleased(key:{}, scancode:{}, mods:{})", magic_enum::enum_name(key), scancode, magic_enum::enum_name(mods));
     }
 
-    std::string KeyRepeated::toString() const
+    std::string KeyRepeated::ToString() const
     {
         return std::format("KeyRepeated(key:{}, scancode:{}, mods:{})", magic_enum::enum_name(key), scancode, magic_enum::enum_name(mods));
     }
 
-    std::string ButtonPressed::toString() const
+    std::string ButtonPressed::ToString() const
     {
         return std::format("ButtonPressed(button:{}, mods:{})", magic_enum::enum_name(button), magic_enum::enum_name(mods));
     }
 
-    std::string ButtonReleased::toString() const
+    std::string ButtonReleased::ToString() const
     {
         return std::format("ButtonReleased(button:{}, mods:{})", magic_enum::enum_name(button), magic_enum::enum_name(mods));
     }

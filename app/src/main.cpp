@@ -16,13 +16,13 @@ int main()
         };
 
         kailux::Application application{windowInfo};
-        application.run();
+        application.Run();
 
         kailux::log::close_file();
     }
     catch (const std::exception& exception)
     {
-        kailux::log::file.error("{}", exception.what());
+        kailux::log::file.Error("{}", exception.what());
         kailux::log::close_file();
         return 1;
     }

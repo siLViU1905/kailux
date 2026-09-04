@@ -43,7 +43,7 @@ namespace kailux
     public:
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(Pipeline)
 
-        static Pipeline createGraphics(
+        static Pipeline create_graphics(
             const Context &context,
             const Swapchain& swapchain,
             const DescriptorLayout& descriptorSetLayout,
@@ -52,17 +52,17 @@ namespace kailux
             std::span<const PushConstantRangeInfo> pushConstantRanges = {}
             );
 
-        static Pipeline createCompute(
+        static Pipeline create_compute(
             const Context &context,
             const DescriptorLayout& descriptorSetLayout,
             const ComputeShaderInfo& shaderInfo,
             std::span<const PushConstantRangeInfo> pushConstantRanges = {}
             );
 
-        void bindGraphics(vk::CommandBuffer cmd) const;
-        void bindCompute(vk::CommandBuffer cmd) const;
+        void BindGraphics(vk::CommandBuffer cmd) const;
+        void BindCompute(vk::CommandBuffer cmd) const;
 
-        vk::PipelineLayout getLayout() const;
+        vk::PipelineLayout GetLayout() const;
 
     private:
         struct ShaderModuleInstance
@@ -75,14 +75,14 @@ namespace kailux
         {
             std::vector<ShaderModuleInstance> modules;
 
-            std::vector<vk::PipelineShaderStageCreateInfo> makeVkStages() const;
+            std::vector<vk::PipelineShaderStageCreateInfo> MakeVkStages() const;
         };
 
         static ShaderModules          create_graphics_shader_modules(const Context &context, const GraphicsShaderInfo& stages);
 
-        void createLayout(const Context& context, const DescriptorLayout& descriptorSetLayout, std::span<const PushConstantRangeInfo> pushConstantRanges);
-        void createGraphicsPipeline(const Context &context, const Swapchain& swapchain, const ShaderModules& shaderModules, const PipelineInfo& info);
-        void createComputePipeline(const Context &context, const vk::raii::ShaderModule& shaderModule);
+        void CreateLayout(const Context& context, const DescriptorLayout& descriptorSetLayout, std::span<const PushConstantRangeInfo> pushConstantRanges);
+        void CreateGraphicsPipeline(const Context &context, const Swapchain& swapchain, const ShaderModules& shaderModules, const PipelineInfo& info);
+        void CreateComputePipeline(const Context &context, const vk::raii::ShaderModule& shaderModule);
 
         vk::raii::PipelineLayout mLayout;
         vk::raii::Pipeline       mPipeline;

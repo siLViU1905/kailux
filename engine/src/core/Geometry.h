@@ -6,7 +6,7 @@ namespace kailux
     class Geometry
     {
     public:
-        static glm::vec4 computeBoundingSphere(std::span<const Vertex> vertices);
+        static glm::vec4 compute_bounding_sphere(std::span<const Vertex> vertices);
 
     private:
         struct AABB

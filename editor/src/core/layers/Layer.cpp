@@ -17,10 +17,10 @@ namespace kailux
         return *this;
     }
 
-    void Layer::renderPanels(Scene &scene) const
+    void Layer::RenderPanels(Scene &scene) const
     {
         for (auto& panel : mPanels)
-            if (panel->isOpen())
-                panel->render(scene);
+            if (panel->IsOpen())
+                panel->Render(scene);
     }
 }

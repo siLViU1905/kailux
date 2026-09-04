@@ -6,7 +6,7 @@ namespace kailux
     class ResizeDebouncer
     {
     public:
-        void request(vk::Extent2D extent)
+        void Request(vk::Extent2D extent)
         {
             if (differs(mPendingExtent, extent))
             {
@@ -18,7 +18,7 @@ namespace kailux
                 ++mStableFrames;
         }
 
-        std::optional<vk::Extent2D> poll(vk::Extent2D current) const
+        std::optional<vk::Extent2D> Poll(vk::Extent2D current) const
         {
             if (mStableFrames < StableFrames)
                 return std::nullopt;

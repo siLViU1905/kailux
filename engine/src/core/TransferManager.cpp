@@ -25,14 +25,14 @@ namespace kailux
         return {};
     }
 
-    void TransferManager::enqueueBuffer(const Context &context, OnRecord &&record, OnComplete &&onComplete)
+    void TransferManager::EnqueueBuffer(const Context &context, OnRecord &&record, OnComplete &&onComplete)
     {
-        auto graphicsFamily = context.getGraphicsQueueFamilyIndex();
-        auto transferFamily = context.getTransferQueueFamilyIndex();
-        bool needsOwnershipTransfer = context.hasDedicatedTransferQueue();
+        auto graphicsFamily = context.GetGraphicsQueueFamilyIndex();
+        auto transferFamily = context.GetTransferQueueFamilyIndex();
+        bool needsOwnershipTransfer = context.HasDedicatedTransferQueue();
 
         auto transferOtc = OneTimeCommand::create(context, QueueType::Transfer);
-        auto tCmd = transferOtc.getCommandBuffer();
+        auto tCmd = transferOtc.GetCommandBuffer();
 
         auto recorded = record(tCmd);
 
@@ -60,7 +60,7 @@ namespace kailux
         }
 
         auto graphicsOtc = OneTimeCommand::create(context, QueueType::Graphics);
-        auto gCmd = graphicsOtc.getCommandBuffer();
+        auto gCmd = graphicsOtc.GetCommandBuffer();
 
         if (needsOwnershipTransfer && !resources.empty())
         {
@@ -84,7 +84,7 @@ namespace kailux
             gCmd.pipelineBarrier2(depInfo);
         }
 
-        submitTransfer(
+        SubmitTransfer(
             context,
             std::move(transferOtc),
             std::move(graphicsOtc),
@@ -93,7 +93,7 @@ namespace kailux
         );
     }
 
-    void TransferManager::enqueueImages(
+    void TransferManager::EnqueueImages(
         const Context &context,
         std::vector<ImageUpload> &&images,
         std::vector<Buffer> &&stagingOwnership,
@@ -103,12 +103,12 @@ namespace kailux
         if (images.empty())
             return;
 
-        auto transferFamily = context.getTransferQueueFamilyIndex();
-        auto graphicsFamily = context.getGraphicsQueueFamilyIndex();
-        bool needsOwnershipTransfer = context.hasDedicatedTransferQueue();
+        auto transferFamily = context.GetTransferQueueFamilyIndex();
+        auto graphicsFamily = context.GetGraphicsQueueFamilyIndex();
+        bool needsOwnershipTransfer = context.HasDedicatedTransferQueue();
 
         auto transferOtc = OneTimeCommand::create(context, QueueType::Transfer);
-        auto tCmd = transferOtc.getCommandBuffer();
+        auto tCmd = transferOtc.GetCommandBuffer();
 
         for (const auto &img : images)
             TextureAllocator::record_texture_copy(
@@ -143,7 +143,7 @@ namespace kailux
         }
 
         auto graphicsOtc = OneTimeCommand::create(context, QueueType::Graphics);
-        auto gCmd = graphicsOtc.getCommandBuffer();
+        auto gCmd = graphicsOtc.GetCommandBuffer();
 
         if (needsOwnershipTransfer)
         {
@@ -176,7 +176,7 @@ namespace kailux
         for (const auto &img : images)
             TextureAllocator::record_texture_mipmaps(gCmd, img.image, img.width, img.height, img.mipLevels);
 
-        submitTransfer(
+        SubmitTransfer(
             context,
             std::move(transferOtc),
             std::move(graphicsOtc),
@@ -185,11 +185,11 @@ namespace kailux
         );
     }
 
-    void TransferManager::poll(const Context &context)
+    void TransferManager::Poll(const Context &context)
     {
         std::erase_if(mPending, [&](auto& pending)
         {
-            auto status = context.getDevice().getFenceStatus(pending.graphicsCmd.getFence());
+            auto status = context.GetDevice().getFenceStatus(pending.graphicsCmd.GetFence());
             if (status == vk::Result::eSuccess)
             {
                 pending.onComplete();
@@ -199,12 +199,12 @@ namespace kailux
         });
     }
 
-    void TransferManager::drain(const Context &context)
+    void TransferManager::Drain(const Context &context)
     {
         for (auto &pending : mPending)
         {
-            auto fence = pending.graphicsCmd.getFence();
-            auto result = context.getDevice().waitForFences(fence, true, UINT64_MAX);
+            auto fence = pending.graphicsCmd.GetFence();
+            auto result = context.GetDevice().waitForFences(fence, true, UINT64_MAX);
             if (result != vk::Result::eSuccess)
                 throw std::runtime_error("TransferManager::drain waitForFences failed");
 
@@ -213,17 +213,17 @@ namespace kailux
         mPending.clear();
     }
 
-    bool TransferManager::hasPending() const
+    bool TransferManager::HasPending() const
     {
         return !mPending.empty();
     }
 
-    void TransferManager::clear()
+    void TransferManager::Clear()
     {
         mPending.clear();
     }
 
-    void TransferManager::submitTransfer(
+    void TransferManager::SubmitTransfer(
         const Context &context,
         OneTimeCommand &&transferCmd,
         OneTimeCommand &&graphicsCmd,
@@ -233,15 +233,15 @@ namespace kailux
     {
         vk::raii::Semaphore semaphore(context.mDevice, vk::SemaphoreCreateInfo{});
 
-        auto tCmd = transferCmd.getCommandBuffer();
-        auto gCmd = graphicsCmd.getCommandBuffer();
+        auto tCmd = transferCmd.GetCommandBuffer();
+        auto gCmd = graphicsCmd.GetCommandBuffer();
 
         {
             tCmd.end();
             vk::SemaphoreSubmitInfo signalInfo(*semaphore, 0, vk::PipelineStageFlagBits2::eTransfer);
             vk::CommandBufferSubmitInfo cmdInfo(tCmd);
             vk::SubmitInfo2 submit({}, {}, cmdInfo, signalInfo);
-            context.getTransferQueue().submit2(submit, nullptr);
+            context.GetTransferQueue().submit2(submit, nullptr);
         }
 
         {
@@ -249,7 +249,7 @@ namespace kailux
             vk::SemaphoreSubmitInfo waitInfo(*semaphore, 0, vk::PipelineStageFlagBits2::eAllCommands);
             vk::CommandBufferSubmitInfo cmdInfo(gCmd);
             vk::SubmitInfo2 submit({}, waitInfo, cmdInfo, {});
-            context.getGraphicsQueue().submit2(submit, graphicsCmd.getFence());
+            context.GetGraphicsQueue().submit2(submit, graphicsCmd.GetFence());
         }
 
         mPending.emplace_back(

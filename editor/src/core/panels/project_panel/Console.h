@@ -15,7 +15,7 @@ namespace kailux
     {
     public:
         template<LogSeverity severity>
-        void log(std::string_view message)
+        void Log(std::string_view message)
         {
             std::string formatedMessage;
             if constexpr (severity == LogSeverity::Info)
@@ -28,7 +28,7 @@ namespace kailux
             mLogs.emplace_back(std::move(formatedMessage), severity);
         }
 
-        void render();
+        void Render();
 
     private:
         static constexpr std::array s_SeverityColors = {
@@ -39,12 +39,12 @@ namespace kailux
 
         static std::string_view get_non_formated_message(std::string_view message);
 
-        struct Log
+        struct LogMessage
         {
             std::string message;
             LogSeverity severity;
         };
 
-        std::vector<Log> mLogs;
+        std::vector<LogMessage> mLogs;
     };
 }

@@ -14,7 +14,7 @@ namespace kailux
             std::filesystem::create_directory(mCurrentPath);
     }
 
-    void AssetBrowser::render()
+    void AssetBrowser::Render()
     {
         if (mCurrentPath != details::kWorkspaceDefaultPath)
         {
@@ -132,27 +132,27 @@ namespace kailux
         }
     }
 
-    void AssetBrowser::setDirectoryTextureId(ImTextureID id)
+    void AssetBrowser::SetDirectoryTextureId(ImTextureID id)
     {
         mDirectoryTextureId = id;
     }
 
-    void AssetBrowser::setFileTextureId(ImTextureID id)
+    void AssetBrowser::SetFileTextureId(ImTextureID id)
     {
         mFileTextureId = id;
     }
 
-    void AssetBrowser::setOnImportFiles(OnImport &&callback)
+    void AssetBrowser::SetOnImportFiles(OnImport &&callback)
     {
         mOnImportFiles = std::move(callback);
     }
 
-    void AssetBrowser::setOnImportFolder(OnImport &&callback)
+    void AssetBrowser::SetOnImportFolder(OnImport &&callback)
     {
         mOnImportFolder = std::move(callback);
     }
 
-    void AssetBrowser::import(std::string_view path) const
+    void AssetBrowser::Import(std::string_view path) const
     {
         namespace fs = std::filesystem;
         if (fs::exists(path))

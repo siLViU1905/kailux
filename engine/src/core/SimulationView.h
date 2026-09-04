@@ -16,13 +16,13 @@ namespace kailux
                                      vk::Extent2D extent,
                                      vk::SampleCountFlagBits samples);
 
-        const Texture& getColorTexture()    const;
-        const Texture& getDepthTexture()    const;
-        const Texture& getResolvedTexture() const;
+        const Texture& GetColorTexture()    const;
+        const Texture& GetDepthTexture()    const;
+        const Texture& GetResolvedTexture() const;
 
-        vk::Extent2D getExtent()  const;
-        ImTextureID  getTextureId() const;
-        void setTextureId(ImTextureID id);
+        vk::Extent2D GetExtent()  const;
+        ImTextureID  GetTextureId() const;
+        void SetTextureId(ImTextureID id);
 
     private:
         Texture      mColor;

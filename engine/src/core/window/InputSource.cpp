@@ -8,55 +8,55 @@ namespace kailux
     {
     }
 
-    bool InputSource::valid() const
+    bool InputSource::Valid() const
     {
         return mHandle != nullptr;
     }
 
-    bool InputSource::isOpen() const
+    bool InputSource::IsOpen() const
     {
         return !glfwWindowShouldClose(mHandle);
     }
 
-    bool InputSource::isMaximized() const
+    bool InputSource::IsMaximized() const
     {
         return static_cast<bool>(glfwGetWindowAttrib(mHandle, GLFW_MAXIMIZED));
     }
 
-    bool InputSource::isMinimized() const
+    bool InputSource::IsMinimized() const
     {
-        const auto size{getFramebufferSize()};
+        const auto size{GetFramebufferSize()};
         return !size.x || !size.y;
     }
 
-    bool InputSource::isKeyPressed(Key key) const
+    bool InputSource::IsKeyPressed(Key key) const
     {
         return glfwGetKey(mHandle, static_cast<int>(key)) == GLFW_PRESS;
     }
 
-    bool InputSource::isButtonClicked(MouseButton button) const
+    bool InputSource::IsButtonClicked(MouseButton button) const
     {
         return glfwGetMouseButton(mHandle, static_cast<int>(button)) == GLFW_PRESS;
     }
 
-    glm::dvec2 InputSource::getMousePos() const
+    glm::dvec2 InputSource::GetMousePos() const
     {
         double x,y;
         glfwGetCursorPos(mHandle, &x, &y);
         return {x, y};
     }
 
-    void InputSource::setCursorMode(CursorMode mode)
+    void InputSource::SetCursorMode(CursorMode mode)
     {
         glfwSetInputMode(mHandle, GLFW_CURSOR, static_cast<int>(mode));
     }
 
-    CursorMode InputSource::getCursorMode() const
+    CursorMode InputSource::GetCursorMode() const
     {
         return static_cast<CursorMode>(glfwGetInputMode(mHandle, GLFW_CURSOR));
     }
 
-    glm::ivec2 InputSource::getFramebufferSize() const
+    glm::ivec2 InputSource::GetFramebufferSize() const
     {
         int width, height;
         glfwGetFramebufferSize(mHandle, &width, &height);

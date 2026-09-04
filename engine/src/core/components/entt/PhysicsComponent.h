@@ -9,6 +9,6 @@ namespace kailux
         PhysicsBodyType type{PhysicsBodyType::Static};
         bool            canBecomeDynamic{false};
 
-        constexpr bool isDynamic() const {return type == PhysicsBodyType::Dynamic;}
+        constexpr bool IsDynamic() const {return type == PhysicsBodyType::Dynamic;}
     };
 }

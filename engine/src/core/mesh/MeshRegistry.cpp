@@ -54,7 +54,7 @@ namespace kailux
         auto uploadShape = [&](auto genFn, MeshHandle &out)
         {
             auto data = genFn();
-            out = registry.uploadInternal(data.vertices, data.indices, context, cmd, stagingBuffers, true);
+            out = registry.UploadInternal(data.vertices, data.indices, context, cmd, stagingBuffers, true);
         };
 
         uploadShape([]() { return MeshGeometry::generate_cube(); }, registry.mBuiltins.cube);
@@ -63,21 +63,21 @@ namespace kailux
         return registry;
     }
 
-    void MeshRegistry::destroy(MeshHandle handle)
+    void MeshRegistry::Destroy(MeshHandle handle)
     {
-        assert(handle.valid());
+        assert(handle.Valid());
         auto &a = mAllocs[handle.index];
         assert(!a.is_builtin && "Cannot destroy built-in shapes");
 
-        mAssetVertexZone.free(a.vertexOffset);
-        mAssetIndexZone.free(a.indexOffset);
+        mAssetVertexZone.Free(a.vertexOffset);
+        mAssetIndexZone.Free(a.indexOffset);
         mFreeSlots.push_back(handle.index);
         a = {};
     }
 
-    MeshView MeshRegistry::view(MeshHandle handle) const
+    MeshView MeshRegistry::View(MeshHandle handle) const
     {
-        assert(handle.valid());
+        assert(handle.Valid());
         const auto &alloc = mAllocs[handle.index];
         return {
             static_cast<uint32_t>(alloc.indexOffset / sizeof(IndexType)),
@@ -86,37 +86,37 @@ namespace kailux
         };
     }
 
-    void MeshRegistry::bind(vk::CommandBuffer cmd) const
+    void MeshRegistry::Bind(vk::CommandBuffer cmd) const
     {
-        cmd.bindVertexBuffers(0, mVertexBuffer.getBuffer(), {0});
-        cmd.bindIndexBuffer(mIndexBuffer.getBuffer(), 0, vk::IndexType::eUint32);
+        cmd.bindVertexBuffers(0, mVertexBuffer.GetBuffer(), {0});
+        cmd.bindIndexBuffer(mIndexBuffer.GetBuffer(), 0, vk::IndexType::eUint32);
     }
 
-    uint32_t MeshRegistry::getMeshCount() const
+    uint32_t MeshRegistry::GetMeshCount() const
     {
         return static_cast<uint32_t>(mAllocs.size());
     }
 
-    BuiltinMeshes MeshRegistry::getBuiltins() const
+    BuiltinMeshes MeshRegistry::GetBuiltins() const
     {
         return mBuiltins;
     }
 
-    MeshBufferRegions MeshRegistry::getRegions(MeshHandle handle) const
+    MeshBufferRegions MeshRegistry::GetRegions(MeshHandle handle) const
     {
-        assert(handle.valid());
+        assert(handle.Valid());
         const auto &alloc = mAllocs[handle.index];
         return {
-            mVertexBuffer.getBuffer(),
+            mVertexBuffer.GetBuffer(),
             alloc.vertexOffset,
             static_cast<vk::DeviceSize>(alloc.vertexCount) * sizeof(Vertex),
-            mIndexBuffer.getBuffer(),
+            mIndexBuffer.GetBuffer(),
             alloc.indexOffset,
             static_cast<vk::DeviceSize>(alloc.indexCount) * sizeof(IndexType)
         };
     }
 
-    vk::DeviceSize MeshRegistry::FreeListZone::alloc(vk::DeviceSize size, vk::DeviceSize alignment)
+    vk::DeviceSize MeshRegistry::FreeListZone::Alloc(vk::DeviceSize size, vk::DeviceSize alignment)
     {
         for (auto it = freeBlocks.begin(); it != freeBlocks.end(); ++it)
         {
@@ -149,7 +149,7 @@ namespace kailux
         throw std::runtime_error("Asset zone out of memory");
     }
 
-    void MeshRegistry::FreeListZone::free(vk::DeviceSize offset)
+    void MeshRegistry::FreeListZone::Free(vk::DeviceSize offset)
     {
         auto it = std::ranges::find_if(usedBlocks, [offset](const Block &b)
         {
@@ -185,7 +185,7 @@ namespace kailux
         }
     }
 
-    MeshHandle MeshRegistry::allocSlot()
+    MeshHandle MeshRegistry::AllocSlot()
     {
         if (!mFreeSlots.empty())
         {
@@ -198,7 +198,7 @@ namespace kailux
         return {static_cast<uint32_t>(mAllocs.size() - 1)};
     }
 
-    MeshHandle MeshRegistry::uploadInternal(std::span<const Vertex> vertices, std::span<const IndexType> indices,
+    MeshHandle MeshRegistry::UploadInternal(std::span<const Vertex> vertices, std::span<const IndexType> indices,
                                             const Context &context, vk::CommandBuffer cmd,
                                             std::vector<Buffer> &stagingBuffers, bool isBuiltin)
     {
@@ -209,18 +209,18 @@ namespace kailux
 
         if (isBuiltin)
         {
-            voffset = mBuiltinVertexZone.alloc(vsize, sizeof(Vertex));
-            ioffset = mBuiltinIndexZone.alloc(isize, sizeof(IndexType));
+            voffset = mBuiltinVertexZone.Alloc(vsize, sizeof(Vertex));
+            ioffset = mBuiltinIndexZone.Alloc(isize, sizeof(IndexType));
         } else
         {
-            voffset = mAssetVertexZone.alloc(vsize, sizeof(Vertex));
-            ioffset = mAssetIndexZone.alloc(isize, sizeof(IndexType));
+            voffset = mAssetVertexZone.Alloc(vsize, sizeof(Vertex));
+            ioffset = mAssetIndexZone.Alloc(isize, sizeof(IndexType));
         }
 
         upload_buffer_region(vertices.data(), vsize, mVertexBuffer, voffset, context, cmd, stagingBuffers);
         upload_buffer_region(indices.data(), isize, mIndexBuffer, ioffset, context, cmd, stagingBuffers);
 
-        auto handle = allocSlot();
+        auto handle = AllocSlot();
         mAllocs[handle.index] = {
             voffset,
             static_cast<uint32_t>(vertices.size()),
@@ -236,15 +236,15 @@ namespace kailux
                                             std::vector<Buffer> &stagingBuffers)
     {
         auto &staging = stagingBuffers.emplace_back(BufferAllocator::alloc_staging(context, size));
-        staging.upload(data, size);
+        staging.Upload(data, size);
 
         vk::BufferCopy region(0, dstOffset, size);
-        cmd.copyBuffer(staging.getBuffer(), dst.getBuffer(), region);
+        cmd.copyBuffer(staging.GetBuffer(), dst.GetBuffer(), region);
     }
 
-    MeshHandle MeshRegistry::upload(const Context &context,
+    MeshHandle MeshRegistry::Upload(const Context &context,
                                     vk::CommandBuffer cmd, const MeshGeometry::MeshData &data, std::vector<Buffer> &stagingBuffer)
     {
-        return uploadInternal(data.vertices, data.indices, context, cmd, stagingBuffer, false);
+        return UploadInternal(data.vertices, data.indices, context, cmd, stagingBuffer, false);
     }
 }

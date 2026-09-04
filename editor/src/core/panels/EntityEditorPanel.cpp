@@ -38,11 +38,11 @@ namespace kailux
         mOpen = false;
     }
 
-    void EntityEditorPanel::render(Scene &scene)
+    void EntityEditorPanel::Render(Scene &scene)
     {
         if (!mOpen || mSelectedEntity == entt::null)
             return;
-        auto &registry = scene.getEntityRegistry();
+        auto &registry = scene.GetEntityRegistry();
         if (!registry.valid(mSelectedEntity))
             return;
 
@@ -57,70 +57,70 @@ namespace kailux
 
             if (registry.all_of<TransformComponent>(mSelectedEntity) &&
                 !registry.any_of<PointLightData>(mSelectedEntity))
-                renderMeshProperties(registry);
+                RenderMeshProperties(registry);
 
             if (registry.all_of<PhysicsComponent, PhysicsControlComponent>(mSelectedEntity))
-                renderBodyProperties(registry);
+                RenderBodyProperties(registry);
 
             if (registry.all_of<MeshMaterialData>(mSelectedEntity))
-                renderMaterialProperties(scene);
+                RenderMaterialProperties(scene);
 
             else if (registry.all_of<DirectionalLightData>(mSelectedEntity))
-                renderDirectionalLightProperties(registry);
+                RenderDirectionalLightProperties(registry);
 
             else if (registry.all_of<PointLightData>(mSelectedEntity))
-                renderPointLightProperties(registry);
+                RenderPointLightProperties(registry);
 
             else if (registry.all_of<CameraComponent>(mSelectedEntity))
-                renderCameraProperties(registry);
+                RenderCameraProperties(registry);
         }
         ImGui::End();
         ImGui::PopStyleColor();
 
-        renderGizmo(scene);
+        RenderGizmo(scene);
     }
 
-    void EntityEditorPanel::setCameraData(const CameraData &data)
+    void EntityEditorPanel::SetCameraData(const CameraData &data)
     {
         mCameraData = data;
     }
 
-    void EntityEditorPanel::setSelectedEntity(entt::entity entity, const Scene &scene)
+    void EntityEditorPanel::SetSelectedEntity(entt::entity entity, const Scene &scene)
     {
         mSelectedEntity = entity;
         if (entity == entt::null)
             mOpen = false;
 
-        if (scene.getEntityRegistry().all_of<TransformComponent>(mSelectedEntity))
+        if (scene.GetEntityRegistry().all_of<TransformComponent>(mSelectedEntity))
         {
-            const auto &transform = scene.getEntityRegistry().get<TransformComponent>(mSelectedEntity);
+            const auto &transform = scene.GetEntityRegistry().get<TransformComponent>(mSelectedEntity);
             mRotationDegrees = glm::degrees(glm::eulerAngles(transform.transform.rotation));
         }
     }
 
-    bool EntityEditorPanel::isGizmoInUse() const
+    bool EntityEditorPanel::IsGizmoInUse() const
     {
         return mGizmoInUse;
     }
 
-    void EntityEditorPanel::setSimulationState(bool running)
+    void EntityEditorPanel::SetSimulationState(bool running)
     {
         mSimulationRunning = running;
     }
 
-    void EntityEditorPanel::setOnBodyTypeChange(OnBodyTypeChange &&callback)
+    void EntityEditorPanel::SetOnBodyTypeChange(OnBodyTypeChange &&callback)
     {
         mOnBodyTypeChange = std::move(callback);
     }
 
-    void EntityEditorPanel::setOnBodyScaleChange(OnBodyScaleChange &&callback)
+    void EntityEditorPanel::SetOnBodyScaleChange(OnBodyScaleChange &&callback)
     {
         mOnBodyScaleChange = std::move(callback);
     }
 
-    void EntityEditorPanel::renderGizmo(Scene &scene)
+    void EntityEditorPanel::RenderGizmo(Scene &scene)
     {
-        auto &registry = scene.getEntityRegistry();
+        auto &registry = scene.GetEntityRegistry();
 
         if (!registry.all_of<TransformComponent>(mSelectedEntity))
             return;
@@ -181,7 +181,7 @@ namespace kailux
         }
     }
 
-    void EntityEditorPanel::renderMeshProperties(entt::registry &registry)
+    void EntityEditorPanel::RenderMeshProperties(entt::registry &registry)
     {
         ImGui::Text("Gizmo Operation:");
                 if (ImGui::RadioButton("Translate", mCurrentGizmoOperation == ImGuizmo::TRANSLATE))
@@ -235,7 +235,7 @@ namespace kailux
                 }
     }
 
-    void EntityEditorPanel::renderBodyProperties(entt::registry &registry)
+    void EntityEditorPanel::RenderBodyProperties(entt::registry &registry)
     {
         if (ImGui::CollapsingHeader("Physics", ImGuiTreeNodeFlags_DefaultOpen))
         {
@@ -263,11 +263,11 @@ namespace kailux
         }
     }
 
-    void EntityEditorPanel::renderMaterialProperties(Scene &scene) const
+    void EntityEditorPanel::RenderMaterialProperties(Scene &scene) const
     {
         if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            auto &material = scene.getEntityRegistry().get<MeshMaterialData>(mSelectedEntity);
+            auto &material = scene.GetEntityRegistry().get<MeshMaterialData>(mSelectedEntity);
             bool changed = false;
 
             float &roughness = material.albedoAndRoughness.w;
@@ -286,7 +286,7 @@ namespace kailux
         }
     }
 
-    void EntityEditorPanel::renderDirectionalLightProperties(entt::registry &registry) const
+    void EntityEditorPanel::RenderDirectionalLightProperties(entt::registry &registry) const
     {
         auto &data = registry.get<DirectionalLightData>(mSelectedEntity);
         if (ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen))
@@ -302,7 +302,7 @@ namespace kailux
         }
     }
 
-    void EntityEditorPanel::renderPointLightProperties(entt::registry &registry) const
+    void EntityEditorPanel::RenderPointLightProperties(entt::registry &registry) const
     {
         auto [light, transform] = registry.get<PointLightData, TransformComponent>(mSelectedEntity);
         if (ImGui::CollapsingHeader("Point Light", ImGuiTreeNodeFlags_DefaultOpen))
@@ -325,7 +325,7 @@ namespace kailux
         }
     }
 
-    void EntityEditorPanel::renderCameraProperties(entt::registry &registry) const
+    void EntityEditorPanel::RenderCameraProperties(entt::registry &registry) const
     {
         auto &camera = registry.get<CameraComponent>(mSelectedEntity);
         if (ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen))
@@ -335,7 +335,7 @@ namespace kailux
     void EntityEditorPanel::propagate_material_to_children(Scene &scene, entt::entity entity,
                                                            const MeshMaterialData &material)
     {
-        auto& registry = scene.getEntityRegistry();
+        auto& registry = scene.GetEntityRegistry();
         auto* hierarchy = registry.try_get<HierarchyComponent>(entity);
         if (!hierarchy)
             return;

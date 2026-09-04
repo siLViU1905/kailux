@@ -8,13 +8,13 @@ namespace kailux
     public:
         SimulationPanel(std::string_view name);
 
-        void render(Scene& scene) override;
+        void Render(Scene& scene) override;
 
-        void setTextureId(ImTextureID id);
+        void SetTextureId(ImTextureID id);
 
-        vk::Extent2D getExtent() const;
+        vk::Extent2D GetExtent() const;
 
-        bool isVisible() const;
+        bool IsVisible() const;
 
     private:
         ImTextureID mTextureId{};

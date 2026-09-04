@@ -21,14 +21,14 @@ namespace kailux
     GizmoPass GizmoPass::create(const Context &context, const Swapchain &swapchain, uint32_t maxFrames)
     {
         GizmoPass pass;
-        pass.createDescriptorLayout(context, kDescriptorLayoutBindings);
-        pass.createDescriptorPool(context, maxFrames, kDescriptorPoolSizes);
-        pass.createPipeline(
+        pass.CreateDescriptorLayout(context, kDescriptorLayoutBindings);
+        pass.CreateDescriptorPool(context, maxFrames, kDescriptorPoolSizes);
+        pass.CreatePipeline(
             context,
             swapchain,
             kVertexShaderPath,
             kFragmentShaderPath,
-            make_pipeline_info(swapchain, context.getMaxUsableSampleCount()),
+            make_pipeline_info(swapchain, context.GetMaxUsableSampleCount()),
             kPushConstantRanges
         );
         return pass;
@@ -65,7 +65,7 @@ namespace kailux
         colorAttachment.dstAlphaBlendFactor = vk::BlendFactor::eZero;
         colorAttachment.alphaBlendOp = vk::BlendOp::eAdd;
         info.colorBlendAttachments.push_back(colorAttachment);
-        info.colorFormats.push_back(swapchain.getFormat());
+        info.colorFormats.push_back(swapchain.GetFormat());
 
         vk::PipelineColorBlendAttachmentState idAttachment{};
         idAttachment.colorWriteMask = {};

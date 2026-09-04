@@ -201,7 +201,7 @@ namespace kailux
         int     scancode;
         KeyMods mods;
 
-        std::string toString() const;
+        std::string ToString() const;
     };
 
     struct KeyReleased
@@ -210,7 +210,7 @@ namespace kailux
         int     scancode;
         KeyMods mods;
 
-        std::string toString() const;
+        std::string ToString() const;
     };
 
     struct KeyRepeated
@@ -219,7 +219,7 @@ namespace kailux
         int     scancode;
         KeyMods mods;
 
-        std::string toString() const;
+        std::string ToString() const;
     };
 
     struct ButtonPressed
@@ -227,7 +227,7 @@ namespace kailux
         MouseButton button;
         MouseMods   mods;
 
-        std::string toString() const;
+        std::string ToString() const;
     };
 
     struct ButtonReleased
@@ -235,6 +235,6 @@ namespace kailux
         MouseButton button;
         MouseMods   mods;
 
-        std::string toString() const;
+        std::string ToString() const;
     };
 }

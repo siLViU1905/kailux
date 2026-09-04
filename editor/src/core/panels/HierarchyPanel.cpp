@@ -21,7 +21,7 @@ namespace kailux
     {
     }
 
-    void HierarchyPanel::render(Scene &scene)
+    void HierarchyPanel::Render(Scene &scene)
     {
         if (mSelectedEntity != mLastSelectedEntity)
         {
@@ -35,7 +35,7 @@ namespace kailux
         mFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
         if (visible)
         {
-            auto &registry = scene.getEntityRegistry();
+            auto &registry = scene.GetEntityRegistry();
 
             auto view = registry.view<TagComponent>();
             for (auto entity: view)
@@ -43,7 +43,7 @@ namespace kailux
                 auto *hierarchy = registry.try_get<HierarchyComponent>(entity);
 
                 if (!hierarchy || hierarchy->parent == entt::null)
-                    renderEntityNode(scene, entity);
+                    RenderEntityNode(scene, entity);
             }
 
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered())
@@ -101,57 +101,57 @@ namespace kailux
             ImGui::OpenPopup("Add Physics##add_physics_popup");
             mOpenPhysicsPopup = false;
         }
-        renderAddPhysicsPopup(scene);
+        RenderAddPhysicsPopup(scene);
 
         ImGui::End();
         ImGui::PopStyleColor();
 
         if (can_delete_entity(scene, mPendingDeleteEntity))
-            onEntityDelete(scene, mPendingDeleteEntity);
+            OnEntityDelete(scene, mPendingDeleteEntity);
         mPendingDeleteEntity = entt::null;
     }
 
-    void HierarchyPanel::setOnEntitySelected(OnEntitySelected &&callback)
+    void HierarchyPanel::SetOnEntitySelected(OnEntitySelected &&callback)
     {
         mOnEntitySelected = std::move(callback);
     }
 
-    void HierarchyPanel::setOnMeshDeleted(OnMeshDeleted &&callback)
+    void HierarchyPanel::SetOnMeshDeleted(OnMeshDeleted &&callback)
     {
         mOnEntityDeleted = std::move(callback);
     }
 
-    void HierarchyPanel::setOnDragDrop(OnDragDrop &&callback)
+    void HierarchyPanel::SetOnDragDrop(OnDragDrop &&callback)
     {
         mOnDragDrop = std::move(callback);
     }
 
-    void HierarchyPanel::setOnNewMesh(OnNewMesh &&callback)
+    void HierarchyPanel::SetOnNewMesh(OnNewMesh &&callback)
     {
         mOnNewMesh = std::move(callback);
     }
 
-    void HierarchyPanel::setOnNewLight(OnNewLight &&callback)
+    void HierarchyPanel::SetOnNewLight(OnNewLight &&callback)
     {
         mOnNewLight = std::move(callback);
     }
 
-    void HierarchyPanel::setOnAddPhysics(OnAddPhysics &&callback)
+    void HierarchyPanel::SetOnAddPhysics(OnAddPhysics &&callback)
     {
         mOnAddPhysics = std::move(callback);
     }
 
-    void HierarchyPanel::selectEntity(entt::entity entity)
+    void HierarchyPanel::SelectEntity(entt::entity entity)
     {
         mSelectedEntity = entity;
     }
 
-    entt::entity HierarchyPanel::getSelectedEntity() const
+    entt::entity HierarchyPanel::GetSelectedEntity() const
     {
         return mSelectedEntity;
     }
 
-    void HierarchyPanel::deleteSelectedEntity()
+    void HierarchyPanel::DeleteSelectedEntity()
     {
         mPendingDeleteEntity = mSelectedEntity;
     }
@@ -200,15 +200,15 @@ namespace kailux
 
     bool HierarchyPanel::can_delete_entity(const Scene &scene, entt::entity entity)
     {
-        return scene.getEntityRegistry().valid(entity) &&
-               entity != scene.getSun() &&
-               entity != scene.getSceneCamera() &&
-               entity != scene.getSimulationCamera();
+        return scene.GetEntityRegistry().valid(entity) &&
+               entity != scene.GetSun() &&
+               entity != scene.GetSceneCamera() &&
+               entity != scene.GetSimulationCamera();
     }
 
-    void HierarchyPanel::onEntityDelete(Scene &scene, entt::entity entity)
+    void HierarchyPanel::OnEntityDelete(Scene &scene, entt::entity entity)
     {
-        notifyAndDestroyHierarchy(scene.getEntityRegistry(), entity);
+        NotifyAndDestroyHierarchy(scene.GetEntityRegistry(), entity);
 
         if (mSelectedEntity == entity)
         {
@@ -230,7 +230,7 @@ namespace kailux
         return !h || h->parent == entt::null;
     }
 
-    void HierarchyPanel::notifyAndDestroyHierarchy(entt::registry &registry, entt::entity entity)
+    void HierarchyPanel::NotifyAndDestroyHierarchy(entt::registry &registry, entt::entity entity)
     {
         const auto *hierarchy = registry.try_get<HierarchyComponent>(entity);
 
@@ -262,14 +262,14 @@ namespace kailux
         if (hierarchy)
             for (auto child: hierarchy->children)
                 if (registry.valid(child))
-                    notifyAndDestroyHierarchy(registry, child);
+                    NotifyAndDestroyHierarchy(registry, child);
 
         registry.destroy(entity);
     }
 
-    void HierarchyPanel::renderEntityNode(Scene &scene, entt::entity entity)
+    void HierarchyPanel::RenderEntityNode(Scene &scene, entt::entity entity)
     {
-        auto &registry = scene.getEntityRegistry();
+        auto &registry = scene.GetEntityRegistry();
         const auto &tag = registry.get<TagComponent>(entity);
         auto *hierarchy = registry.try_get<HierarchyComponent>(entity);
 
@@ -329,19 +329,19 @@ namespace kailux
             if (hierarchy)
                 for (auto child: hierarchy->children)
                     if (registry.valid(child))
-                        renderEntityNode(scene, child);
+                        RenderEntityNode(scene, child);
 
             ImGui::TreePop();
         }
     }
 
-    void HierarchyPanel::renderAddPhysicsPopup(const Scene &scene)
+    void HierarchyPanel::RenderAddPhysicsPopup(const Scene &scene)
     {
         ImGui::SetNextWindowSize(ImVec2(300, 0), ImGuiCond_Appearing);
         if (ImGui::BeginPopupModal("Add Physics##add_physics_popup", nullptr,
                                    ImGuiWindowFlags_AlwaysAutoResize))
         {
-            const auto &registry = scene.getEntityRegistry();
+            const auto &registry = scene.GetEntityRegistry();
 
             if (mPhysicsTargetEntity == entt::null)
             {

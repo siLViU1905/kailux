@@ -50,22 +50,22 @@ namespace kailux
                                       std::string_view fileIconPath
         );
 
-        std::optional<TextureHandle>  registerTexture(Texture&& texture);
-        void                          releaseTexture(TextureHandle handle);
-        const Texture&                getTexture(TextureHandle handle) const;
-        std::optional<MaterialHandle> registerMaterial(const MaterialSlot& slot);
-        void                          updateMaterial(MaterialHandle handle, const MaterialSlot& slot);
-        void                          releaseMaterial(MaterialHandle handle);
-        const MaterialSlot&           getMaterial(MaterialHandle handle) const;
-        MaterialHandle                getDefaultMaterialHandle() const;
-        TextureHandle                 getDefaultTextureHandle(TextureType type) const;
+        std::optional<TextureHandle>  RegisterTexture(Texture&& texture);
+        void                          ReleaseTexture(TextureHandle handle);
+        const Texture&                GetTexture(TextureHandle handle) const;
+        std::optional<MaterialHandle> RegisterMaterial(const MaterialSlot& slot);
+        void                          UpdateMaterial(MaterialHandle handle, const MaterialSlot& slot);
+        void                          ReleaseMaterial(MaterialHandle handle);
+        const MaterialSlot&           GetMaterial(MaterialHandle handle) const;
+        MaterialHandle                GetDefaultMaterialHandle() const;
+        TextureHandle                 GetDefaultTextureHandle(TextureType type) const;
 
-        std::span<const MaterialSlot> viewMaterials() const;
+        std::span<const MaterialSlot> ViewMaterials() const;
 
-        std::vector<LiveTexture> getLiveTexures() const;
+        std::vector<LiveTexture> GetLiveTexures() const;
 
-        const Texture& getAssetBrowserDirectoryIconTexture() const;
-        const Texture& getAssetBrowserFileIconTexture() const;
+        const Texture& GetAssetBrowserDirectoryIconTexture() const;
+        const Texture& GetAssetBrowserFileIconTexture() const;
 
         struct MaterialData
         {
@@ -76,12 +76,12 @@ namespace kailux
             ImageLoader::ImageData aoData;
         };
 
-        AsyncMaterialResult createMaterialFromData(const Context &context, const MaterialData& data);
+        AsyncMaterialResult CreateMaterialFromData(const Context &context, const MaterialData& data);
 
     private:
-        void     allocResources();
-        void     createDefaultTextures(const Context& context);
-        void     createAssetBrowserTextures(const Context& context, std::string_view directoryIconPath, std::string_view fileIconPath);
+        void     AllocResources();
+        void     CreateDefaultTextures(const Context& context);
+        void     CreateAssetBrowserTextures(const Context& context, std::string_view directoryIconPath, std::string_view fileIconPath);
 
         std::vector<std::optional<Texture>>  mTextures;
         std::vector<uint32_t>                mTextureRefCount;

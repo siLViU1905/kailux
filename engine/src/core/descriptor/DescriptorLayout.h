@@ -20,10 +20,10 @@ namespace kailux
 
         static DescriptorLayout create(const Context &context, std::span<const DescriptorLayoutBinding> bindings);
 
-        vk::DescriptorSetLayout getLayout() const;
+        vk::DescriptorSetLayout GetLayout() const;
 
     private:
-        void createLayout(const Context &context, std::span<const DescriptorLayoutBinding> bindings);
+        void CreateLayout(const Context &context, std::span<const DescriptorLayoutBinding> bindings);
 
         vk::raii::DescriptorSetLayout mLayout;
     };

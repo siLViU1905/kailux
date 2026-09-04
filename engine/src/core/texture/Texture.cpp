@@ -38,17 +38,17 @@ namespace kailux
     {
     }
 
-    vk::Image Texture::getImage() const
+    vk::Image Texture::GetImage() const
     {
         return *mImage;
     }
 
-    vk::ImageView Texture::getImageView() const
+    vk::ImageView Texture::GetImageView() const
     {
         return *mImageView;
     }
 
-    vk::Sampler Texture::getSampler() const
+    vk::Sampler Texture::GetSampler() const
     {
         return *mSampler;
     }

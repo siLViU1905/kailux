@@ -89,26 +89,26 @@ namespace kailux::log
         }
 
         template <typename... Args>
-        void trace(details::Fmt<Args...> fmt, Args&&... args) { log<Level::Trace>(fmt, std::forward<Args>(args)...); }
+        void Trace(details::Fmt<Args...> fmt, Args&&... args) { Log<Level::Trace>(fmt, std::forward<Args>(args)...); }
         template <typename... Args>
-        void debug(details::Fmt<Args...> fmt, Args&&... args) { log<Level::Debug>(fmt, std::forward<Args>(args)...); }
+        void Debug(details::Fmt<Args...> fmt, Args&&... args) { Log<Level::Debug>(fmt, std::forward<Args>(args)...); }
         template <typename... Args>
-        void info(details::Fmt<Args...> fmt, Args&&... args)  { log<Level::Info>(fmt, std::forward<Args>(args)...); }
+        void Info(details::Fmt<Args...> fmt, Args&&... args)  { Log<Level::Info>(fmt, std::forward<Args>(args)...); }
         template <typename... Args>
-        void warning(details::Fmt<Args...> fmt, Args&&... args)  { log<Level::Warning>(fmt, std::forward<Args>(args)...); }
+        void Warning(details::Fmt<Args...> fmt, Args&&... args)  { Log<Level::Warning>(fmt, std::forward<Args>(args)...); }
         template <typename... Args>
-        void error(details::Fmt<Args...> fmt, Args&&... args) { log<Level::Error>(fmt, std::forward<Args>(args)...); }
+        void Error(details::Fmt<Args...> fmt, Args&&... args) { Log<Level::Error>(fmt, std::forward<Args>(args)...); }
 
     private:
         template<Level L, typename... Args>
-        void log(details::Fmt<Args...> fmt, Args&&... args)
+        void Log(details::Fmt<Args...> fmt, Args&&... args)
         {
             if constexpr (L >= details::get_compiled_log_level())
-                write<L>(fmt.loc, std::format(fmt.fmt, std::forward<Args>(args)...));
+                Write<L>(fmt.loc, std::format(fmt.fmt, std::forward<Args>(args)...));
         }
 
         template<Level L>
-        void write(const std::source_location& loc, std::string_view msg)
+        void Write(const std::source_location& loc, std::string_view msg)
         {
             std::string line;
             line.reserve(msg.size() + 64);

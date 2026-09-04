@@ -13,19 +13,19 @@ namespace kailux
 
         static Context create(Window& window);
 
-        vk::PhysicalDevice getPhysicalDevice() const;
-        vk::Device         getDevice() const;
-        vk::SurfaceKHR     getSurface() const;
-        vk::Queue          getGraphicsQueue() const;
-        vk::Queue          getTransferQueue() const;
-        uint32_t           getGraphicsQueueFamilyIndex() const;
-        uint32_t           getTransferQueueFamilyIndex() const;
+        vk::PhysicalDevice GetPhysicalDevice() const;
+        vk::Device         GetDevice() const;
+        vk::SurfaceKHR     GetSurface() const;
+        vk::Queue          GetGraphicsQueue() const;
+        vk::Queue          GetTransferQueue() const;
+        uint32_t           GetGraphicsQueueFamilyIndex() const;
+        uint32_t           GetTransferQueueFamilyIndex() const;
 
-        uint32_t                findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const;
-        vk::SampleCountFlagBits getMaxUsableSampleCount() const;
-        bool                    hasDedicatedTransferQueue() const;
+        uint32_t                FindMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const;
+        vk::SampleCountFlagBits GetMaxUsableSampleCount() const;
+        bool                    HasDedicatedTransferQueue() const;
 
-        DeviceInfo getDeviceInfo() const;
+        DeviceInfo GetDeviceInfo() const;
 
         friend class Swapchain;
         friend class FrameData;
@@ -48,12 +48,12 @@ namespace kailux
                                                               pCallbackData,
                                                               void *pUser);
 
-        void createInstance();
-        void setupDebugMessenger();
-        void createSurface(Window& window);
-        void pickPhysicalDevice();
-        void createLogicalDevice();
-        void createQueues();
+        void CreateInstance();
+        void SetupDebugMessenger();
+        void CreateSurface(Window& window);
+        void PickPhysicalDevice();
+        void CreateLogicalDevice();
+        void CreateQueues();
 
         static bool     is_device_suitable(const vk::raii::PhysicalDevice& device);
         static uint32_t score_device(const vk::raii::PhysicalDevice& device);

@@ -10,21 +10,21 @@ namespace kailux
         InputSource();
         InputSource(GLFWwindow* handle);
 
-        bool valid() const;
+        bool Valid() const;
 
-        bool isOpen() const;
+        bool IsOpen() const;
 
-        bool isMaximized() const;
-        bool isMinimized() const;
+        bool IsMaximized() const;
+        bool IsMinimized() const;
 
-        bool       isKeyPressed(Key key) const;
-        bool       isButtonClicked(MouseButton button) const;
+        bool       IsKeyPressed(Key key) const;
+        bool       IsButtonClicked(MouseButton button) const;
 
-        glm::dvec2 getMousePos() const;
-        void       setCursorMode(CursorMode mode);
-        CursorMode getCursorMode() const;
+        glm::dvec2 GetMousePos() const;
+        void       SetCursorMode(CursorMode mode);
+        CursorMode GetCursorMode() const;
 
-        glm::ivec2 getFramebufferSize() const;
+        glm::ivec2 GetFramebufferSize() const;
 
         bool operator==(const InputSource& other) const;
 

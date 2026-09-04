@@ -11,7 +11,7 @@ namespace kailux
 
         static SceneDocument to_document(const Scene &scene);
         static std::string   write(const SceneDocument &document, int indent = 3);
-        static std::expected<void, Error> writeFile(const SceneDocument &document,
+        static std::expected<void, Error> write_file(const SceneDocument &document,
                                                     const std::filesystem::path &path,
                                                     int indent = 3);
 

@@ -24,47 +24,47 @@ namespace kailux
         return *this;
     }
 
-    void ComputePass::bind(vk::CommandBuffer cmd) const
+    void ComputePass::Bind(vk::CommandBuffer cmd) const
     {
-        mPipeline.bindCompute(cmd);
+        mPipeline.BindCompute(cmd);
     }
 
-    void ComputePass::execute(vk::CommandBuffer cmd, ComputeWorkgroup group) const
+    void ComputePass::Execute(vk::CommandBuffer cmd, ComputeWorkgroup group) const
     {
         cmd.dispatch(group.x, group.y, group.z);
     }
 
-    const DescriptorLayout &ComputePass::getDescriptorLayout() const
+    const DescriptorLayout &ComputePass::GetDescriptorLayout() const
     {
         return mDescriptorLayout;
     }
 
-    const DescriptorPool &ComputePass::getDescriptorPool() const
+    const DescriptorPool &ComputePass::GetDescriptorPool() const
     {
         return mDescriptorPool;
     }
 
-    const Pipeline &ComputePass::getPipeline() const
+    const Pipeline &ComputePass::GetPipeline() const
     {
         return mPipeline;
     }
 
-    void ComputePass::createDescriptorLayout(const Context &context, std::span<const DescriptorLayoutBinding> bindings)
+    void ComputePass::CreateDescriptorLayout(const Context &context, std::span<const DescriptorLayoutBinding> bindings)
     {
         mDescriptorLayout = DescriptorLayout::create(context, bindings);
     }
 
-    void ComputePass::createDescriptorPool(const Context &context, uint32_t frameCount,
+    void ComputePass::CreateDescriptorPool(const Context &context, uint32_t frameCount,
                                            std::span<const DescriptorPoolSize> sizes)
     {
         mDescriptorPool = DescriptorPool::create(context, frameCount, sizes);
     }
 
-    void ComputePass::createPipeline(const Context &context,
+    void ComputePass::CreatePipeline(const Context &context,
                                      const ComputeShaderInfo &info,
                                      std::span<const PushConstantRangeInfo> pushConstantRanges)
     {
-        mPipeline = Pipeline::createCompute(
+        mPipeline = Pipeline::create_compute(
             context,
             mDescriptorLayout,
             info,

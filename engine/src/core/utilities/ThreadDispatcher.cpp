@@ -21,22 +21,22 @@ namespace kailux
 
     ThreadDispatcher::ThreadDispatcher(uint32_t threads):mThreads(threads)
     {
-        log::console.debug("thread dispatcher: creating");
-        createWorkers();
-        log::console.debug("thread dispatcher: created with {} threads", mWorkers.size());
+        log::console.Debug("thread dispatcher: creating");
+        CreateWorkers();
+        log::console.Debug("thread dispatcher: created with {} threads", mWorkers.size());
     }
 
-    void ThreadDispatcher::createWorkers()
+    void ThreadDispatcher::CreateWorkers()
     {
         mWorkers.reserve(mThreads);
         for (uint32_t i = 0; i < mThreads; ++i)
             mWorkers.emplace_back([this](std::stop_token stopToken)
             {
-                workerLoop(stopToken);
+                WorkerLoop(stopToken);
             });
     }
 
-    void ThreadDispatcher::workerLoop(std::stop_token stopToken)
+    void ThreadDispatcher::WorkerLoop(std::stop_token stopToken)
     {
         while (!stopToken.stop_requested())
         {

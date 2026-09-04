@@ -9,33 +9,33 @@ namespace kailux
         ViewportPanel();
         ViewportPanel(std::string_view name);
 
-        void render(Scene &scene) override;
+        void Render(Scene &scene) override;
 
-        void setSceneTextureId(ImTextureID id);
+        void SetSceneTextureId(ImTextureID id);
 
         struct MousePosition
         {
             uint32_t x{};
             uint32_t y{};
         };
-        MousePosition getScaledMousePos() const;
+        MousePosition GetScaledMousePos() const;
 
         using OnClick = std::move_only_function<void()>;
-        void setOnClick(OnClick&& callback);
+        void SetOnClick(OnClick&& callback);
 
-        SimulationState getSimulationState() const;
+        SimulationState GetSimulationState() const;
 
-        void requestSimulationState(SimulationState state);
+        void RequestSimulationState(SimulationState state);
 
         using OnSimulationStart = std::move_only_function<void()>;
-        void setOnSimulationStart(OnSimulationStart&& callback);
+        void SetOnSimulationStart(OnSimulationStart&& callback);
         using OnSimulationPause = std::move_only_function<void()>;
-        void setOnSimulationPause(OnSimulationPause&& callback);
+        void SetOnSimulationPause(OnSimulationPause&& callback);
 
     private:
         static MousePosition compute_relative_mouse_pos(ImVec2 minBound, ImVec2 viewportSize);
 
-        void renderSimulationIndicator(ImVec2 minBound, ImVec2 viewportSize);
+        void RenderSimulationIndicator(ImVec2 minBound, ImVec2 viewportSize);
 
         ImTextureID   mSceneTextureId;
         MousePosition mMousePos;

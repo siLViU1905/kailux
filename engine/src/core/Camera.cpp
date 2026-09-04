@@ -11,18 +11,18 @@ namespace kailux
         component.right = glm::normalize(glm::cross(component.forward, component.up));
 
         float velocity = component.speed * deltaTime;
-        if (source.isKeyPressed(Key::W))
+        if (source.IsKeyPressed(Key::W))
             component.position += component.forward * velocity;
-        if (source.isKeyPressed(Key::S))
+        if (source.IsKeyPressed(Key::S))
             component.position -= component.forward * velocity;
-        if (source.isKeyPressed(Key::A))
+        if (source.IsKeyPressed(Key::A))
             component.position -= component.right * velocity;
-        if (source.isKeyPressed(Key::D))
+        if (source.IsKeyPressed(Key::D))
             component.position += component.right * velocity;
 
-        if (source.isKeyPressed(Key::Space))
+        if (source.IsKeyPressed(Key::Space))
             component.position += glm::vec3(0.f, 1.f, 0.f) * velocity;
-        if (source.isKeyPressed(Key::LeftControl))
+        if (source.IsKeyPressed(Key::LeftControl))
             component.position -= glm::vec3(0.f, 1.f, 0.f) * velocity;
     }
 
@@ -31,7 +31,7 @@ namespace kailux
         if (!component.focused)
             return;
 
-        const auto mousePos{source.getMousePos()};
+        const auto mousePos{source.GetMousePos()};
 
         const auto xOffset{static_cast<float>(mousePos.x - component.lastMousePosX)};
         const auto yOffset{static_cast<float>(component.lastMousePosY - mousePos.y)};
