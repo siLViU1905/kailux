@@ -401,6 +401,24 @@ namespace kailux
         };
     }
 
+    std::array<vk::BufferMemoryBarrier2, FrameData::kIndirectReadToWriteMemoryBarriersCount> FrameData::getIndirectReadToWriteBarriers() const
+    {
+        return {
+            vk::BufferMemoryBarrier2{ // indirect buffer
+                vk::PipelineStageFlagBits2::eDrawIndirect, vk::AccessFlagBits2::eIndirectCommandRead,
+                vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eTransferWrite,
+                vk::QueueFamilyIgnored, vk::QueueFamilyIgnored,
+                mIndirectBuffer.getBuffer(), 0, vk::WholeSize
+            },
+            vk::BufferMemoryBarrier2{  // culler count
+                vk::PipelineStageFlagBits2::eDrawIndirect, vk::AccessFlagBits2::eIndirectCommandRead,
+                vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eTransferWrite,
+                vk::QueueFamilyIgnored, vk::QueueFamilyIgnored,
+                mCullerCountBuffer.getBuffer(), 0, vk::WholeSize
+            }
+        };
+    }
+
     void FrameData::createCommandPool(const Context &context)
     {
         vk::CommandPoolCreateInfo poolInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
@@ -484,7 +502,7 @@ namespace kailux
 
     void FrameData::createCameraBuffer(const Context &context)
     {
-        mCameraBuffer = BufferAllocator::alloc_uniform(context, sizeof(CameraData));
+        mCameraBuffer = BufferAllocator::alloc_uniform(context, sizeof(CameraData) * details::kMaxCameras);
     }
 
     void FrameData::createMeshDataBuffer(const Context &context)

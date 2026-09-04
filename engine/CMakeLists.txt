@@ -52,6 +52,8 @@ add_library(kailux_engine STATIC
         src/core/Shader.cpp
         src/core/scene/SceneSerializer.cpp
         src/core/scene/SceneInstantiator.cpp
+        src/core/SimulationView.cpp
+        src/core/window/InputSource.cpp
 )
 
 target_compile_definitions(kailux_engine PUBLIC

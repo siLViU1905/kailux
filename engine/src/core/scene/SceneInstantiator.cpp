@@ -64,7 +64,7 @@ namespace kailux
                 );
 
             if (record.camera)
-                scene.attachCamera(entity, *record.camera, context.windowWidth, context.windowHeight);
+                scene.attachCamera(entity, *record.camera);
         }
 
         if (const auto it{remap.find(document.mainCamera)}; it != remap.end())
@@ -74,7 +74,7 @@ namespace kailux
             log::console.warning("No camera found in scene '{}'. Falling back...", scene.getName());
             const auto fallback = scene.createCameraEntity(
                 "MainCamera", true, context.windowWidth, context.windowHeight);
-            scene.setMainCamera(fallback);
+            scene.setMainCamera(*fallback);
         }
 
         for (const auto& record : document.entities)

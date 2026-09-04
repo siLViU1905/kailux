@@ -4,9 +4,7 @@
 
 #include "../Core.h"
 #include <string_view>
-#include <GLFW/glfw3.h>
-
-#include "Event.h"
+#include "InputSource.h"
 
 namespace kailux
 {
@@ -19,7 +17,6 @@ namespace kailux
         static Window create(int width, int height, std::string_view title);
         void updateUserPointer();
 
-        bool isOpen() const;
         void close();
         void pollEvents() const;
         void waitForEvents() const;
@@ -30,20 +27,10 @@ namespace kailux
         void restore();
         void resize(int width, int height);
 
-        bool isMaximized() const;
-        bool isMinimized() const;
-
-        bool       isKeyPressed(Key key) const;
-        bool       isButtonClicked(MouseButton button) const;
-        void       getMousePos(double& x, double& y) const;
-        void       setCursorMode(CursorMode mode);
-        CursorMode getCursorMode() const;
-
-        void getFramebufferSize(int& width, int& height) const;
-        constexpr int getWidth()  const { return mWidth;  }
-        constexpr int getHeight() const { return mHeight; }
-
         GLFWwindow* getGLFWWindow();
+
+        InputSource getInputSource();
+        InputSource getInputSource() const;
 
     private:
         void initGLFW();
@@ -55,8 +42,6 @@ namespace kailux
         static void glfw_button_callback(GLFWwindow* window, int button, int action, int mods);
 
         GLFWwindow*       mWindowHandle;
-        int               mWidth;
-        int               mHeight;
         bool              mFramebufferResized;
         std::queue<Event> mEventQueue;
     };

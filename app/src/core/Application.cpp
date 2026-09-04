@@ -2,6 +2,7 @@
 
 #include "core/panels/HierarchyPanel.h"
 #include "core/panels/MenuPanel.h"
+#include "core/panels/SimulationPanel.h"
 
 namespace kailux
 {
@@ -21,11 +22,11 @@ namespace kailux
 
     void Application::run()
     {
-        while (mWindow.isOpen())
+        while (mWindow.getInputSource().isOpen())
         {
             mClock.tick();
             mWindow.pollEvents();
-            if (mWindow.isMinimized())
+            if (mWindow.getInputSource().isMinimized())
             {
                 while (mWindow.getEvent()) {}
                 mWindow.waitForEvents();
@@ -187,7 +188,7 @@ namespace kailux
     {
         if (mLoadSceneDialog.poll())
             if (auto path = mLoadSceneDialog.tryPopPath())
-                mEngine.loadScene(*path, mWindow.getWidth(), mWindow.getHeight());
+                mEngine.loadScene(*path, mWindow);
 
         if (mSaveSceneDialog.poll())
             if (auto path = mSaveSceneDialog.tryPopPath())
@@ -205,16 +206,43 @@ namespace kailux
     void Application::updateEditor()
     {
         mEditor.update();
-        auto& viewportPanel = mEditor.getLayer<EditorLayer>().getPanel<ViewportPanel>();
+
+        auto& entityEditor{mEditor.getLayer<EditorLayer>().getPanel<EntityEditorPanel>()};
+        entityEditor.setCameraData(mEngine.getCameraData());
+
+        auto& viewportPanel{mEditor.getLayer<EditorLayer>().getPanel<ViewportPanel>()};
         viewportPanel.setSceneTextureId(mEngine.getSceneTextureId());
+
+        auto& simulationPanel{mEditor.getLayer<EditorLayer>().getPanel<SimulationPanel>()};
+        simulationPanel.setTextureId(mEngine.getSimulationTextureId());
     }
 
     void Application::updateEngine(float deltaTime, const Window& window)
     {
-        mEngine.update(deltaTime, window);
-        auto sceneViewportMousePos = mEditor.getLayer<EditorLayer>().getPanel<ViewportPanel>().getScaledMousePos();
-        auto outlineColor = mEditor.getLayer<EditorLayer>().getPanel<MenuPanel>().getOutlineColor();
-        auto selectedEntity = static_cast<uint32_t>(mEditor.getLayer<EditorLayer>().getPanel<HierarchyPanel>().getSelectedEntity());
+        auto& editorLayer{mEditor.getLayer<EditorLayer>()};
+        auto& simulation{editorLayer.getPanel<SimulationPanel>()};
+        auto& viewport{editorLayer.getPanel<ViewportPanel>()};
+
+        mEngine.setSimulationViewActive(simulation.isOpen());
+        mEngine.setSimulationViewExtent(simulation.getExtent());
+
+        const bool simulationHasInput = simulation.isOpen() && simulation.isFocused();
+
+        mEngine.setControlledCamera(
+            simulationHasInput ? mEngine.getScene().getSimulationCamera()
+                               : mEngine.getScene().getSceneCamera(),
+            InputSource(simulationHasInput ? simulation.getPlatformWindow()
+                                           : viewport.getPlatformWindow())
+        );
+
+        if (simulation.consumeToggleMouseLook() || viewport.consumeToggleMouseLook())
+            mEngine.toggleMouseLook();
+
+        mEngine.update(deltaTime);
+
+        const auto sceneViewportMousePos = mEditor.getLayer<EditorLayer>().getPanel<ViewportPanel>().getScaledMousePos();
+        const auto outlineColor = mEditor.getLayer<EditorLayer>().getPanel<MenuPanel>().getOutlineColor();
+        const auto selectedEntity = static_cast<uint32_t>(mEditor.getLayer<EditorLayer>().getPanel<HierarchyPanel>().getSelectedEntity());
         mEngine.setOutlineInfo(outlineColor, selectedEntity);
         mEngine.setSceneViewportMousePos(sceneViewportMousePos.x, sceneViewportMousePos.y);
     }

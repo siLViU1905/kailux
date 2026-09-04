@@ -13,12 +13,15 @@ namespace kailux
         template<typename... Pcs>
         void push(vk::CommandBuffer cmd, const Pcs &... pcs) const
         {
-            pushImpl<{}, Pcs...>(cmd, pcs...);
+            pushImpl<kPushConstantRanges, Pcs...>(cmd, pcs...);
         }
 
+        void bind(vk::CommandBuffer cmd, bool writeIds = true) const;
+
     private:
-        static constexpr std::string_view kVertexShaderPath = "shaders/vertex_shader.glsl";
-        static constexpr std::string_view kFragmentShaderPath = "shaders/fragment_shader.glsl";
+        static constexpr std::string_view kVertexShaderPath = "shaders/mesh_vertex_shader.glsl";
+        static constexpr std::string_view kFragmentShaderPath = "shaders/mesh_fragment_shader.glsl";
+        static constexpr std::string_view kNoIdFragmentShaderPath = "shaders/mesh_no_id_fragment_shader.glsl";
 
         static constexpr std::array kDescriptorLayoutBindings = {
             DescriptorLayoutBinding(
@@ -110,6 +113,12 @@ namespace kailux
             "Descriptor layout bindings and pool sizes do not match"
             );
 
+        static constexpr std::array kPushConstantRanges = {
+            PushConstantRangeInfo(vk::ShaderStageFlagBits::eVertex,
+                sizeof(uint32_t)
+                )
+        };
+
     public:
         static constexpr uint32_t kMeshTextureBindStart = []() constexpr -> uint32_t {
             for (uint32_t i = 0; i < kDescriptorLayoutBindings.size(); ++i)
@@ -127,5 +136,13 @@ namespace kailux
 
     private:
         static PipelineInfo make_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits sampleCount);
+        static PipelineInfo make_no_id_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits sampleCount);
+
+        void createNoIdPipeline(const Context &context, const Swapchain &swapchain,
+                                      std::string_view vertShaderPath, std::string_view fragShaderPath,
+                                      const PipelineInfo &info,
+                                      std::span<const PushConstantRangeInfo> pushConstantRanges);
+
+        Pipeline mNoIdPipeline;
     };
 }

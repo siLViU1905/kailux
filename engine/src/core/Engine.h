@@ -24,6 +24,9 @@
 #include "utilities/Queue.h"
 #include "utilities/ThreadDispatcher.h"
 #include "DeferredResourceEraser.h"
+#include "ResizeDebouncer.h"
+#include "SimulationView.h"
+#include "components/gpu/CameraData.h"
 #include "gizmo/GizmoRegistry.h"
 #include "passes/GizmoPass.h"
 
@@ -40,6 +43,13 @@ namespace kailux
         using OnEditorRender = std::move_only_function<void(Scene&)>;
         void setOnEditorRender(OnEditorRender&& callback);
 
+        CameraData getCameraData() const;
+
+        void setSimulationViewExtent(vk::Extent2D extent);
+        void setSimulationViewActive(bool active);
+        void setControlledCamera(entt::entity camera, InputSource source);
+        void toggleMouseLook();
+
         void waitIdle() const;
 
         Queue<AssetPipeline::PendingMeshData> &getPendingMeshDataQueue();
@@ -50,9 +60,10 @@ namespace kailux
         ImTextureID getAssetBrowserDirectoryTextureId() const;
         ImTextureID getAssetBrowserFileTextureId() const;
         ImTextureID getSceneTextureId() const;
+        ImTextureID getSimulationTextureId() const;
 
         void onEvent(const Event& event, Window& window);
-        void update(float deltaTime, const Window &window);
+        void update(float deltaTime);
         void render(const Window &window);
 
         static bool is_mesh_type_supported(std::string_view path);
@@ -63,7 +74,7 @@ namespace kailux
         static constexpr std::string_view kSceneFileExtension = "klx";
         const Scene& getScene() const;
         void         saveScene(const std::filesystem::path &path);
-        void         loadScene(const std::filesystem::path &path, int windowWidth, int windowHeight);
+        void         loadScene(const std::filesystem::path &path, const Window &window);
 
         using OnLog = std::move_only_function<void(std::string_view)>;
         void setOnInfoLog(OnLog&& callback);
@@ -106,21 +117,23 @@ namespace kailux
 
         void seedDefaultTextures();
 
-        void createSceneTextureIds();
+        void createEditorTextureIds();
 
         void createComputePicker();
         void createComputeCuller();
 
-        void createScene();
-        void createSceneEntities(const Window &window);
+        void createScene(const Window &window);
 
         void                                        submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
-        void                                        recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const;
-        void                                        recordSkybox(const FrameData &frame, const CommandRecorder &recorder) const;
+        void                                        recordMeshData(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex, bool writeIds) const;
+        void                                        recordSkybox(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex) const;
         void                                        recordGizmos(const FrameData &frame, const CommandRecorder &recorder) const;
         void                                        recordImGuiData(const FrameData& frame);
         void                                        recordPicker(const FrameData& frame, const CommandRecorder &recorder) const;
         void                                        recordOutline(const FrameData& frame, const CommandRecorder &recorder) const;
+        void                                        renderSimulationView(const FrameData &frame, CommandRecorder &recorder);
+
+        CameraData buildCameraData(entt::entity entity, vk::Extent2D extent) const;
 
         void updateFrameBuffers(FrameData& frame, const CommandRecorder& recorder);
         void updateCameraBuffer(FrameData& frame) const;
@@ -132,11 +145,17 @@ namespace kailux
 
         void readOutputBuffers(const FrameData& frame);
 
+        void recreateSwapchainResources(const Window& window);
+
         BodyHandle uploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo& data);
 
-        void executeCulling(const FrameData& frame, const CommandRecorder& recorder);
+        void executeCulling(const FrameData& frame, const CommandRecorder& recorder, entt::entity camera, vk::Extent2D extent);
+
+        void resizeSimulationView(vk::Extent2D extent);
 
         void transitionForMainPass(const FrameData& frame, const CommandRecorder& recorder) const;
+        void transitionForSimulationPass(const CommandRecorder &recorder) const;
+        void transitionForGizmoPass(const FrameData& frame, const CommandRecorder& recorder) const;
         void transitionForOutlinePass(const FrameData& frame, const CommandRecorder& recorder, uint32_t imageIndex) const;
         void transitionForPickerAndPostProcess(const FrameData& frame, const CommandRecorder& recorder) const;
         void transitionForPresent(const CommandRecorder& recorder, uint32_t imageIndex) const;
@@ -160,10 +179,19 @@ namespace kailux
         std::array<FrameData, details::kFramesInFlight>    mFrames;
         uint32_t                                   mCurrentFrame;
 
-        std::array<ImTextureID, details::kFramesInFlight>  mSceneTextureIds;
+        std::array<ImTextureID, details::kFramesInFlight>  mSceneTextureIds{};
+        std::array<ImTextureID, details::kFramesInFlight>  mSimulationTextureIds{};
 
         Scene                                      mScene;
+        entt::entity                               mControlledCamera{entt::null};
+        InputSource                                mInputSource;
+        bool                                       mMouseLookActive{};
         OnEditorRender                             mOnEditorRender;
+
+        SimulationView                             mSimulationView;
+        SimulationView                             mRetiredSimulationView;
+        ResizeDebouncer<>                          mSimulationResize;
+        bool                                       mSimulationViewActive{};
 
         ComputePassesPushConstants::MouseCords     mSceneViewportMousePos;
         GraphicsPassesPushConstants::Outline       mOutlineInfo;

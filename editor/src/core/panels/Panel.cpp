@@ -2,15 +2,12 @@
 
 namespace kailux
 {
-    Panel::Panel()
-        : mBackgroundColor(0.f, 0.f, 0.f, 0.f),
-          mOpen(true)
-    {
-    }
+    Panel::Panel() = default;
 
-    Panel::Panel(std::string_view name, ImVec4 backgroundColor, bool open) : mName(name),
-                                                                             mBackgroundColor(backgroundColor),
-                                                                             mOpen(open)
+    Panel::Panel(std::string_view name, ImVec4 backgroundColor, bool open, bool focused) : mName(name),
+                                                                                           mBackgroundColor(backgroundColor),
+                                                                                           mOpen(open),
+                                                                                           mFocused(focused)
     {
     }
 
@@ -42,5 +39,20 @@ namespace kailux
     bool Panel::isOpen() const
     {
         return mOpen;
+    }
+
+    bool Panel::isFocused() const
+    {
+        return mFocused;
+    }
+
+    GLFWwindow * Panel::getPlatformWindow() const
+    {
+        return mPlatformWindow;
+    }
+
+    bool Panel::consumeToggleMouseLook()
+    {
+        return std::exchange(mToggleMouseLook, false);
     }
 }

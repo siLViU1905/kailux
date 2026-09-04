@@ -19,7 +19,7 @@ namespace kailux
         template<typename... Pcs>
         void push(vk::CommandBuffer cmd, const Pcs &... pcs) const
         {
-            pushImpl<{}, Pcs...>(cmd, pcs...);
+            pushImpl<kPushConstantRanges, Pcs...>(cmd, pcs...);
         }
 
         const Texture&          getTexture() const;
@@ -78,6 +78,12 @@ namespace kailux
             check_descriptor_layout_bindings_and_pool_sizes_match(kDescriptorLayoutBindings, kDescriptorPoolSizes),
             "Descriptor layout bindings and pool sizes do not match"
             );
+
+        static constexpr std::array kPushConstantRanges = {
+            PushConstantRangeInfo(vk::ShaderStageFlagBits::eVertex,
+                sizeof(uint32_t)
+                )
+        };
 
         static PipelineInfo make_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits samples);
 

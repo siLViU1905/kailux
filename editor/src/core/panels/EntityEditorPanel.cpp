@@ -47,8 +47,9 @@ namespace kailux
             return;
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, mBackgroundColor);
-
-        if (ImGui::Begin(mName.c_str(), &mOpen))
+        const bool visible{ImGui::Begin(mName.c_str(), &mOpen)};
+        mFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+        if (visible)
         {
             const auto &tag = registry.get<TagComponent>(mSelectedEntity);
             ImGui::Text("Entity: %s", tag.name.c_str());
@@ -77,6 +78,11 @@ namespace kailux
         ImGui::PopStyleColor();
 
         renderGizmo(scene);
+    }
+
+    void EntityEditorPanel::setCameraData(const CameraData &data)
+    {
+        mCameraData = data;
     }
 
     void EntityEditorPanel::setSelectedEntity(entt::entity entity, const Scene &scene)
@@ -125,11 +131,10 @@ namespace kailux
         auto &transform = transformComp.transform;
 
         auto modelMatrix = transformComp.worldMatrix;
-        const auto &cameraData = registry.get<CameraData>(scene.getMainCamera());
 
         ImGuizmo::Manipulate(
-            glm::value_ptr(cameraData.view),
-            glm::value_ptr(cameraData.projection),
+            glm::value_ptr(mCameraData.view),
+            glm::value_ptr(mCameraData.projection),
             operation,
             mCurrentGizmoMode,
             glm::value_ptr(modelMatrix)

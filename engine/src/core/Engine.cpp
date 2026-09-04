@@ -50,7 +50,15 @@ namespace kailux
                                               mFrames(std::move(other.mFrames)),
                                               mCurrentFrame(other.mCurrentFrame),
                                               mSceneTextureIds(other.mSceneTextureIds),
+                                              mSimulationTextureIds(other.mSimulationTextureIds),
                                               mScene(std::move(other.mScene)),
+                                              mControlledCamera(other.mControlledCamera),
+                                              mInputSource(other.mInputSource),
+                                              mMouseLookActive(other.mMouseLookActive),
+                                              mSimulationView(std::move(other.mSimulationView)),
+                                              mRetiredSimulationView(std::move(other.mRetiredSimulationView)),
+                                              mSimulationResize(other.mSimulationResize),
+                                              mSimulationViewActive(other.mSimulationViewActive),
                                               mMainPass(std::move(other.mMainPass)),
                                               mSkyboxPass(std::move(other.mSkyboxPass)),
                                               mGizmoPass(std::move(other.mGizmoPass)),
@@ -85,7 +93,15 @@ namespace kailux
             mFrames = std::move(other.mFrames);
             mCurrentFrame = other.mCurrentFrame;
             mSceneTextureIds = other.mSceneTextureIds;
+            mSimulationTextureIds = other.mSimulationTextureIds;
             mScene = std::move(other.mScene);
+            mControlledCamera = other.mControlledCamera;
+            mInputSource = other.mInputSource;
+            mMouseLookActive = other.mMouseLookActive;
+            mSimulationView = std::move(other.mSimulationView);
+            mRetiredSimulationView = std::move(other.mRetiredSimulationView);
+            mSimulationResize = other.mSimulationResize;
+            mSimulationViewActive = other.mSimulationViewActive;
             mMainPass = std::move(other.mMainPass);
             mSkyboxPass = std::move(other.mSkyboxPass);
             mGizmoPass = std::move(other.mGizmoPass);
@@ -133,17 +149,62 @@ namespace kailux
         engine.createFrameResources();
         engine.seedDefaultTextures();
         engine.createImGui(window);
-        engine.createScene();
-        engine.createSceneTextureIds();
-        engine.createSceneEntities(window);
+        engine.createScene(window);
+        engine.createEditorTextureIds();
         engine.createAssetPipeline();
         engine.createPhysicsSystem();
+
         return engine;
     }
 
     void Engine::setOnEditorRender(OnEditorRender &&callback)
     {
         mOnEditorRender = std::move(callback);
+    }
+
+    CameraData Engine::getCameraData() const
+    {
+        return buildCameraData(mScene.getSceneCamera(), mSwapchain.getExtent());
+    }
+
+    void Engine::setSimulationViewExtent(vk::Extent2D extent)
+    {
+       mSimulationResize.request(extent);
+    }
+
+    void Engine::setSimulationViewActive(bool active)
+    {
+        mSimulationViewActive = active;
+    }
+
+    void Engine::setControlledCamera(entt::entity camera, InputSource source)
+    {
+        if (mControlledCamera == camera && mInputSource == source)
+            return;
+
+        if (mMouseLookActive && mInputSource.valid())
+            mInputSource.setCursorMode(CursorMode::Normal);
+
+         mControlledCamera = camera;
+         mInputSource      = source;
+         mMouseLookActive  = false;
+    }
+
+    void Engine::toggleMouseLook()
+    {
+        if (!mInputSource.valid())
+            return;
+
+        mMouseLookActive = !mMouseLookActive;
+        mInputSource.setCursorMode(mMouseLookActive ? CursorMode::Disabled : CursorMode::Normal);
+
+        if (mMouseLookActive)
+            if (auto* camera = mScene.getEntityRegistry().try_get<CameraComponent>(mControlledCamera))
+            {
+                const auto mousePos{mInputSource.getMousePos()};
+                camera->lastMousePosX = mousePos.x;
+                camera->lastMousePosY = mousePos.y;
+            }
     }
 
     void Engine::waitIdle() const
@@ -193,23 +254,16 @@ namespace kailux
         return mSceneTextureIds[mCurrentFrame];
     }
 
+    ImTextureID Engine::getSimulationTextureId() const
+    {
+        return mSimulationView.getTextureId();
+    }
+
     void Engine::onEvent(const Event &event, Window &window)
     {
-        if (const auto* buttonPressed{std::get_if<ButtonPressed>(&event)})
-        {
-            if (buttonPressed->button == MouseButton::Middle)
-            {
-                (window.getCursorMode() == CursorMode::Normal)
-                                ? window.setCursorMode(CursorMode::Disabled)
-                                : window.setCursorMode(CursorMode::Normal);
-                auto view = mScene.getEntityRegistry().view<CameraComponent>();
-                for (auto entity: view)
-                {
-                    auto &focused = view.get<CameraComponent>(entity).focused;
-                    focused = !focused;
-                }
-            }
-        }
+        if (const auto* keyReleased{std::get_if<KeyReleased>(&event)})
+            if (keyReleased->key == Key::Escape && mMouseLookActive)
+                toggleMouseLook();
     }
 
     void Engine::createRenderingContext(Window &window)
@@ -357,10 +411,15 @@ namespace kailux
             frame.getMeshDescriptorSet().updateInfo(mContext, writes);
     }
 
-    void Engine::createSceneTextureIds()
+    void Engine::createEditorTextureIds()
     {
-        for (uint32_t i = 0; i < details::kFramesInFlight; i++)
+        for (uint32_t i{}; i < details::kFramesInFlight; i++)
+        {
+            if (mSceneTextureIds[i])
+                ImGuiBackend::remove_texture(mSceneTextureIds[i]);
+
             mSceneTextureIds[i] = ImGuiBackend::get_texture_id_from_texture(mFrames[i].getSceneTexture());
+        }
     }
 
     void Engine::createComputePicker()
@@ -373,22 +432,9 @@ namespace kailux
         mComputeCuller = ComputeCuller::create(mContext, details::kFramesInFlight);
     }
 
-    void Engine::createScene()
+    void Engine::createScene(const Window &window)
     {
-        mScene = Scene::create("MainScene");
-    }
-
-    void Engine::createSceneEntities(const Window &window)
-    {
-        int windowWidth, windowHeight;
-        window.getFramebufferSize(windowWidth, windowHeight);
-        auto cameraEntity = mScene.createCameraEntity(
-            "MainCamera",
-            true,
-            windowWidth,
-            windowHeight
-        );
-        mScene.setMainCamera(cameraEntity);
+        mScene = Scene::create("MainScene", window);
     }
 
     void Engine::submit(const FrameData &frame, vk::Semaphore imageAvailableSemaphore,
@@ -428,25 +474,26 @@ namespace kailux
         auto acquired = mSwapchain.acquire();
         if (!acquired)
         {
-            mSwapchain.recreate(window, mContext, mSampleCount);
-            for (auto &f: mFrames)
-                f.recreateTextures(mContext, mSwapchain);
-            createSceneTextureIds();
+            recreateSwapchainResources(window);
             return;
         }
 
-        vk::Semaphore renderFinishedSemaphore = mSwapchain.getPresentSemaphore(acquired->imageIndex); {
+        if (mSimulationViewActive)
+            if (const auto extent{mSimulationResize.poll(mSimulationView.getExtent())})
+                resizeSimulationView(*extent);
+
+        const auto renderFinishedSemaphore = mSwapchain.getPresentSemaphore(acquired->imageIndex); {
             CommandRecorder recorder(frame.getCommandBuffer());
             updateFrameBuffers(frame, recorder);
 
-            executeCulling(frame, recorder);
+            executeCulling(frame, recorder, mScene.getSceneCamera(), mSwapchain.getExtent());
 
             transitionForMainPass(frame, recorder);
 
             constexpr vk::ClearColorValue clearColor(std::array{0u, 0u, 0u, 0u});
             constexpr vk::ClearColorValue idClear(std::array{~0u, ~0u, ~0u, ~0u});
 
-            std::array mainAndPickerAttachments{
+            const std::array mainAndPickerAttachments{
                 ColorAttachmentInfo(
                     mSwapchain.getColorImageView(),
                     frame.getSceneTexture().getImageView(),
@@ -473,6 +520,7 @@ namespace kailux
                     frame.getExtent(),
                     mSwapchain.getDepthImageView(),
                     vk::ImageLayout::eDepthAttachmentOptimal,
+                    vk::AttachmentLoadOp::eClear,
                     {}
                 }
             );
@@ -480,16 +528,49 @@ namespace kailux
             recorder.setViewport(frame.getExtent());
             recorder.setScissor(frame.getExtent());
 
-            recordMeshData(frame, recorder);
-            recordSkybox(frame, recorder);
-            recordGizmos(frame, recorder);
+            recordMeshData(frame, recorder, details::kSceneCameraIndex, true);
+            recordSkybox(frame, recorder, details::kSceneCameraIndex);
 
+            recorder.endRendering();
+
+            transitionForGizmoPass(frame, recorder);
+
+            const std::array gizmoAttachments{
+                ColorAttachmentInfo(
+                    mSwapchain.getColorImageView(),
+                    frame.getSceneTexture().getImageView(),
+                    vk::ImageLayout::eColorAttachmentOptimal,
+                    vk::AttachmentLoadOp::eLoad,
+                    vk::AttachmentStoreOp::eStore,
+                    {},
+                    vk::ResolveModeFlagBits::eAverage
+                ),
+                ColorAttachmentInfo(
+                    frame.getOutIdTexture().getImageView(),
+                    {},
+                    vk::ImageLayout::eColorAttachmentOptimal,
+                    vk::AttachmentLoadOp::eLoad,
+                    vk::AttachmentStoreOp::eStore,
+                    {}
+                )
+            };
+
+            recorder.beginRendering({
+                gizmoAttachments,
+                frame.getExtent(),
+                mSwapchain.getDepthImageView(),
+                vk::ImageLayout::eDepthAttachmentOptimal,
+                vk::AttachmentLoadOp::eLoad,
+                {}
+            });
+
+            recordGizmos(frame, recorder);
             recorder.endRendering();
 
             transitionForOutlinePass(frame, recorder, acquired->imageIndex);
 
 
-            std::array outlineAttachment{
+            const std::array outlineAttachment{
                 ColorAttachmentInfo(
                     frame.getSceneTexture().getImageView(),
                     {},
@@ -514,7 +595,13 @@ namespace kailux
 
             transitionForPickerAndPostProcess(frame, recorder);
 
-            std::array imguiOverlay{
+            if (mSimulationViewActive &&
+                mSimulationView.getExtent().width > 0 &&
+                mSimulationView.getExtent().height > 0
+            )
+                renderSimulationView(frame, recorder);
+
+            const std::array imguiOverlay{
                 ColorAttachmentInfo
                 (mSwapchain.getImageView(acquired->imageIndex),
                  {},
@@ -530,6 +617,7 @@ namespace kailux
                 mSwapchain.getExtent(),
                 {},
                 vk::ImageLayout::eUndefined,
+                vk::AttachmentLoadOp::eClear,
                 vk::RenderingFlagBits::eContentsSecondaryCommandBuffers
             });
 
@@ -543,13 +631,16 @@ namespace kailux
 
         submit(mFrames[mCurrentFrame], acquired->imageAvailableSemaphore, renderFinishedSemaphore);
 
-        if (!mSwapchain.present(mContext, acquired->imageIndex, renderFinishedSemaphore))
+        mImGuiBackend.updatePlatform();
+        if (mRetiredSimulationView.getTextureId())
         {
-            mSwapchain.recreate(window, mContext, mSampleCount);
-            for (auto &f: mFrames)
-                f.recreateTextures(mContext, mSwapchain);
-            createSceneTextureIds();
+            waitIdle();
+            ImGuiBackend::remove_texture(mRetiredSimulationView.getTextureId());
+            mRetiredSimulationView = {};
         }
+
+        if (!mSwapchain.present(mContext, acquired->imageIndex, renderFinishedSemaphore))
+            recreateSwapchainResources(window);
 
         mCurrentFrame = (mCurrentFrame + 1) % details::kFramesInFlight;
     }
@@ -606,7 +697,7 @@ namespace kailux
                                mScene.getName(), path.generic_string()));
     }
 
-    void Engine::loadScene(const std::filesystem::path &path, int windowWidth, int windowHeight)
+    void Engine::loadScene(const std::filesystem::path &path, const Window &window)
     {
         auto t{Clock::now()};
         const auto document = SceneSerializer::read_file(path);
@@ -617,9 +708,10 @@ namespace kailux
             return;
         }
 
-        Scene scene = Scene::create(document->meta.name);
+        Scene scene = Scene::create(document->meta.name, window);
 
-        auto requests = SceneInstantiator::apply(scene, *document, {mGizmoRegistry, windowWidth, windowHeight});
+        const auto fbSize{window.getInputSource().getFramebufferSize()};
+        auto requests = SceneInstantiator::apply(scene, *document, {mGizmoRegistry, fbSize.x, fbSize.y});
 
         if (!requests)
         {
@@ -702,7 +794,7 @@ namespace kailux
         mPhysicsSystem.setSimulationState(state);
     }
 
-    void Engine::executeCulling(const FrameData &frame, const CommandRecorder &recorder)
+    void Engine::executeCulling(const FrameData &frame, const CommandRecorder &recorder, entt::entity camera, vk::Extent2D extent)
     {
         const auto cmd = recorder.getCommandBuffer();
 
@@ -724,14 +816,31 @@ namespace kailux
         mComputeCuller.bind(cmd);
         frame.getCullerDescriptorSet().bind(mComputeCuller.getPipeline(), cmd, vk::PipelineBindPoint::eCompute);
 
-        const auto &camera = mScene.getEntityRegistry().get<CameraData>(mScene.getMainCamera());
-        auto planes = Camera::get_frustum_planes(camera.projection, camera.view);
+        const auto cameraData{buildCameraData(camera, extent)};
+        const auto planes{Camera::get_frustum_planes(cameraData.projection, cameraData.view)};
         mComputeCuller.push<ComputePassesPushConstants::CameraFrustum>(cmd, {planes, totalObjects});
 
         uint32_t groupX = (totalObjects + 255) / 256;
         mComputeCuller.execute(cmd, {groupX, 1, 1});
 
         recorder.bufferMemoryBarriers(frame.getCullerBufferMemoryBarriers());
+    }
+
+    void Engine::resizeSimulationView(vk::Extent2D extent)
+    {
+        waitIdle();
+
+        mRetiredSimulationView = std::move(mSimulationView);
+
+        mSimulationView = SimulationView::create(
+           mContext,
+           mSwapchain.getFormat(),
+           mSwapchain.getDepthFormat(),
+           extent,
+           mSampleCount
+       );
+        mSimulationView.setTextureId(
+            ImGuiBackend::get_texture_id_from_texture(mSimulationView.getResolvedTexture()));
     }
 
     void Engine::transitionForMainPass(const FrameData &frame, const CommandRecorder &recorder) const
@@ -781,6 +890,74 @@ namespace kailux
             vk::PipelineStageFlagBits2::eColorAttachmentOutput,
             vk::AccessFlagBits2::eNone,
             vk::AccessFlagBits2::eColorAttachmentWrite
+        });
+    }
+
+    void Engine::transitionForSimulationPass(const CommandRecorder &recorder) const
+    {
+        recorder.imageBarrier({
+            mSimulationView.getColorTexture().getImage(),
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eColorAttachmentOptimal,
+            vk::PipelineStageFlagBits2::eTopOfPipe,
+            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            vk::AccessFlagBits2::eNone,
+            vk::AccessFlagBits2::eColorAttachmentWrite
+        });
+
+        recorder.imageBarrier({
+            mSimulationView.getDepthTexture().getImage(),
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eDepthAttachmentOptimal,
+            vk::PipelineStageFlagBits2::eTopOfPipe,
+            vk::PipelineStageFlagBits2::eEarlyFragmentTests,
+            vk::AccessFlagBits2::eNone,
+            vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+            vk::ImageAspectFlagBits::eDepth
+        });
+
+        recorder.imageBarrier({
+            mSimulationView.getResolvedTexture().getImage(),
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eColorAttachmentOptimal,
+            vk::PipelineStageFlagBits2::eFragmentShader,
+            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            vk::AccessFlagBits2::eShaderRead,
+            vk::AccessFlagBits2::eColorAttachmentWrite
+        });
+    }
+
+    void Engine::transitionForGizmoPass(const FrameData &frame, const CommandRecorder &recorder) const
+    {
+        recorder.imageBarrier({
+        mSwapchain.getColorImage(),
+        vk::ImageLayout::eColorAttachmentOptimal,
+        vk::ImageLayout::eColorAttachmentOptimal,
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+        vk::AccessFlagBits2::eColorAttachmentWrite,
+        vk::AccessFlagBits2::eColorAttachmentRead | vk::AccessFlagBits2::eColorAttachmentWrite
+    });
+
+        recorder.imageBarrier({
+            mSwapchain.getDepthImage(),
+            vk::ImageLayout::eDepthAttachmentOptimal,
+            vk::ImageLayout::eDepthAttachmentOptimal,
+            vk::PipelineStageFlagBits2::eLateFragmentTests,
+            vk::PipelineStageFlagBits2::eEarlyFragmentTests,
+            vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+            vk::AccessFlagBits2::eDepthStencilAttachmentRead | vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+            vk::ImageAspectFlagBits::eDepth
+        });
+
+        recorder.imageBarrier({
+            frame.getOutIdTexture().getImage(),
+            vk::ImageLayout::eColorAttachmentOptimal,
+            vk::ImageLayout::eColorAttachmentOptimal,
+            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            vk::AccessFlagBits2::eColorAttachmentWrite,
+            vk::AccessFlagBits2::eColorAttachmentRead | vk::AccessFlagBits2::eColorAttachmentWrite
         });
     }
 
@@ -854,12 +1031,13 @@ namespace kailux
         });
     }
 
-    void Engine::recordMeshData(const FrameData &frame, const CommandRecorder &recorder) const
+    void Engine::recordMeshData(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex, bool writeIds) const
     {
         const auto cmd = recorder.getCommandBuffer();
-        mMainPass.bind(cmd);
+        mMainPass.bind(cmd, writeIds);
         mMeshRegistry.bind(recorder.getCommandBuffer());
         frame.getMeshDescriptorSet().bind(mMainPass.getPipeline(), cmd);
+        mMainPass.push<uint32_t>(recorder.getCommandBuffer(), cameraIndex);
 
         recorder.drawIndexedIndirectCount(
             frame.getIndirectBuffer(),
@@ -868,11 +1046,13 @@ namespace kailux
         );
     }
 
-    void Engine::recordSkybox(const FrameData &frame, const CommandRecorder &recorder) const
+    void Engine::recordSkybox(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex) const
     {
         const auto cmd = recorder.getCommandBuffer();
         mSkyboxPass.bind(cmd);
         frame.getSkyboxDescriptorSet().bind(mSkyboxPass.getPipeline(), cmd);
+        mSkyboxPass.push<uint32_t>(recorder.getCommandBuffer(), cameraIndex);
+
         auto cubeView = mMeshRegistry.view(mMeshRegistry.getBuiltins().cube);
         cmd.drawIndexed(
             cubeView.indexCount,
@@ -885,21 +1065,20 @@ namespace kailux
 
     void Engine::recordGizmos(const FrameData &frame, const CommandRecorder &recorder) const
     {
-        if (mPhysicsSystem.getSimulationState() == SimulationState::Running)
-            return;
-
         const auto cmd = recorder.getCommandBuffer();
         mGizmoPass.bind(cmd);
         mGizmoRegistry.bind(cmd);
         frame.getGizmoDescriptorSet().bind(mGizmoPass.getPipeline(), cmd);
+
         auto view = mScene.getEntityRegistry().view<GizmoComponent, TransformComponent>();
         view.each([&](const auto& component, const auto& transform)
         {
             auto gizmoView = mGizmoRegistry.view(component.handle);
 
-            GraphicsPassesPushConstants::Gizmo pc{
+            const GraphicsPassesPushConstants::Gizmo pc{
                 glm::vec4(transform.transform.position, component.scale),
-                component.color
+                component.color,
+                0
             };
 
             mGizmoPass.push(cmd, pc);
@@ -957,7 +1136,68 @@ namespace kailux
         cmd.draw(3, 1, 0, 0);
     }
 
-    void Engine::update(float deltaTime, const Window &window)
+    void Engine::renderSimulationView(const FrameData &frame, CommandRecorder &recorder)
+    {
+        const auto extent{mSimulationView.getExtent()};
+
+        recorder.bufferMemoryBarriers(frame.getIndirectReadToWriteBarriers());
+        executeCulling(frame, recorder, mScene.getSimulationCamera(), extent);
+
+        transitionForSimulationPass(recorder);
+
+        const std::array attachments{
+            ColorAttachmentInfo{
+                mSimulationView.getColorTexture().getImageView(),
+                mSimulationView.getResolvedTexture().getImageView(),
+                vk::ImageLayout::eColorAttachmentOptimal,
+                vk::AttachmentLoadOp::eClear,
+                vk::AttachmentStoreOp::eStore,
+                vk::ClearColorValue{std::array{0.f, 0.f, 0.f, 1.f}},
+                vk::ResolveModeFlagBits::eAverage
+            }
+        };
+
+        recorder.beginRendering({
+            attachments,
+            extent,
+            mSimulationView.getDepthTexture().getImageView(),
+            vk::ImageLayout::eDepthAttachmentOptimal,
+            vk::AttachmentLoadOp::eClear
+        });
+
+        recorder.setViewport(extent);
+        recorder.setScissor(extent);
+
+        recordMeshData(frame, recorder, details::kSimulationCameraIndex, false);
+        recordSkybox(frame, recorder, details::kSimulationCameraIndex);
+
+        recorder.endRendering();
+
+        recorder.imageBarrier({
+            mSimulationView.getResolvedTexture().getImage(),
+            vk::ImageLayout::eColorAttachmentOptimal,
+            vk::ImageLayout::eShaderReadOnlyOptimal,
+            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            vk::PipelineStageFlagBits2::eFragmentShader,
+            vk::AccessFlagBits2::eColorAttachmentWrite,
+            vk::AccessFlagBits2::eShaderRead
+        });
+    }
+
+    CameraData Engine::buildCameraData(entt::entity entity, vk::Extent2D extent) const
+    {
+        const auto& camera{mScene.getEntityRegistry().get<CameraComponent>(entity)};
+        return {
+            Camera::get_projection(camera, static_cast<int>(extent.width), static_cast<int>(extent.height)),
+            Camera::get_view(camera),
+            {
+                camera.position,
+                camera.exposure
+            }
+        };
+    }
+
+    void Engine::update(float deltaTime)
     {
         mAssetPipeline.poll();
         mTransferManager.poll(mContext);
@@ -968,15 +1208,19 @@ namespace kailux
 
         mScene.update();
 
-        auto view = mScene.getEntityRegistry().view<CameraComponent, CameraData>();
-        for (auto entity: view)
+        if (!mInputSource.valid())
+            return;
+
+        const auto controlled{
+            mControlledCamera == entt::null ?
+            mScene.getSceneCamera() :
+            mControlledCamera
+        };
+        if (auto* camera{mScene.getEntityRegistry().try_get<CameraComponent>(controlled)})
         {
-            auto &camera = view.get<CameraComponent>(entity);
-            Camera::update_movement(camera, window, deltaTime);
-            Camera::update_look_at(camera, window, deltaTime);
-            auto &data = view.get<CameraData>(entity);
-            data.view = Camera::get_view(camera);
-            data.positionAndExposure = {camera.position, camera.exposure};
+            camera->focused = mMouseLookActive;
+            Camera::update_movement(*camera, mInputSource, deltaTime);
+            Camera::update_look_at(*camera, mInputSource, deltaTime);
         }
     }
 
@@ -993,11 +1237,22 @@ namespace kailux
 
     void Engine::updateCameraBuffer(FrameData &frame) const
     {
-        const auto &data = mScene.getEntityRegistry().get<CameraData>(mScene.getMainCamera());
+        const auto simulationExtent{
+            mSimulationView.getExtent().width > 0 && mSimulationView.getExtent().height > 0
+                ? mSimulationView.getExtent()
+                : mSwapchain.getExtent()
+        };
+
+        std::array<CameraData, details::kMaxCameras> cameras{};
+        cameras[details::kSceneCameraIndex] =
+                buildCameraData(mScene.getSceneCamera(), mSwapchain.getExtent());
+        cameras[details::kSimulationCameraIndex] =
+                buildCameraData(mScene.getSimulationCamera(), simulationExtent);
+
         frame.getCameraBuffer().upload(
-            &data,
-            sizeof(CameraData)
-        );
+            cameras.data(),
+            sizeof(CameraData) * cameras.size()
+            );
     }
 
     void Engine::updateMeshDataBuffer(FrameData &frame) const
@@ -1064,6 +1319,14 @@ namespace kailux
     void Engine::readOutputBuffers(const FrameData &frame)
     {
         mPickedEntity = frame.getPickerBuffer().read<uint32_t>();
+    }
+
+    void Engine::recreateSwapchainResources(const Window &window)
+    {
+        mSwapchain.recreate(window, mContext, mSampleCount);
+        for (auto &f : mFrames)
+            f.recreateTextures(mContext, mSwapchain);
+        createEditorTextureIds();
     }
 
     BodyHandle Engine::uploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo &data)

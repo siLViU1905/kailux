@@ -61,12 +61,18 @@ namespace kailux
         const Texture& getOutIdTexture() const;
         const Texture& getResolvedOutIdTexture() const;
 
-        static constexpr uint32_t kBufferMemoryBarriersCount = 1 + 1 + 1 + 1 + 1; // camera buffer + mesh data buffer + materials buffer + culler input buffer + scene buffer
+        static constexpr uint32_t kBufferMemoryBarriersCount{1 + 1 + 1 + 1 + 1}; // camera buffer + mesh data buffer + materials buffer + culler input buffer + scene buffer
         std::array<vk::BufferMemoryBarrier2, kBufferMemoryBarriersCount>       getBufferMemoryBarriers() const;
-        vk::BufferMemoryBarrier2                                                getPickerBufferMemoryBarrier() const;
-        static constexpr uint32_t kCullerBufferMemoryBarriersCount = 1 + 1; // indirect buffer + culler count buffer
+
+        vk::BufferMemoryBarrier2                                               getPickerBufferMemoryBarrier() const;
+
+        static constexpr uint32_t kCullerBufferMemoryBarriersCount{1 + 1}; // indirect buffer + culler count buffer
         std::array<vk::BufferMemoryBarrier2, kCullerBufferMemoryBarriersCount> getCullerBufferMemoryBarriers() const;
-        vk::BufferMemoryBarrier2                                                getCullerCountBufferFillMemoryBarrier() const;
+
+        vk::BufferMemoryBarrier2                                               getCullerCountBufferFillMemoryBarrier() const;
+
+        static constexpr uint32_t kIndirectReadToWriteMemoryBarriersCount{1 + 1}; // indirect buffer + culler count buffer
+        std::array<vk::BufferMemoryBarrier2, kIndirectReadToWriteMemoryBarriersCount> getIndirectReadToWriteBarriers() const;
 
     private:
         void createCommandPool(const Context& context);

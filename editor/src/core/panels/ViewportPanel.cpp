@@ -7,10 +7,18 @@ namespace kailux
     {
     }
 
+    ViewportPanel::ViewportPanel(std::string_view name) : Panel(name, {}), mSceneTextureId(0), mSimulationState(SimulationState::Paused)
+    {
+    }
+
     void ViewportPanel::render(Scene &scene)
     {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-        if (ImGui::Begin("Viewport"))
+        const bool visible{ImGui::Begin(mName.c_str(), &mOpen)};
+        mFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+        mPlatformWindow = static_cast<GLFWwindow*>(ImGui::GetWindowViewport()->PlatformHandle);
+
+        if (visible)
         {
             auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
             auto viewportOffset = ImGui::GetWindowPos();
@@ -25,6 +33,8 @@ namespace kailux
                 mMousePos = compute_relative_mouse_pos(minBound, viewportSize);
                 if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
                     mOnClick();
+                else if (ImGui::IsMouseClicked(ImGuiMouseButton_Middle))
+                    mToggleMouseLook = true;
             }
 
             renderSimulationIndicator(minBound, viewportSize);
@@ -54,6 +64,14 @@ namespace kailux
     SimulationState ViewportPanel::getSimulationState() const
     {
         return mSimulationState;
+    }
+
+    void ViewportPanel::requestSimulationState(SimulationState state)
+    {
+        if (mSimulationState == state)
+            return;
+        mSimulationState = state;
+        (state == SimulationState::Running) ? mOnSimulationStart() : mOnSimulationPause();
     }
 
     void ViewportPanel::setOnSimulationStart(OnSimulationStart &&callback)
@@ -129,17 +147,9 @@ namespace kailux
 
         ImGui::SetCursorScreenPos(pos);
         if (ImGui::InvisibleButton("##sim_indicator", size))
-            switch (mSimulationState)
-            {
-            case SimulationState::Paused:
-                    mSimulationState = SimulationState::Running;
-                    mOnSimulationStart();
-                    break;
-            case SimulationState::Running:
-                    mSimulationState = SimulationState::Paused;
-                    mOnSimulationPause();
-                    break;
-            }
+            requestSimulationState(mSimulationState == SimulationState::Paused
+                                       ? SimulationState::Running
+                                       : SimulationState::Paused);
 
         if (ImGui::IsItemHovered())
         {

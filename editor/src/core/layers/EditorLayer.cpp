@@ -3,6 +3,7 @@
 #include "../panels/EntityEditorPanel.h"
 #include "../panels/HierarchyPanel.h"
 #include "../panels/MenuPanel.h"
+#include "core/panels/SimulationPanel.h"
 
 namespace kailux
 {
@@ -22,8 +23,20 @@ namespace kailux
     {
         getPanel<ProjectPanel>().useFullWidth(!getPanel<EntityEditorPanel>().isOpen());
 
-        bool isSimulationRunning = getPanel<ViewportPanel>().getSimulationState() != SimulationState::Paused;
+        auto& viewport = getPanel<ViewportPanel>();
+        auto& simulation = getPanel<SimulationPanel>();
+
+        const bool isSimulationRunning = viewport.getSimulationState() != SimulationState::Paused;
         getPanel<EntityEditorPanel>().setSimulationState(isSimulationRunning);
+
+        if (!isSimulationRunning)
+            simulation.close();
+        else if (!mSimulationWasRunning)
+            simulation.open();
+        else if (!simulation.isOpen())
+            viewport.requestSimulationState(SimulationState::Paused);
+
+        mSimulationWasRunning = isSimulationRunning;
     }
 
     void EditorLayer::render_dock_space()
@@ -53,20 +66,17 @@ namespace kailux
 
     void EditorLayer::addPanels(ImTextureID directoryTextureId, ImTextureID fileTextureId)
     {
-        emplacePanel<ViewportPanel>();
+        auto &viewportPanel = emplacePanel<ViewportPanel>(kViewportPanelName) ;
         auto& menuPanel = emplacePanel<MenuPanel>();
-        auto &hierarchyPanel = emplacePanel<HierarchyPanel>() = {
-                                   kHierarchyPanelName,
-                                   kPanelsBackgroundColor
-                               };
-        auto &entityEditorPanel = emplacePanel<EntityEditorPanel>() = {
-                                      kEntityEditorName,
-                                      kPanelsBackgroundColor
-                                  };
-        auto &projectPanel = emplacePanel<ProjectPanel>() = {
-                                 kProjectPanelName,
-                                 kPanelsBackgroundColor
-                             };
+        auto &hierarchyPanel = emplacePanel<HierarchyPanel>(
+            kHierarchyPanelName,
+            kPanelsBackgroundColor);
+        auto &entityEditorPanel = emplacePanel<EntityEditorPanel>(kEntityEditorName,
+                                                                  kPanelsBackgroundColor);
+        auto &projectPanel = emplacePanel<ProjectPanel>(kProjectPanelName,
+                                                        kPanelsBackgroundColor);
+        auto &simulationPanel = emplacePanel<SimulationPanel>(kSimulationPanelName);
+        simulationPanel.close();
 
         hierarchyPanel.setOnEntitySelected([&entityEditorPanel](entt::entity entity, const Scene &scene)
         {

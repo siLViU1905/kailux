@@ -117,7 +117,7 @@ namespace kailux
                 vk::ResolveModeFlagBits::eNone,
                 {},
                 {},
-                vk::AttachmentLoadOp::eClear,
+                info.depthLoadOp,
                 vk::AttachmentStoreOp::eStore,
                 vk::ClearValue{vk::ClearDepthStencilValue{1.0f, 0}}
             };

@@ -17,7 +17,9 @@ namespace kailux
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, mBackgroundColor);
 
-        if (ImGui::Begin(mName.c_str(), &mOpen))
+        const bool visible{ImGui::Begin(mName.c_str(), &mOpen)};
+        mFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+        if (visible)
         {
             if (ImGui::BeginTabBar("ProjectPanelTabs"))
             {

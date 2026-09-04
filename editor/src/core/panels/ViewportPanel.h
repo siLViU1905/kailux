@@ -7,6 +7,7 @@ namespace kailux
     {
     public:
         ViewportPanel();
+        ViewportPanel(std::string_view name);
 
         void render(Scene &scene) override;
 
@@ -23,6 +24,8 @@ namespace kailux
         void setOnClick(OnClick&& callback);
 
         SimulationState getSimulationState() const;
+
+        void requestSimulationState(SimulationState state);
 
         using OnSimulationStart = std::move_only_function<void()>;
         void setOnSimulationStart(OnSimulationStart&& callback);
