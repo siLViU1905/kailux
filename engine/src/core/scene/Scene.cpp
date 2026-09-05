@@ -57,17 +57,17 @@ namespace kailux
         UpdateTransforms();
     }
 
-    std::optional<entt::entity> Scene::CreateCameraEntity(std::string_view name, bool isPrimary, int width, int height)
+    Scene::CreateResult Scene::CreateCameraEntity(std::string_view name, bool isPrimary, int width, int height)
     {
         if (mEntityRegistry.view<CameraComponent>().size() >= details::kMaxCameras)
-            return std::nullopt;
+            return std::unexpected{"The maximum number of cameras has been reached"};
 
         auto entity = CreateEntity(name);
         AttachCamera(entity, {isPrimary});
         return entity;
     }
 
-    std::optional<entt::entity> Scene::CreateMeshEntity(
+    Scene::CreateResult Scene::CreateMeshEntity(
         std::string_view name,
         const MeshComponent &component,
         MaterialHandle materialHandle,
@@ -77,7 +77,7 @@ namespace kailux
     )
     {
         if (mEntityRegistry.view<MeshComponent>().size() >= details::kMaxMeshes)
-            return std::nullopt;
+            return std::unexpected{"The maximum number of meshes has been reached"};
 
         auto entity = CreateEntity(name);
         SetLocalTransform(entity, transform);
@@ -85,7 +85,7 @@ namespace kailux
         if (!AttachMesh(entity, component, materialHandle, material))
         {
             DestroyEntity(entity);
-            return std::nullopt;
+            return std::unexpected{std::format("Cannot attach mesh component to {}", name)};
         }
 
         if (parent != entt::null)
@@ -99,10 +99,11 @@ namespace kailux
         return CreateEntity(name);
     }
 
-    std::optional<entt::entity> Scene::CreatePointLightEntity(std::string_view name, const GizmoComponent &component, const glm::vec3 &position)
+    Scene::CreateResult Scene::CreatePointLightEntity(std::string_view name, const GizmoComponent &component,
+                                                      const glm::vec3 &position)
     {
         if (mEntityRegistry.view<PointLightData>().size() >= details::kMaxPointLights)
-            return std::nullopt;
+            return std::unexpected{"The maximum number of point lights has been reached"};
         auto entity = CreateEntity(name);
 
         AttachPointLight(entity, component, {});
