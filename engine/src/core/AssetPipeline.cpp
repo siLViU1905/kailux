@@ -203,7 +203,7 @@ namespace kailux
                 const auto created = scene.CreateMeshEntity(meshName, component, materialHandle, data.transform, data.material);
                 if (!created)
                 {
-                    mOnWarningLog("The maximum number of meshes has been reached");
+                    mOnWarningLog(created.error());
                     return;
                 }
                 scene.AttachMeshSource(*created, source);
@@ -331,7 +331,7 @@ namespace kailux
                         ++submeshIndex;
                     }
                     else
-                        mOnWarningLog("The maximum number of meshes has been reached");
+                        mOnWarningLog(childEntity.error());
                 }
                 return result;
             },

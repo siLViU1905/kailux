@@ -25,9 +25,11 @@ namespace kailux
 
         void Update();
 
-        std::optional<entt::entity> CreateCameraEntity(std::string_view name, bool isPrimary, int width, int height);
+        using CreateResult = std::expected<entt::entity, std::string>;
 
-        std::optional<entt::entity> CreateMeshEntity(
+        CreateResult CreateCameraEntity(std::string_view name, bool isPrimary, int width, int height);
+
+        CreateResult CreateMeshEntity(
             std::string_view name,
             const MeshComponent &component,
             MaterialHandle materialHandle,
@@ -37,7 +39,8 @@ namespace kailux
         );
         entt::entity CreateParentEntity(std::string_view name);
 
-        std::optional<entt::entity> CreatePointLightEntity(std::string_view name, const GizmoComponent &component, const glm::vec3 &position);
+        CreateResult CreatePointLightEntity(std::string_view name, const GizmoComponent &component,
+                                            const glm::vec3 &position);
 
         entt::registry&       GetEntityRegistry();
         const entt::registry& GetEntityRegistry() const;

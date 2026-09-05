@@ -1385,11 +1385,13 @@ namespace kailux
         switch (type)
         {
             case LightType::Point:
-                if (!mScene.CreatePointLightEntity(
-                    mScene.GetLightEntityName(),
-                    {mGizmoRegistry.GetBuiltins().pointLight, 0.5f, {1.f, 1.f, 1.f, 1.f}},
-                    {}))
-                    mOnWarningLog("The maximum number of point lights has been reached");
+                if (const auto pointLight{
+                    mScene.CreatePointLightEntity(
+                        mScene.GetLightEntityName(),
+                        {mGizmoRegistry.GetBuiltins().pointLight, 0.5f, {1.f, 1.f, 1.f, 1.f}},
+                        {})
+                }; !pointLight)
+                    mOnWarningLog(pointLight.error());
                 break;
             default:
                 break;
