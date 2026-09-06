@@ -184,11 +184,11 @@ namespace kailux
         });
         viewportPanel.SetOnSimulationStart([this]()
         {
-            mEngine.SetSimulationState(SimulationState::Running);
+            return mEngine.RequestSimulationState(SimulationState::Running);
         });
         viewportPanel.SetOnSimulationPause([this]()
         {
-            mEngine.SetSimulationState(SimulationState::Paused);
+            mEngine.RequestSimulationState(SimulationState::Paused);
         });
 
         mEngine.SetOnEditorRender([this](Scene &scene)
@@ -248,7 +248,7 @@ namespace kailux
 
         mEngine.SetControlledCamera(
             simulationHasInput
-                ? mEngine.GetScene().GetSimulationCamera()
+                ? mEngine.GetScene().GetPrimaryCamera()
                 : mEngine.GetScene().GetSceneCamera(),
             simulationHasInput
                 ? simulation.GetInputSource()

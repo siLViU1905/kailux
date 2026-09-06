@@ -88,7 +88,8 @@ namespace kailux
 
         void UpdateBodyType(BodyHandle handle, PhysicsBodyType type);
         void UpdateBodyScale(BodyHandle handle, const glm::vec3& scale);
-        void SetSimulationState(SimulationState state);
+
+        bool RequestSimulationState(SimulationState state);
 
         void AddPhysicsToEntity(entt::entity entity, PhysicsCreationOptions options);
 

@@ -502,7 +502,7 @@ namespace kailux
 
     void FrameData::CreateCameraBuffer(const Context &context)
     {
-        mCameraBuffer = BufferAllocator::alloc_uniform(context, sizeof(CameraData) * details::kMaxCameras);
+        mCameraBuffer = BufferAllocator::alloc_uniform(context, sizeof(CameraData) * (details::kMaxCameras * details::kMaxCameraViews));
     }
 
     void FrameData::CreateMeshDataBuffer(const Context &context)

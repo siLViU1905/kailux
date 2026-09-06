@@ -210,8 +210,7 @@ namespace kailux
     {
         return scene.GetEntityRegistry().valid(entity) &&
                entity != scene.GetSun() &&
-               entity != scene.GetSceneCamera() &&
-               entity != scene.GetSimulationCamera();
+               entity != scene.GetSceneCamera();
     }
 
     void HierarchyPanel::OnEntityDelete(Scene &scene, entt::entity entity)

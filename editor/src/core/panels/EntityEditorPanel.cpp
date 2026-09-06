@@ -3,6 +3,7 @@
 #include <glm/gtx/matrix_decompose.hpp>
 
 #include "HierarchyPanel.h"
+#include "core/components/entt/BuiltinCamera.h"
 #include "core/components/entt/CameraComponent.h"
 #include "core/components/entt/HierarchyComponent.h"
 #include "core/components/entt/PhysicsControlComponent.h"
@@ -72,7 +73,7 @@ namespace kailux
                 RenderPointLightProperties(registry);
 
             else if (registry.all_of<CameraComponent>(mSelectedEntity))
-                RenderCameraProperties(registry);
+                RenderCameraProperties(scene);
         }
         ImGui::End();
         ImGui::PopStyleColor();
@@ -325,11 +326,19 @@ namespace kailux
         }
     }
 
-    void EntityEditorPanel::RenderCameraProperties(entt::registry &registry) const
+    void EntityEditorPanel::RenderCameraProperties(Scene &scene) const
     {
+        auto& registry{scene.GetEntityRegistry()};
         auto &camera = registry.get<CameraComponent>(mSelectedEntity);
         if (ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen))
+        {
             ImGui::InputFloat("Exposure", &camera.exposure, 0.f, 0.f, "%.6f");
+
+            const bool isBuiltin{registry.all_of<BuiltinCamera>(mSelectedEntity)};
+            if (!isBuiltin)
+                if (ImGui::Checkbox("Primary", &camera.isPrimary) && camera.isPrimary)
+                    scene.SetPrimaryCamera(mSelectedEntity);
+        }
     }
 
     void EntityEditorPanel::propagate_material_to_children(Scene &scene, entt::entity entity,

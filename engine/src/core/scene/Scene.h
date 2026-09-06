@@ -21,13 +21,14 @@ namespace kailux
     public:
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(Scene)
 
-        static Scene create(std::string_view name, const Window &window);
+        static Scene create(std::string_view name);
 
         void Update();
+        void UpdateCameras();
 
         using CreateResult = std::expected<entt::entity, std::string>;
 
-        CreateResult CreateCameraEntity(std::string_view name, const GizmoComponent &component, bool isPrimary);
+        CreateResult CreateCameraEntity(std::string_view name, const GizmoComponent &component, const glm::vec3 &position, bool isPrimary);
         entt::entity CreateBuiltinCameraEntity(std::string_view name);
 
         CreateResult CreateMeshEntity(
@@ -46,7 +47,8 @@ namespace kailux
         entt::registry&       GetEntityRegistry();
         const entt::registry& GetEntityRegistry() const;
         entt::entity          GetSceneCamera() const;
-        entt::entity          GetSimulationCamera() const;
+        void                  SetPrimaryCamera(entt::entity entity);
+        entt::entity          GetPrimaryCamera() const;
         void                  SetMainCamera(entt::entity camera);
         entt::entity          GetSun() const;
         SceneData             GetData() const;
@@ -88,7 +90,7 @@ namespace kailux
         entt::entity CreateEntity(std::string_view name);
         using        SunData = DirectionalLightData;
         entt::entity CreateSunEntity(const SunData& data);
-        void         CreateCameras(const Window& window);
+        void         CreateSceneCamera();
 
         LightsData GetLightData() const;
 
@@ -100,7 +102,6 @@ namespace kailux
 
         entt::registry mEntityRegistry;
         entt::entity   mSceneCameraEntity{entt::null};
-        entt::entity   mSimulationCameraEntity{entt::null};
         entt::entity   mSun{entt::null};
 
         uint32_t mMeshEntityNameCount{};

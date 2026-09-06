@@ -21,7 +21,6 @@ namespace kailux
                                            mSavePath(std::move(other.mSavePath)),
                                            mEntityRegistry(std::move(other.mEntityRegistry)),
                                            mSceneCameraEntity(other.mSceneCameraEntity),
-                                           mSimulationCameraEntity(other.mSimulationCameraEntity),
                                            mSun(other.mSun),
                                            mMeshEntityNameCount(other.mMeshEntityNameCount),
                                            mLightEntityNameCount(other.mLightEntityNameCount),
@@ -37,7 +36,6 @@ namespace kailux
             mSavePath = std::move(other.mSavePath);
             mEntityRegistry = std::move(other.mEntityRegistry);
             mSceneCameraEntity = other.mSceneCameraEntity;
-            mSimulationCameraEntity = other.mSimulationCameraEntity;
             mSun = other.mSun;
             mMeshEntityNameCount = other.mMeshEntityNameCount;
             mLightEntityNameCount = other.mLightEntityNameCount;
@@ -46,12 +44,12 @@ namespace kailux
         return *this;
     }
 
-    Scene Scene::create(std::string_view name, const Window &window)
+    Scene Scene::create(std::string_view name)
     {
         Scene scene;
         scene.mName = name;
         scene.mSun = scene.CreateSunEntity({});
-        scene.CreateCameras(window);
+        scene.CreateSceneCamera();
         return scene;
     }
 
@@ -60,12 +58,20 @@ namespace kailux
         UpdateTransforms();
     }
 
-    Scene::CreateResult Scene::CreateCameraEntity(std::string_view name, const GizmoComponent &component, bool isPrimary)
+    Scene::CreateResult Scene::CreateCameraEntity(std::string_view name, const GizmoComponent &component, const glm::vec3 &position, bool isPrimary)
     {
         if (mEntityRegistry.view<CameraComponent>(entt::exclude<BuiltinCamera>).size_hint() >= details::kMaxCameras)
             return std::unexpected{"The maximum number of cameras has been reached"};
 
         auto entity = CreateEntity(name);
+        MeshTransformData transform;
+        transform.position = position;
+        mEntityRegistry.emplace<TransformComponent>(
+            entity,
+            transform,
+            glm::mat4(1.f),
+            transform.GetModelMatrix()
+        );
         AttachCamera(entity, component, {isPrimary});
         return entity;
     }
@@ -146,9 +152,24 @@ namespace kailux
         return mSceneCameraEntity;
     }
 
-    entt::entity Scene::GetSimulationCamera() const
+    void Scene::SetPrimaryCamera(entt::entity entity)
     {
-        return mSimulationCameraEntity;
+        for (const auto other : mEntityRegistry.view<CameraComponent>(entt::exclude<BuiltinCamera>))
+            mEntityRegistry.get<CameraComponent>(other).isPrimary = (other == entity);
+    }
+
+    entt::entity Scene::GetPrimaryCamera() const
+    {
+        const auto view{mEntityRegistry.view<CameraComponent>(entt::exclude<BuiltinCamera>)};
+        entt::entity fallback{entt::null};
+        for (const auto entity : view)
+        {
+            if (view.get<CameraComponent>(entity).isPrimary)
+                return entity;
+            if (fallback == entt::null)
+                fallback = entity;
+        }
+        return fallback;
     }
 
     void Scene::SetMainCamera(entt::entity camera)
@@ -369,10 +390,9 @@ namespace kailux
         return entity;
     }
 
-    void Scene::CreateCameras(const Window &window)
+    void Scene::CreateSceneCamera()
     {
         mSceneCameraEntity = CreateBuiltinCameraEntity("SceneCamera");
-        mSimulationCameraEntity = CreateBuiltinCameraEntity("SimulationCamera");
     }
 
     void Scene::UpdateTransforms()
@@ -398,5 +418,15 @@ namespace kailux
             if (!hierarchy || hierarchy->parent == entt::null)
                 walk(entity, {1.f});
         }
+    }
+
+    void Scene::UpdateCameras()
+    {
+        mEntityRegistry.view<CameraComponent, TransformComponent>(entt::exclude<BuiltinCamera>).each(
+            [](auto &camera, const auto &transform)
+            {
+                camera.position = transform.transform.position;
+            }
+        );
     }
 }
