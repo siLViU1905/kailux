@@ -164,10 +164,11 @@ namespace kailux
 
     CameraData Engine::GetCameraData() const
     {
-        return BuildCameraData(mScene.GetSceneCamera(), mSwapchain.GetExtent());
+        const glm::ivec2 extent{mSwapchain.GetExtent().width, mSwapchain.GetExtent().height};
+        return BuildCameraData(mScene.GetSceneCamera(), extent);
     }
 
-    void Engine::SetSimulationViewExtent(vk::Extent2D extent)
+    void Engine::SetSimulationViewExtent(glm::ivec2 extent)
     {
        mSimulationResize.Request(extent);
     }
@@ -596,8 +597,8 @@ namespace kailux
             TransitionForPickerAndPostProcess(frame, recorder);
 
             if (mSimulationViewActive &&
-                mSimulationView.GetExtent().width > 0 &&
-                mSimulationView.GetExtent().height > 0
+                mSimulationView.GetExtent().x > 0 &&
+                mSimulationView.GetExtent().y > 0
             )
                 RenderSimulationView(frame, recorder);
 
@@ -816,7 +817,7 @@ namespace kailux
         mComputeCuller.Bind(cmd);
         frame.GetCullerDescriptorSet().Bind(mComputeCuller.GetPipeline(), cmd, vk::PipelineBindPoint::eCompute);
 
-        const auto cameraData{BuildCameraData(camera, extent)};
+        const auto cameraData{BuildCameraData(camera, {extent.width, extent.height})};
         const auto planes{Camera::get_frustum_planes(cameraData.projection, cameraData.view)};
         mComputeCuller.Push<ComputePassesPushConstants::CameraFrustum>(cmd, {planes, totalObjects});
 
@@ -826,7 +827,7 @@ namespace kailux
         recorder.BufferMemoryBarriers(frame.GetCullerBufferMemoryBarriers());
     }
 
-    void Engine::ResizeSimulationView(vk::Extent2D extent)
+    void Engine::ResizeSimulationView(glm::ivec2 extent)
     {
         WaitIdle();
 
@@ -1138,7 +1139,10 @@ namespace kailux
 
     void Engine::RenderSimulationView(const FrameData &frame, CommandRecorder &recorder)
     {
-        const auto extent{mSimulationView.GetExtent()};
+        const vk::Extent2D extent{
+            static_cast<uint32_t>(mSimulationView.GetExtent().x),
+            static_cast<uint32_t>(mSimulationView.GetExtent().y)
+        };
 
         recorder.BufferMemoryBarriers(frame.GetIndirectReadToWriteBarriers());
         ExecuteCulling(frame, recorder, mScene.GetSimulationCamera(), extent);
@@ -1184,11 +1188,11 @@ namespace kailux
         });
     }
 
-    CameraData Engine::BuildCameraData(entt::entity entity, vk::Extent2D extent) const
+    CameraData Engine::BuildCameraData(entt::entity entity, glm::ivec2 extent) const
     {
         const auto& camera{mScene.GetEntityRegistry().get<CameraComponent>(entity)};
         return {
-            Camera::get_projection(camera, static_cast<int>(extent.width), static_cast<int>(extent.height)),
+            Camera::get_projection(camera, extent.x, extent.y),
             Camera::get_view(camera),
             {
                 camera.position,
@@ -1237,15 +1241,16 @@ namespace kailux
 
     void Engine::UpdateCameraBuffer(FrameData &frame) const
     {
-        const auto simulationExtent{
-            mSimulationView.GetExtent().width > 0 && mSimulationView.GetExtent().height > 0
-                ? mSimulationView.GetExtent()
-                : mSwapchain.GetExtent()
-        };
+        const glm::ivec2 swapchainExtent{mSwapchain.GetExtent().width, mSwapchain.GetExtent().height};
+
+        glm::ivec2 simulationExtent{};
+        mSimulationView.GetExtent().x > 0 && mSimulationView.GetExtent().y > 0
+            ? simulationExtent = mSimulationView.GetExtent()
+            : simulationExtent = swapchainExtent;
 
         std::array<CameraData, details::kMaxCameras> cameras{};
         cameras[details::kSceneCameraIndex] =
-                BuildCameraData(mScene.GetSceneCamera(), mSwapchain.GetExtent());
+                BuildCameraData(mScene.GetSceneCamera(), swapchainExtent);
         cameras[details::kSimulationCameraIndex] =
                 BuildCameraData(mScene.GetSimulationCamera(), simulationExtent);
 
@@ -1396,6 +1401,19 @@ namespace kailux
             default:
                 break;
         }
+    }
+
+    void Engine::AddCameraEntity(int width, int height)
+    {
+        const auto camera{
+            mScene.CreateCameraEntity(
+                mScene.GetCameraEntityName(),
+                {mGizmoRegistry.GetBuiltins().camera, 0.5f, {1.f, 1.f, 1.f, 1.f}},
+                false
+                )
+        };
+        if (!camera)
+            mOnWarningLog(camera.error());
     }
 
     DeviceInfo Engine::GetDeviceInfo() const

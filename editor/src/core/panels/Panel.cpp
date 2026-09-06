@@ -46,7 +46,7 @@ namespace kailux
         return mFocused;
     }
 
-    GLFWwindow * Panel::GetPlatformWindow() const
+    InputSource Panel::GetInputSource() const
     {
         return mPlatformWindow;
     }

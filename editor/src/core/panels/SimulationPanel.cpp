@@ -37,14 +37,6 @@ namespace kailux
         mTextureId = id;
     }
 
-    vk::Extent2D SimulationPanel::GetExtent() const
-    {
-        return {
-            static_cast<uint32_t>(mExtent.x),
-            static_cast<uint32_t>(mExtent.y)
-        };
-    }
-
     bool SimulationPanel::IsVisible() const
     {
         return mVisible;

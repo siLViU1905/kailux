@@ -4,6 +4,7 @@
 #include "../components/entt/MeshComponent.h"
 #include "../components/entt/MaterialComponent.h"
 #include "../components/entt/TagComponent.h"
+#include "../components/entt/BuiltinCamera.h"
 #include "../components/gpu/CameraData.h"
 #include <nlohmann/json.hpp>
 
@@ -23,7 +24,8 @@ namespace kailux
                                            mSimulationCameraEntity(other.mSimulationCameraEntity),
                                            mSun(other.mSun),
                                            mMeshEntityNameCount(other.mMeshEntityNameCount),
-                                           mLightEntityNameCount(other.mLightEntityNameCount)
+                                           mLightEntityNameCount(other.mLightEntityNameCount),
+                                           mCameraEntityNameCount(other.mCameraEntityNameCount)
     {
     }
 
@@ -39,6 +41,7 @@ namespace kailux
             mSun = other.mSun;
             mMeshEntityNameCount = other.mMeshEntityNameCount;
             mLightEntityNameCount = other.mLightEntityNameCount;
+            mCameraEntityNameCount = other.mCameraEntityNameCount;
         }
         return *this;
     }
@@ -57,13 +60,20 @@ namespace kailux
         UpdateTransforms();
     }
 
-    Scene::CreateResult Scene::CreateCameraEntity(std::string_view name, bool isPrimary, int width, int height)
+    Scene::CreateResult Scene::CreateCameraEntity(std::string_view name, const GizmoComponent &component, bool isPrimary)
     {
-        if (mEntityRegistry.view<CameraComponent>().size() >= details::kMaxCameras)
+        if (mEntityRegistry.view<CameraComponent>(entt::exclude<BuiltinCamera>).size_hint() >= details::kMaxCameras)
             return std::unexpected{"The maximum number of cameras has been reached"};
 
         auto entity = CreateEntity(name);
-        AttachCamera(entity, {isPrimary});
+        AttachCamera(entity, component, {isPrimary});
+        return entity;
+    }
+
+    entt::entity Scene::CreateBuiltinCameraEntity(std::string_view name)
+    {
+        auto entity = CreateEntity(name);
+        AttachBuiltinCamera(entity);
         return entity;
     }
 
@@ -189,6 +199,11 @@ namespace kailux
         return std::format("Light{}", mLightEntityNameCount++);
     }
 
+    std::string Scene::GetCameraEntityName()
+    {
+        return std::format("Camera{}", mCameraEntityNameCount++);
+    }
+
     void Scene::SetSavePath(const std::filesystem::path &path)
     {
         mSavePath = path;
@@ -269,12 +284,22 @@ namespace kailux
         }
     }
 
-    void Scene::AttachCamera(entt::entity entity, const CameraComponent &component)
+    void Scene::AttachCamera(entt::entity entity, const GizmoComponent &component, const CameraComponent &camera)
     {
         if (!mEntityRegistry.valid(entity))
             return;
 
-        mEntityRegistry.emplace_or_replace<CameraComponent>(entity, component);
+        mEntityRegistry.emplace_or_replace<GizmoComponent>(entity, component);
+        mEntityRegistry.emplace_or_replace<CameraComponent>(entity, camera);
+    }
+
+    void Scene::AttachBuiltinCamera(entt::entity entity)
+    {
+        if (!mEntityRegistry.valid(entity))
+            return;
+
+        mEntityRegistry.emplace_or_replace<CameraComponent>(entity);
+        mEntityRegistry.emplace_or_replace<BuiltinCamera>(entity);
     }
 
     void Scene::SetLocalTransform(entt::entity entity, const MeshTransformData &transform)
@@ -346,20 +371,8 @@ namespace kailux
 
     void Scene::CreateCameras(const Window &window)
     {
-        const auto fbSize{window.GetInputSource().GetFramebufferSize()};
-        mSceneCameraEntity = *CreateCameraEntity(
-            "SceneCamera",
-            true,
-            fbSize.x,
-            fbSize.y
-        );
-
-        mSimulationCameraEntity = *CreateCameraEntity(
-            "SimulationCamera",
-            false,
-            fbSize.x,
-            fbSize.y
-        );
+        mSceneCameraEntity = CreateBuiltinCameraEntity("SceneCamera");
+        mSimulationCameraEntity = CreateBuiltinCameraEntity("SimulationCamera");
     }
 
     void Scene::UpdateTransforms()

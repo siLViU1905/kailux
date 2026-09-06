@@ -101,6 +101,19 @@ namespace kailux
         {
             mEngine.AddLightEntity(type);
         });
+        hierarchyPanel.SetOnNewCamera([this]()
+        {
+            glm::ivec2 extent{};
+            const auto& simulationPanel{mEditor.GetLayer<EditorLayer>().GetPanel<SimulationPanel>()};
+            if (simulationPanel.IsOpen())
+                extent = simulationPanel.GetInputSource().GetFramebufferSize();
+            else
+            {
+                const auto& editorPanel{mEditor.GetLayer<EditorLayer>().GetPanel<ViewportPanel>()};
+                extent = editorPanel.GetInputSource().GetFramebufferSize();
+            }
+            mEngine.AddCameraEntity(extent.x, extent.y);
+        });
         hierarchyPanel.SetOnAddPhysics([this](auto entity, auto bodyType, auto canBecomeDynamic)
         {
             mEngine.AddPhysicsToEntity(entity, {bodyType, canBecomeDynamic});
@@ -224,15 +237,22 @@ namespace kailux
         auto& viewport{editorLayer.GetPanel<ViewportPanel>()};
 
         mEngine.SetSimulationViewActive(simulation.IsOpen());
-        mEngine.SetSimulationViewExtent(simulation.GetExtent());
+        const auto extent{
+            simulation.GetInputSource().Valid() && simulation.IsOpen()
+                ? simulation.GetInputSource().GetFramebufferSize()
+                : glm::ivec2{}
+        };
+        mEngine.SetSimulationViewExtent(extent);
 
         const bool simulationHasInput = simulation.IsOpen() && simulation.IsFocused();
 
         mEngine.SetControlledCamera(
-            simulationHasInput ? mEngine.GetScene().GetSimulationCamera()
-                               : mEngine.GetScene().GetSceneCamera(),
-            InputSource(simulationHasInput ? simulation.GetPlatformWindow()
-                                           : viewport.GetPlatformWindow())
+            simulationHasInput
+                ? mEngine.GetScene().GetSimulationCamera()
+                : mEngine.GetScene().GetSceneCamera(),
+            simulationHasInput
+                ? simulation.GetInputSource()
+                : viewport.GetInputSource()
         );
 
         if (simulation.ConsumeToggleMouseLook() || viewport.ConsumeToggleMouseLook())

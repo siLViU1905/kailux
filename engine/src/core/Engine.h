@@ -45,7 +45,7 @@ namespace kailux
 
         CameraData GetCameraData() const;
 
-        void SetSimulationViewExtent(vk::Extent2D extent);
+        void SetSimulationViewExtent(glm::ivec2 extent);
         void SetSimulationViewActive(bool active);
         void SetControlledCamera(entt::entity camera, InputSource source);
         void ToggleMouseLook();
@@ -93,6 +93,7 @@ namespace kailux
         void AddPhysicsToEntity(entt::entity entity, PhysicsCreationOptions options);
 
         void AddLightEntity(LightType type);
+        void AddCameraEntity(int width, int height);
 
         DeviceInfo GetDeviceInfo() const;
 
@@ -133,7 +134,7 @@ namespace kailux
         void                                        RecordOutline(const FrameData& frame, const CommandRecorder &recorder) const;
         void                                        RenderSimulationView(const FrameData &frame, CommandRecorder &recorder);
 
-        CameraData BuildCameraData(entt::entity entity, vk::Extent2D extent) const;
+        CameraData BuildCameraData(entt::entity entity, glm::ivec2 extent) const;
 
         void UpdateFrameBuffers(FrameData& frame, const CommandRecorder& recorder);
         void UpdateCameraBuffer(FrameData& frame) const;
@@ -151,7 +152,7 @@ namespace kailux
 
         void ExecuteCulling(const FrameData& frame, const CommandRecorder& recorder, entt::entity camera, vk::Extent2D extent);
 
-        void ResizeSimulationView(vk::Extent2D extent);
+        void ResizeSimulationView(glm::ivec2 extent);
 
         void TransitionForMainPass(const FrameData& frame, const CommandRecorder& recorder) const;
         void TransitionForSimulationPass(const CommandRecorder &recorder) const;

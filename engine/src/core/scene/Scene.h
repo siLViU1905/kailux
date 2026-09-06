@@ -27,7 +27,8 @@ namespace kailux
 
         using CreateResult = std::expected<entt::entity, std::string>;
 
-        CreateResult CreateCameraEntity(std::string_view name, bool isPrimary, int width, int height);
+        CreateResult CreateCameraEntity(std::string_view name, const GizmoComponent &component, bool isPrimary);
+        entt::entity CreateBuiltinCameraEntity(std::string_view name);
 
         CreateResult CreateMeshEntity(
             std::string_view name,
@@ -54,6 +55,7 @@ namespace kailux
 
         std::string           GetMeshEntityName();
         std::string           GetLightEntityName();
+        std::string           GetCameraEntityName();
 
         void                         SetSavePath(const std::filesystem::path& path);
         const std::filesystem::path& GetSavePath() const;
@@ -70,7 +72,8 @@ namespace kailux
                               const GizmoComponent   &component,
                               const PointLightRecord &light);
         void AttachPhysics(entt::entity entity, PhysicsComponent component);
-        void AttachCamera(entt::entity entity, const CameraComponent &component);
+        void AttachCamera(entt::entity entity, const GizmoComponent &component, const CameraComponent &camera);
+        void AttachBuiltinCamera(entt::entity entity);
 
         void SetLocalTransform(entt::entity entity, const MeshTransformData &transform);
         void SetParent(entt::entity child, entt::entity parent);
@@ -102,5 +105,6 @@ namespace kailux
 
         uint32_t mMeshEntityNameCount{};
         uint32_t mLightEntityNameCount{};
+        uint32_t mCameraEntityNameCount{};
     };
 }

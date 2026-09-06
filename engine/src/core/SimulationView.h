@@ -13,14 +13,14 @@ namespace kailux
         static SimulationView create(const Context& context,
                                      vk::Format colorFormat,
                                      vk::Format depthFormat,
-                                     vk::Extent2D extent,
+                                     glm::ivec2 extent,
                                      vk::SampleCountFlagBits samples);
 
         const Texture& GetColorTexture()    const;
         const Texture& GetDepthTexture()    const;
         const Texture& GetResolvedTexture() const;
 
-        vk::Extent2D GetExtent()  const;
+        glm::ivec2 GetExtent()  const;
         ImTextureID  GetTextureId() const;
         void SetTextureId(ImTextureID id);
 
@@ -28,7 +28,7 @@ namespace kailux
         Texture      mColor;
         Texture      mDepth;
         Texture      mResolved;
-        vk::Extent2D mExtent{};
+        glm::ivec2 mExtent{};
         ImTextureID  mTextureId{};
     };
 }

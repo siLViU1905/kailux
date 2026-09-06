@@ -64,7 +64,14 @@ namespace kailux
                 );
 
             if (record.camera)
-                scene.AttachCamera(entity, *record.camera);
+            {
+                GizmoComponent gizmo{
+                    gizmoRegistry.GetBuiltins().camera,
+                    0.5f,
+                    {}
+                };
+                scene.AttachCamera(entity, gizmo, *record.camera);
+        }
         }
 
         if (const auto it{remap.find(document.mainCamera)}; it != remap.end())
@@ -72,9 +79,8 @@ namespace kailux
         else
         {
             log::console.Warning("No camera found in scene '{}'. Falling back...", scene.GetName());
-            const auto fallback = scene.CreateCameraEntity(
-                "MainCamera", true, context.windowWidth, context.windowHeight);
-            scene.SetMainCamera(*fallback);
+            const auto fallback = scene.CreateBuiltinCameraEntity("MainCamera");
+            scene.SetMainCamera(fallback);
         }
 
         for (const auto& record : document.entities)
