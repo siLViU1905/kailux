@@ -66,7 +66,7 @@ else()
     set(SIMD_FLAGS -mavx2 -mfma -msse3)
 endif()
 
-target_compile_options(kailux_engine PRIVATE ${SIMD_FLAGS})
+target_compile_options(kailux_engine PUBLIC ${SIMD_FLAGS})
 
 target_include_directories(kailux_engine PUBLIC src)
 
