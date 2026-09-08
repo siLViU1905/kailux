@@ -16,6 +16,10 @@ if(CCACHE_PROGRAM)
     message(STATUS "ccache enabled: ${CCACHE_PROGRAM}")
 endif()
 
+if(WIN32)
+    add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN)
+endif()
+
 if(NOT MSVC)
     find_program(MOLD_LINKER mold)
     find_program(LLD_LINKER ld.lld)
