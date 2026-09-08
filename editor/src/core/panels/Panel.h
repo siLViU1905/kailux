@@ -22,7 +22,7 @@ namespace kailux
         bool IsOpen() const;
         bool IsFocused() const;
 
-        GLFWwindow* GetPlatformWindow() const;
+        InputSource GetInputSource() const;
 
         bool ConsumeToggleMouseLook();
 

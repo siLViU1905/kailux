@@ -27,7 +27,7 @@ namespace kailux
 
         void RequestSimulationState(SimulationState state);
 
-        using OnSimulationStart = std::move_only_function<void()>;
+        using OnSimulationStart = std::move_only_function<bool()>;
         void SetOnSimulationStart(OnSimulationStart&& callback);
         using OnSimulationPause = std::move_only_function<void()>;
         void SetOnSimulationPause(OnSimulationPause&& callback);

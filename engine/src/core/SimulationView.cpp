@@ -28,27 +28,27 @@ namespace kailux
     }
 
     SimulationView SimulationView::create(const Context &context, vk::Format colorFormat, vk::Format depthFormat,
-        vk::Extent2D extent, vk::SampleCountFlagBits samples)
+        glm::ivec2 extent, vk::SampleCountFlagBits samples)
     {
         SimulationView view;
         view.mExtent = extent;
 
         view.mColor = TextureAllocator::create_empty(
-            context, extent.width, extent.height, colorFormat,
+            context, extent.x, extent.y, colorFormat,
             vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransientAttachment,
             vk::ImageAspectFlagBits::eColor,
             samples
         );
 
         view.mDepth = TextureAllocator::create_empty(
-            context, extent.width, extent.height, depthFormat,
+            context, extent.x, extent.y, depthFormat,
             vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransientAttachment,
             vk::ImageAspectFlagBits::eDepth,
             samples
         );
 
         view.mResolved = TextureAllocator::create_empty(
-            context, extent.width, extent.height, colorFormat,
+            context, extent.x, extent.y, colorFormat,
             vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
             vk::ImageAspectFlagBits::eColor,
             vk::SampleCountFlagBits::e1
@@ -72,7 +72,7 @@ namespace kailux
         return mResolved;
     }
 
-    vk::Extent2D SimulationView::GetExtent() const
+    glm::ivec2 SimulationView::GetExtent() const
     {
         return mExtent;
     }

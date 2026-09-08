@@ -164,10 +164,11 @@ namespace kailux
 
     CameraData Engine::GetCameraData() const
     {
-        return BuildCameraData(mScene.GetSceneCamera(), mSwapchain.GetExtent());
+        const glm::ivec2 extent{mSwapchain.GetExtent().width, mSwapchain.GetExtent().height};
+        return BuildCameraData(mScene.GetSceneCamera(), extent);
     }
 
-    void Engine::SetSimulationViewExtent(vk::Extent2D extent)
+    void Engine::SetSimulationViewExtent(glm::ivec2 extent)
     {
        mSimulationResize.Request(extent);
     }
@@ -262,8 +263,13 @@ namespace kailux
     void Engine::OnEvent(const Event &event, Window &window)
     {
         if (const auto* keyReleased{std::get_if<KeyReleased>(&event)})
-            if (keyReleased->key == Key::Escape && mMouseLookActive)
+        {
+            const auto key{keyReleased->key};
+            if (key == Key::Escape && mMouseLookActive)
                 ToggleMouseLook();
+            else if (key == Key::Tab)
+                mScene.SetPrimaryCamera(mScene.GetNextCamera(mScene.GetPrimaryCamera()));
+        }
     }
 
     void Engine::CreateRenderingContext(Window &window)
@@ -434,7 +440,7 @@ namespace kailux
 
     void Engine::CreateScene(const Window &window)
     {
-        mScene = Scene::create("MainScene", window);
+        mScene = Scene::create("MainScene");
     }
 
     void Engine::Submit(const FrameData &frame, vk::Semaphore imageAvailableSemaphore,
@@ -528,8 +534,8 @@ namespace kailux
             recorder.SetViewport(frame.GetExtent());
             recorder.SetScissor(frame.GetExtent());
 
-            RecordMeshData(frame, recorder, details::kSceneCameraIndex, true);
-            RecordSkybox(frame, recorder, details::kSceneCameraIndex);
+            RecordMeshData(frame, recorder, details::kSceneViewCameraIndex, true);
+            RecordSkybox(frame, recorder, details::kSceneViewCameraIndex);
 
             recorder.EndRendering();
 
@@ -596,8 +602,8 @@ namespace kailux
             TransitionForPickerAndPostProcess(frame, recorder);
 
             if (mSimulationViewActive &&
-                mSimulationView.GetExtent().width > 0 &&
-                mSimulationView.GetExtent().height > 0
+                mSimulationView.GetExtent().x > 0 &&
+                mSimulationView.GetExtent().y > 0
             )
                 RenderSimulationView(frame, recorder);
 
@@ -708,7 +714,7 @@ namespace kailux
             return;
         }
 
-        Scene scene = Scene::create(document->meta.name, window);
+        Scene scene = Scene::create(document->meta.name);
 
         const auto fbSize{window.GetInputSource().GetFramebufferSize()};
         auto requests = SceneInstantiator::apply(scene, *document, {mGizmoRegistry, fbSize.x, fbSize.y});
@@ -789,9 +795,22 @@ namespace kailux
         mPhysicsRegistry.UpdateBodyScale(handle, scale);
     }
 
-    void Engine::SetSimulationState(SimulationState state)
+    bool Engine::RequestSimulationState(SimulationState state)
     {
+        if (state == SimulationState::Paused)
+        {
+            mPhysicsSystem.SetSimulationState(state);
+            return true;
+        }
+
+        if (mScene.GetPrimaryCamera() == entt::null)
+        {
+            mOnWarningLog("Cannot start simulation: the scene has no camera");
+            return false;
+        }
+        mScene.UpdateCameras();
         mPhysicsSystem.SetSimulationState(state);
+        return true;
     }
 
     void Engine::ExecuteCulling(const FrameData &frame, const CommandRecorder &recorder, entt::entity camera, vk::Extent2D extent)
@@ -808,15 +827,14 @@ namespace kailux
         std::array countBufferBarrier = {frame.GetCullerCountBufferFillMemoryBarrier()};
         recorder.BufferMemoryBarriers(countBufferBarrier);
 
-        auto totalObjects = static_cast<uint32_t>(
-            mScene.GetEntityRegistry().view<MeshComponent>(entt::exclude<PendingUploadComponent>).size_hint());
+        const auto totalObjects{mScene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)};
         if (totalObjects == 0)
             return;
 
         mComputeCuller.Bind(cmd);
         frame.GetCullerDescriptorSet().Bind(mComputeCuller.GetPipeline(), cmd, vk::PipelineBindPoint::eCompute);
 
-        const auto cameraData{BuildCameraData(camera, extent)};
+        const auto cameraData{BuildCameraData(camera, {extent.width, extent.height})};
         const auto planes{Camera::get_frustum_planes(cameraData.projection, cameraData.view)};
         mComputeCuller.Push<ComputePassesPushConstants::CameraFrustum>(cmd, {planes, totalObjects});
 
@@ -826,7 +844,7 @@ namespace kailux
         recorder.BufferMemoryBarriers(frame.GetCullerBufferMemoryBarriers());
     }
 
-    void Engine::ResizeSimulationView(vk::Extent2D extent)
+    void Engine::ResizeSimulationView(glm::ivec2 extent)
     {
         WaitIdle();
 
@@ -1070,7 +1088,7 @@ namespace kailux
         mGizmoRegistry.Bind(cmd);
         frame.GetGizmoDescriptorSet().Bind(mGizmoPass.GetPipeline(), cmd);
 
-        auto view = mScene.GetEntityRegistry().view<GizmoComponent, TransformComponent>();
+        const auto view{mScene.GetEntityRegistry().view<GizmoComponent, TransformComponent>()};
         view.each([&](const auto& component, const auto& transform)
         {
             auto gizmoView = mGizmoRegistry.View(component.handle);
@@ -1138,10 +1156,17 @@ namespace kailux
 
     void Engine::RenderSimulationView(const FrameData &frame, CommandRecorder &recorder)
     {
-        const auto extent{mSimulationView.GetExtent()};
+        const auto primaryCamera{mScene.GetPrimaryCamera()};
+        if (primaryCamera == entt::null)
+            return;
+
+        const vk::Extent2D extent{
+            static_cast<uint32_t>(mSimulationView.GetExtent().x),
+            static_cast<uint32_t>(mSimulationView.GetExtent().y)
+        };
 
         recorder.BufferMemoryBarriers(frame.GetIndirectReadToWriteBarriers());
-        ExecuteCulling(frame, recorder, mScene.GetSimulationCamera(), extent);
+        ExecuteCulling(frame, recorder, primaryCamera, extent);
 
         TransitionForSimulationPass(recorder);
 
@@ -1168,8 +1193,8 @@ namespace kailux
         recorder.SetViewport(extent);
         recorder.SetScissor(extent);
 
-        RecordMeshData(frame, recorder, details::kSimulationCameraIndex, false);
-        RecordSkybox(frame, recorder, details::kSimulationCameraIndex);
+        RecordMeshData(frame, recorder, details::kSimulationViewCameraIndex, false);
+        RecordSkybox(frame, recorder, details::kSimulationViewCameraIndex);
 
         recorder.EndRendering();
 
@@ -1184,11 +1209,11 @@ namespace kailux
         });
     }
 
-    CameraData Engine::BuildCameraData(entt::entity entity, vk::Extent2D extent) const
+    CameraData Engine::BuildCameraData(entt::entity entity, glm::ivec2 extent) const
     {
         const auto& camera{mScene.GetEntityRegistry().get<CameraComponent>(entity)};
         return {
-            Camera::get_projection(camera, static_cast<int>(extent.width), static_cast<int>(extent.height)),
+            Camera::get_projection(camera, extent.x, extent.y),
             Camera::get_view(camera),
             {
                 camera.position,
@@ -1209,19 +1234,28 @@ namespace kailux
         mScene.Update();
 
         if (!mInputSource.Valid())
+        {
+            mScene.UpdateCameras();
             return;
+        }
 
         const auto controlled{
             mControlledCamera == entt::null ?
             mScene.GetSceneCamera() :
             mControlledCamera
         };
-        if (auto* camera{mScene.GetEntityRegistry().try_get<CameraComponent>(controlled)})
-        {
-            camera->focused = mMouseLookActive;
-            Camera::update_movement(*camera, mInputSource, deltaTime);
-            Camera::update_look_at(*camera, mInputSource, deltaTime);
-        }
+
+        auto& registry{mScene.GetEntityRegistry()};
+        if (registry.valid(controlled))
+            if (auto* camera{registry.try_get<CameraComponent>(controlled)})
+            {
+                camera->focused = mMouseLookActive;
+                Camera::update_movement(*camera, mInputSource, deltaTime);
+                Camera::update_look_at(*camera, mInputSource, deltaTime);
+                mScene.SyncCameraTransform(controlled);
+            }
+
+        mScene.UpdateCameras(controlled);
     }
 
     void Engine::UpdateFrameBuffers(FrameData &frame, const CommandRecorder &recorder)
@@ -1237,17 +1271,20 @@ namespace kailux
 
     void Engine::UpdateCameraBuffer(FrameData &frame) const
     {
-        const auto simulationExtent{
-            mSimulationView.GetExtent().width > 0 && mSimulationView.GetExtent().height > 0
-                ? mSimulationView.GetExtent()
-                : mSwapchain.GetExtent()
-        };
+        const glm::ivec2 swapchainExtent{mSwapchain.GetExtent().width, mSwapchain.GetExtent().height};
 
-        std::array<CameraData, details::kMaxCameras> cameras{};
-        cameras[details::kSceneCameraIndex] =
-                BuildCameraData(mScene.GetSceneCamera(), mSwapchain.GetExtent());
-        cameras[details::kSimulationCameraIndex] =
-                BuildCameraData(mScene.GetSimulationCamera(), simulationExtent);
+        glm::ivec2 simulationExtent{};
+        mSimulationView.GetExtent().x > 0 && mSimulationView.GetExtent().y > 0
+            ? simulationExtent = mSimulationView.GetExtent()
+            : simulationExtent = swapchainExtent;
+
+        std::array<CameraData, details::kMaxCameras + details::kMaxCameraViews> cameras{};
+        cameras[details::kSceneViewCameraIndex] =
+                BuildCameraData(mScene.GetSceneCamera(), swapchainExtent);
+
+        if (const auto primary{mScene.GetPrimaryCamera()}; primary != entt::null)
+            cameras[details::kSimulationViewCameraIndex] =
+                BuildCameraData(primary, simulationExtent);
 
         frame.GetCameraBuffer().Upload(
             cameras.data(),
@@ -1396,6 +1433,20 @@ namespace kailux
             default:
                 break;
         }
+    }
+
+    void Engine::AddCameraEntity(int width, int height)
+    {
+        const auto camera{
+            mScene.CreateCameraEntity(
+                mScene.GetCameraEntityName(),
+                {mGizmoRegistry.GetBuiltins().camera, 0.5f, {1.f, 1.f, 1.f, 1.f}},
+                {},
+                false
+            )
+        };
+        if (!camera)
+            mOnWarningLog(camera.error());
     }
 
     DeviceInfo Engine::GetDeviceInfo() const

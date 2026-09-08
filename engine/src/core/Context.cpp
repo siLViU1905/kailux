@@ -464,7 +464,7 @@ namespace kailux
 
         auto extensions = device.enumerateDeviceExtensionProperties();
         for (const auto& extension : extensions)
-            info.extensions.emplace_back(extension.extensionName);
+            info.extensions.emplace_back(extension.extensionName.data());
 
         return info;
     }

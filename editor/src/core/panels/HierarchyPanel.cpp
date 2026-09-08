@@ -75,6 +75,9 @@ namespace kailux
                         ImGui::EndMenu();
                     }
 
+                    if (ImGui::MenuItem("Camera"))
+                        mOnNewCamera();
+
                     ImGui::EndMenu();
                 }
 
@@ -134,6 +137,11 @@ namespace kailux
     void HierarchyPanel::SetOnNewLight(OnNewLight &&callback)
     {
         mOnNewLight = std::move(callback);
+    }
+
+    void HierarchyPanel::SetOnNewCamera(OnNewCamera &&callback)
+    {
+        mOnNewCamera = std::move(callback);
     }
 
     void HierarchyPanel::SetOnAddPhysics(OnAddPhysics &&callback)
@@ -202,8 +210,7 @@ namespace kailux
     {
         return scene.GetEntityRegistry().valid(entity) &&
                entity != scene.GetSun() &&
-               entity != scene.GetSceneCamera() &&
-               entity != scene.GetSimulationCamera();
+               entity != scene.GetSceneCamera();
     }
 
     void HierarchyPanel::OnEntityDelete(Scene &scene, entt::entity entity)

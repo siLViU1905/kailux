@@ -12,8 +12,6 @@ namespace kailux
 
         void SetTextureId(ImTextureID id);
 
-        vk::Extent2D GetExtent() const;
-
         bool IsVisible() const;
 
     private:

@@ -70,8 +70,16 @@ namespace kailux
     {
         if (mSimulationState == state)
             return;
+
+        if (state == SimulationState::Running)
+        {
+            if (!mOnSimulationStart || !mOnSimulationStart())
+                return;
+        }
+        else if (mOnSimulationPause)
+            mOnSimulationPause();
+
         mSimulationState = state;
-        (state == SimulationState::Running) ? mOnSimulationStart() : mOnSimulationPause();
     }
 
     void ViewportPanel::SetOnSimulationStart(OnSimulationStart &&callback)

@@ -2,6 +2,7 @@
 
 #include <fstream>
 
+#include "core/components/entt/BuiltinCamera.h"
 #include "core/components/entt/HierarchyComponent.h"
 #include "core/components/entt/PhysicsComponent.h"
 #include "core/components/entt/TagComponent.h"
@@ -27,34 +28,41 @@ namespace kailux
         const auto& registry = scene.GetEntityRegistry();
         if (scene.GetSun() != entt::null && registry.all_of<SunData>(scene.GetSun()))
             document.sun = registry.get<SunData>(scene.GetSun());
- 
-        document.mainCamera = details::to_id(scene.GetSceneCamera());
- 
+
+        if (const auto editor{scene.GetSceneCamera()};
+            editor != entt::null && registry.all_of<CameraComponent>(editor))
+            document.editorCamera = registry.get<CameraComponent>(editor);
+
+        document.mainCamera = kNoEntity;
+
         for (auto entity : registry.view<TagComponent>())
         {
             if (entity == scene.GetSun())
                 continue;
 
+            if (registry.all_of<BuiltinCamera>(entity))
+                continue;
+
             if (registry.all_of<MeshComponent>(entity) &&
                 !registry.all_of<MeshSourceComponent>(entity))
                 continue;
- 
+
             EntityRecord record;
             record.id   = details::to_id(entity);
             record.name = registry.get<TagComponent>(entity).name;
- 
+
             if (const auto *transform = registry.try_get<TransformComponent>(entity))
                 record.transform = transform->transform;
- 
+
             if (const auto *hierarchy = registry.try_get<HierarchyComponent>(entity))
                 record.parent = details::to_id(hierarchy->parent);
- 
+
             if (const auto *source = registry.try_get<MeshSourceComponent>(entity))
                 record.mesh = {source->path, source->type};
- 
+
             if (const auto *material = registry.try_get<MeshMaterialData>(entity))
                 record.material = *material;
- 
+
             if (const auto *light = registry.try_get<PointLightData>(entity))
                 record.light = {
                 light->positionAndIntensity.w,
@@ -63,14 +71,18 @@ namespace kailux
             };
 
             if (const auto* camera = registry.try_get<CameraComponent>(entity))
+            {
                 record.camera = *camera;
- 
+                if (camera->isPrimary && document.mainCamera == kNoEntity)
+                    document.mainCamera = record.id;
+            }
+
             if (const auto *physics = registry.try_get<PhysicsComponent>(entity))
                 record.physics = {physics->type, physics->canBecomeDynamic};
- 
+
             document.entities.push_back(std::move(record));
         }
- 
+
         return document;
     }
 
