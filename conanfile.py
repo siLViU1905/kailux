@@ -24,6 +24,7 @@ class kailux(ConanFile):
         self.requires("nlohmann_json/3.12.0")
         self.requires("joltphysics/5.2.0")
         self.requires("shaderc/2025.3")
+        self.requires("onetbb/2023.1.0")
 
     def configure(self):
         self.options["imgui"].with_glfw = True

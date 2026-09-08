@@ -137,10 +137,10 @@ namespace kailux
             vk::DescriptorPoolSize(vk::DescriptorType::eInputAttachment, descriptorCount)
         };
 
-        vk::DescriptorPoolCreateInfo poolInfo(
+        const vk::DescriptorPoolCreateInfo poolInfo(
             vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-            descriptorCount * poolSizes.size(),
-            poolSizes.size(),
+            static_cast<uint32_t>(descriptorCount * poolSizes.size()),
+            static_cast<uint32_t>(poolSizes.size()),
             poolSizes.data()
         );
 
