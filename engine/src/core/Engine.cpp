@@ -263,8 +263,13 @@ namespace kailux
     void Engine::OnEvent(const Event &event, Window &window)
     {
         if (const auto* keyReleased{std::get_if<KeyReleased>(&event)})
-            if (keyReleased->key == Key::Escape && mMouseLookActive)
+        {
+            const auto key{keyReleased->key};
+            if (key == Key::Escape && mMouseLookActive)
                 ToggleMouseLook();
+            else if (key == Key::Tab)
+                mScene.SetPrimaryCamera(mScene.GetNextCamera(mScene.GetPrimaryCamera()));
+        }
     }
 
     void Engine::CreateRenderingContext(Window &window)

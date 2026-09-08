@@ -68,6 +68,7 @@ namespace kailux
         entt::entity          GetSceneCamera() const;
         void                  SetPrimaryCamera(entt::entity entity);
         entt::entity          GetPrimaryCamera() const;
+        entt::entity          GetNextCamera(entt::entity currentCamera) const;
         void                  SetMainCamera(entt::entity camera);
         entt::entity          GetSun() const;
         SceneData             GetData() const;

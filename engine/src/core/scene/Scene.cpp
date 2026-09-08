@@ -186,6 +186,28 @@ namespace kailux
         return fallback;
     }
 
+    entt::entity Scene::GetNextCamera(entt::entity currentCamera) const
+    {
+        const auto view{mEntityRegistry.view<CameraComponent>(entt::exclude<BuiltinCamera>)};
+
+        entt::entity first{entt::null};
+        bool reachedCurrent{};
+
+        for (const auto entity : view)
+        {
+            if (first == entt::null)
+                first = entity;
+
+            if (reachedCurrent)
+                return entity;
+
+            if (entity == currentCamera)
+                reachedCurrent = true;
+        }
+
+        return first == entt::null ? currentCamera : first;
+    }
+
     void Scene::SetMainCamera(entt::entity camera)
     {
         mSceneCameraEntity = camera;
