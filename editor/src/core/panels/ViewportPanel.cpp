@@ -71,10 +71,13 @@ namespace kailux
         if (mSimulationState == state)
             return;
 
-        if (state == SimulationState::Running && !mOnSimulationStart())
-            return;
-
-        mOnSimulationPause();
+        if (state == SimulationState::Running)
+        {
+            if (!mOnSimulationStart || !mOnSimulationStart())
+                return;
+        }
+        else if (mOnSimulationPause)
+            mOnSimulationPause();
 
         mSimulationState = state;
     }

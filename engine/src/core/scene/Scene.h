@@ -24,7 +24,26 @@ namespace kailux
         static Scene create(std::string_view name);
 
         void Update();
-        void UpdateCameras();
+
+        void UpdateCameras(entt::entity controlled = entt::null);
+
+        void SyncCameraTransform(entt::entity entity);
+
+        template<typename Type, typename... Other, typename... Exclude>
+        uint32_t GetEntityCount(entt::exclude_t<Exclude...> exclude = entt::exclude_t{}) const
+        {
+            const auto view{mEntityRegistry.view<Type, Other...>(exclude)};
+
+            if constexpr (sizeof...(Other) == 0 && sizeof...(Exclude) == 0)
+                return static_cast<uint32_t>(view.size());
+            else
+            {
+                uint32_t count{};
+                for ([[maybe_unused]] const auto e : view)
+                    ++count;
+                return count;
+            }
+        }
 
         using CreateResult = std::expected<entt::entity, std::string>;
 

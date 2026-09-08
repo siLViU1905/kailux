@@ -8,11 +8,12 @@ namespace kailux
     std::expected<std::vector<MeshRequest>, SceneInstantiator::Error> SceneInstantiator::apply(Scene &scene,
         const SceneDocument &document, const SceneLoadContext &context)
     {
-        size_t meshCount{}, lightCount{};
+        size_t meshCount{}, lightCount{}, cameraCount{};
         for (const auto &record : document.entities)
         {
-            meshCount  += record.mesh ? 1 : 0;
-            lightCount += record.light ? 1 : 0;
+            meshCount   += record.mesh ? 1 : 0;
+            lightCount  += record.light ? 1 : 0;
+            cameraCount += record.camera ? 1 : 0;
         }
         if (meshCount > details::kMaxMeshes)
             return std::unexpected(std::format(
@@ -20,11 +21,25 @@ namespace kailux
         if (lightCount > details::kMaxPointLights)
             return std::unexpected(std::format(
                 "Scene contains {} point lights, limit is {}", lightCount, details::kMaxPointLights));
+        if (cameraCount > details::kMaxCameras)
+            return std::unexpected(std::format(
+                "Scene contains {} cameras, limit is {}", cameraCount, details::kMaxCameras));
 
         scene.SetMeta(document.meta);
 
+        auto& registry = scene.GetEntityRegistry();
+
         if (scene.GetSun() != entt::null)
-            scene.GetEntityRegistry().get<SunData>(scene.GetSun()) = document.sun;
+            registry.get<SunData>(scene.GetSun()) = document.sun;
+
+        if (document.editorCamera)
+            if (const auto editor{scene.GetSceneCamera()};
+                editor != entt::null && registry.all_of<CameraComponent>(editor))
+            {
+                auto& camera = registry.get<CameraComponent>(editor);
+                camera       = *document.editorCamera;
+                camera.isPrimary = false;
+            }
 
         std::unordered_map<uint32_t, entt::entity> remap;
         remap.reserve(document.entities.size());
@@ -65,23 +80,43 @@ namespace kailux
 
             if (record.camera)
             {
-                GizmoComponent gizmo{
+                if (!record.transform)
+                {
+                    MeshTransformData transform;
+                    transform.position = record.camera->position;
+                    scene.SetLocalTransform(entity, transform);
+                }
+
+                const GizmoComponent gizmo{
                     gizmoRegistry.GetBuiltins().camera,
                     0.5f,
-                    {}
+                    {1.f, 1.f, 1.f, 1.f}
                 };
                 scene.AttachCamera(entity, gizmo, *record.camera);
-        }
+            }
         }
 
-        if (const auto it{remap.find(document.mainCamera)}; it != remap.end())
-            scene.SetMainCamera(it->second);
+        constexpr Version kPrimaryCameraVersion{2, 1};
+        const bool        isLegacy{
+            document.version.major < kPrimaryCameraVersion.major ||
+            (document.version.major == kPrimaryCameraVersion.major &&
+             document.version.minor < kPrimaryCameraVersion.minor)
+        };
+
+        entt::entity primary{entt::null};
+        if (!isLegacy)
+            if (const auto it{remap.find(document.mainCamera)};
+                it != remap.end() && registry.all_of<CameraComponent>(it->second))
+                primary = it->second;
+
+        if (primary == entt::null)
+            primary = scene.GetPrimaryCamera();
+
+        if (primary != entt::null)
+            scene.SetPrimaryCamera(primary);
         else
-        {
-            log::console.Warning("No camera found in scene '{}'. Falling back...", scene.GetName());
-            const auto fallback = scene.CreateBuiltinCameraEntity("MainCamera");
-            scene.SetMainCamera(fallback);
-        }
+            log::console.Warning(
+                "Scene '{}' has no camera. Add one before starting the simulation.", scene.GetName());
 
         for (const auto& record : document.entities)
         {
@@ -97,6 +132,7 @@ namespace kailux
         }
 
         scene.Update();
+        scene.UpdateCameras();
         return requests;
     }
 }

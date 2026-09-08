@@ -14,7 +14,7 @@ namespace kailux
         uint8_t major{};
         uint8_t minor{};
     };
-    constexpr Version kSceneVersion{2, 0};
+    constexpr Version kSceneVersion{2, 1};
 
     constexpr uint32_t kNoEntity{~0u};
 
@@ -58,15 +58,17 @@ namespace kailux
         std::filesystem::path savePath{};
         uint32_t              meshNameCount{};
         uint32_t              lightNameCount{};
+        uint32_t              cameraNameCount{};
     };
 
     struct SceneDocument
     {
-        Version                   version{kSceneVersion};
-        SceneMeta                 meta{};
-        SunData                   sun{};
-        uint32_t                  mainCamera{kNoEntity};
-        std::vector<EntityRecord> entities;
+        Version                        version{kSceneVersion};
+        SceneMeta                      meta{};
+        SunData                        sun{};
+        uint32_t                       mainCamera{kNoEntity};
+        std::optional<CameraComponent> editorCamera{};
+        std::vector<EntityRecord>      entities;
     };
 
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(MeshRecord, path, type)
@@ -130,7 +132,7 @@ namespace kailux
     inline void from_json(const nlohmann::json &js, CameraComponent &component)
     {
         component.isPrimary = js.value("isPrimary", component.isPrimary);
- 
+
         if (const auto it = js.find("transform"); it != js.end() && it->is_object())
         {
             component.position = it->value("position", component.position);
@@ -161,29 +163,31 @@ namespace kailux
             {"name", meta.name},
             {"save_path", meta.savePath.generic_string()},
             {"mesh_name_count", meta.meshNameCount},
-            {"light_name_count", meta.lightNameCount}
+            {"light_name_count", meta.lightNameCount},
+            {"camera_name_count", meta.cameraNameCount}
         };
 
     }
     inline void from_json(const nlohmann::json &js, SceneMeta &meta)
     {
-        meta.name           = js.value("name", meta.name);
-        meta.savePath       = std::filesystem::path(js.value("save_path", std::string{}));
-        meta.meshNameCount  = js.value("mesh_name_count", meta.meshNameCount);
-        meta.lightNameCount = js.value("light_name_count", meta.lightNameCount);
+        meta.name            = js.value("name", meta.name);
+        meta.savePath        = std::filesystem::path(js.value("save_path", std::string{}));
+        meta.meshNameCount   = js.value("mesh_name_count", meta.meshNameCount);
+        meta.lightNameCount  = js.value("light_name_count", meta.lightNameCount);
+        meta.cameraNameCount = js.value("camera_name_count", meta.cameraNameCount);
     }
 
     inline void to_json(nlohmann::json &js, const EntityRecord &record)
     {
         js = {
             {"id", record.id},
-            {"name", record.name},
-            {"transform", record.transform}
+            {"name", record.name}
         };
 
         if (record.parent != kNoEntity)
             js["parent"] = record.parent;
 
+        details::writeOptional(js, "transform", record.transform);
         details::writeOptional(js, "mesh", record.mesh);
         details::writeOptional(js, "material", record.material);
         details::writeOptional(js, "light", record.light);
@@ -192,21 +196,16 @@ namespace kailux
     }
     inline void from_json(const nlohmann::json &js, EntityRecord &record)
     {
-        record.id        = js.value("id", kNoEntity);
-        record.parent    = js.value("parent", kNoEntity);
-        record.name      = js.value("name", std::string{});
-        record.transform = js.value("transform", MeshTransformData{});
-        record.camera    = js.value("camera", CameraComponent{});
+        record.id     = js.value("id", kNoEntity);
+        record.parent = js.value("parent", kNoEntity);
+        record.name   = js.value("name", std::string{});
 
+        details::readOptional(js, "transform", record.transform);
         details::readOptional(js, "mesh", record.mesh);
         details::readOptional(js, "material", record.material);
         details::readOptional(js, "light", record.light);
         details::readOptional(js, "physics", record.physics);
         details::readOptional(js, "camera", record.camera);
-
-        record.physics.reset();
-        if (const auto it = js.find("physics"); it != js.end() && !it->is_null())
-            record.physics = it->get<PhysicsRecord>();
     }
 
     inline void to_json(nlohmann::json &js, const SceneDocument &document)
@@ -220,6 +219,7 @@ namespace kailux
             {"entities", document.entities}
         };
 
+        details::writeOptional(js, "editor_camera", document.editorCamera);
     }
     inline void from_json(const nlohmann::json &js, SceneDocument &document)
     {
@@ -228,7 +228,9 @@ namespace kailux
         document.meta          = js.value("meta", SceneMeta{});
         document.sun           = js.value("sun", SunData{});
         document.mainCamera    = js.value("main_camera", kNoEntity);
- 
+
+        details::readOptional(js, "editor_camera", document.editorCamera);
+
         document.entities.clear();
         if (const auto it = js.find("entities"); it != js.end() && it->is_array())
         {

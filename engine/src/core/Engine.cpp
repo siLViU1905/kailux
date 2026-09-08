@@ -822,8 +822,7 @@ namespace kailux
         std::array countBufferBarrier = {frame.GetCullerCountBufferFillMemoryBarrier()};
         recorder.BufferMemoryBarriers(countBufferBarrier);
 
-        auto totalObjects = static_cast<uint32_t>(
-            mScene.GetEntityRegistry().view<MeshComponent>(entt::exclude<PendingUploadComponent>).size_hint());
+        const auto totalObjects{mScene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)};
         if (totalObjects == 0)
             return;
 
@@ -1152,13 +1151,17 @@ namespace kailux
 
     void Engine::RenderSimulationView(const FrameData &frame, CommandRecorder &recorder)
     {
+        const auto primaryCamera{mScene.GetPrimaryCamera()};
+        if (primaryCamera == entt::null)
+            return;
+
         const vk::Extent2D extent{
             static_cast<uint32_t>(mSimulationView.GetExtent().x),
             static_cast<uint32_t>(mSimulationView.GetExtent().y)
         };
 
         recorder.BufferMemoryBarriers(frame.GetIndirectReadToWriteBarriers());
-        ExecuteCulling(frame, recorder, mScene.GetPrimaryCamera(), extent);
+        ExecuteCulling(frame, recorder, primaryCamera, extent);
 
         TransitionForSimulationPass(recorder);
 
@@ -1226,19 +1229,28 @@ namespace kailux
         mScene.Update();
 
         if (!mInputSource.Valid())
+        {
+            mScene.UpdateCameras();
             return;
+        }
 
         const auto controlled{
             mControlledCamera == entt::null ?
             mScene.GetSceneCamera() :
             mControlledCamera
         };
-        if (auto* camera{mScene.GetEntityRegistry().try_get<CameraComponent>(controlled)})
-        {
-            camera->focused = mMouseLookActive;
-            Camera::update_movement(*camera, mInputSource, deltaTime);
-            Camera::update_look_at(*camera, mInputSource, deltaTime);
-        }
+
+        auto& registry{mScene.GetEntityRegistry()};
+        if (registry.valid(controlled))
+            if (auto* camera{registry.try_get<CameraComponent>(controlled)})
+            {
+                camera->focused = mMouseLookActive;
+                Camera::update_movement(*camera, mInputSource, deltaTime);
+                Camera::update_look_at(*camera, mInputSource, deltaTime);
+                mScene.SyncCameraTransform(controlled);
+            }
+
+        mScene.UpdateCameras(controlled);
     }
 
     void Engine::UpdateFrameBuffers(FrameData &frame, const CommandRecorder &recorder)
