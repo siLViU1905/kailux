@@ -15,7 +15,6 @@ add_library(kailux_engine STATIC
         src/core/buffer/Buffer.cpp
         src/core/buffer/BufferAllocator.cpp
         src/core/mesh/MeshRegistry.cpp
-        src/core/Pipeline.cpp
         src/core/descriptor/DescriptorLayout.cpp
         src/core/command/OneTimeCommand.cpp
         src/core/Camera.cpp
@@ -54,6 +53,8 @@ add_library(kailux_engine STATIC
         src/core/scene/SceneInstantiator.cpp
         src/core/SimulationView.cpp
         src/core/window/InputSource.cpp
+        src/core/pipeline/GraphicsPipeline.cpp
+        src/core/pipeline/ComputePipeline.cpp
 )
 
 target_compile_definitions(kailux_engine PUBLIC

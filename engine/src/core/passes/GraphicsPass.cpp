@@ -26,7 +26,7 @@ namespace kailux
 
     void GraphicsPass::Bind(vk::CommandBuffer cmd) const
     {
-        mPipeline.BindGraphics(cmd);
+        mPipeline.Bind(cmd);
     }
 
     const DescriptorLayout &GraphicsPass::GetDescriptorLayout() const
@@ -39,7 +39,7 @@ namespace kailux
         return mDescriptorPool;
     }
 
-    const Pipeline &GraphicsPass::GetPipeline() const
+    const GraphicsPipeline &GraphicsPass::GetPipeline() const
     {
         return mPipeline;
     }
@@ -66,7 +66,7 @@ namespace kailux
         if (!fragShaderPath.empty())
             shaderInfo.emplace_back(vk::ShaderStageFlagBits::eFragment, fragShaderPath.data());
 
-        mPipeline = Pipeline::create_graphics(
+        mPipeline = GraphicsPipeline::create(
             context,
             swapchain,
             mDescriptorLayout,

@@ -1,6 +1,6 @@
 #pragma once
 #include "core/Core.h"
-#include "core/Pipeline.h"
+#include "../pipeline/ComputePipeline.h"
 #include "core/descriptor/DescriptorPool.h"
 
 namespace kailux
@@ -23,7 +23,7 @@ namespace kailux
 
         const DescriptorLayout& GetDescriptorLayout() const;
         const DescriptorPool&   GetDescriptorPool() const;
-        const Pipeline&         GetPipeline() const;
+        const ComputePipeline&         GetPipeline() const;
 
     protected:
         void CreateDescriptorLayout(const Context &context, std::span<const DescriptorLayoutBinding> bindings);
@@ -71,6 +71,6 @@ namespace kailux
 
         DescriptorLayout    mDescriptorLayout;
         DescriptorPool      mDescriptorPool;
-        Pipeline            mPipeline;
+        ComputePipeline            mPipeline;
     };
 }

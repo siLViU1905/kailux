@@ -2,7 +2,7 @@
 #include "GraphicsPass.h"
 #include "GraphicsPassesPushConstants.h"
 #include "core/Core.h"
-#include "core/Pipeline.h"
+#include "../pipeline/Pipeline.h"
 #include "core/descriptor/DescriptorPool.h"
 
 namespace kailux

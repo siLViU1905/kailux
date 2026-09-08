@@ -33,7 +33,10 @@ namespace kailux
         friend class BufferAllocator;
         friend class TextureAllocator;
         friend class Shader;
+        template <class Derived>
         friend class Pipeline;
+        friend class GraphicsPipeline;
+        friend class ComputePipeline;
         friend class DescriptorLayout;
         friend class DescriptorPool;
         friend class DescriptorSet;
