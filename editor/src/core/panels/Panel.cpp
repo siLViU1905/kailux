@@ -28,12 +28,15 @@ namespace kailux
 
     void Panel::Close()
     {
-        mOpen = false;
+        mOpen            = false;
+        mPlatformWindow  = nullptr;
+        mFocused         = false;
+        mToggleMouseLook = false;
     }
 
     void Panel::Toggle()
     {
-        mOpen = !mOpen;
+        mOpen ? Close() : Open();
     }
 
     bool Panel::IsOpen() const
