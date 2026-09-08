@@ -1,6 +1,6 @@
 #include "FrameData.h"
 
-#include "Pipeline.h"
+#include "pipeline/Pipeline.h"
 #include "buffer/BufferAllocator.h"
 #include "components/gpu/CameraData.h"
 #include "components/gpu/MeshData.h"

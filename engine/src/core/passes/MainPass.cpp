@@ -44,9 +44,9 @@ namespace kailux
         return pass;
     }
 
-    void MainPass::bind(vk::CommandBuffer cmd, bool writeIds) const
+    void MainPass::Bind(vk::CommandBuffer cmd, bool writeIds) const
     {
-        writeIds ? mPipeline.BindGraphics(cmd) : mNoIdPipeline.BindGraphics(cmd);
+        writeIds ? mPipeline.Bind(cmd) : mNoIdPipeline.Bind(cmd);
     }
 
     PipelineInfo MainPass::make_pipeline_info(const Swapchain &swapchain, vk::SampleCountFlagBits sampleCount)
@@ -166,7 +166,7 @@ namespace kailux
         if (!fragShaderPath.empty())
             shaderInfo.emplace_back(vk::ShaderStageFlagBits::eFragment, fragShaderPath.data());
 
-        mNoIdPipeline = Pipeline::create_graphics(
+        mNoIdPipeline = GraphicsPipeline::create(
             context,
             swapchain,
             mDescriptorLayout,

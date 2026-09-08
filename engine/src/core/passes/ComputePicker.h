@@ -1,7 +1,7 @@
 #pragma once
 #include "ComputePass.h"
 #include "ComputePassesPushConstants.h"
-#include "../Pipeline.h"
+#include "../pipeline/Pipeline.h"
 #include "../descriptor/DescriptorLayout.h"
 #include "../descriptor/DescriptorPool.h"
 

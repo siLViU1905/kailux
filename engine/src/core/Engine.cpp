@@ -832,7 +832,7 @@ namespace kailux
             return;
 
         mComputeCuller.Bind(cmd);
-        frame.GetCullerDescriptorSet().Bind(mComputeCuller.GetPipeline(), cmd, vk::PipelineBindPoint::eCompute);
+        frame.GetCullerDescriptorSet().Bind(mComputeCuller.GetPipeline(), cmd);
 
         const auto cameraData{BuildCameraData(camera, {extent.width, extent.height})};
         const auto planes{Camera::get_frustum_planes(cameraData.projection, cameraData.view)};
@@ -1052,7 +1052,7 @@ namespace kailux
     void Engine::RecordMeshData(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex, bool writeIds) const
     {
         const auto cmd = recorder.GetCommandBuffer();
-        mMainPass.bind(cmd, writeIds);
+        mMainPass.Bind(cmd, writeIds);
         mMeshRegistry.Bind(recorder.GetCommandBuffer());
         frame.GetMeshDescriptorSet().Bind(mMainPass.GetPipeline(), cmd);
         mMainPass.Push<uint32_t>(recorder.GetCommandBuffer(), cameraIndex);
@@ -1136,8 +1136,7 @@ namespace kailux
     {
         const auto cmd = recorder.GetCommandBuffer();
         mComputePicker.Bind(cmd);
-        frame.GetPickerDescriptorSet().Bind(mComputePicker.GetPipeline(), cmd,
-                                            vk::PipelineBindPoint::eCompute);
+        frame.GetPickerDescriptorSet().Bind(mComputePicker.GetPipeline(), cmd);
         mComputePicker.Push(cmd, mSceneViewportMousePos);
         mComputePicker.Execute(
             cmd,

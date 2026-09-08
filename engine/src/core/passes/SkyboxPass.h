@@ -1,7 +1,7 @@
 #pragma once
 #include "GraphicsPass.h"
 #include "../descriptor/DescriptorLayout.h"
-#include "../Pipeline.h"
+#include "../pipeline/Pipeline.h"
 #include "../descriptor/DescriptorPool.h"
 #include "../descriptor/DescriptorSet.h"
 #include "../mesh/MeshRegistry.h"

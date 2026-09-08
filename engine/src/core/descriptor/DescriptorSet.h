@@ -3,7 +3,7 @@
 #include "../Context.h"
 #include "DescriptorLayout.h"
 #include "DescriptorPool.h"
-#include "../Pipeline.h"
+#include "../pipeline/Pipeline.h"
 
 namespace kailux
 {
@@ -43,7 +43,11 @@ namespace kailux
 
         vk::DescriptorSet GetDescriptorSet() const;
 
-        void Bind(const Pipeline& pipeline, vk::CommandBuffer cmd, vk::PipelineBindPoint bindPoint = vk::PipelineBindPoint::eGraphics) const;
+        template<PipelineType TPipeline>
+        void Bind(const TPipeline &pipeline, vk::CommandBuffer cmd) const
+        {
+            cmd.bindDescriptorSets(TPipeline::kBindPoint, pipeline.GetLayout(), 0, *mSet, {});
+        }
         void UpdateInfo(const Context& context, std::span<const DescriptorSetUpdateInfo> updateInfos) const;
 
     private:

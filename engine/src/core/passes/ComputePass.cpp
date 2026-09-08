@@ -26,7 +26,7 @@ namespace kailux
 
     void ComputePass::Bind(vk::CommandBuffer cmd) const
     {
-        mPipeline.BindCompute(cmd);
+        mPipeline.Bind(cmd);
     }
 
     void ComputePass::Execute(vk::CommandBuffer cmd, ComputeWorkgroup group) const
@@ -44,7 +44,7 @@ namespace kailux
         return mDescriptorPool;
     }
 
-    const Pipeline &ComputePass::GetPipeline() const
+    const ComputePipeline &ComputePass::GetPipeline() const
     {
         return mPipeline;
     }
@@ -64,7 +64,7 @@ namespace kailux
                                      const ComputeShaderInfo &info,
                                      std::span<const PushConstantRangeInfo> pushConstantRanges)
     {
-        mPipeline = Pipeline::create_compute(
+        mPipeline = ComputePipeline::create(
             context,
             mDescriptorLayout,
             info,
