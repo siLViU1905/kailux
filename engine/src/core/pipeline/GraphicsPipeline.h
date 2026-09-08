@@ -3,6 +3,25 @@
 
 namespace kailux
 {
+    struct ShaderStageInfo
+    {
+        vk::ShaderStageFlagBits stage{};
+        std::string             path;
+    };
+    using GraphicsShaderInfo = std::vector<ShaderStageInfo>;
+
+    struct PipelineInfo
+    {
+        vk::VertexInputBindingDescription                  vertexInputBinding;
+        std::vector<vk::VertexInputAttributeDescription>   vertexInputAttribute;
+        vk::PrimitiveTopology                              topology;
+        vk::PipelineRasterizationStateCreateInfo           rasterizer;
+        std::vector<vk::PipelineColorBlendAttachmentState> colorBlendAttachments;
+        std::vector<vk::Format>                            colorFormats;
+        vk::SampleCountFlagBits                            samples{vk::SampleCountFlagBits::e1};
+        vk::PipelineDepthStencilStateCreateInfo            depthStencilInfo;
+    };
+
     class GraphicsPipeline final : public Pipeline<GraphicsPipeline>
     {
     public:

@@ -3,6 +3,11 @@
 
 namespace kailux
 {
+    struct ComputeShaderInfo
+    {
+        std::string computeShaderPath;
+    };
+
     class ComputePipeline final : public Pipeline<ComputePipeline>
     {
     public:
