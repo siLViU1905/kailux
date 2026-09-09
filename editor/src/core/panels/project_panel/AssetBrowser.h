@@ -41,8 +41,8 @@ namespace kailux
         ImTextureID mDirectoryTextureId;
         ImTextureID mFileTextureId;
 
-        Path                  mItemToRenamePath;
-        std::array<char, 65>  mRenameBuffer;
-        bool                  mIsRenaming;
+        Path        mItemToRenamePath;
+        std::string mRenameBuffer;
+        bool        mIsRenaming;
     };
 }

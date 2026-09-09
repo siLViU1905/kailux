@@ -10,6 +10,7 @@ add_library(kailux_engine STATIC
         src/core/imgui_backend/ImGuiBackend.cpp
         src/core/imgui_backend/bindings/imgui_impl_glfw.cpp
         src/core/imgui_backend/bindings/imgui_impl_vulkan.cpp
+        src/core/imgui_backend/misc/imgui_stdlib.cpp
         ${IMGUIZMO_CPP}
         src/core/window/Event.cpp
         src/core/buffer/Buffer.cpp
