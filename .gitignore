@@ -1,4 +1,5 @@
 /engine/src/core/imgui_backend/bindings
+/engine/src/core/imgui_backend/misc
 *.spv
 CMakeUserPresets.json
 /build

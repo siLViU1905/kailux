@@ -36,7 +36,13 @@ class kailux(ConanFile):
     def generate(self):
         imgui = self.dependencies["imgui"]
         bindings_dir = os.path.join(imgui.package_folder, "res", "bindings")
-        dest_dir = os.path.join(self.source_folder, "engine", "src", "core", "imgui_backend", "bindings")
+        bindings_dest_dir = os.path.join(self.source_folder, "engine", "src", "core", "imgui_backend", "bindings")
 
         for pattern in ["*imgui_impl_glfw*", "*imgui_impl_vulkan*"]:
-            copy(self, pattern, bindings_dir, dest_dir)
+            copy(self, pattern, bindings_dir, bindings_dest_dir)
+
+        misc_dir = os.path.join(imgui.package_folder, "res", "misc", "cpp")
+        misc_dest_dir = os.path.join(self.source_folder, "engine", "src", "core", "imgui_backend", "misc")
+
+        for pattern in ["*imgui_stdlib*"]:
+            copy(self, pattern, misc_dir, misc_dest_dir)
