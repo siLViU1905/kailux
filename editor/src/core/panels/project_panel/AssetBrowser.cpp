@@ -1,5 +1,6 @@
 #include "AssetBrowser.h"
 #include "core/Core.h"
+#include "core/imgui_backend/misc/imgui_stdlib.h"
 
 namespace kailux
 {
@@ -7,7 +8,6 @@ namespace kailux
                                    mDirectoryTextureId(0),
                                    mFileTextureId(0),
                                    mItemToRenamePath(""),
-                                   mRenameBuffer(""),
                                    mIsRenaming(false)
     {
         if (!std::filesystem::exists(mCurrentPath))
@@ -33,14 +33,18 @@ namespace kailux
         if (ImGui::BeginTable("AssetBrowserTable", columnCount))
         {
             float iconSizePixels = ImGui::GetWindowWidth() * s_RelativeIconSize;
-            for (const auto &entry: std::filesystem::directory_iterator(mCurrentPath))
+            std::vector<Path> entries;
+            for (const auto &e : std::filesystem::directory_iterator(mCurrentPath))
+                entries.push_back(e);
+
+            for (const auto &entry: entries)
             {
                 ImGui::TableNextColumn();
 
-                bool isDirectory = std::filesystem::is_directory(entry.path());
+                bool isDirectory = std::filesystem::is_directory(entry);
                 auto iconId = isDirectory ? mDirectoryTextureId : mFileTextureId;
 
-                auto name = entry.path().filename().string();
+                auto name = entry.filename().string();
                 ImGui::PushID(name.c_str());
 
                 ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
@@ -56,12 +60,11 @@ namespace kailux
                     if (ImGui::MenuItem("Rename"))
                     {
                         mIsRenaming = true;
-                        mItemToRenamePath = entry.path();
-                        mRenameBuffer.fill(0);
-                        std::strncpy(mRenameBuffer.data(), name.c_str(), mRenameBuffer.size());
+                        mItemToRenamePath = entry;
+                        mRenameBuffer = name;
                     }
                     if (ImGui::MenuItem("Delete"))
-                        std::filesystem::remove_all(entry.path());
+                        std::filesystem::remove_all(entry);
 
                     ImGui::EndPopup();
                 }
@@ -71,26 +74,30 @@ namespace kailux
                 if (!isDirectory)
                     if (ImGui::BeginDragDropSource(s_DragDropSourceFlags))
                     {
-                        std::string itemPath = entry.path().string();
+                        std::string itemPath = entry.string();
                         ImGui::SetDragDropPayload(s_DragDropPayloadType.data(), itemPath.c_str(), itemPath.size() + 1);
                         ImGui::Text("%s", name.c_str());
                         ImGui::EndDragDropSource();
                     }
 
-                if (mIsRenaming && mItemToRenamePath == entry.path())
+                if (mIsRenaming && mItemToRenamePath == entry)
                 {
                     ImGui::SetKeyboardFocusHere();
-                    if (ImGui::InputText("##rename", mRenameBuffer.data(), mRenameBuffer.size(),
-                                         ImGuiInputTextFlags_EnterReturnsTrue))
+                    if (ImGui::InputText("##rename", &mRenameBuffer,ImGuiInputTextFlags_EnterReturnsTrue))
                     {
-                        std::filesystem::path newPath = entry.path().parent_path() / std::string(
-                                                            mRenameBuffer.begin(), mRenameBuffer.end());
+                        if (!mRenameBuffer.empty())
+                        {
+                            const auto newPath{entry.parent_path() / mRenameBuffer};
 
-                        if (!std::filesystem::exists(newPath))
-                            std::filesystem::rename(entry.path(), newPath);
+                            if (!std::filesystem::exists(newPath))
+                            {
+                                std::error_code ec;
+                                std::filesystem::rename(entry, newPath, ec);
+                            }
+                        }
 
                         mIsRenaming = false;
-                        mItemToRenamePath = "";
+                        mItemToRenamePath.clear();
                     }
 
                     if (!ImGui::IsItemActive() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
@@ -99,7 +106,7 @@ namespace kailux
                     ImGui::TextWrapped("%s", name.c_str());
 
                 if (iconDoubleClicked && isDirectory)
-                    mCurrentPath /= entry.path().filename();
+                    mCurrentPath /= entry.filename();
 
                 ImGui::PopID();
             }
