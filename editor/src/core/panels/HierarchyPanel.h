@@ -49,13 +49,12 @@ namespace kailux
             sizeof("Static\0Dynamic\0Kinematic\0")
         };
 
-        static bool on_entity_rename(entt::registry &registry, entt::entity entity);
-
         static bool can_delete_entity(const Scene& scene, entt::entity entity);
 
         static bool can_attach_physics(const entt::registry &registry, entt::entity entity);
 
         void OnEntityDelete(Scene &scene, entt::entity entity);
+        bool OnEntityRename(entt::registry &registry, entt::entity entity);
 
         void NotifyAndDestroyHierarchy(entt::registry& registry, entt::entity entity);
 
@@ -72,6 +71,10 @@ namespace kailux
         entt::entity     mSelectedEntity;
         entt::entity     mLastSelectedEntity{entt::null};
         entt::entity     mPendingDeleteEntity{entt::null};
+
+        std::string      mRenameBuffer;
+        entt::entity     mRenameTarget{entt::null};
+        bool             mRenameNameExists{};
 
         bool         mOpenPhysicsPopup{};
         entt::entity mPhysicsTargetEntity{entt::null};
