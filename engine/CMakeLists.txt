@@ -56,6 +56,7 @@ add_library(kailux_engine STATIC
         src/core/window/InputSource.cpp
         src/core/pipeline/GraphicsPipeline.cpp
         src/core/pipeline/ComputePipeline.cpp
+        src/core/components/math/Transform.cpp
 )
 
 target_compile_definitions(kailux_engine PUBLIC

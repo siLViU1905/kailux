@@ -317,7 +317,7 @@ namespace kailux
         return slot;
     }
 
-    JPH::ShapeRefC PhysicsRegistry::create_builtin_mesh_body(MeshType type, const MeshTransformData &transform)
+    JPH::ShapeRefC PhysicsRegistry::create_builtin_mesh_body(MeshType type, const Transform &transform)
     {
         JPH::ShapeRefC shape;
         switch (type)

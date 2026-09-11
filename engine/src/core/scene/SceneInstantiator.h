@@ -21,7 +21,7 @@ namespace kailux
         entt::entity                   target{entt::null};
         std::string                    name;
         MeshRecord                     record;
-        MeshTransformData              transform;
+        Transform                      transform;
         MeshMaterialData               material;
         std::optional<PhysicsRecord>   physics;
     };

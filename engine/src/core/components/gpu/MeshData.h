@@ -1,9 +1,10 @@
 #pragma once
 #include "MeshMaterialData.h"
-#include "MeshTransformData.h"
 
 namespace kailux
 {
+    using ModelMatrixType = glm::mat4;
+
     struct MeshData
     {
         ModelMatrixType   modelMatrix{1.f};

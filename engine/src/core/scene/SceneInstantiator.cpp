@@ -73,7 +73,7 @@ namespace kailux
                     entity,
                     record.name,
                     *record.mesh,
-                    record.transform.value_or(MeshTransformData{}),
+                    record.transform.value_or(Transform{}),
                     record.material.value_or(MeshMaterialData{}),
                     record.physics
                 );
@@ -81,11 +81,7 @@ namespace kailux
             if (record.camera)
             {
                 if (!record.transform)
-                {
-                    MeshTransformData transform;
-                    transform.position = record.camera->position;
-                    scene.SetLocalTransform(entity, transform);
-                }
+                    scene.SetLocalTransform(entity, {record.camera->position});
 
                 const GizmoComponent gizmo{
                     gizmoRegistry.GetBuiltins().camera,

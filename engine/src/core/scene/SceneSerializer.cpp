@@ -4,9 +4,10 @@
 
 #include "core/components/entt/BuiltinCamera.h"
 #include "core/components/entt/HierarchyComponent.h"
+#include "core/components/entt/LocalTransform.h"
 #include "core/components/entt/PhysicsComponent.h"
 #include "core/components/entt/TagComponent.h"
-#include "core/components/gpu/TransformComponent.h"
+#include "core/components/math/Transform.h"
 
 namespace kailux
 {
@@ -51,8 +52,8 @@ namespace kailux
             record.id   = details::to_id(entity);
             record.name = registry.get<TagComponent>(entity).name;
 
-            if (const auto *transform = registry.try_get<TransformComponent>(entity))
-                record.transform = transform->transform;
+            if (const auto *local = registry.try_get<LocalTransform>(entity))
+                record.transform = *local;
 
             if (const auto *hierarchy = registry.try_get<HierarchyComponent>(entity))
                 record.parent = details::to_id(hierarchy->parent);

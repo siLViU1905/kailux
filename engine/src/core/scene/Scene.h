@@ -6,13 +6,13 @@
 #include "../Core.h"
 #include "../components/entt/GizmoComponent.h"
 #include "../components/entt/MeshComponent.h"
-#include "../components/gpu/MeshTransformData.h"
 #include "../components/gpu/MeshMaterialData.h"
 #include "../components/gpu/SceneData.h"
 #include "../mesh/MeshLoader.h"
 #include "../texture/TextureRegistry.h"
 #include "core/components/entt/MeshSourceComponent.h"
 #include "core/components/entt/PhysicsComponent.h"
+#include "core/components/math/Transform.h"
 
 namespace kailux
 {
@@ -54,14 +54,14 @@ namespace kailux
             std::string_view name,
             const MeshComponent &component,
             MaterialHandle materialHandle,
-            const MeshTransformData &transform,
+            const Transform &transform,
             const MeshMaterialData &material,
             entt::entity parent = entt::null
         );
         entt::entity CreateParentEntity(std::string_view name);
 
         CreateResult CreatePointLightEntity(std::string_view name, const GizmoComponent &component,
-                                            const glm::vec3 &position);
+                                            const glm::vec3& position);
 
         entt::registry&       GetEntityRegistry();
         const entt::registry& GetEntityRegistry() const;
@@ -97,9 +97,13 @@ namespace kailux
         void AttachCamera(entt::entity entity, const GizmoComponent &component, const CameraComponent &camera);
         void AttachBuiltinCamera(entt::entity entity);
 
-        void SetLocalTransform(entt::entity entity, const MeshTransformData &transform);
+        glm::mat4 GetParentWorldMatrix(entt::entity entity) const;
+        void      SetLocalTransform(entt::entity entity, const Transform &transform);
+        void      SetWorldTransform(entt::entity entity, const glm::mat4 &world);
+
         void SetParent(entt::entity child, entt::entity parent);
         void DetachFromParent(entt::entity child);
+
         void DestroyEntity(entt::entity entity);
 
         friend class SceneInstantiator;

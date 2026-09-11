@@ -4,7 +4,7 @@
 #include "core/components/entt/CameraComponent.h"
 #include "core/components/gpu/DirectionalLightData.h"
 #include "core/components/gpu/MeshMaterialData.h"
-#include "core/components/gpu/MeshTransformData.h"
+#include "core/components/math/Transform.h"
 #include "core/physics/PhysicsRegistry.h"
 
 namespace kailux
@@ -44,7 +44,7 @@ namespace kailux
         uint32_t                         id{kNoEntity};
         uint32_t                         parent{kNoEntity};
         std::string                      name;
-        std::optional<MeshTransformData> transform{};
+        std::optional<Transform>         transform{};
         std::optional<MeshRecord>        mesh;
         std::optional<MeshMaterialData>  material;
         std::optional<PointLightRecord>  light;
@@ -73,7 +73,7 @@ namespace kailux
 
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(MeshRecord, path, type)
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(PhysicsRecord, type, canBecomeDynamic)
-    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(MeshTransformData, position, rotation, scale)
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Transform, position, rotation, scale)
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(MeshMaterialData, albedoAndRoughness, pbrParams)
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(PointLightRecord, intensity, range, colorAndEnabled)
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(SunData, directionAndIntensity, colorAndEnabled)
@@ -91,7 +91,7 @@ namespace kailux
         void readOptional(const nlohmann::json &js, std::string_view key, std::optional<T> &value)
         {
             if (const auto it = js.find(std::string(key)); it != js.end() && !it->is_null())
-                value = it->template get<T>();
+                value = it->get<T>();
             else
                 value.reset();
         }
