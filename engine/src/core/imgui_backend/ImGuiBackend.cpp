@@ -246,27 +246,27 @@ namespace kailux
         constexpr ImVec4 kDanger = to_rgba(0xFFE05252);
         constexpr ImVec4 kInfo = to_rgba(0xFF5C9FD6);
 
-        style.WindowPadding = ImVec2(12.f, 11.f);
-        style.FramePadding = ImVec2(11.f, 7.f);
-        style.ItemSpacing = ImVec2(9.f, 8.f);
+        style.WindowPadding = ImVec2(14.f, 12.f);
+        style.FramePadding = ImVec2(10.f, 6.f);
+        style.ItemSpacing = ImVec2(8.f, 7.f);
         style.ItemInnerSpacing = ImVec2(8.f, 6.f);
         style.CellPadding = ImVec2(8.f, 5.f);
-        style.IndentSpacing = 22.f;
-        style.ScrollbarSize = 13.f;
+        style.IndentSpacing = 16.f;
+        style.ScrollbarSize = 10.f;
         style.GrabMinSize = 12.f;
 
         style.WindowBorderSize = 0.f;
-        style.ChildBorderSize = 1.f;
+        style.ChildBorderSize = 0.f;
         style.PopupBorderSize = 1.f;
-        style.FrameBorderSize = 1.f;
+        style.FrameBorderSize = 0.f;
         style.SeparatorTextBorderSize = 1.f;
 
         style.WindowRounding = 8.f;
         style.ChildRounding = 7.f;
         style.PopupRounding = 8.f;
-        style.FrameRounding = 5.f;
+        style.FrameRounding = 6.f;
         style.ScrollbarRounding = 12.f;
-        style.GrabRounding = 5.f;
+        style.GrabRounding = 6.f;
         style.TabRounding = 6.f;
 
         style.WindowTitleAlign = ImVec2(0.f, 0.5f);
@@ -284,7 +284,7 @@ namespace kailux
         style.TabCloseButtonMinWidthSelected = -1.f;
         style.TabCloseButtonMinWidthUnselected = 0.f;
 
-        style.TreeLinesFlags = ImGuiTreeNodeFlags_DrawLinesToNodes;
+        style.TreeLinesFlags = ImGuiTreeNodeFlags_DrawLinesNone;
         style.TreeLinesSize = 1.f;
         style.TreeLinesRounding = 8.f;
 
@@ -308,12 +308,12 @@ namespace kailux
         colors[ImGuiCol_WindowBg] = kVoid;
         colors[ImGuiCol_ChildBg] = ImVec4{0.f, 0.f, 0.f, 0.f};
         colors[ImGuiCol_PopupBg] = kOverlay;
-        colors[ImGuiCol_Border] = alpha(kBorder, 0.90f);
+        colors[ImGuiCol_Border] = alpha(kBorder, 0.55f);
         colors[ImGuiCol_BorderShadow] = ImVec4{0.f, 0.f, 0.f, 0.f};
 
         colors[ImGuiCol_FrameBg] = kSunken;
-        colors[ImGuiCol_FrameBgHovered] = alpha(kWhite, 0.05f);
-        colors[ImGuiCol_FrameBgActive] = alpha(kWhite, 0.09f);
+        colors[ImGuiCol_FrameBgHovered] = lerp(kSunken, kRaised, 0.45f);
+        colors[ImGuiCol_FrameBgActive] = kRaised;
 
         colors[ImGuiCol_TitleBg] = kSunken;
         colors[ImGuiCol_TitleBgActive] = kRaised;
@@ -329,13 +329,13 @@ namespace kailux
         colors[ImGuiCol_SliderGrab] = kAccentDim;
         colors[ImGuiCol_SliderGrabActive] = kAccent;
 
-        colors[ImGuiCol_Button] = alpha(kWhite, 0.06f);
-        colors[ImGuiCol_ButtonHovered] = alpha(kWhite, 0.13f);
-        colors[ImGuiCol_ButtonActive] = alpha(kAccent, 0.55f);
+        colors[ImGuiCol_Button] = kRaised;
+        colors[ImGuiCol_ButtonHovered] = kOverlay;
+        colors[ImGuiCol_ButtonActive] = alpha(kAccent, 0.35f);
 
-        colors[ImGuiCol_Header] = alpha(kAccent, 0.20f);
-        colors[ImGuiCol_HeaderHovered] = alpha(kWhite, 0.07f);
-        colors[ImGuiCol_HeaderActive] = alpha(kAccent, 0.32f);
+        colors[ImGuiCol_Header] = alpha(kAccent, 0.16f);
+        colors[ImGuiCol_HeaderHovered] = alpha(kAccent, 0.08f);
+        colors[ImGuiCol_HeaderActive] = alpha(kAccent, 0.22f);
 
         colors[ImGuiCol_Separator] = alpha(kBorder, 0.80f);
         colors[ImGuiCol_SeparatorHovered] = alpha(kAccent, 0.65f);

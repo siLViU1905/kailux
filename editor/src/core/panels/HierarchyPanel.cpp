@@ -9,6 +9,7 @@
 #include "core/components/entt/PhysicsComponent.h"
 #include "core/components/entt/TagComponent.h"
 #include "project_panel/ProjectPanel.h"
+#include "../UIWidgets.h"
 
 namespace kailux
 {
@@ -37,6 +38,9 @@ namespace kailux
         {
             auto &registry = scene.GetEntityRegistry();
 
+            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(6.f, 4.f));
+            ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, 14.f);
+
             auto view = registry.view<TagComponent>();
             for (auto entity: view)
             {
@@ -45,6 +49,8 @@ namespace kailux
                 if (!hierarchy || hierarchy->parent == entt::null)
                     RenderEntityNode(scene, entity);
             }
+
+            ImGui::PopStyleVar(2);
 
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && ImGui::IsWindowHovered() && !ImGui::IsAnyItemHovered())
             {
@@ -277,14 +283,43 @@ namespace kailux
         const auto &tag = registry.get<TagComponent>(entity);
         auto *hierarchy = registry.try_get<HierarchyComponent>(entity);
 
-        ImGuiTreeNodeFlags flags = ((mSelectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0);
-        flags |= ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+        const bool selected = mSelectedEntity == entity;
 
+        // Nu mai lasam TreeNode sa-si deseneze singur highlight-ul; desenam noi o "pastila".
+        ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth |
+                                   ImGuiTreeNodeFlags_FramePadding;
         if (!hierarchy || hierarchy->children.empty())
             flags |= ImGuiTreeNodeFlags_Leaf;
 
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10.f, 6.f));
+        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.f, 0.f, 0.f, 0.f));
+        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.f, 0.f, 0.f, 0.f));
+        ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.f, 0.f, 0.f, 0.f));
+        if (selected)
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.98f, 0.86f, 0.68f, 1.f));
+
+        auto *dl{ImGui::GetWindowDrawList()};
+        const ImVec2 rowMin = ImGui::GetCursorScreenPos();
+        const ImVec2 rowMax(rowMin.x + ImGui::GetContentRegionAvail().x, rowMin.y + ImGui::GetFrameHeight());
+        const bool rowHovered = ImGui::IsWindowHovered() && ImGui::IsMouseHoveringRect(rowMin, rowMax);
+        constexpr float kRounding = 6.f;
+
+        if (selected)
+        {
+            dl->AddRectFilled(rowMin, rowMax, widgets::colors::kRowSelected, kRounding);
+            dl->AddRect(rowMin, rowMax, widgets::colors::kRowSelBorder, kRounding);
+        }
+        else
+        {
+            dl->AddRectFilled(rowMin, rowMax, rowHovered ? widgets::colors::kRowHover : widgets::colors::kRowIdle, kRounding);
+            dl->AddRect(rowMin, rowMax, widgets::colors::kRowBorder, kRounding);
+        }
+
         bool opened = ImGui::TreeNodeEx(reinterpret_cast<void *>(static_cast<uintptr_t>(entity)), flags, "%s",
                                         tag.name.c_str());
+
+        ImGui::PopStyleColor(selected ? 4 : 3);
+        ImGui::PopStyleVar();
 
         if (ImGui::IsItemClicked())
             mSelectedEntity = entity;

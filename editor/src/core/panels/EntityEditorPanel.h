@@ -30,7 +30,14 @@ namespace kailux
         void SetOnBodyScaleChange(OnBodyScaleChange&& callback);
 
     private:
+        static constexpr std::array<std::string_view, 3> kOperations{"Move", "Rotate", "Scale"};
+        static constexpr std::array                      kOperationValues{ImGuizmo::TRANSLATE, ImGuizmo::ROTATE, ImGuizmo::SCALE};
+
+        static constexpr std::array<std::string_view, 2> kOperationModeLabels{"Local", "World"};
+        static constexpr std::array                      kOperationModes{ImGuizmo::LOCAL, ImGuizmo::WORLD};
+
         void RenderGizmo(Scene& scene);
+        void RenderHeader(const entt::registry &registry) const;
         void RenderMeshProperties(entt::registry &registry);
         void RenderBodyProperties(entt::registry &registry);
         void RenderMaterialProperties(Scene &scene) const;
