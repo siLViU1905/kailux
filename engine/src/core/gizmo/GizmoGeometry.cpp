@@ -9,40 +9,100 @@ namespace kailux
 
         constexpr float pi{std::numbers::pi_v<float>};
 
-        constexpr uint32_t circleSegments{24};
-        constexpr float    circleRadius{0.35f};
-        constexpr float    thickness{0.02f};
-
-        constexpr uint32_t rayCount{8};
-        constexpr float    rayInner{0.5f};
-        constexpr float    rayOuter{0.75f};
-
+        constexpr float thickness{0.02f};
         constexpr float halfThickness{thickness / 2.f};
 
-        constexpr uint32_t quadCount{circleSegments + rayCount};
+        constexpr uint32_t globeSegments{20};
+        constexpr float    globeRadius{0.30f};
+        constexpr float    globeOpenHalfAngle{pi / 6.f};
+
+        constexpr float neckTopHalfWidth{0.15f};
+        constexpr float neckTopY{-0.26f};
+        constexpr float baseHalfWidth{0.11f};
+        constexpr float baseTopY{-0.40f};
+        constexpr float baseBottomY{-0.58f};
+        constexpr uint32_t baseBands{4};
+        constexpr float tipHalfWidth{0.05f};
+        constexpr float tipY{-0.64f};
+
+        constexpr uint32_t rayCount{8};
+        constexpr float    rayInner{0.42f};
+        constexpr float    rayOuter{0.64f};
+
+        constexpr float filamentPostX{0.05f};
+        constexpr float filamentLowY{-0.12f};
+        constexpr float filamentHighY{-0.05f};
+
+        constexpr uint32_t quadCount{globeSegments + 2 + 2 + baseBands + 3 + 2 + 4 + rayCount};
         data.vertices.reserve(quadCount * 4);
         data.indices.reserve(quadCount * 6);
 
-        for (uint32_t i{0}; i < circleSegments; ++i)
+        auto polyline = [&](auto const &points)
         {
-            float a0{(static_cast<float>(i)     / circleSegments) * 2.f * pi};
-            float a1{(static_cast<float>(i + 1) / circleSegments) * 2.f * pi};
+            for (size_t i{}; i + 1 < points.size(); ++i)
+                append_segment(data, points[i], points[i + 1], halfThickness, color);
+        };
 
-            glm::vec2 p0{std::cos(a0) * circleRadius, std::sin(a0) * circleRadius};
-            glm::vec2 p1{std::cos(a1) * circleRadius, std::sin(a1) * circleRadius};
+        {
+            const float start{-pi / 2.f + globeOpenHalfAngle};
+            const float sweep{2.f * pi - 2.f * globeOpenHalfAngle};
 
-            append_segment(data, p0, p1, halfThickness, color);
+            for (uint32_t i{}; i < globeSegments; ++i)
+            {
+                const float a0{start + (static_cast<float>(i)     / globeSegments) * sweep};
+                const float a1{start + (static_cast<float>(i + 1) / globeSegments) * sweep};
+
+                const glm::vec2 p0{std::cos(a0) * globeRadius, std::sin(a0) * globeRadius};
+                const glm::vec2 p1{std::cos(a1) * globeRadius, std::sin(a1) * globeRadius};
+
+                append_segment(data, p0, p1, halfThickness, color);
+            }
         }
+
+        polyline(std::array{
+            glm::vec2{ neckTopHalfWidth, neckTopY},
+            glm::vec2{ baseHalfWidth,    baseTopY},
+            glm::vec2{ baseHalfWidth,    baseBottomY},
+        });
+        polyline(std::array{
+            glm::vec2{-neckTopHalfWidth, neckTopY},
+            glm::vec2{-baseHalfWidth,    baseTopY},
+            glm::vec2{-baseHalfWidth,    baseBottomY},
+        });
+
+        for (uint32_t i{}; i < baseBands; ++i)
+        {
+            const float t{static_cast<float>(i) / static_cast<float>(baseBands - 1)};
+            const float y{baseTopY + (baseBottomY - baseTopY) * t};
+            append_segment(data, {-baseHalfWidth, y}, {baseHalfWidth, y}, halfThickness, color);
+        }
+
+        polyline(std::array{
+            glm::vec2{-baseHalfWidth, baseBottomY},
+            glm::vec2{-tipHalfWidth,  tipY},
+            glm::vec2{ tipHalfWidth,  tipY},
+            glm::vec2{ baseHalfWidth, baseBottomY},
+        });
+
+        append_segment(data, {-filamentPostX, baseTopY}, {-filamentPostX, filamentLowY}, halfThickness, color);
+        append_segment(data, { filamentPostX, baseTopY}, { filamentPostX, filamentLowY}, halfThickness, color);
+        polyline(std::array{
+            glm::vec2{-filamentPostX,        filamentLowY},
+            glm::vec2{-filamentPostX * 0.5f, filamentHighY},
+            glm::vec2{ 0.f,                  filamentLowY},
+            glm::vec2{ filamentPostX * 0.5f, filamentHighY},
+            glm::vec2{ filamentPostX,        filamentLowY},
+        });
 
         for (uint32_t i{}; i < rayCount; ++i)
         {
             const float angle{(static_cast<float>(i) / rayCount) * 2.f * pi};
-            glm::vec2 dir{std::cos(angle), std::sin(angle)};
+            const glm::vec2 dir{std::cos(angle), std::sin(angle)};
 
-            const auto start{dir * rayInner};
-            const auto end{dir * rayOuter};
+            if (dir.y < -0.9f)
+                continue;
 
-            append_segment(data, start, end, halfThickness, color);
+            append_segment(data, dir * rayInner, dir * rayOuter, halfThickness, color);
         }
 
         return data;
