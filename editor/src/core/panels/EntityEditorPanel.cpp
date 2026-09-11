@@ -11,6 +11,7 @@
 #include "core/components/entt/TagComponent.h"
 #include "core/components/entt/WorldTransform.h"
 #include "core/components/gpu/CameraData.h"
+#include "../UIWidgets.h"
 
 namespace kailux
 {
@@ -49,13 +50,13 @@ namespace kailux
             return;
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, mBackgroundColor);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16.f, 14.f));
         const bool visible{ImGui::Begin(mName.c_str(), &mOpen)};
+        ImGui::PopStyleVar();
         mFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
         if (visible)
         {
-            const auto &tag = registry.get<TagComponent>(mSelectedEntity);
-            ImGui::Text("Entity: %s", tag.name.c_str());
-            ImGui::Separator();
+            RenderHeader(registry);
 
             if (registry.all_of<LocalTransform>(mSelectedEntity) &&
                 !registry.any_of<PointLightData>(mSelectedEntity))
@@ -178,163 +179,228 @@ namespace kailux
         }
     }
 
+    void EntityEditorPanel::RenderHeader(const entt::registry &registry) const
+    {
+        const auto &[name]{registry.get<TagComponent>(mSelectedEntity)};
+
+        std::string_view kind{"Entity"};
+        if (registry.all_of<DirectionalLightData>(mSelectedEntity)) kind = "Directional light";
+        else if (registry.all_of<PointLightData>(mSelectedEntity))  kind = "Point light";
+        else if (registry.all_of<CameraComponent>(mSelectedEntity)) kind = "Camera";
+        else if (registry.all_of<MeshComponent>(mSelectedEntity))   kind = "Mesh";
+
+        ImGui::SetWindowFontScale(1.15f);
+        ImGui::TextUnformatted(name.c_str());
+        ImGui::SetWindowFontScale(1.f);
+        ImGui::TextDisabled("%s", kind.data());
+        ImGui::Dummy(ImVec2(0.f, 4.f));
+    }
+
     void EntityEditorPanel::RenderMeshProperties(entt::registry &registry)
     {
-        ImGui::Text("Gizmo Operation:");
-                if (ImGui::RadioButton("Translate", mCurrentGizmoOperation == ImGuizmo::TRANSLATE))
-                    mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
-                ImGui::SameLine();
-                if (ImGui::RadioButton("Rotate", mCurrentGizmoOperation == ImGuizmo::ROTATE))
-                    mCurrentGizmoOperation = ImGuizmo::ROTATE;
-                ImGui::SameLine();
-                if (ImGui::RadioButton("Scale", mCurrentGizmoOperation == ImGuizmo::SCALE))
-                    mCurrentGizmoOperation = ImGuizmo::SCALE;
+        if (registry.all_of<MeshComponent>(mSelectedEntity))
+            widgets::segmented("##gizmo_op", mCurrentGizmoOperation, kOperations, kOperationValues);
+        
+        widgets::segmented("##gizmo_mode", mCurrentGizmoMode, kOperationModeLabels, kOperationModes);
 
-                ImGui::Text("Gizmo Mode:");
-                if (ImGui::RadioButton("Local", mCurrentGizmoMode == ImGuizmo::LOCAL))
-                    mCurrentGizmoMode = ImGuizmo::LOCAL;
-                ImGui::SameLine();
-                if (ImGui::RadioButton("World", mCurrentGizmoMode == ImGuizmo::WORLD))
-                    mCurrentGizmoMode = ImGuizmo::WORLD;
+        auto &transform = registry.get<LocalTransform>(mSelectedEntity);
+        if (!widgets::section("Transform"))
+            return;
 
-                ImGui::Separator();
+        if (!widgets::begin_properties("##transform"))
+            return;
 
-                auto &transform = registry.get<LocalTransform>(mSelectedEntity);
-                if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
-                {
-                    ImGui::InputFloat3("Translation", glm::value_ptr(transform.position));
+         widgets::property("Position");
+         widgets::vec3_control("pos", transform.position);
 
-                    if (ImGui::InputFloat3("Rotation (Deg)", glm::value_ptr(mRotationDegrees)))
-                        transform.rotation = glm::quat(glm::radians(mRotationDegrees));
+         widgets::property("Rotation");
+        if (widgets::vec3_control("rot", mRotationDegrees, 0.5f, 0.f, nullptr, "%.1f"))
+            transform.rotation = glm::quat(glm::radians(mRotationDegrees));
 
-                    auto oldScale = transform.scale;
-                    if (ImGui::InputFloat3("Scale", glm::value_ptr(transform.scale)))
-                    {
-                        if (mUniformScale)
-                        {
-                            float newValue = oldScale.x;
-                            if (transform.scale.x != oldScale.x)
-                                newValue = transform.scale.x;
-                            else if (transform.scale.y != oldScale.y)
-                                newValue = transform.scale.y;
-                            else if (transform.scale.z != oldScale.z)
-                                newValue = transform.scale.z;
-                            transform.scale = glm::vec3(newValue);
-                        }
+         widgets::property("Scale");
+        {
+            const float lockWidth = ImGui::GetFrameHeight() + 6.f;
+            const float fieldsWidth = ImGui::GetContentRegionAvail().x - lockWidth;
 
-                    }
-                    if (ImGui::IsItemDeactivatedAfterEdit() && registry.all_of<PhysicsComponent>(mSelectedEntity))
-                        mOnBodyScaleChange(registry.get<PhysicsComponent>(mSelectedEntity), transform.scale);
-                    ImGui::SameLine();
-                    ImGui::Checkbox("##uniform", &mUniformScale);
-                    if (ImGui::IsItemHovered())
-                        ImGui::SetTooltip("Uniform Scale");
-                }
+            const auto oldScale = transform.scale;
+            bool editDone{};
+            if (widgets::vec3_control("scale", transform.scale, 0.02f, 1.f, &editDone, "%.2f", fieldsWidth) &&
+                mUniformScale)
+            {
+                float newValue = oldScale.x;
+                if (transform.scale.x != oldScale.x)      newValue = transform.scale.x;
+                else if (transform.scale.y != oldScale.y) newValue = transform.scale.y;
+                else if (transform.scale.z != oldScale.z) newValue = transform.scale.z;
+                transform.scale = glm::vec3(newValue);
+            }
+
+            ImGui::SameLine(0.f, 6.f);
+            ImGui::Checkbox("##uniform", &mUniformScale);
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("Uniform scale");
+
+            if (editDone && registry.all_of<PhysicsComponent>(mSelectedEntity))
+                mOnBodyScaleChange(registry.get<PhysicsComponent>(mSelectedEntity), transform.scale);
+        }
+
+         widgets::end_properties();
     }
 
     void EntityEditorPanel::RenderBodyProperties(entt::registry &registry)
     {
-        if (ImGui::CollapsingHeader("Physics", ImGuiTreeNodeFlags_DefaultOpen))
+        if (!widgets::section("Physics"))
+            return;
+
+        auto &physics = registry.get<PhysicsComponent>(mSelectedEntity);
+        auto &control = registry.get<PhysicsControlComponent>(mSelectedEntity);
+
+        if (!widgets::begin_properties("##physics"))
+            return;
+
+        ImGui::BeginDisabled(mSimulationRunning);
+
+         widgets::property("Body type");
+        int typeIndex = static_cast<int>(physics.type);
+        if (ImGui::Combo("##body_type", &typeIndex, HierarchyPanel::s_BodyTypeOptions.data()))
         {
-            auto &physics = registry.get<PhysicsComponent>(mSelectedEntity);
-            auto &control = registry.get<PhysicsControlComponent>(mSelectedEntity);
-
-            ImGui::BeginDisabled(mSimulationRunning);
-
-            int typeIndex = static_cast<int>(physics.type);
-            if (ImGui::Combo("Body type", &typeIndex, HierarchyPanel::s_BodyTypeOptions.data()))
-            {
-                physics.type = static_cast<PhysicsBodyType>(typeIndex);
-                mOnBodyTypeChange(physics, physics.type);
-            }
-
-            ImGui::InputFloat3("Velocity", glm::value_ptr(control.velocity));
-
-            ImGui::EndDisabled();
-
-            ImGui::InputFloat3("Force", glm::value_ptr(control.force));
-            ImGui::Checkbox("Apply Force", &control.applyForce);
-
-            ImGui::InputFloat3("Impulse", glm::value_ptr(control.impulse));
-            control.applyImpulse = ImGui::Button("Apply Impulse");
+            physics.type = static_cast<PhysicsBodyType>(typeIndex);
+            mOnBodyTypeChange(physics, physics.type);
         }
+
+         widgets::property("Velocity");
+         widgets::vec3_control("vel", control.velocity);
+
+        ImGui::EndDisabled();
+
+         widgets::property("Force");
+         widgets::vec3_control("force", control.force);
+
+         widgets::property("");
+        ImGui::Checkbox("Apply force continuously", &control.applyForce);
+
+         widgets::property("Impulse");
+         widgets::vec3_control("impulse", control.impulse);
+
+         widgets::property("");
+        control.applyImpulse = ImGui::Button("Apply impulse", ImVec2(-FLT_MIN, 0.f));
+
+         widgets::end_properties();
     }
 
     void EntityEditorPanel::RenderMaterialProperties(Scene &scene) const
     {
-        if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
-        {
-            auto &material = scene.GetEntityRegistry().get<MeshMaterialData>(mSelectedEntity);
-            bool changed = false;
+        if (!widgets::section("Material"))
+            return;
 
-            float &roughness = material.albedoAndRoughness.w;
-            changed |= ImGui::SliderFloat("Roughness", &roughness, 0.f, 1.f);
+        auto &material = scene.GetEntityRegistry().get<MeshMaterialData>(mSelectedEntity);
+        bool changed = false;
 
-            float &metallic = material.pbrParams.x;
-            changed |= ImGui::SliderFloat("Metallic", &metallic, 0.f, 1.f);
+        if (!widgets::begin_properties("##material"))
+            return;
 
-            float &ao = material.pbrParams.y;
-            changed |= ImGui::SliderFloat("AO", &ao, 0.f, 1.f);
+         widgets::property("Albedo");
+        changed |= ImGui::ColorEdit3("##albedo", glm::value_ptr(material.albedoAndRoughness),
+                                     ImGuiColorEditFlags_DisplayHex | ImGuiColorEditFlags_PickerHueWheel);
 
-            changed |= ImGui::ColorPicker3("Albedo", glm::value_ptr(material.albedoAndRoughness));
+         widgets::property("Roughness");
+        changed |= ImGui::SliderFloat("##roughness", &material.albedoAndRoughness.w, 0.f, 1.f, "%.2f");
 
-            if (changed)
-                propagate_material_to_children(scene, mSelectedEntity, material);
-        }
+         widgets::property("Metallic");
+        changed |= ImGui::SliderFloat("##metallic", &material.pbrParams.x, 0.f, 1.f, "%.2f");
+
+         widgets::property("AO");
+        changed |= ImGui::SliderFloat("##ao", &material.pbrParams.y, 0.f, 1.f, "%.2f");
+
+         widgets::end_properties();
+
+        if (changed)
+            propagate_material_to_children(scene, mSelectedEntity, material);
     }
 
     void EntityEditorPanel::RenderDirectionalLightProperties(entt::registry &registry) const
     {
         auto &data = registry.get<DirectionalLightData>(mSelectedEntity);
-        if (ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen))
-        {
-            ImGui::SliderFloat3("Direction", glm::value_ptr(data.directionAndIntensity), -1.f, 1.f);
-            float &intensity = data.directionAndIntensity.w;
-            ImGui::InputFloat("Intensity", &intensity);
-            ImGui::ColorPicker3("Color", glm::value_ptr(data.colorAndEnabled));
-            float &enableValue = data.colorAndEnabled.w;
-            bool enabled = enableValue > 0.5f;
-            if (ImGui::Checkbox("Enabled", &enabled))
-                enabled ? enableValue = 1.f : enableValue = 0.f;
-        }
+        if (!widgets::section("Light"))
+            return;
+
+        if (!widgets::begin_properties("##sun"))
+            return;
+
+        float &enableValue = data.colorAndEnabled.w;
+        bool enabled = enableValue > 0.5f;
+         widgets::property("Enabled");
+        if (ImGui::Checkbox("##enabled", &enabled))
+            enableValue = enabled ? 1.f : 0.f;
+
+         widgets::property("Color");
+        ImGui::ColorEdit3("##color", glm::value_ptr(data.colorAndEnabled),
+                          ImGuiColorEditFlags_DisplayHex | ImGuiColorEditFlags_PickerHueWheel);
+
+         widgets::property("Intensity");
+        ImGui::DragFloat("##intensity", &data.directionAndIntensity.w, 0.05f, 0.f, FLT_MAX, "%.2f");
+
+         widgets::property("Direction");
+        glm::vec3 dir{data.directionAndIntensity};
+        if (widgets::vec3_control("dir", dir, 0.01f))
+            data.directionAndIntensity = glm::vec4(glm::clamp(dir, glm::vec3(-1.f), glm::vec3(1.f)),
+                                                   data.directionAndIntensity.w);
+
+         widgets::end_properties();
     }
 
     void EntityEditorPanel::RenderPointLightProperties(entt::registry &registry) const
     {
         auto [light, local] = registry.get<PointLightData, LocalTransform>(mSelectedEntity);
-        if (ImGui::CollapsingHeader("Point Light", ImGuiTreeNodeFlags_DefaultOpen))
-        {
-            ImGui::InputFloat3("Position", glm::value_ptr(local.position));
+        if (!widgets::section("Point light"))
+            return;
 
-            float &intensity = light.positionAndIntensity.w;
-            ImGui::InputFloat("Intensity", &intensity);
+        if (!widgets::begin_properties("##point_light"))
+            return;
 
-            float &range = light.range.x;
-            ImGui::InputFloat("Range", &range);
+        float &enableValue = light.colorAndEnabled.w;
+        bool enabled = enableValue > 0.5f;
+         widgets::property("Enabled");
+        if (ImGui::Checkbox("##enabled", &enabled))
+            enableValue = enabled ? 1.f : 0.f;
 
-            ImGui::ColorPicker3("Color", glm::value_ptr(light.colorAndEnabled));
+         widgets::property("Position");
+         widgets::vec3_control("pos", local.position);
+
+         widgets::property("Color");
+        if (ImGui::ColorEdit3("##color", glm::value_ptr(light.colorAndEnabled),
+                              ImGuiColorEditFlags_DisplayHex | ImGuiColorEditFlags_PickerHueWheel))
             registry.get<GizmoComponent>(mSelectedEntity).color = {glm::vec3(light.colorAndEnabled), 1.f};
 
-            float &enableValue = light.colorAndEnabled.w;
-            bool enabled = enableValue > 0.5f;
-            if (ImGui::Checkbox("Enabled", &enabled))
-                enableValue = enabled ? 1.f : 0.f;
-        }
+         widgets::property("Intensity");
+        ImGui::DragFloat("##intensity", &light.positionAndIntensity.w, 0.1f, 0.f, FLT_MAX, "%.2f");
+
+         widgets::property("Range");
+        ImGui::DragFloat("##range", &light.range.x, 0.1f, 0.f, FLT_MAX, "%.2f");
+
+         widgets::end_properties();
     }
 
     void EntityEditorPanel::RenderCameraProperties(Scene &scene) const
     {
-        auto& registry{scene.GetEntityRegistry()};
+        auto &registry{scene.GetEntityRegistry()};
         auto &camera = registry.get<CameraComponent>(mSelectedEntity);
-        if (ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen))
-        {
-            ImGui::InputFloat("Exposure", &camera.exposure, 0.f, 0.f, "%.6f");
+        if (!widgets::section("Camera"))
+            return;
 
-            const bool isBuiltin{registry.all_of<BuiltinCamera>(mSelectedEntity)};
-            if (!isBuiltin)
-                if (ImGui::Checkbox("Primary", &camera.isPrimary) && camera.isPrimary)
-                    scene.SetPrimaryCamera(mSelectedEntity);
+        if (!widgets::begin_properties("##camera"))
+            return;
+
+         widgets::property("Exposure");
+        ImGui::DragFloat("##exposure", &camera.exposure, 0.00001f, 0.f, FLT_MAX, "%.6f");
+
+        if (!registry.all_of<BuiltinCamera>(mSelectedEntity))
+        {
+             widgets::property("Primary");
+            if (ImGui::Checkbox("##primary", &camera.isPrimary) && camera.isPrimary)
+                scene.SetPrimaryCamera(mSelectedEntity);
         }
+
+         widgets::end_properties();
     }
 
     void EntityEditorPanel::propagate_material_to_children(Scene &scene, entt::entity entity,

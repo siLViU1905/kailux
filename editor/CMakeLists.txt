@@ -11,6 +11,7 @@ add_library(kailux_editor
         src/core/panels/project_panel/Console.cpp
         src/core/panels/ViewportPanel.cpp
         src/core/panels/SimulationPanel.cpp
+        src/core/UIWidgets.cpp
 )
 
 target_precompile_headers(kailux_editor REUSE_FROM kailux_engine)
