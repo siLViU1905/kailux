@@ -22,6 +22,10 @@ namespace kailux
         bool IsOpen() const;
         bool IsFocused() const;
 
+        void Lock();
+        void Unlock();
+        bool IsLocked() const;
+
         InputSource GetInputSource() const;
 
         bool ConsumeToggleMouseLook();
@@ -33,5 +37,6 @@ namespace kailux
         bool         mFocused{};
         GLFWwindow*  mPlatformWindow{};
         bool         mToggleMouseLook{};
+        bool         mLocked{};
     };
 }

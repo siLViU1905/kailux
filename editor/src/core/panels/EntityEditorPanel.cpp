@@ -59,10 +59,16 @@ namespace kailux
 
             if (registry.all_of<LocalTransform>(mSelectedEntity) &&
                 !registry.any_of<PointLightData>(mSelectedEntity))
+            {
+                ImGui::BeginDisabled(mLocked);
                 RenderMeshProperties(registry);
+                ImGui::EndDisabled();
+            }
 
             if (registry.all_of<PhysicsComponent, PhysicsControlComponent>(mSelectedEntity))
                 RenderBodyProperties(registry);
+
+            ImGui::BeginDisabled(mLocked);
 
             if (registry.all_of<MeshMaterialData>(mSelectedEntity))
                 RenderMaterialProperties(scene);
@@ -75,6 +81,8 @@ namespace kailux
 
             else if (registry.all_of<CameraComponent>(mSelectedEntity))
                 RenderCameraProperties(scene);
+
+            ImGui::EndDisabled();
         }
         ImGui::End();
         ImGui::PopStyleColor();
@@ -119,6 +127,13 @@ namespace kailux
 
     void EntityEditorPanel::RenderGizmo(Scene &scene)
     {
+        if (mLocked)
+        {
+            mGizmoInUse       = false;
+            mGizmoWasDragging = false;
+            return;
+        }
+
         auto &registry = scene.GetEntityRegistry();
 
         if (!registry.all_of<LocalTransform>(mSelectedEntity))
