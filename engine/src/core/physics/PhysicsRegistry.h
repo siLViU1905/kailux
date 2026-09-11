@@ -7,7 +7,7 @@
 #include <Jolt/Core/JobSystemThreadPool.h>
 
 #include "core/Core.h"
-#include "core/components/gpu/MeshTransformData.h"
+#include "core/components/math/Transform.h"
 #include "core/mesh/MeshRegistry.h"
 
 namespace kailux
@@ -39,7 +39,7 @@ namespace kailux
     {
         std::vector<SubmeshPhysicsInfo> submeshes;
         MeshType                        meshType;
-        MeshTransformData               transform;
+        Transform                       transform;
         PhysicsCreationOptions          options;
     };
 
@@ -84,7 +84,7 @@ namespace kailux
 
         uint32_t AcquireSlot();
 
-        static JPH::ShapeRefC create_builtin_mesh_body(MeshType type, const MeshTransformData &transform);
+        static JPH::ShapeRefC create_builtin_mesh_body(MeshType type, const Transform &transform);
         static JPH::ShapeRefC create_loaded_mesh_body(const PhysicsBodyInfo &info);
 
         struct ChildShapeResult

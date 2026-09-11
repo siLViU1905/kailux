@@ -4,8 +4,9 @@
 #include "../components/entt/MeshComponent.h"
 #include "../components/entt/PhysicsComponent.h"
 #include "../components/entt/PhysicsControlComponent.h"
-#include "../components/gpu/TransformComponent.h"
 #include "core/components/entt/HierarchyComponent.h"
+#include "core/components/entt/LocalTransform.h"
+#include "core/components/entt/WorldTransform.h"
 
 namespace kailux
 {
@@ -57,17 +58,17 @@ namespace kailux
     void PhysicsSystem::OnSimulationStart()
     {
         auto& registry = mScene.get().GetEntityRegistry();
-        auto view = registry.view<TransformComponent, PhysicsComponent>();
+        const auto view = registry.view<WorldTransform, PhysicsComponent>();
 
-        for (auto entity : view)
+        for (const auto entity : view)
         {
-            const auto& transformComp = view.get<TransformComponent>(entity);
+            const auto world{Transform::from_matrix(view.get<WorldTransform>(entity).model)};
             const auto& physicsComp = view.get<PhysicsComponent>(entity);
 
             mPhysicsRegistry.get().SetBodyTransform(
                 physicsComp.handle,
-                transformComp.transform.position,
-                transformComp.transform.rotation
+                world.position,
+                world.rotation
             );
 
             if (physicsComp.IsDynamic())
@@ -97,36 +98,28 @@ namespace kailux
 
     void PhysicsSystem::UpdateTransforms()
     {
-        auto& registry = mScene.get().GetEntityRegistry();
-        auto view = registry.view<TransformComponent, PhysicsComponent>();
+        Scene& scene = mScene;
+        auto &registry = scene.GetEntityRegistry();
+        const auto view = registry.view<LocalTransform, PhysicsComponent>();
 
-        for (auto entity : view)
+        for (const auto entity: view)
         {
-            auto& transformComp = view.get<TransformComponent>(entity);
-            auto physics = view.get<PhysicsComponent>(entity);
+            const auto &physics = view.get<PhysicsComponent>(entity);
+            if (!physics.IsDynamic())
+                continue;
 
-            if (physics.IsDynamic())
-            {
-                glm::vec3 worldPos;
-                glm::quat worldRot;
-                mPhysicsRegistry.get().GetBodyTransform(physics.handle, worldPos, worldRot);
+            glm::vec3 worldPos;
+            glm::quat worldRot;
+            mPhysicsRegistry.get().GetBodyTransform(physics.handle, worldPos, worldRot);
 
-                if (auto* h = registry.try_get<HierarchyComponent>(entity);
-                    h && h->parent != entt::null)
-                {
-                    const auto& parentWorld = registry.get<TransformComponent>(h->parent).worldMatrix;
-                    glm::mat4 worldM = glm::translate(glm::mat4(1.f), worldPos) * glm::toMat4(worldRot);
-                    glm::mat4 localM = glm::inverse(parentWorld) * worldM;
+            const auto local = glm::inverse(scene.GetParentWorldMatrix(entity))
+                                    * glm::translate(glm::mat4(1.f), worldPos)
+                                    * glm::toMat4(worldRot);
 
-                    transformComp.transform.position = glm::vec3(localM[3]);
-                    transformComp.transform.rotation = glm::quat_cast(localM);
-                }
-                else
-                {
-                    transformComp.transform.position = worldPos;
-                    transformComp.transform.rotation = worldRot;
-                }
-            }
+            Transform updated{view.get<LocalTransform>(entity)};
+            updated.position = glm::vec3(local[3]);
+            updated.rotation = glm::quat_cast(local);
+            scene.SetLocalTransform(entity, updated);
         }
     }
 
@@ -134,7 +127,7 @@ namespace kailux
     {
         auto& reg = mScene.get().GetEntityRegistry();
 
-        const auto& transform = reg.get<TransformComponent>(entity).transform;
+        const auto transform{Transform::from_matrix(reg.get<WorldTransform>(entity).model)};
 
         BodyHandle handle;
         if (const auto* cache = reg.try_get<CachedPhysicsData>(entity))

@@ -10,8 +10,9 @@
 
 #include "../components/entt/HierarchyComponent.h"
 #include "../components/entt/PhysicsComponent.h"
-#include "../components/gpu/TransformComponent.h"
+#include "core/components/entt/LocalTransform.h"
 #include "core/components/entt/PhysicsControlComponent.h"
+#include "core/components/entt/WorldTransform.h"
 
 namespace kailux
 {
@@ -69,15 +70,8 @@ namespace kailux
         if (cameraCount >= details::kMaxCameras)
             return std::unexpected{"The maximum number of cameras has been reached"};
 
-        auto entity = CreateEntity(name);
-        MeshTransformData transform;
-        transform.position = position;
-        mEntityRegistry.emplace<TransformComponent>(
-            entity,
-            transform,
-            glm::mat4(1.f),
-            transform.GetModelMatrix()
-        );
+        const auto entity{ CreateEntity(name)};
+        SetLocalTransform(entity, {position});
 
         CameraComponent camera;
         camera.isPrimary = isPrimary;
@@ -92,7 +86,7 @@ namespace kailux
 
     entt::entity Scene::CreateBuiltinCameraEntity(std::string_view name)
     {
-        auto entity = CreateEntity(name);
+        const auto entity{ CreateEntity(name)};
         AttachBuiltinCamera(entity);
         return entity;
     }
@@ -101,7 +95,7 @@ namespace kailux
         std::string_view name,
         const MeshComponent &component,
         MaterialHandle materialHandle,
-        const MeshTransformData &transform,
+        const Transform &transform,
         const MeshMaterialData &material,
         entt::entity parent
     )
@@ -109,7 +103,7 @@ namespace kailux
         if (mEntityRegistry.view<MeshComponent>().size() >= details::kMaxMeshes)
             return std::unexpected{"The maximum number of meshes has been reached"};
 
-        auto entity = CreateEntity(name);
+        const auto entity{ CreateEntity(name)};
         SetLocalTransform(entity, transform);
 
         if (!AttachMesh(entity, component, materialHandle, material))
@@ -126,26 +120,20 @@ namespace kailux
 
     entt::entity Scene::CreateParentEntity(std::string_view name)
     {
-        return CreateEntity(name);
+        const auto entity{CreateEntity(name)};
+        SetLocalTransform(entity, {});
+        return entity;
     }
 
     Scene::CreateResult Scene::CreatePointLightEntity(std::string_view name, const GizmoComponent &component,
-                                                      const glm::vec3 &position)
+                                                      const glm::vec3& position)
     {
         if (mEntityRegistry.view<PointLightData>().size() >= details::kMaxPointLights)
             return std::unexpected{"The maximum number of point lights has been reached"};
-        auto entity = CreateEntity(name);
+        const auto entity{ CreateEntity(name)};
 
         AttachPointLight(entity, component, {});
-
-        MeshTransformData transform;
-        transform.position = position;
-        mEntityRegistry.emplace<TransformComponent>(
-            entity,
-            transform,
-            glm::mat4(1.f),
-            transform.GetModelMatrix()
-        );
+        SetLocalTransform(entity, {position});
         mEntityRegistry.emplace<HierarchyComponent>(entity);
 
         return entity;
@@ -227,13 +215,12 @@ namespace kailux
     {
         LightsData data;
         data.directional = mEntityRegistry.get<SunData>(mSun);
-        auto view = mEntityRegistry.view<PointLightData, TransformComponent>();
+        auto view = mEntityRegistry.view<PointLightData, WorldTransform>();
         uint32_t index = 0;
         for (auto entity : view)
         {
             auto light = view.get<PointLightData>(entity);
-            const auto& transform = view.get<TransformComponent>(entity);
-            auto pos = glm::vec3(transform.worldMatrix[3]);
+            const auto pos{view.get<WorldTransform>(entity).GetPosition()};
             light.positionAndIntensity = glm::vec4(pos, light.positionAndIntensity.w);
             data.pointLights[index++] = light;
         }
@@ -361,14 +348,33 @@ namespace kailux
         mEntityRegistry.emplace_or_replace<BuiltinCamera>(entity);
     }
 
-    void Scene::SetLocalTransform(entt::entity entity, const MeshTransformData &transform)
+    glm::mat4 Scene::GetParentWorldMatrix(entt::entity entity) const
+    {
+        const auto *hierarchy{mEntityRegistry.try_get<HierarchyComponent>(entity)};
+        if (!hierarchy || hierarchy->parent == entt::null)
+            return {1.f};
+        const auto *parentWorld{mEntityRegistry.try_get<WorldTransform>(hierarchy->parent)};
+        return parentWorld ? parentWorld->model : glm::mat4{1.f};
+    }
+
+    void Scene::SetLocalTransform(entt::entity entity, const Transform &transform)
     {
         if (!mEntityRegistry.valid(entity))
             return;
+        mEntityRegistry.emplace_or_replace<LocalTransform>(entity, transform);
+        mEntityRegistry.emplace_or_replace<WorldTransform>(entity,
+                                                           GetParentWorldMatrix(entity) * transform.GetModelMatrix());
+    }
 
-        auto& component = mEntityRegistry.emplace_or_replace<TransformComponent>(entity);
-        component.transform = transform;
-        component.worldMatrix = transform.GetModelMatrix();
+    void Scene::SetWorldTransform(entt::entity entity, const glm::mat4 &world)
+    {
+        if (!mEntityRegistry.valid(entity))
+            return;
+        SetLocalTransform(entity, Transform::from_matrix(
+                              glm::inverse(GetParentWorldMatrix(entity))
+                              * world
+                          )
+        );
     }
 
     void Scene::SetParent(entt::entity child, entt::entity parent)
@@ -439,10 +445,10 @@ namespace kailux
         {
             auto world{parentWorld};
 
-            if (auto *transform = mEntityRegistry.try_get<TransformComponent>(entity))
+            if (const auto *local{mEntityRegistry.try_get<LocalTransform>(entity)})
             {
-                world = parentWorld * transform->transform.GetModelMatrix();
-                transform->worldMatrix = world;
+                world = parentWorld * local->GetModelMatrix();
+                mEntityRegistry.get<WorldTransform>(entity).model = world;
             }
 
             if (const auto *hierarchy = mEntityRegistry.try_get<HierarchyComponent>(entity))
@@ -450,7 +456,7 @@ namespace kailux
                     self(child, world);
         };
 
-        for (const auto entity : mEntityRegistry.view<TransformComponent>())
+        for (const auto entity : mEntityRegistry.view<LocalTransform>())
         {
             const auto* hierarchy{mEntityRegistry.try_get<HierarchyComponent>(entity)};
             if (!hierarchy || hierarchy->parent == entt::null)
@@ -460,12 +466,12 @@ namespace kailux
 
     void Scene::UpdateCameras(entt::entity controlled)
     {
-        for (auto [entity, camera, transform] : mEntityRegistry.view<CameraComponent, TransformComponent>(entt::exclude<BuiltinCamera>).each())
+        for (auto [entity, camera, world] : mEntityRegistry.view<CameraComponent, WorldTransform>(entt::exclude<BuiltinCamera>).each())
         {
             if (entity == controlled)
                 continue;
 
-            camera.position = glm::vec3(transform.worldMatrix[3]);
+            camera.position = world.GetPosition();
         }
     }
 
@@ -474,18 +480,13 @@ namespace kailux
         if (!mEntityRegistry.valid(entity))
             return;
 
-        const auto *camera   {mEntityRegistry.try_get<CameraComponent>(entity)};
-        auto       *transform{mEntityRegistry.try_get<TransformComponent>(entity)};
-        if (!camera || !transform)
+        const auto *camera{mEntityRegistry.try_get<CameraComponent>(entity)};
+        const auto *local{mEntityRegistry.try_get<LocalTransform>(entity)};
+        if (!camera || !local)
             return;
 
-        glm::mat4 parentWorld{1.f};
-        if (const auto *hierarchy = mEntityRegistry.try_get<HierarchyComponent>(entity);
-            hierarchy && hierarchy->parent != entt::null)
-            if (const auto *parent = mEntityRegistry.try_get<TransformComponent>(hierarchy->parent))
-                parentWorld = parent->worldMatrix;
-
-        transform->transform.position = glm::vec3{glm::inverse(parentWorld) * glm::vec4(camera->position, 1.f)};
-        transform->worldMatrix        = parentWorld * transform->transform.GetModelMatrix();
+        Transform updated{*local};
+        updated.position = glm::vec3{glm::inverse(GetParentWorldMatrix(entity)) * glm::vec4(camera->position, 1.f)};
+        SetLocalTransform(entity, updated);
     }
 }

@@ -17,10 +17,9 @@
 #include "components/entt/PhysicsComponent.h"
 #include "components/entt/PhysicsControlComponent.h"
 #include "components/entt/TagComponent.h"
+#include "components/entt/WorldTransform.h"
 #include "components/gpu/CameraData.h"
 #include "components/gpu/MeshData.h"
-#include "components/gpu/MeshTransformData.h"
-#include "components/gpu/TransformComponent.h"
 #include "scene/SceneInstantiator.h"
 #include "scene/SceneSerializer.h"
 #include "texture/TextureAllocator.h"
@@ -1088,13 +1087,13 @@ namespace kailux
         mGizmoRegistry.Bind(cmd);
         frame.GetGizmoDescriptorSet().Bind(mGizmoPass.GetPipeline(), cmd);
 
-        const auto view{mScene.GetEntityRegistry().view<GizmoComponent, TransformComponent>()};
-        view.each([&](const auto& component, const auto& transform)
+        const auto view{mScene.GetEntityRegistry().view<GizmoComponent, WorldTransform>()};
+        view.each([&](const auto& component, const auto& world)
         {
             auto gizmoView = mGizmoRegistry.View(component.handle);
 
             const GraphicsPassesPushConstants::Gizmo pc{
-                glm::vec4(transform.transform.position, component.scale),
+                glm::vec4(world.GetPosition(), component.scale),
                 component.color,
                 0
             };
@@ -1295,7 +1294,7 @@ namespace kailux
     {
         std::vector<MeshData> data;
         auto view = mScene.GetEntityRegistry().view<
-            TransformComponent,
+            WorldTransform,
             MeshMaterialData,
             MeshComponent,
             MaterialComponent>
@@ -1303,12 +1302,12 @@ namespace kailux
         data.reserve(view.size_hint());
         for (auto entity: view)
         {
-            const auto &transform = view.get<TransformComponent>(entity);
+            const auto &world = view.get<WorldTransform>(entity);
             auto boundingSphere = view.get<MeshComponent>(entity).boundingSphere;
             auto material = view.get<MeshMaterialData>(entity);
             material.materialIdx = view.get<MaterialComponent>(entity).handle.index;
             data.emplace_back(
-                transform.worldMatrix,
+                world.model,
                 boundingSphere,
                 material,
                 static_cast<uint32_t>(entity)
@@ -1377,7 +1376,7 @@ namespace kailux
     {
         auto &reg = mScene.GetEntityRegistry();
 
-        const auto &transform = reg.get<TransformComponent>(entity).transform;
+        const auto transform{Transform::from_matrix(reg.get<WorldTransform>(entity).model)};
 
         BodyHandle handle;
         if (const auto *cache = reg.try_get<CachedPhysicsData>(entity))

@@ -63,10 +63,10 @@ namespace kailux
                     mEngine.GetPendingMeshDataQueue().Emplace(
                         entt::null,
                         std::move(pathStr),
-                        MeshLoader::LoadData(),
+                        MeshLoader::LoadData{},
                         "",
-                        MeshTransformData(),
-                        MeshMaterialData(),
+                        Transform{},
+                        MeshMaterialData{},
                         MeshType::Loaded
                     );
                 else
@@ -78,8 +78,8 @@ namespace kailux
                                 std::move(p),
                                 std::move(*data),
                                 "",
-                                MeshTransformData(),
-                                MeshMaterialData(),
+                                Transform{},
+                                MeshMaterialData{},
                                 MeshType::Loaded
                             );
                     });
@@ -90,10 +90,10 @@ namespace kailux
             mEngine.GetPendingMeshDataQueue().Emplace(
                                 entt::null,
                                 "",
-                                MeshLoader::LoadData(),
+                                MeshLoader::LoadData{},
                                 "",
-                                MeshTransformData(),
-                                MeshMaterialData(),
+                                Transform{},
+                                MeshMaterialData{},
                                 type
                             );
         });

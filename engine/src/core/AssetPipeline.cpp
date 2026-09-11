@@ -8,7 +8,6 @@
 #include "components/entt/HierarchyComponent.h"
 #include "components/entt/PendingUploadComponent.h"
 #include "components/entt/TagComponent.h"
-#include "components/gpu/TransformComponent.h"
 
 namespace kailux
 {
@@ -316,14 +315,7 @@ namespace kailux
                         parentEntity
                     ))
                     {
-                        auto &childTransform = scene.GetEntityRegistry().get<TransformComponent>(*childEntity);
-                        glm::vec3 t, s, skew;
-                        glm::quat r;
-                        glm::vec4 persp;
-                        glm::decompose(submesh.localTransform, s, r, t, skew, persp);
-                        childTransform.transform.position = t;
-                        childTransform.transform.rotation = r;
-                        childTransform.transform.scale = s;
+                        scene.SetLocalTransform(*childEntity, Transform::from_matrix(submesh.localTransform));
 
                         scene.GetEntityRegistry().emplace<PendingUploadComponent>(*childEntity);
                         pendingEntities->push_back(*childEntity);

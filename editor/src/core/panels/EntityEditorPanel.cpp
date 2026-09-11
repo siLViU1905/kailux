@@ -6,10 +6,11 @@
 #include "core/components/entt/BuiltinCamera.h"
 #include "core/components/entt/CameraComponent.h"
 #include "core/components/entt/HierarchyComponent.h"
+#include "core/components/entt/LocalTransform.h"
 #include "core/components/entt/PhysicsControlComponent.h"
 #include "core/components/entt/TagComponent.h"
+#include "core/components/entt/WorldTransform.h"
 #include "core/components/gpu/CameraData.h"
-#include "core/components/gpu/TransformComponent.h"
 
 namespace kailux
 {
@@ -56,7 +57,7 @@ namespace kailux
             ImGui::Text("Entity: %s", tag.name.c_str());
             ImGui::Separator();
 
-            if (registry.all_of<TransformComponent>(mSelectedEntity) &&
+            if (registry.all_of<LocalTransform>(mSelectedEntity) &&
                 !registry.any_of<PointLightData>(mSelectedEntity))
                 RenderMeshProperties(registry);
 
@@ -92,11 +93,8 @@ namespace kailux
         if (entity == entt::null)
             mOpen = false;
 
-        if (scene.GetEntityRegistry().all_of<TransformComponent>(mSelectedEntity))
-        {
-            const auto &transform = scene.GetEntityRegistry().get<TransformComponent>(mSelectedEntity);
-            mRotationDegrees = glm::degrees(glm::eulerAngles(transform.transform.rotation));
-        }
+        if (const auto *local = scene.GetEntityRegistry().try_get<LocalTransform>(mSelectedEntity))
+            mRotationDegrees = glm::degrees(glm::eulerAngles(local->rotation));
     }
 
     bool EntityEditorPanel::IsGizmoInUse() const
@@ -123,15 +121,12 @@ namespace kailux
     {
         auto &registry = scene.GetEntityRegistry();
 
-        if (!registry.all_of<TransformComponent>(mSelectedEntity))
+        if (!registry.all_of<LocalTransform>(mSelectedEntity))
             return;
         bool isMesh = registry.all_of<MeshComponent>(mSelectedEntity);
         auto operation = isMesh ? mCurrentGizmoOperation : ImGuizmo::TRANSLATE;
 
-        auto &transformComp = registry.get<TransformComponent>(mSelectedEntity);
-        auto &transform = transformComp.transform;
-
-        auto modelMatrix = transformComp.worldMatrix;
+        auto modelMatrix{registry.get<WorldTransform>(mSelectedEntity).model};
 
         ImGuizmo::Manipulate(
             glm::value_ptr(mCameraData.view),
@@ -144,11 +139,10 @@ namespace kailux
         bool isDragging = ImGuizmo::IsUsing();
         if (mGizmoWasDragging && !isDragging)
             if (operation == ImGuizmo::SCALE &&
-                registry.all_of<PhysicsComponent>(mSelectedEntity) &&
-                registry.all_of<TransformComponent>(mSelectedEntity))
+                registry.all_of<PhysicsComponent>(mSelectedEntity))
                 mOnBodyScaleChange(
                     registry.get<PhysicsComponent>(mSelectedEntity),
-                    registry.get<TransformComponent>(mSelectedEntity).transform.scale
+                    registry.get<LocalTransform>(mSelectedEntity).scale
                     );
 
         mGizmoWasDragging = isDragging;
@@ -156,29 +150,16 @@ namespace kailux
         mGizmoInUse = isDragging || ImGuizmo::IsOver();
         if (isDragging)
         {
-            glm::vec3 translation, scale, skew;
-            glm::quat rotation;
-            glm::vec4 perspective;
-
-            glm::mat4 parentWorld{1.0f};
-            if (auto* hierarchy = registry.try_get<HierarchyComponent>(mSelectedEntity))
-                if (hierarchy->parent != entt::null)
-                    parentWorld = registry.get<TransformComponent>(hierarchy->parent).worldMatrix;
-
-            auto localMatrix = glm::inverse(parentWorld) * modelMatrix;
-
-            glm::decompose(localMatrix, scale, rotation, translation, skew, perspective);
-
-            transform.position = translation;
-            transform.rotation = rotation;
+            scene.SetWorldTransform(mSelectedEntity, modelMatrix);
+            auto local = registry.get<LocalTransform>(mSelectedEntity);
             if (mUniformScale && operation == ImGuizmo::SCALE)
             {
-                float avgScale = (scale.x + scale.y + scale.z) / 3.f;
-                transform.scale = glm::vec3(avgScale);
-            } else
-                transform.scale = scale;
+                const float avgScale = (local.scale.x + local.scale.y + local.scale.z) / 3.f;
+                local.scale = glm::vec3(avgScale);
+                scene.SetLocalTransform(mSelectedEntity, local);
+            }
 
-            mRotationDegrees = glm::degrees(glm::eulerAngles(transform.rotation));
+            mRotationDegrees = glm::degrees(glm::eulerAngles(local.rotation));
         }
     }
 
@@ -203,7 +184,7 @@ namespace kailux
 
                 ImGui::Separator();
 
-                auto &transform = registry.get<TransformComponent>(mSelectedEntity).transform;
+                auto &transform = registry.get<LocalTransform>(mSelectedEntity);
                 if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
                 {
                     ImGui::InputFloat3("Translation", glm::value_ptr(transform.position));
@@ -305,10 +286,10 @@ namespace kailux
 
     void EntityEditorPanel::RenderPointLightProperties(entt::registry &registry) const
     {
-        auto [light, transform] = registry.get<PointLightData, TransformComponent>(mSelectedEntity);
+        auto [light, local] = registry.get<PointLightData, LocalTransform>(mSelectedEntity);
         if (ImGui::CollapsingHeader("Point Light", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            ImGui::InputFloat3("Position", glm::value_ptr(transform.transform.position));
+            ImGui::InputFloat3("Position", glm::value_ptr(local.position));
 
             float &intensity = light.positionAndIntensity.w;
             ImGui::InputFloat("Intensity", &intensity);

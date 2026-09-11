@@ -14,13 +14,13 @@ namespace kailux
     public:
         struct PendingMeshData
         {
-            entt::entity target{entt::null};
-            std::string path;
-            MeshLoader::LoadData data;
-            std::string name;
-            MeshTransformData transform;
-            MeshMaterialData material;
-            MeshType type{MeshType::Unknown};
+            entt::entity                 target{entt::null};
+            std::string                  path;
+            MeshLoader::LoadData         data;
+            std::string                  name;
+            Transform                    transform;
+            MeshMaterialData             material;
+            MeshType                     type{MeshType::Unknown};
             std::optional<PhysicsRecord> physics{std::nullopt};
         };
 

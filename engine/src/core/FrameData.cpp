@@ -4,8 +4,6 @@
 #include "buffer/BufferAllocator.h"
 #include "components/gpu/CameraData.h"
 #include "components/gpu/MeshData.h"
-#include "components/gpu/MeshMaterialData.h"
-#include "components/gpu/MeshTransformData.h"
 #include "components/gpu/SceneData.h"
 #include  "texture/TextureAllocator.h"
 
