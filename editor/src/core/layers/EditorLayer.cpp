@@ -27,7 +27,12 @@ namespace kailux
         auto& simulation = GetPanel<SimulationPanel>();
 
         const bool isSimulationRunning = viewport.GetSimulationState() != SimulationState::Paused;
-        GetPanel<EntityEditorPanel>().SetSimulationState(isSimulationRunning);
+        auto& editorPanel{GetPanel<EntityEditorPanel>()};
+        editorPanel.SetSimulationState(isSimulationRunning);
+        isSimulationRunning ? editorPanel.Lock() : editorPanel.Unlock();
+
+        auto& hierarchyPanel{GetPanel<HierarchyPanel>()};
+        isSimulationRunning ? hierarchyPanel.Lock() : hierarchyPanel.Unlock();
 
         if (!isSimulationRunning)
             simulation.Close();

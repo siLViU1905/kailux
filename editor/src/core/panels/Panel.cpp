@@ -49,6 +49,21 @@ namespace kailux
         return mFocused;
     }
 
+    void Panel::Lock()
+    {
+        mLocked = true;
+    }
+
+    void Panel::Unlock()
+    {
+        mLocked = false;
+    }
+
+    bool Panel::IsLocked() const
+    {
+        return mLocked;
+    }
+
     InputSource Panel::GetInputSource() const
     {
         return mPlatformWindow;

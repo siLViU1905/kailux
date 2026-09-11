@@ -53,7 +53,7 @@ namespace kailux
                     mOnEntitySelected(mSelectedEntity, scene);
             }
 
-            if (ImGui::BeginPopupContextWindow("##hierarchy_options",
+            if (!mLocked && ImGui::BeginPopupContextWindow("##hierarchy_options",
                                                ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
             {
                 if (ImGui::BeginMenu("New"))
@@ -86,7 +86,7 @@ namespace kailux
         }
 
 
-        if (ImGui::BeginDragDropTargetCustom(
+        if (!mLocked && ImGui::BeginDragDropTargetCustom(
             ImGui::GetCurrentWindow()->InnerRect,
             ImGui::GetID(mName.c_str())
         ))
@@ -161,6 +161,8 @@ namespace kailux
 
     void HierarchyPanel::DeleteSelectedEntity()
     {
+        if (mLocked)
+            return;
         mPendingDeleteEntity = mSelectedEntity;
     }
 
@@ -287,7 +289,7 @@ namespace kailux
         if (ImGui::IsItemClicked())
             mSelectedEntity = entity;
 
-        if (ImGui::BeginPopupContextItem())
+        if (!mLocked && ImGui::BeginPopupContextItem())
         {
             static entt::entity lastEntity = entt::null;
 
