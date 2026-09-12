@@ -29,6 +29,7 @@
 #include "components/gpu/CameraData.h"
 #include "gizmo/GizmoRegistry.h"
 #include "passes/GizmoPass.h"
+#include "components/gpu/DirectionalShadowData.h"
 
 namespace kailux
 {
@@ -107,6 +108,7 @@ namespace kailux
         void CreateSkybox();
         void CreateGizmoPass();
         void CreateOutlinePass();
+        void CreateShadowPass();
         void CreateFrameResources();
         void CreateTransferManager();
         void CreateMeshRegistry();
@@ -129,6 +131,7 @@ namespace kailux
         void                                        Submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
         void                                        RecordMeshData(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex, bool writeIds) const;
         void                                        RecordSkybox(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex) const;
+        void                                        RecordDirectionalShadows(const FrameData &frame, CommandRecorder &recorder) const;
         void                                        RecordGizmos(const FrameData &frame, const CommandRecorder &recorder) const;
         void                                        RecordImGuiData(const FrameData& frame);
         void                                        RecordPicker(const FrameData& frame, const CommandRecorder &recorder) const;
@@ -143,6 +146,7 @@ namespace kailux
         void UpdateMaterialBuffer(FrameData& frame) const;
 
         void UpdateSceneBuffer(FrameData& frame) const;
+        void UpdateDirectionalShadowData(entt::entity camera, glm::ivec2 extent);
         void UpdateCullerBuffers(const FrameData& frame, const CommandRecorder &recorder);
 
         void ReadOutputBuffers(const FrameData& frame);
@@ -155,6 +159,8 @@ namespace kailux
 
         void ResizeSimulationView(glm::ivec2 extent);
 
+        void TransitionForShadowPass(const FrameData& frame, const CommandRecorder& recorder) const;
+        void TransitionShadowMapForSampling(const FrameData& frame, const CommandRecorder& recorder) const;
         void TransitionForMainPass(const FrameData& frame, const CommandRecorder& recorder) const;
         void TransitionForSimulationPass(const CommandRecorder &recorder) const;
         void TransitionForGizmoPass(const FrameData& frame, const CommandRecorder& recorder) const;
@@ -205,6 +211,9 @@ namespace kailux
         ComputePicker                              mComputePicker;
         uint32_t                                   mPickedEntity;
         ComputeCuller                              mComputeCuller;
+        ShadowPass                                 mShadowPass;
+
+        DirectionalShadowData                      mDirectionalShadowData;
 
         OnLog                                      mOnInfoLog;
         OnLog                                      mOnWarningLog;

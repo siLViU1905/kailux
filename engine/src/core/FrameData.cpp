@@ -29,6 +29,7 @@ namespace kailux
                                                        mPickerDescriptorSet(std::move(other.mPickerDescriptorSet)),
                                                        mOutlineDescriptorSet(std::move(other.mOutlineDescriptorSet)),
                                                        mCullerDescriptorSet(std::move(other.mCullerDescriptorSet)),
+                                                       mShadowDescriptorSet(std::move(other.mShadowDescriptorSet)),
                                                        mCameraBuffer(std::move(other.mCameraBuffer)),
                                                        mMeshDataBuffer(std::move(other.mMeshDataBuffer)),
                                                        mMaterialsBuffer(std::move(other.mMaterialsBuffer)),
@@ -41,7 +42,8 @@ namespace kailux
                                                        mExtent(other.mExtent),
                                                        mSceneTexture(std::move(other.mSceneTexture)),
                                                        mOutIdTexture(std::move(other.mOutIdTexture)),
-                                                       mResolvedOutIdTexture(std::move(other.mResolvedOutIdTexture))
+                                                       mResolvedOutIdTexture(std::move(other.mResolvedOutIdTexture)),
+                                                       mDirectionalShadowMap(std::move(other.mDirectionalShadowMap))
     {
     }
 
@@ -60,6 +62,7 @@ namespace kailux
             mPickerDescriptorSet = std::move(other.mPickerDescriptorSet);
             mOutlineDescriptorSet = std::move(other.mOutlineDescriptorSet);
             mCullerDescriptorSet = std::move(other.mCullerDescriptorSet);
+            mShadowDescriptorSet = std::move(other.mShadowDescriptorSet);
             mCameraBuffer = std::move(other.mCameraBuffer);
             mMeshDataBuffer = std::move(other.mMeshDataBuffer);
             mMaterialsBuffer = std::move(other.mMaterialsBuffer);
@@ -72,6 +75,7 @@ namespace kailux
             mSceneTexture = std::move(other.mSceneTexture);
             mOutIdTexture = std::move(other.mOutIdTexture);
             mResolvedOutIdTexture = std::move(other.mResolvedOutIdTexture);
+            mDirectionalShadowMap = std::move(other.mDirectionalShadowMap);
         }
         return *this;
     }
@@ -85,6 +89,7 @@ namespace kailux
         const ComputePicker &picker,
         const OutlinePass &outlinePass,
         const ComputeCuller &culler,
+        const ShadowPass& shadowPass,
         const TextureRegistry &textureRegistry
     )
     {
@@ -104,22 +109,26 @@ namespace kailux
         frame.CreateCullerBuffers(context);
         frame.CreateSceneTexture(context, swapchain.GetFormat());
         frame.CreateOutIdTexture(context);
-        auto descSetInfo = frame.MakeMeshDescriptorSetInfo(skybox, textureRegistry);
+        frame.CreateDirectionalShadowMap(context, swapchain.GetDepthFormat());
+        const auto descSetInfo{frame.MakeMeshDescriptorSetInfo(skybox, textureRegistry)};
         frame.CreateMeshDescriptorSet(context, mainPass.GetDescriptorLayout(), mainPass.GetDescriptorPool(), descSetInfo);
-        auto skyboxDescInfo = frame.MakeSkyboxDescriptorSetInfo(skybox.GetTexture());
+        const auto skyboxDescInfo{frame.MakeSkyboxDescriptorSetInfo(skybox.GetTexture())};
         frame.CreateSkyboxDescriptorSet(context, skybox.GetDescriptorLayout(), skybox.GetDescriptorPool(),
                                         skyboxDescInfo);
-        auto gizmoDescInfo = frame.MakeGizmoDescriptorSetInfo();
+        const auto gizmoDescInfo{frame.MakeGizmoDescriptorSetInfo()};
         frame.CreateGizmoDescriptorSet(context, gizmoPass.GetDescriptorLayout(), gizmoPass.GetDescriptorPool(), gizmoDescInfo);
-        auto pickerDescInfo = frame.MakePickerDescriptorSetInfo();
+        const auto pickerDescInfo{frame.MakePickerDescriptorSetInfo()};
         frame.CreatePickerDescriptorSet(context, picker.GetDescriptorLayout(), picker.GetDescriptorPool(),
                                         pickerDescInfo);
-        auto outlineDescInfo = frame.MakeOutlineDescriptorSetInfo();
+        const auto outlineDescInfo{frame.MakeOutlineDescriptorSetInfo()};
         frame.CreateOutlineDescriptorSet(context, outlinePass.GetDescriptorLayout(), outlinePass.GetDescriptorPool(),
                                          outlineDescInfo);
-        auto cullerDescInfo = frame.MakeCullerDescriptorSetInfo();
+        const auto cullerDescInfo{frame.MakeCullerDescriptorSetInfo()};
         frame.CreateCullerDescriptorSet(context, culler.GetDescriptorLayout(), culler.GetDescriptorPool(),
                                         cullerDescInfo);
+        const auto shadowDescInfo{frame.MakeShadowDescriptorSetInfo()};
+        frame.CreateShadowDescriptorSet(context, shadowPass.GetDescriptorLayout(), shadowPass.GetDescriptorPool(),
+                                        shadowDescInfo);
         return frame;
     }
 
@@ -213,6 +222,11 @@ namespace kailux
         return mCullerDescriptorSet;
     }
 
+    const DescriptorSet & FrameData::GetShadowDescriptorSet() const
+    {
+        return mShadowDescriptorSet;
+    }
+
     Buffer &FrameData::GetCameraBuffer()
     {
         return mCameraBuffer;
@@ -278,6 +292,11 @@ namespace kailux
         return mResolvedOutIdTexture;
     }
 
+    const ShadowMap & FrameData::GetDirectionalShadowMap() const
+    {
+        return mDirectionalShadowMap;
+    }
+
     std::array<vk::BufferMemoryBarrier2, FrameData::kBufferMemoryBarriersCount>
     FrameData::GetBufferMemoryBarriers() const
     {
@@ -318,8 +337,8 @@ namespace kailux
             vk::BufferMemoryBarrier2( // culler input
                 vk::PipelineStageFlagBits2::eHost,
                 vk::AccessFlagBits2::eHostWrite,
-                vk::PipelineStageFlagBits2::eComputeShader,
-                vk::AccessFlagBits2::eShaderStorageRead,
+                vk::PipelineStageFlagBits2::eComputeShader | vk::PipelineStageFlagBits2::eDrawIndirect,
+                vk::AccessFlagBits2::eShaderStorageRead | vk::AccessFlagBits2::eIndirectCommandRead,
                 vk::QueueFamilyIgnored,
                 vk::QueueFamilyIgnored,
                 mCullerInputCommandsBuffer.GetBuffer(),
@@ -498,6 +517,12 @@ namespace kailux
         mCullerDescriptorSet = DescriptorSet::create(context, descriptorLayout, descriptorPool, infos);
     }
 
+    void FrameData::CreateShadowDescriptorSet(const Context &context, const DescriptorLayout &descriptorLayout,
+        const DescriptorPool &descriptorPool, std::span<const DescriptorSetInfo> infos)
+    {
+        mShadowDescriptorSet = DescriptorSet::create(context, descriptorLayout, descriptorPool, infos);
+    }
+
     void FrameData::CreateCameraBuffer(const Context &context)
     {
         mCameraBuffer = BufferAllocator::alloc_uniform(context, sizeof(CameraData) * (details::kMaxCameras * details::kMaxCameraViews));
@@ -533,7 +558,8 @@ namespace kailux
     void FrameData::CreateCullerBuffers(const Context &context)
     {
         mCullerInputCommandsBuffer = BufferAllocator::alloc_host(context, details::kMaxMeshes * sizeof(vk::DrawIndexedIndirectCommand),
-                                                                  vk::BufferUsageFlagBits::eStorageBuffer);
+                                                                 vk::BufferUsageFlagBits::eStorageBuffer |
+                                                                 vk::BufferUsageFlagBits::eIndirectBuffer);
         mCullerCountBuffer = BufferAllocator::alloc_local(context, sizeof(uint32_t),
                                                            vk::BufferUsageFlagBits::eStorageBuffer |
                                                            vk::BufferUsageFlagBits::eIndirectBuffer);
@@ -573,6 +599,16 @@ namespace kailux
             vk::ImageAspectFlagBits::eColor,
             vk::SampleCountFlagBits::e1
         );
+    }
+
+    void FrameData::CreateDirectionalShadowMap(const Context &context, vk::Format depthFormat)
+    {
+        mDirectionalShadowMap = ShadowMap::create(
+            context,
+            details::kShadowMapResolution,
+            details::kShadowCascadeCount,
+            depthFormat
+            );
     }
 
     std::array<DescriptorSetInfo, FrameData::kDescriptorSetInfoCount> FrameData::MakeMeshDescriptorSetInfo(
@@ -624,6 +660,12 @@ namespace kailux
             DescriptorSetImageInfo(
                 skybox.GetBrdfLutTexture().GetSampler(),
                 skybox.GetBrdfLutTexture().GetImageView(),
+                vk::ImageLayout::eShaderReadOnlyOptimal,
+                1
+            ),
+            DescriptorSetImageInfo(
+                mDirectionalShadowMap.GetSampler(),
+                mDirectionalShadowMap.GetArrayView(),
                 vk::ImageLayout::eShaderReadOnlyOptimal,
                 1
             ),
@@ -726,6 +768,19 @@ namespace kailux
             DescriptorSetBufferInfo(
                 mCullerCountBuffer.GetBuffer(),
                 mCullerCountBuffer.GetSize(),
+                1,
+                vk::DescriptorType::eStorageBuffer
+            )
+        };
+    }
+
+    std::array<DescriptorSetInfo, FrameData::kShadowDescriptorSetInfoCount> FrameData::
+    MakeShadowDescriptorSetInfo() const
+    {
+        return {
+            DescriptorSetBufferInfo(
+                mMeshDataBuffer.GetBuffer(),
+                mMeshDataBuffer.GetSize(),
                 1,
                 vk::DescriptorType::eStorageBuffer
             )

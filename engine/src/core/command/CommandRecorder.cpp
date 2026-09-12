@@ -50,8 +50,10 @@ namespace kailux
             info.image,
             vk::ImageSubresourceRange{
                 info.aspect,
-                0, 1,
-                0, 1
+                0,
+                1,
+                0,
+                info.layerCount
             }
         };
 

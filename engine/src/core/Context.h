@@ -42,6 +42,7 @@ namespace kailux
         friend class DescriptorSet;
         friend class OneTimeCommand;
         friend class TransferManager;
+        friend class ShadowMap;
 
     private:
         static std::vector<const char *> get_required_extensions();

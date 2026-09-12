@@ -17,5 +17,10 @@ namespace kailux
             glm::vec4 color{};
             uint32_t  cameraIdx{};
         };
+
+        struct ShadowCascade
+        {
+            glm::mat4 viewProjection{1.f};
+        };
     };
 }

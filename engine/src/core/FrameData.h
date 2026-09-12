@@ -11,6 +11,8 @@
 #include "passes/GizmoPass.h"
 #include "passes/MainPass.h"
 #include "passes/OutlinePass.h"
+#include "passes/ShadowPass.h"
+#include "shadow/ShadowMap.h"
 
 namespace kailux
 {
@@ -27,6 +29,7 @@ namespace kailux
                                 const ComputePicker& picker,
                                 const OutlinePass& outlinePass,
                                 const ComputeCuller& culler,
+                                const ShadowPass& shadowPass,
                                 const TextureRegistry &textureRegistry
         );
 
@@ -44,6 +47,7 @@ namespace kailux
         const DescriptorSet& GetPickerDescriptorSet() const;
         const DescriptorSet& GetOutlineDescriptorSet() const;
         const DescriptorSet& GetCullerDescriptorSet() const;
+        const DescriptorSet& GetShadowDescriptorSet() const;
 
         Buffer&       GetCameraBuffer();
         Buffer&       GetModelBuffer();
@@ -60,6 +64,8 @@ namespace kailux
         const Texture& GetSceneTexture() const;
         const Texture& GetOutIdTexture() const;
         const Texture& GetResolvedOutIdTexture() const;
+
+        const ShadowMap& GetDirectionalShadowMap() const;
 
         static constexpr uint32_t kBufferMemoryBarriersCount{1 + 1 + 1 + 1 + 1}; // camera buffer + mesh data buffer + materials buffer + culler input buffer + scene buffer
         std::array<vk::BufferMemoryBarrier2, kBufferMemoryBarriersCount>       GetBufferMemoryBarriers() const;
@@ -93,6 +99,8 @@ namespace kailux
                                        DescriptorSetInfo> infos);
         void CreateCullerDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
                                        DescriptorSetInfo> infos);
+        void CreateShadowDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
+                                       DescriptorSetInfo> infos);
         void CreateCameraBuffer(const Context& context);
         void CreateMeshDataBuffer(const Context &context);
         void CreateMaterialsBuffer(const Context &context);
@@ -104,18 +112,22 @@ namespace kailux
         void CreateSceneTexture(const Context& context, vk::Format format);
         void CreateOutIdTexture(const Context &context);
 
-        static constexpr uint32_t kDescriptorSetInfoCount = 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1; // camera buffer + mesh data buffer + materials buffer + scene buffer + skybox sampler + irradiance map + prefiltered env + brdf lut + textures array
-        static constexpr uint32_t kSkyboxDescriptorSetInfoCount = 1 + 1; // camera buffer + cube texture
-        static constexpr uint32_t kGizmoDescriptorSetInfoCount = 1; // camera buffer
-        static constexpr uint32_t kPickerDescriptorSetInfoCount = 1 + 1; // id image + out buffer
-        static constexpr uint32_t kOutlineDescriptorSetInfoCount = 1; // id image
-        static constexpr uint32_t kCullerDescriptorSetInfoCount = 4; // mesh data + template + out indirect + counter
+        void CreateDirectionalShadowMap(const Context &context, vk::Format depthFormat);
+
+        static constexpr uint32_t kDescriptorSetInfoCount{1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1}; // camera buffer + mesh data buffer + materials buffer + scene buffer + skybox sampler + irradiance map + prefiltered env + brdf lut + directional shadow + textures array
+        static constexpr uint32_t kSkyboxDescriptorSetInfoCount{1 + 1}; // camera buffer + cube texture
+        static constexpr uint32_t kGizmoDescriptorSetInfoCount{1}; // camera buffer
+        static constexpr uint32_t kPickerDescriptorSetInfoCount{1 + 1}; // id image + out buffer
+        static constexpr uint32_t kOutlineDescriptorSetInfoCount{1}; // id image
+        static constexpr uint32_t kCullerDescriptorSetInfoCount{4}; // mesh data + template + out indirect + counter
+        static constexpr uint32_t kShadowDescriptorSetInfoCount{1}; // mesh data
         std::array<DescriptorSetInfo, kDescriptorSetInfoCount>        MakeMeshDescriptorSetInfo(const SkyboxPass &skybox, const TextureRegistry &textureRegistry) const;
         std::array<DescriptorSetInfo, kSkyboxDescriptorSetInfoCount>  MakeSkyboxDescriptorSetInfo(const Texture& skyboxTexture) const;
         std::array<DescriptorSetInfo, kGizmoDescriptorSetInfoCount>   MakeGizmoDescriptorSetInfo() const;
         std::array<DescriptorSetInfo, kPickerDescriptorSetInfoCount>  MakePickerDescriptorSetInfo() const;
         std::array<DescriptorSetInfo, kOutlineDescriptorSetInfoCount> MakeOutlineDescriptorSetInfo() const;
         std::array<DescriptorSetInfo, kCullerDescriptorSetInfoCount>  MakeCullerDescriptorSetInfo() const;
+        std::array<DescriptorSetInfo, kShadowDescriptorSetInfoCount>  MakeShadowDescriptorSetInfo() const;
         static constexpr uint32_t kPickerResolvedViewDescriptorSetBinding = 0;
         static constexpr uint32_t kOutlineIdResolvedViewDescriptorSetBinding = 0;
 
@@ -131,6 +143,7 @@ namespace kailux
         DescriptorSet           mPickerDescriptorSet;
         DescriptorSet           mOutlineDescriptorSet;
         DescriptorSet           mCullerDescriptorSet;
+        DescriptorSet           mShadowDescriptorSet;
 
         Buffer                  mCameraBuffer;
         Buffer                  mMeshDataBuffer;
@@ -146,5 +159,7 @@ namespace kailux
         Texture                 mSceneTexture;
         Texture                 mOutIdTexture;
         Texture                 mResolvedOutIdTexture;
+
+        ShadowMap               mDirectionalShadowMap;
     };
 }

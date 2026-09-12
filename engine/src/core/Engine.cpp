@@ -22,6 +22,7 @@
 #include "components/gpu/MeshData.h"
 #include "scene/SceneInstantiator.h"
 #include "scene/SceneSerializer.h"
+#include "shadow/ShadowCascades.h"
 #include "texture/TextureAllocator.h"
 
 namespace kailux
@@ -65,6 +66,8 @@ namespace kailux
                                               mComputePicker(std::move(other.mComputePicker)),
                                               mPickedEntity(other.mPickedEntity),
                                               mComputeCuller(std::move(other.mComputeCuller)),
+                                              mShadowPass(std::move(other.mShadowPass)),
+                                              mDirectionalShadowData(other.mDirectionalShadowData),
                                               mOnInfoLog(std::move(other.mOnInfoLog)),
                                               mOnWarningLog(std::move(other.mOnWarningLog)),
                                               mOnErrorLog(std::move(other.mOnErrorLog))
@@ -108,6 +111,8 @@ namespace kailux
             mComputePicker = std::move(other.mComputePicker);
             mPickedEntity = other.mPickedEntity;
             mComputeCuller = std::move(other.mComputeCuller);
+            mShadowPass = std::move(other.mShadowPass);
+            mDirectionalShadowData = other.mDirectionalShadowData;
             mOnInfoLog = std::move(other.mOnInfoLog);
             mOnWarningLog = std::move(other.mOnWarningLog);
             mOnErrorLog = std::move(other.mOnErrorLog);
@@ -138,6 +143,7 @@ namespace kailux
         engine.CreateSkybox();
         engine.CreateGizmoPass();
         engine.CreateOutlinePass();
+        engine.CreateShadowPass();
         engine.CreateTransferManager();
         engine.CreateMeshRegistry();
         engine.CreateTextureRegistry();
@@ -310,6 +316,15 @@ namespace kailux
         );
     }
 
+    void Engine::CreateShadowPass()
+    {
+        mShadowPass = ShadowPass::create(
+            mContext,
+            mSwapchain,
+            details::kFramesInFlight
+            );
+    }
+
     void Engine::CreateFrameResources()
     {
         for (auto &frame: mFrames)
@@ -321,7 +336,9 @@ namespace kailux
                 mGizmoPass,
                 mComputePicker,
                 mOutlinePass,
-                mComputeCuller, mTextureRegistry
+                mComputeCuller,
+                mShadowPass,
+                mTextureRegistry
             );
     }
 
@@ -489,9 +506,19 @@ namespace kailux
 
         const auto renderFinishedSemaphore = mSwapchain.GetPresentSemaphore(acquired->imageIndex); {
             CommandRecorder recorder(frame.GetCommandBuffer());
+
+            UpdateDirectionalShadowData(
+                mScene.GetSceneCamera(),
+                {mSwapchain.GetExtent().width, mSwapchain.GetExtent().height}
+                );
+
             UpdateFrameBuffers(frame, recorder);
 
             ExecuteCulling(frame, recorder, mScene.GetSceneCamera(), mSwapchain.GetExtent());
+
+            TransitionForShadowPass(frame, recorder);
+            RecordDirectionalShadows(frame, recorder);
+            TransitionShadowMapForSampling(frame, recorder);
 
             TransitionForMainPass(frame, recorder);
 
@@ -860,6 +887,37 @@ namespace kailux
             ImGuiBackend::get_texture_id_from_texture(mSimulationView.GetResolvedTexture()));
     }
 
+    void Engine::TransitionForShadowPass(const FrameData &frame, const CommandRecorder &recorder) const
+    {
+        recorder.ApplyImageBarrier({
+                frame.GetDirectionalShadowMap().GetImage(),
+                vk::ImageLayout::eUndefined,
+                vk::ImageLayout::eDepthAttachmentOptimal,
+                vk::PipelineStageFlagBits2::eFragmentShader,
+                vk::PipelineStageFlagBits2::eEarlyFragmentTests,
+                vk::AccessFlagBits2::eShaderRead,
+                vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+                vk::ImageAspectFlagBits::eDepth,
+                details::kShadowCascadeCount
+            }
+        );
+    }
+
+    void Engine::TransitionShadowMapForSampling(const FrameData &frame, const CommandRecorder &recorder) const
+    {
+        recorder.ApplyImageBarrier({
+            frame.GetDirectionalShadowMap().GetImage(),
+            vk::ImageLayout::eDepthAttachmentOptimal,
+            vk::ImageLayout::eShaderReadOnlyOptimal,
+            vk::PipelineStageFlagBits2::eLateFragmentTests,
+            vk::PipelineStageFlagBits2::eFragmentShader,
+            vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+            vk::AccessFlagBits2::eShaderRead,
+            vk::ImageAspectFlagBits::eDepth,
+            details::kShadowCascadeCount
+        });
+    }
+
     void Engine::TransitionForMainPass(const FrameData &frame, const CommandRecorder &recorder) const
     {
         recorder.ApplyImageBarrier({
@@ -1078,6 +1136,49 @@ namespace kailux
             cubeView.vertexOffset,
             0
         );
+    }
+
+    void Engine::RecordDirectionalShadows(const FrameData &frame, CommandRecorder &recorder) const
+    {
+        const auto cmd{recorder.GetCommandBuffer()};
+        const auto &shadowMap{frame.GetDirectionalShadowMap()};
+        const auto extent{shadowMap.GetExtent()};
+
+        const auto objectCount{mScene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)};
+        const bool castShadows{objectCount > 0 && mDirectionalShadowData.params.x > 0.5f};
+
+        for (uint32_t cascade{}; cascade < shadowMap.GetLayerCount(); ++cascade)
+        {
+            recorder.BeginRendering({
+                {},
+                extent,
+                shadowMap.GetLayerView(cascade),
+                vk::ImageLayout::eDepthAttachmentOptimal,
+                vk::AttachmentLoadOp::eClear
+            });
+
+            if (castShadows)
+            {
+                recorder.SetViewport(extent);
+                recorder.SetScissor(extent);
+
+                mShadowPass.Bind(cmd);
+                mMeshRegistry.Bind(cmd);
+                frame.GetShadowDescriptorSet().Bind(mShadowPass.GetPipeline(), cmd);
+                mShadowPass.Push(cmd, GraphicsPassesPushConstants::ShadowCascade{
+                    mDirectionalShadowData.cascades[cascade].viewProjection
+                });
+
+                cmd.drawIndexedIndirect(
+                    frame.GetCullerInputCommandsBuffer().GetBuffer(),
+                    0,
+                    objectCount,
+                    sizeof(vk::DrawIndexedIndirectCommand)
+                );
+            }
+
+            recorder.EndRendering();
+        }
     }
 
     void Engine::RecordGizmos(const FrameData &frame, const CommandRecorder &recorder) const
@@ -1324,8 +1425,37 @@ namespace kailux
 
     void Engine::UpdateSceneBuffer(FrameData &frame) const
     {
-        const auto &data = mScene.GetData();
+        auto data = mScene.GetData();
+        data.directionalShadow = mDirectionalShadowData;
         frame.GetSceneBuffer().Upload(&data, sizeof(SceneData));
+    }
+
+    void Engine::UpdateDirectionalShadowData(entt::entity camera, glm::ivec2 extent)
+    {
+        auto &registry{mScene.GetEntityRegistry()};
+        const auto sun{mScene.GetSun()};
+
+        const auto &sunData{registry.get<DirectionalLightData>(sun)};
+        if (sunData.colorAndEnabled.w < 0.5f)
+            return;
+
+        const auto& cameraComponent{registry.get<CameraComponent>(camera)};
+
+        const glm::vec3 direction{sunData.directionAndIntensity};
+        if (glm::length(direction) < 0.0001f)
+            return;
+
+        const auto setup{
+            ShadowCascades::build(
+                ShadowCascades::make_build_info(cameraComponent, extent, direction)
+            )
+        };
+
+        for (uint32_t i{}; i < details::kShadowCascadeCount; ++i)
+            mDirectionalShadowData.cascades[i].viewProjection = setup.viewProjections[i];
+
+        mDirectionalShadowData.splitDepths = setup.splitDepths;
+        mDirectionalShadowData.params.x = 1.f;
     }
 
     void Engine::UpdateCullerBuffers(const FrameData &frame, const CommandRecorder &recorder)
@@ -1341,7 +1471,7 @@ namespace kailux
                 1,
                 meshView.firstIndex,
                 meshView.vertexOffset,
-                0
+                static_cast<uint32_t>(indirectCommands.size())
             );
         });
         if (indirectCommands.empty())

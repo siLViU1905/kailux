@@ -108,6 +108,9 @@ namespace kailux::details
     constexpr uint32_t kSceneViewCameraIndex{0};
     constexpr uint32_t kSimulationViewCameraIndex{1};
     constexpr uint32_t kMaxCameraViews{2};
+
+    constexpr uint32_t kShadowCascadeCount{4};
+    constexpr uint32_t kShadowMapResolution{2048};
 }
 
 namespace kailux::details

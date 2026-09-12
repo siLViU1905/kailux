@@ -57,6 +57,9 @@ add_library(kailux_engine STATIC
         src/core/pipeline/GraphicsPipeline.cpp
         src/core/pipeline/ComputePipeline.cpp
         src/core/components/math/Transform.cpp
+        src/core/shadow/ShadowMap.cpp
+        src/core/shadow/ShadowCascades.cpp
+        src/core/passes/ShadowPass.cpp
 )
 
 target_compile_definitions(kailux_engine PUBLIC

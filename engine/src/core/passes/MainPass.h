@@ -66,6 +66,11 @@ namespace kailux
             ),
             DescriptorLayoutBinding(
                 vk::DescriptorType::eCombinedImageSampler,
+                1, // directional shadow
+                vk::ShaderStageFlagBits::eFragment
+            ),
+            DescriptorLayoutBinding(
+                vk::DescriptorType::eCombinedImageSampler,
                 details::kMaxTextures, // textures array
                 vk::ShaderStageFlagBits::eFragment
             )
@@ -102,6 +107,10 @@ namespace kailux
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
                 1 // brdf lut
+            ),
+            DescriptorPoolSize(
+                vk::DescriptorType::eCombinedImageSampler,
+                1 // directional shadow
             ),
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
