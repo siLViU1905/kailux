@@ -66,6 +66,7 @@ namespace kailux
         const Texture& GetResolvedOutIdTexture() const;
 
         const ShadowMap& GetDirectionalShadowMap() const;
+        const ShadowMap& GetPointShadowMap() const;
 
         static constexpr uint32_t kBufferMemoryBarriersCount{1 + 1 + 1 + 1 + 1}; // camera buffer + mesh data buffer + materials buffer + culler input buffer + scene buffer
         std::array<vk::BufferMemoryBarrier2, kBufferMemoryBarriersCount>       GetBufferMemoryBarriers() const;
@@ -113,8 +114,16 @@ namespace kailux
         void CreateOutIdTexture(const Context &context);
 
         void CreateDirectionalShadowMap(const Context &context, vk::Format depthFormat);
+        void CreatePointShadowMap(const Context &context, vk::Format depthFormat);
+        void SeedPointShadowDescriptors(const Context &context);
 
-        static constexpr uint32_t kDescriptorSetInfoCount{1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1}; // camera buffer + mesh data buffer + materials buffer + scene buffer + skybox sampler + irradiance map + prefiltered env + brdf lut + directional shadow + textures array
+        // camera buffer + mesh data buffer +
+        // materials buffer + scene buffer +
+        // skybox sampler + irradiance map +
+        // prefiltered env + brdf lut +
+        // directional shadow + point shadow cubes +
+        // textures array
+        static constexpr uint32_t kDescriptorSetInfoCount{11};
         static constexpr uint32_t kSkyboxDescriptorSetInfoCount{1 + 1}; // camera buffer + cube texture
         static constexpr uint32_t kGizmoDescriptorSetInfoCount{1}; // camera buffer
         static constexpr uint32_t kPickerDescriptorSetInfoCount{1 + 1}; // id image + out buffer
@@ -161,5 +170,6 @@ namespace kailux
         Texture                 mResolvedOutIdTexture;
 
         ShadowMap               mDirectionalShadowMap;
+        ShadowMap               mPointShadowMap;
     };
 }

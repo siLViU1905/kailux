@@ -96,8 +96,20 @@ struct PointLight
 };
 vec3 calcPointLight(PointLight light, vec3 N, vec3 V, vec3 fragPos, vec3 albedo, float roughness, float metallic, vec3 F0);
 
+struct PointShadow
+{
+    vec4  positionAndFar;
+    // x = enabled, y = depth bias, z = normal offset, w = pcf radius
+    vec4  params;
+    ivec4 lightIndex;
+};
+uint findPointShadowSlot(uint lightIndex);
+float samplePointShadow(uint slot, vec3 worldPos, vec3 N);
+
 #define kMaxPointLights 16
 #define kShadowCascadeCount 4
+#define kMaxPointShadows 1
+#define kPointShadowNear 0.05
 
 layout (std430, set = 0, binding = 3) readonly buffer SceneBuffer {
     DirectionalLight sun;
@@ -110,6 +122,9 @@ layout (std430, set = 0, binding = 3) readonly buffer SceneBuffer {
     vec4       cascadeSplitDepths;
     // x = enabled, y = depth bias, z = normal offset, w = pcf radius
     vec4       shadowParams;
+
+    PointShadow pointShadows[kMaxPointShadows];
+    uvec4       pointShadowCount;
 } sceneData;
 
 layout (set = 0, binding = 4) uniform samplerCube skyboxSampler;
@@ -117,7 +132,8 @@ layout (set = 0, binding = 5) uniform samplerCube irradianceSampler;
 layout (set = 0, binding = 6) uniform samplerCube prefilteredEnvSampler;
 layout (set = 0, binding = 7) uniform sampler2D brdfLutSampler;
 layout (set = 0, binding = 8) uniform sampler2DArrayShadow shadowMapSampler;
-layout (set = 0, binding = 9) uniform sampler2D textures[];
+layout (set = 0, binding = 9) uniform samplerCubeShadow pointShadowSamplers[kMaxPointShadows];
+layout (set = 0, binding = 10) uniform sampler2D textures[];
 
 
 void main()
@@ -287,4 +303,49 @@ float sampleDirectionalShadow(uint cascade, vec3 worldPos, vec3 N, vec3 L)
     sum += texture(shadowMapSampler, vec4(uv + vec2(x, y) * texel * radius, float(cascade), reference));
 
     return sum / 9.0;
+}
+
+uint findPointShadowSlot(uint lightIndex)
+{
+    for (uint slot = 0; slot < sceneData.pointShadowCount.x; ++slot)
+        if (sceneData.pointShadows[slot].lightIndex.x == lightIndex)
+            return slot;
+
+    return ~0u;
+}
+
+float samplePointShadow(uint slot, vec3 worldPos, vec3 N)
+{
+    PointShadow shadowSlot = sceneData.pointShadows[slot];
+
+    if (shadowSlot.params.x < 0.5)
+    return 1.0;
+
+    vec3  lightPos     = shadowSlot.positionAndFar.xyz;
+    float farPlane     = shadowSlot.positionAndFar.w;
+    float normalOffset = shadowSlot.params.z;
+    vec3  v = (worldPos + N * normalOffset) - lightPos;
+
+    float d = max(abs(v.x), max(abs(v.y), abs(v.z)));
+    if (d > farPlane || d < kPointShadowNear)
+        return 1.0;
+
+    float reference = farPlane * (d - kPointShadowNear) / ((farPlane - kPointShadowNear) * d);
+    reference -= shadowSlot.params.y;
+
+    vec3 dir = normalize(v);
+    vec3 helper = abs(dir.y) > 0.99 ? vec3(0.0, 0.0, 1.0) : vec3(0.0, 1.0, 0.0);
+    vec3 t = normalize(cross(helper, dir));
+    vec3 b = cross(dir, t);
+
+    float spread = shadowSlot.params.w * d * 2.0
+    / float(textureSize(pointShadowSamplers[slot], 0).x);
+
+    float sum = texture(pointShadowSamplers[slot], vec4(v, reference));
+    sum += texture(pointShadowSamplers[slot], vec4(v + t * spread, reference));
+    sum += texture(pointShadowSamplers[slot], vec4(v - t * spread, reference));
+    sum += texture(pointShadowSamplers[slot], vec4(v + b * spread, reference));
+    sum += texture(pointShadowSamplers[slot], vec4(v - b * spread, reference));
+
+    return sum / 5.0;
 }

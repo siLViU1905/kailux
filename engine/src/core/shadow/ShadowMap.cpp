@@ -10,6 +10,7 @@ namespace kailux
                                                        mMemory(std::move(other.mMemory)),
                                                        mArrayView(std::move(other.mArrayView)),
                                                        mLayerViews(std::move(other.mLayerViews)),
+                                                       mCubeViews(std::move(other.mCubeViews)),
                                                        mSampler(std::move(other.mSampler)),
                                                        mResolution(other.mResolution),
                                                        mLayerCount(other.mLayerCount)
@@ -24,6 +25,7 @@ namespace kailux
             mMemory = std::move(other.mMemory);
             mArrayView = std::move(other.mArrayView);
             mLayerViews = std::move(other.mLayerViews);
+            mCubeViews = std::move(other.mCubeViews);
             mSampler = std::move(other.mSampler);
             mResolution = other.mResolution;
             mLayerCount = other.mLayerCount;
@@ -31,16 +33,16 @@ namespace kailux
         return *this;
     }
 
-    ShadowMap ShadowMap::create(const Context &context, uint32_t resolution, uint32_t layerCount, vk::Format format)
+    ShadowMap ShadowMap::create(const Context &context, uint32_t resolution, uint32_t layerCount, vk::Format format, bool createCube)
     {
         ShadowMap map;
         map.mResolution = resolution;
         map.mLayerCount = layerCount;
 
-        map.CreateImage(context, resolution, layerCount, format);
+        map.CreateImage(context, resolution, layerCount, format, createCube);
         log::console.Debug("shadow_map: image created");
 
-        map.CreateViews(context, layerCount, format);
+        map.CreateViews(context, layerCount, format, createCube);
         log::console.Debug("shadow_map: image view created");
 
         map.CreateSampler(context);
@@ -65,6 +67,17 @@ namespace kailux
         return *mLayerViews[layer];
     }
 
+    vk::ImageView ShadowMap::GetCubeView(uint32_t cube) const
+    {
+        assert(cube < mCubeViews.size() && "Shadow map cube out of range");
+        return *mCubeViews[cube];
+    }
+
+    uint32_t ShadowMap::GetCubeCount() const
+    {
+        return static_cast<uint32_t>(mCubeViews.size());
+    }
+
     vk::Sampler ShadowMap::GetSampler() const
     {
         return *mSampler;
@@ -85,9 +98,12 @@ namespace kailux
         return {mResolution, mResolution};
     }
 
-    void ShadowMap::CreateImage(const Context &context, uint32_t resolution, uint32_t layerCount, vk::Format format)
+    void ShadowMap::CreateImage(const Context &context, uint32_t resolution, uint32_t layerCount, vk::Format format, bool createCube)
     {
         vk::ImageCreateInfo imageInfo{};
+        if (createCube)
+            imageInfo.flags = vk::ImageCreateFlagBits::eCubeCompatible;
+
         imageInfo.imageType = vk::ImageType::e2D;
         imageInfo.format = format;
         imageInfo.extent = vk::Extent3D{resolution, resolution, 1};
@@ -113,7 +129,7 @@ namespace kailux
         mImage.bindMemory(*mMemory, 0);
     }
 
-    void ShadowMap::CreateViews(const Context &context, uint32_t layerCount, vk::Format format)
+    void ShadowMap::CreateViews(const Context &context, uint32_t layerCount, vk::Format format, bool createCube)
     {
         vk::ImageViewCreateInfo arrayInfo{};
         arrayInfo.image = *mImage;
@@ -137,6 +153,22 @@ namespace kailux
             layerInfo.subresourceRange.layerCount = 1;
 
             mLayerViews.emplace_back(context.mDevice, layerInfo);
+        }
+
+        mCubeViews.clear();
+        if (!createCube)
+            return;
+
+        const uint32_t cubeCount{layerCount / 6};
+        mCubeViews.reserve(cubeCount);
+        for (uint32_t i{}; i < cubeCount; ++i)
+        {
+            vk::ImageViewCreateInfo cubeInfo{arrayInfo};
+            cubeInfo.viewType = vk::ImageViewType::eCube;
+            cubeInfo.subresourceRange.baseArrayLayer = i * 6;
+            cubeInfo.subresourceRange.layerCount = 6;
+
+            mCubeViews.emplace_back(context.mDevice, cubeInfo);
         }
     }
 

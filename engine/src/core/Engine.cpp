@@ -68,6 +68,7 @@ namespace kailux
                                               mComputeCuller(std::move(other.mComputeCuller)),
                                               mShadowPass(std::move(other.mShadowPass)),
                                               mDirectionalShadowSet(other.mDirectionalShadowSet),
+                                              mPointShadowSet(other.mPointShadowSet),
                                               mOnInfoLog(std::move(other.mOnInfoLog)),
                                               mOnWarningLog(std::move(other.mOnWarningLog)),
                                               mOnErrorLog(std::move(other.mOnErrorLog))
@@ -113,6 +114,7 @@ namespace kailux
             mComputeCuller = std::move(other.mComputeCuller);
             mShadowPass = std::move(other.mShadowPass);
             mDirectionalShadowSet = other.mDirectionalShadowSet;
+            mPointShadowSet = other.mPointShadowSet;
             mOnInfoLog = std::move(other.mOnInfoLog);
             mOnWarningLog = std::move(other.mOnWarningLog);
             mOnErrorLog = std::move(other.mOnErrorLog);
@@ -507,17 +509,23 @@ namespace kailux
         const auto renderFinishedSemaphore = mSwapchain.GetPresentSemaphore(acquired->imageIndex); {
             CommandRecorder recorder(frame.GetCommandBuffer());
 
-            UpdateFrameBuffers(frame, recorder);
             mDirectionalShadowSet.Update(
-                mScene,
-                mScene.GetSceneCamera(),
-                {mSwapchain.GetExtent().width, mSwapchain.GetExtent().height}
-                );
+               mScene,
+               mScene.GetSceneCamera(),
+               {mSwapchain.GetExtent().width, mSwapchain.GetExtent().height}
+               );
+            mPointShadowSet.Update(mScene, mScene.GetSceneCamera());
+
+            UpdateFrameBuffers(frame, recorder);
             ExecuteCulling(frame, recorder, mScene.GetSceneCamera(), mSwapchain.GetExtent());
 
             TransitionForShadowPass(frame, recorder);
             RecordDirectionalShadows(frame, recorder);
             TransitionShadowMapForSampling(frame, recorder);
+
+            TransitionForPointShadowPass(frame, recorder);
+            RecordPointShadows(frame, recorder);
+            TransitionPointShadowMapForSampling(frame, recorder);
 
             TransitionForMainPass(frame, recorder);
 
@@ -917,6 +925,36 @@ namespace kailux
         });
     }
 
+    void Engine::TransitionForPointShadowPass(const FrameData &frame, const CommandRecorder &recorder) const
+    {
+        recorder.ApplyImageBarrier({
+            frame.GetPointShadowMap().GetImage(),
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eDepthAttachmentOptimal,
+            vk::PipelineStageFlagBits2::eFragmentShader,
+            vk::PipelineStageFlagBits2::eEarlyFragmentTests,
+            vk::AccessFlagBits2::eShaderRead,
+            vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+            vk::ImageAspectFlagBits::eDepth,
+            details::kMaxPointShadows * details::kPointShadowFaceCount
+        });
+    }
+
+    void Engine::TransitionPointShadowMapForSampling(const FrameData &frame, const CommandRecorder &recorder) const
+    {
+        recorder.ApplyImageBarrier({
+           frame.GetPointShadowMap().GetImage(),
+           vk::ImageLayout::eDepthAttachmentOptimal,
+           vk::ImageLayout::eShaderReadOnlyOptimal,
+           vk::PipelineStageFlagBits2::eLateFragmentTests,
+           vk::PipelineStageFlagBits2::eFragmentShader,
+           vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+           vk::AccessFlagBits2::eShaderRead,
+           vk::ImageAspectFlagBits::eDepth,
+           details::kMaxPointShadows * details::kPointShadowFaceCount
+       });
+    }
+
     void Engine::TransitionForMainPass(const FrameData &frame, const CommandRecorder &recorder) const
     {
         recorder.ApplyImageBarrier({
@@ -1180,6 +1218,54 @@ namespace kailux
         }
     }
 
+    void Engine::RecordPointShadows(const FrameData &frame, CommandRecorder &recorder) const
+    {
+        const auto cmd{recorder.GetCommandBuffer()};
+        const auto &shadowMap{frame.GetPointShadowMap()};
+        const auto extent{shadowMap.GetExtent()};
+
+        const auto objectCount{mScene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)};
+
+        for (uint32_t slot{}; slot < details::kMaxPointShadows; ++slot)
+        {
+            const bool castShadows{objectCount > 0 && mPointShadowSet.Enabled(slot)};
+
+            for (uint32_t face{}; face < details::kPointShadowFaceCount; ++face)
+            {
+                const uint32_t layer{slot * details::kPointShadowFaceCount + face};
+
+                recorder.BeginRendering({
+                    {},
+                    extent,
+                    shadowMap.GetLayerView(layer),
+                    vk::ImageLayout::eDepthAttachmentOptimal,
+                    vk::AttachmentLoadOp::eClear
+                });
+
+                if (castShadows)
+                {
+                    recorder.SetViewport(extent);
+                    recorder.SetScissor(extent);
+
+                    mShadowPass.Bind(cmd);
+                    mMeshRegistry.Bind(cmd);
+                    frame.GetShadowDescriptorSet().Bind(mShadowPass.GetPipeline(), cmd);
+                    mShadowPass.Push(cmd, GraphicsPassesPushConstants::ShadowCascade{
+                        mPointShadowSet.GetFace(slot, face)
+                    });
+
+                    cmd.drawIndexedIndirect(
+                        frame.GetCullerInputCommandsBuffer().GetBuffer(),
+                        0,
+                        objectCount,
+                        sizeof(vk::DrawIndexedIndirectCommand)
+                    );
+                }
+                recorder.EndRendering();
+            }
+        }
+    }
+
     void Engine::RecordGizmos(const FrameData &frame, const CommandRecorder &recorder) const
     {
         const auto cmd = recorder.GetCommandBuffer();
@@ -1426,6 +1512,7 @@ namespace kailux
     {
         auto data = mScene.GetData();
         data.directionalShadow = mDirectionalShadowSet.GetData();
+        data.pointShadows = mPointShadowSet.GetData();
         frame.GetSceneBuffer().Upload(&data, sizeof(SceneData));
     }
 

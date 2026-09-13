@@ -13,11 +13,16 @@ namespace kailux
             const Context &context,
             uint32_t resolution,
             uint32_t layerCount,
-            vk::Format format);
+            vk::Format format,
+            bool createCube);
 
         vk::Image     GetImage() const;
         vk::ImageView GetArrayView() const;
         vk::ImageView GetLayerView(uint32_t layer) const;
+
+        vk::ImageView GetCubeView(uint32_t cube) const;
+        uint32_t      GetCubeCount() const;
+
         vk::Sampler   GetSampler() const;
 
         uint32_t      GetResolution() const;
@@ -25,14 +30,15 @@ namespace kailux
         vk::Extent2D  GetExtent() const;
 
     private:
-        void CreateImage(const Context &context, uint32_t resolution, uint32_t layerCount, vk::Format format);
-        void CreateViews(const Context &context, uint32_t layerCount, vk::Format format);
+        void CreateImage(const Context &context, uint32_t resolution, uint32_t layerCount, vk::Format format, bool createCube);
+        void CreateViews(const Context &context, uint32_t layerCount, vk::Format format, bool createCube);
         void CreateSampler(const Context &context);
 
         vk::raii::Image                  mImage{nullptr};
         vk::raii::DeviceMemory           mMemory{nullptr};
         vk::raii::ImageView              mArrayView{nullptr};
         std::vector<vk::raii::ImageView> mLayerViews;
+        std::vector<vk::raii::ImageView> mCubeViews;
         vk::raii::Sampler                mSampler{nullptr};
 
         uint32_t mResolution{};

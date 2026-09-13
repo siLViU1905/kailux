@@ -30,6 +30,7 @@
 #include "gizmo/GizmoRegistry.h"
 #include "passes/GizmoPass.h"
 #include "shadow/DirectionalShadowSet.h"
+#include "shadow/PointShadowSet.h"
 
 namespace kailux
 {
@@ -132,6 +133,7 @@ namespace kailux
         void                                        RecordMeshData(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex, bool writeIds) const;
         void                                        RecordSkybox(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex) const;
         void                                        RecordDirectionalShadows(const FrameData &frame, CommandRecorder &recorder) const;
+        void                                        RecordPointShadows(const FrameData& frame, CommandRecorder &recorder) const;
         void                                        RecordGizmos(const FrameData &frame, const CommandRecorder &recorder) const;
         void                                        RecordImGuiData(const FrameData& frame);
         void                                        RecordPicker(const FrameData& frame, const CommandRecorder &recorder) const;
@@ -160,6 +162,10 @@ namespace kailux
 
         void TransitionForShadowPass(const FrameData& frame, const CommandRecorder& recorder) const;
         void TransitionShadowMapForSampling(const FrameData& frame, const CommandRecorder& recorder) const;
+
+        void TransitionForPointShadowPass(const FrameData& frame, const CommandRecorder& recorder) const;
+        void TransitionPointShadowMapForSampling(const FrameData& frame, const CommandRecorder& recorder) const;
+
         void TransitionForMainPass(const FrameData& frame, const CommandRecorder& recorder) const;
         void TransitionForSimulationPass(const CommandRecorder &recorder) const;
         void TransitionForGizmoPass(const FrameData& frame, const CommandRecorder& recorder) const;
@@ -213,6 +219,7 @@ namespace kailux
         ShadowPass                                 mShadowPass;
 
         DirectionalShadowSet                       mDirectionalShadowSet;
+        PointShadowSet                             mPointShadowSet;
 
         OnLog                                      mOnInfoLog;
         OnLog                                      mOnWarningLog;

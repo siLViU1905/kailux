@@ -71,6 +71,11 @@ namespace kailux
             ),
             DescriptorLayoutBinding(
                 vk::DescriptorType::eCombinedImageSampler,
+                details::kMaxPointShadows, // point shadow cubes
+                vk::ShaderStageFlagBits::eFragment
+            ),
+            DescriptorLayoutBinding(
+                vk::DescriptorType::eCombinedImageSampler,
                 details::kMaxTextures, // textures array
                 vk::ShaderStageFlagBits::eFragment
             )
@@ -114,6 +119,10 @@ namespace kailux
             ),
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
+                details::kMaxPointShadows // point shadow cubes
+            ),
+            DescriptorPoolSize(
+                vk::DescriptorType::eCombinedImageSampler,
                 details::kMaxTextures // textures array
             )
         };
@@ -142,6 +151,20 @@ namespace kailux
             return ~0u;
         }();
         static_assert(kMeshTextureBindStart != ~0u, "Failed to find mesh texture bind start index");
+
+        static constexpr uint32_t kMeshPointShadowBindStart = []() constexpr -> uint32_t {
+            for (uint32_t i = 0; i < kDescriptorLayoutBindings.size(); ++i)
+            {
+                const auto [descriptor, count, stage] = kDescriptorLayoutBindings[i];
+
+                if (descriptor == vk::DescriptorType::eCombinedImageSampler &&
+                    count == details::kMaxPointShadows &&
+                    stage == vk::ShaderStageFlagBits::eFragment)
+                    return i;
+            }
+            return ~0u;
+        }();
+        static_assert(kMeshPointShadowBindStart != ~0u, "Failed to find point shadow bind start index");
 
     private:
         static PipelineInfo make_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits sampleCount);

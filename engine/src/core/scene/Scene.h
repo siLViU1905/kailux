@@ -60,8 +60,11 @@ namespace kailux
         );
         entt::entity CreateParentEntity(std::string_view name);
 
-        CreateResult CreatePointLightEntity(std::string_view name, const GizmoComponent &component,
-                                            const glm::vec3& position);
+        CreateResult CreatePointLightEntity(
+            std::string_view name,
+            const GizmoComponent &component,
+            const glm::vec3 &position);
+        std::array<entt::entity, details::kMaxPointLights> GetPointLightEntities() const;
 
         entt::registry&       GetEntityRegistry();
         const entt::registry& GetEntityRegistry() const;
@@ -72,6 +75,7 @@ namespace kailux
         void                  SetMainCamera(entt::entity camera);
         entt::entity          GetSun() const;
         SceneData             GetData() const;
+        LightsData            GetLightData() const;
 
         std::string_view      GetName() const;
 
@@ -115,8 +119,6 @@ namespace kailux
         using        SunData = DirectionalLightData;
         entt::entity CreateSunEntity(const SunData& data);
         void         CreateSceneCamera();
-
-        LightsData GetLightData() const;
 
         void UpdateTransforms();
 
