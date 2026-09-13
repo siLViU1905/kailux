@@ -108,7 +108,7 @@ float samplePointShadow(uint slot, vec3 worldPos, vec3 N);
 
 #define kMaxPointLights 16
 #define kShadowCascadeCount 4
-#define kMaxPointShadows 1
+#define kMaxPointShadows 4
 #define kPointShadowNear 0.05
 
 layout (std430, set = 0, binding = 3) readonly buffer SceneBuffer {
