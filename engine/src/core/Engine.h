@@ -29,7 +29,7 @@
 #include "components/gpu/CameraData.h"
 #include "gizmo/GizmoRegistry.h"
 #include "passes/GizmoPass.h"
-#include "components/gpu/DirectionalShadowData.h"
+#include "shadow/DirectionalShadowSet.h"
 
 namespace kailux
 {
@@ -146,7 +146,6 @@ namespace kailux
         void UpdateMaterialBuffer(FrameData& frame) const;
 
         void UpdateSceneBuffer(FrameData& frame) const;
-        void UpdateDirectionalShadowData(entt::entity camera, glm::ivec2 extent);
         void UpdateCullerBuffers(const FrameData& frame, const CommandRecorder &recorder);
 
         void ReadOutputBuffers(const FrameData& frame);
@@ -213,7 +212,7 @@ namespace kailux
         ComputeCuller                              mComputeCuller;
         ShadowPass                                 mShadowPass;
 
-        DirectionalShadowData                      mDirectionalShadowData;
+        DirectionalShadowSet                       mDirectionalShadowSet;
 
         OnLog                                      mOnInfoLog;
         OnLog                                      mOnWarningLog;

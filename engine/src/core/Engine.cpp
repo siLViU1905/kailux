@@ -67,7 +67,7 @@ namespace kailux
                                               mPickedEntity(other.mPickedEntity),
                                               mComputeCuller(std::move(other.mComputeCuller)),
                                               mShadowPass(std::move(other.mShadowPass)),
-                                              mDirectionalShadowData(other.mDirectionalShadowData),
+                                              mDirectionalShadowSet(other.mDirectionalShadowSet),
                                               mOnInfoLog(std::move(other.mOnInfoLog)),
                                               mOnWarningLog(std::move(other.mOnWarningLog)),
                                               mOnErrorLog(std::move(other.mOnErrorLog))
@@ -112,7 +112,7 @@ namespace kailux
             mPickedEntity = other.mPickedEntity;
             mComputeCuller = std::move(other.mComputeCuller);
             mShadowPass = std::move(other.mShadowPass);
-            mDirectionalShadowData = other.mDirectionalShadowData;
+            mDirectionalShadowSet = other.mDirectionalShadowSet;
             mOnInfoLog = std::move(other.mOnInfoLog);
             mOnWarningLog = std::move(other.mOnWarningLog);
             mOnErrorLog = std::move(other.mOnErrorLog);
@@ -507,13 +507,12 @@ namespace kailux
         const auto renderFinishedSemaphore = mSwapchain.GetPresentSemaphore(acquired->imageIndex); {
             CommandRecorder recorder(frame.GetCommandBuffer());
 
-            UpdateDirectionalShadowData(
+            UpdateFrameBuffers(frame, recorder);
+            mDirectionalShadowSet.Update(
+                mScene,
                 mScene.GetSceneCamera(),
                 {mSwapchain.GetExtent().width, mSwapchain.GetExtent().height}
                 );
-
-            UpdateFrameBuffers(frame, recorder);
-
             ExecuteCulling(frame, recorder, mScene.GetSceneCamera(), mSwapchain.GetExtent());
 
             TransitionForShadowPass(frame, recorder);
@@ -1145,7 +1144,7 @@ namespace kailux
         const auto extent{shadowMap.GetExtent()};
 
         const auto objectCount{mScene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)};
-        const bool castShadows{objectCount > 0 && mDirectionalShadowData.params.x > 0.5f};
+        const bool castShadows{objectCount > 0 && mDirectionalShadowSet.Enabled()};
 
         for (uint32_t cascade{}; cascade < shadowMap.GetLayerCount(); ++cascade)
         {
@@ -1166,7 +1165,7 @@ namespace kailux
                 mMeshRegistry.Bind(cmd);
                 frame.GetShadowDescriptorSet().Bind(mShadowPass.GetPipeline(), cmd);
                 mShadowPass.Push(cmd, GraphicsPassesPushConstants::ShadowCascade{
-                    mDirectionalShadowData.cascades[cascade].viewProjection
+                    mDirectionalShadowSet.GetCascade(cascade)
                 });
 
                 cmd.drawIndexedIndirect(
@@ -1426,36 +1425,8 @@ namespace kailux
     void Engine::UpdateSceneBuffer(FrameData &frame) const
     {
         auto data = mScene.GetData();
-        data.directionalShadow = mDirectionalShadowData;
+        data.directionalShadow = mDirectionalShadowSet.GetData();
         frame.GetSceneBuffer().Upload(&data, sizeof(SceneData));
-    }
-
-    void Engine::UpdateDirectionalShadowData(entt::entity camera, glm::ivec2 extent)
-    {
-        auto &registry{mScene.GetEntityRegistry()};
-        const auto sun{mScene.GetSun()};
-
-        const auto &sunData{registry.get<DirectionalLightData>(sun)};
-        if (sunData.colorAndEnabled.w < 0.5f)
-            return;
-
-        const auto& cameraComponent{registry.get<CameraComponent>(camera)};
-
-        const glm::vec3 direction{sunData.directionAndIntensity};
-        if (glm::length(direction) < 0.0001f)
-            return;
-
-        const auto setup{
-            ShadowCascades::build(
-                ShadowCascades::make_build_info(cameraComponent, extent, direction)
-            )
-        };
-
-        for (uint32_t i{}; i < details::kShadowCascadeCount; ++i)
-            mDirectionalShadowData.cascades[i].viewProjection = setup.viewProjections[i];
-
-        mDirectionalShadowData.splitDepths = setup.splitDepths;
-        mDirectionalShadowData.params.x = 1.f;
     }
 
     void Engine::UpdateCullerBuffers(const FrameData &frame, const CommandRecorder &recorder)
