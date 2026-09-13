@@ -101,7 +101,7 @@ struct PointShadow
     vec4  positionAndFar;
     // x = enabled, y = depth bias, z = normal offset, w = pcf radius
     vec4  params;
-    ivec4 lightIndex;
+    uvec4 lightIndex;
 };
 uint findPointShadowSlot(uint lightIndex);
 float samplePointShadow(uint slot, vec3 worldPos, vec3 N);
