@@ -1,6 +1,6 @@
 #pragma once
-#include "DirectionalLightData.h"
-#include "DirectionalShadowData.h"
+
+#include "DirectionalShadowsData.h"
 #include "LightsData.h"
 #include "PointShadowData.h"
 #include "core/Core.h"
@@ -10,7 +10,7 @@ namespace kailux
     struct SceneData
     {
         LightsData lights;
-        DirectionalShadowData directionalShadow;
+        DirectionalShadowsData directionalShadows;
         PointShadowsData pointShadows;
     };
 

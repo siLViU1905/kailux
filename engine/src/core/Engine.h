@@ -132,7 +132,7 @@ namespace kailux
         void                                        Submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
         void                                        RecordMeshData(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex, bool writeIds) const;
         void                                        RecordSkybox(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex) const;
-        void                                        RecordDirectionalShadows(const FrameData &frame, CommandRecorder &recorder) const;
+        void                                        RecordDirectionalShadows(const FrameData &frame, CommandRecorder &recorder, uint32_t viewIndex) const;
         void                                        RecordPointShadows(const FrameData& frame, CommandRecorder &recorder) const;
         void                                        RecordGizmos(const FrameData &frame, const CommandRecorder &recorder) const;
         void                                        RecordImGuiData(const FrameData& frame);
@@ -218,7 +218,7 @@ namespace kailux
         ComputeCuller                              mComputeCuller;
         ShadowPass                                 mShadowPass;
 
-        DirectionalShadowSet                       mDirectionalShadowSet;
+        std::array<DirectionalShadowSet, details::kMaxCameraViews> mDirectionalShadowSets;
         PointShadowSet                             mPointShadowSet;
 
         OnLog                                      mOnInfoLog;

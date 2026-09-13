@@ -614,7 +614,7 @@ namespace kailux
         mDirectionalShadowMap = ShadowMap::create(
             context,
             details::kShadowMapResolution,
-            details::kShadowCascadeCount,
+            details::kShadowCascadeCount * details::kMaxCameraViews,
             depthFormat,
             false
             );

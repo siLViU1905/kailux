@@ -61,6 +61,7 @@ layout (location = 9) in flat uint fragIdx;
 layout (location = 10) in vec2 fragTexCoord;
 layout (location = 11) in vec4 fragTangent;
 layout (location = 12) in float fragViewDepth;
+layout (location = 13) in flat uint fragCameraIdx;
 
 layout (location = 0) out vec4 outColor;
 layout (location = 1) out uint outEntityId;
@@ -89,6 +90,16 @@ struct DirectionalLight
     vec4 directionAndIntensity;
     vec4 colorAndEnabled;
 };
+
+#define kShadowCascadeCount 4
+struct DirectionalShadow
+{
+    mat4 cascadeViewProjection[kShadowCascadeCount];
+    vec4 splitDepths;
+    // x = enabled, y = depth bias, z = normal offset, w = pcf radius
+    vec4 params;
+};
+
 struct PointLight
 {
     vec4 positionAndIntensity;
@@ -107,8 +118,8 @@ struct PointShadow
 uint findPointShadowSlot(uint lightIndex);
 float samplePointShadow(uint slot, vec3 worldPos, vec3 N);
 
+#define kMaxCameraViews 2
 #define kMaxPointLights 16
-#define kShadowCascadeCount 4
 #define kMaxPointShadows 4
 #define kPointShadowNear 0.05
 
@@ -119,10 +130,7 @@ layout (std430, set = 0, binding = 3) readonly buffer SceneBuffer {
     uint       pointLightCount;
     uint       _padding[3];
 
-    mat4       cascadeViewProjection[kShadowCascadeCount];
-    vec4       cascadeSplitDepths;
-    // x = enabled, y = depth bias, z = normal offset, w = pcf radius
-    vec4       shadowParams;
+    DirectionalShadow directionalShadows[kMaxCameraViews];
 
     PointShadow pointShadows[kMaxPointShadows];
     uvec4       pointShadowCount;
@@ -202,7 +210,7 @@ void main()
 
         float NdotL = max(dot(N, L), 0.0);
         float shadow = 1.0;
-        if (sceneData.shadowParams.x > 0.5)
+        if (sceneData.directionalShadows[fragCameraIdx].params.x > 0.5)
             shadow = sampleDirectionalShadow(selectCascade(fragViewDepth), fragPos, N, L);
 
         Lo = (kD * albedo / PI + specular) * radiance * NdotL * shadow;
@@ -290,7 +298,7 @@ vec3 calcPointLight(PointLight light, vec3 N, vec3 V, vec3 fragPos, vec3 albedo,
 uint selectCascade(float viewDepth)
 {
     for (uint i = 0u; i < kShadowCascadeCount - 1u; ++i)
-        if (viewDepth < sceneData.cascadeSplitDepths[i])
+        if (viewDepth < sceneData.directionalShadows[fragCameraIdx].splitDepths[i])
             return i;
 
     return kShadowCascadeCount - 1u;
@@ -298,8 +306,9 @@ uint selectCascade(float viewDepth)
 
 float sampleDirectionalShadow(uint cascade, vec3 worldPos, vec3 N, vec3 L)
 {
-    float normalOffset = sceneData.shadowParams.z;
-    vec4 lightClip = sceneData.cascadeViewProjection[cascade] * vec4(worldPos + N * normalOffset, 1.0);
+    DirectionalShadow shadowView = sceneData.directionalShadows[fragCameraIdx];
+    float normalOffset = shadowView.params.z;
+    vec4 lightClip = shadowView.cascadeViewProjection[cascade] * vec4(worldPos + N * normalOffset, 1.0);
     vec3 ndc = lightClip.xyz / lightClip.w;
 
     if (ndc.z > 1.0 || ndc.z < 0.0)
@@ -310,16 +319,20 @@ float sampleDirectionalShadow(uint cascade, vec3 worldPos, vec3 N, vec3 L)
     return 1.0;
 
     float NdotL = max(dot(N, L), 0.0);
-    float bias = sceneData.shadowParams.y * (1.0 + (1.0 - NdotL) * 2.0) * float(cascade + 1u);
+    float bias = shadowView.params.y * (1.0 + (1.0 - NdotL) * 2.0) * float(cascade + 1u);
     float reference = ndc.z - bias;
 
     vec2 texel = 1.0 / vec2(textureSize(shadowMapSampler, 0).xy);
-    float radius = sceneData.shadowParams.w;
+    float radius = shadowView.params.w;
 
     float sum = 0.0;
     for (int y = -1; y <= 1; ++y)
         for (int x = -1; x <= 1; ++x)
-            sum += texture(shadowMapSampler, vec4(uv + vec2(x, y) * texel * radius, float(cascade), reference));
+            sum += texture(
+                shadowMapSampler,
+                vec4(uv + vec2(x, y) * texel * radius,
+                float(fragCameraIdx * kShadowCascadeCount + cascade),
+                reference));
 
     return sum / 9.0;
 }
