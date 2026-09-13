@@ -1244,7 +1244,7 @@ namespace kailux
 
                 if (castShadows)
                 {
-                    recorder.SetViewport(extent);
+                    recorder.SetViewportNoFlip(extent);
                     recorder.SetScissor(extent);
 
                     mShadowPass.Bind(cmd);
