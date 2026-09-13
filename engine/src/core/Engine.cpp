@@ -22,6 +22,7 @@
 #include "components/gpu/MeshData.h"
 #include "scene/SceneInstantiator.h"
 #include "scene/SceneSerializer.h"
+#include "shadow/ShadowCascades.h"
 #include "texture/TextureAllocator.h"
 
 namespace kailux
@@ -65,6 +66,9 @@ namespace kailux
                                               mComputePicker(std::move(other.mComputePicker)),
                                               mPickedEntity(other.mPickedEntity),
                                               mComputeCuller(std::move(other.mComputeCuller)),
+                                              mShadowPass(std::move(other.mShadowPass)),
+                                              mDirectionalShadowSets(other.mDirectionalShadowSets),
+                                              mPointShadowSets(other.mPointShadowSets),
                                               mOnInfoLog(std::move(other.mOnInfoLog)),
                                               mOnWarningLog(std::move(other.mOnWarningLog)),
                                               mOnErrorLog(std::move(other.mOnErrorLog))
@@ -108,6 +112,9 @@ namespace kailux
             mComputePicker = std::move(other.mComputePicker);
             mPickedEntity = other.mPickedEntity;
             mComputeCuller = std::move(other.mComputeCuller);
+            mShadowPass = std::move(other.mShadowPass);
+            mDirectionalShadowSets = other.mDirectionalShadowSets;
+            mPointShadowSets = other.mPointShadowSets;
             mOnInfoLog = std::move(other.mOnInfoLog);
             mOnWarningLog = std::move(other.mOnWarningLog);
             mOnErrorLog = std::move(other.mOnErrorLog);
@@ -138,6 +145,7 @@ namespace kailux
         engine.CreateSkybox();
         engine.CreateGizmoPass();
         engine.CreateOutlinePass();
+        engine.CreateShadowPass();
         engine.CreateTransferManager();
         engine.CreateMeshRegistry();
         engine.CreateTextureRegistry();
@@ -310,6 +318,15 @@ namespace kailux
         );
     }
 
+    void Engine::CreateShadowPass()
+    {
+        mShadowPass = ShadowPass::create(
+            mContext,
+            mSwapchain,
+            details::kFramesInFlight
+            );
+    }
+
     void Engine::CreateFrameResources()
     {
         for (auto &frame: mFrames)
@@ -321,7 +338,9 @@ namespace kailux
                 mGizmoPass,
                 mComputePicker,
                 mOutlinePass,
-                mComputeCuller, mTextureRegistry
+                mComputeCuller,
+                mShadowPass,
+                mTextureRegistry
             );
     }
 
@@ -489,9 +508,35 @@ namespace kailux
 
         const auto renderFinishedSemaphore = mSwapchain.GetPresentSemaphore(acquired->imageIndex); {
             CommandRecorder recorder(frame.GetCommandBuffer());
-            UpdateFrameBuffers(frame, recorder);
 
+            mDirectionalShadowSets[details::kSceneViewCameraIndex].Update(
+               mScene,
+               mScene.GetSceneCamera(),
+               {mSwapchain.GetExtent().width, mSwapchain.GetExtent().height}
+               );
+            mDirectionalShadowSets[details::kSimulationViewCameraIndex].Update(
+                mScene,
+                mSimulationViewActive ? mScene.GetPrimaryCamera() : entt::null,
+                mSimulationView.GetExtent()
+            );
+            mPointShadowSets[details::kSceneViewCameraIndex].Update(mScene, mScene.GetSceneCamera());
+            mPointShadowSets[details::kSimulationViewCameraIndex].Update(
+                mScene,
+                mSimulationViewActive ? mScene.GetPrimaryCamera() : entt::null
+            );
+
+            UpdateFrameBuffers(frame, recorder);
             ExecuteCulling(frame, recorder, mScene.GetSceneCamera(), mSwapchain.GetExtent());
+
+            TransitionForShadowPass(frame, recorder);
+            for (uint32_t view{}; view < details::kMaxCameraViews; ++view)
+                RecordDirectionalShadows(frame, recorder, view);
+            TransitionShadowMapForSampling(frame, recorder);
+
+            TransitionForPointShadowPass(frame, recorder);
+            for (uint32_t view{}; view < details::kMaxCameraViews; ++view)
+                RecordPointShadows(frame, recorder, view);
+            TransitionPointShadowMapForSampling(frame, recorder);
 
             TransitionForMainPass(frame, recorder);
 
@@ -860,6 +905,67 @@ namespace kailux
             ImGuiBackend::get_texture_id_from_texture(mSimulationView.GetResolvedTexture()));
     }
 
+    void Engine::TransitionForShadowPass(const FrameData &frame, const CommandRecorder &recorder) const
+    {
+        recorder.ApplyImageBarrier({
+                frame.GetDirectionalShadowMap().GetImage(),
+                vk::ImageLayout::eUndefined,
+                vk::ImageLayout::eDepthAttachmentOptimal,
+                vk::PipelineStageFlagBits2::eFragmentShader,
+                vk::PipelineStageFlagBits2::eEarlyFragmentTests,
+                vk::AccessFlagBits2::eShaderRead,
+                vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+                vk::ImageAspectFlagBits::eDepth,
+                details::kShadowCascadeCount * details::kMaxCameraViews
+            }
+        );
+    }
+
+    void Engine::TransitionShadowMapForSampling(const FrameData &frame, const CommandRecorder &recorder) const
+    {
+        recorder.ApplyImageBarrier({
+            frame.GetDirectionalShadowMap().GetImage(),
+            vk::ImageLayout::eDepthAttachmentOptimal,
+            vk::ImageLayout::eShaderReadOnlyOptimal,
+            vk::PipelineStageFlagBits2::eLateFragmentTests,
+            vk::PipelineStageFlagBits2::eFragmentShader,
+            vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+            vk::AccessFlagBits2::eShaderRead,
+            vk::ImageAspectFlagBits::eDepth,
+            details::kShadowCascadeCount * details::kMaxCameraViews
+        });
+    }
+
+    void Engine::TransitionForPointShadowPass(const FrameData &frame, const CommandRecorder &recorder) const
+    {
+        recorder.ApplyImageBarrier({
+            frame.GetPointShadowMap().GetImage(),
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eDepthAttachmentOptimal,
+            vk::PipelineStageFlagBits2::eFragmentShader,
+            vk::PipelineStageFlagBits2::eEarlyFragmentTests,
+            vk::AccessFlagBits2::eShaderRead,
+            vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+            vk::ImageAspectFlagBits::eDepth,
+            details::kMaxPointShadows * details::kPointShadowFaceCount * details::kMaxCameraViews
+        });
+    }
+
+    void Engine::TransitionPointShadowMapForSampling(const FrameData &frame, const CommandRecorder &recorder) const
+    {
+        recorder.ApplyImageBarrier({
+           frame.GetPointShadowMap().GetImage(),
+           vk::ImageLayout::eDepthAttachmentOptimal,
+           vk::ImageLayout::eShaderReadOnlyOptimal,
+           vk::PipelineStageFlagBits2::eLateFragmentTests,
+           vk::PipelineStageFlagBits2::eFragmentShader,
+           vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+           vk::AccessFlagBits2::eShaderRead,
+           vk::ImageAspectFlagBits::eDepth,
+           details::kMaxPointShadows * details::kPointShadowFaceCount * details::kMaxCameraViews
+       });
+    }
+
     void Engine::TransitionForMainPass(const FrameData &frame, const CommandRecorder &recorder) const
     {
         recorder.ApplyImageBarrier({
@@ -1078,6 +1184,100 @@ namespace kailux
             cubeView.vertexOffset,
             0
         );
+    }
+
+    void Engine::RecordDirectionalShadows(const FrameData &frame, CommandRecorder &recorder, uint32_t viewIndex) const
+    {
+        const auto cmd{recorder.GetCommandBuffer()};
+        const auto &shadowMap{frame.GetDirectionalShadowMap()};
+        const auto extent{shadowMap.GetExtent()};
+
+        const auto objectCount{mScene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)};
+        const auto& shadowSet{mDirectionalShadowSets[viewIndex]};
+        const bool castShadows{objectCount > 0 && shadowSet.Enabled()};
+
+        for (uint32_t cascade{}; cascade < details::kShadowCascadeCount; ++cascade)
+        {
+            recorder.BeginRendering({
+                {},
+                extent,
+                shadowMap.GetLayerView(viewIndex * details::kShadowCascadeCount + cascade),
+                vk::ImageLayout::eDepthAttachmentOptimal,
+                vk::AttachmentLoadOp::eClear
+            });
+
+            if (castShadows)
+            {
+                recorder.SetViewport(extent);
+                recorder.SetScissor(extent);
+
+                mShadowPass.Bind(cmd);
+                mMeshRegistry.Bind(cmd);
+                frame.GetShadowDescriptorSet().Bind(mShadowPass.GetPipeline(), cmd);
+                mShadowPass.Push(cmd, GraphicsPassesPushConstants::ShadowCascade{
+                    shadowSet.GetCascade(cascade)
+                });
+
+                cmd.drawIndexedIndirect(
+                    frame.GetCullerInputCommandsBuffer().GetBuffer(),
+                    0,
+                    objectCount,
+                    sizeof(vk::DrawIndexedIndirectCommand)
+                );
+            }
+
+            recorder.EndRendering();
+        }
+    }
+
+    void Engine::RecordPointShadows(const FrameData &frame, CommandRecorder &recorder, uint32_t viewIndex) const
+    {
+        const auto cmd{recorder.GetCommandBuffer()};
+        const auto &shadowMap{frame.GetPointShadowMap()};
+        const auto extent{shadowMap.GetExtent()};
+        const auto &shadowSet{mPointShadowSets[viewIndex]};
+
+        const auto objectCount{mScene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)};
+
+        for (uint32_t slot{}; slot < details::kMaxPointShadows; ++slot)
+        {
+            const bool castShadows{objectCount > 0 && shadowSet.Enabled(slot)};
+
+            for (uint32_t face{}; face < details::kPointShadowFaceCount; ++face)
+            {
+                const uint32_t cube{viewIndex * details::kMaxPointShadows + slot};
+                const uint32_t layer{cube * details::kPointShadowFaceCount + face};
+
+                recorder.BeginRendering({
+                    {},
+                    extent,
+                    shadowMap.GetLayerView(layer),
+                    vk::ImageLayout::eDepthAttachmentOptimal,
+                    vk::AttachmentLoadOp::eClear
+                });
+
+                if (castShadows)
+                {
+                    recorder.SetViewportNoFlip(extent);
+                    recorder.SetScissor(extent);
+
+                    mShadowPass.Bind(cmd);
+                    mMeshRegistry.Bind(cmd);
+                    frame.GetShadowDescriptorSet().Bind(mShadowPass.GetPipeline(), cmd);
+                    mShadowPass.Push(cmd, GraphicsPassesPushConstants::ShadowCascade{
+                        shadowSet.GetFace(slot, face)
+                    });
+
+                    cmd.drawIndexedIndirect(
+                        frame.GetCullerInputCommandsBuffer().GetBuffer(),
+                        0,
+                        objectCount,
+                        sizeof(vk::DrawIndexedIndirectCommand)
+                    );
+                }
+                recorder.EndRendering();
+            }
+        }
     }
 
     void Engine::RecordGizmos(const FrameData &frame, const CommandRecorder &recorder) const
@@ -1324,7 +1524,12 @@ namespace kailux
 
     void Engine::UpdateSceneBuffer(FrameData &frame) const
     {
-        const auto &data = mScene.GetData();
+        auto data = mScene.GetData();
+        for (uint32_t view{}; view < details::kMaxCameraViews; ++view)
+        {
+            data.directionalShadows.views[view] = mDirectionalShadowSets[view].GetData();
+            data.pointShadows.views[view] = mPointShadowSets[view].GetData();
+        }
         frame.GetSceneBuffer().Upload(&data, sizeof(SceneData));
     }
 
@@ -1341,7 +1546,7 @@ namespace kailux
                 1,
                 meshView.firstIndex,
                 meshView.vertexOffset,
-                0
+                static_cast<uint32_t>(indirectCommands.size())
             );
         });
         if (indirectCommands.empty())

@@ -50,8 +50,10 @@ namespace kailux
             info.image,
             vk::ImageSubresourceRange{
                 info.aspect,
-                0, 1,
-                0, 1
+                0,
+                1,
+                0,
+                info.layerCount
             }
         };
 
@@ -154,11 +156,25 @@ namespace kailux
 
     void CommandRecorder::SetViewport(vk::Extent2D extent)
     {
-        vk::Viewport viewport{
+        const vk::Viewport viewport{
             0.f,
             static_cast<float>(extent.height),
             static_cast<float>(extent.width),
             -static_cast<float>(extent.height),
+            0.f,
+            1.f
+        };
+
+        mCmd.setViewport(0, viewport);
+    }
+
+    void CommandRecorder::SetViewportNoFlip(vk::Extent2D extent)
+    {
+        const vk::Viewport viewport{
+            0.f,
+            0.f,
+            static_cast<float>(extent.width),
+            static_cast<float>(extent.height),
             0.f,
             1.f
         };

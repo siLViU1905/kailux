@@ -18,6 +18,8 @@ layout (location = 8) out flat uint fragMaterialIdx;
 layout (location = 9) out flat uint fragIdx;
 layout (location = 10) out vec2 fragTexCoord;
 layout (location = 11) out vec4 fragTangent;
+layout (location = 12) out float fragViewDepth;
+layout (location = 13) out flat uint fragCameraIdx;
 
 struct CameraData
 {
@@ -79,9 +81,13 @@ void main()
     fragNormal = normalize(mat3(model) * aNormal);
     fragTangent = vec4(normalize(mat3(model) * aTangent.xyz), aTangent.w);
 
+    fragCameraIdx = cameraIdx;
     CameraData camera = cameras[cameraIdx];
     viewPos = camera.positionAndExposure.xyz;
     fragExposure = camera.positionAndExposure.w;
 
-    gl_Position = camera.projection * camera.view * worldPos;
+    vec4 viewSpacePos = camera.view * worldPos;
+    fragViewDepth = -viewSpacePos.z;
+
+    gl_Position = camera.projection * viewSpacePos;
 }

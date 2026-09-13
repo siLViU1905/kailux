@@ -57,6 +57,12 @@ add_library(kailux_engine STATIC
         src/core/pipeline/GraphicsPipeline.cpp
         src/core/pipeline/ComputePipeline.cpp
         src/core/components/math/Transform.cpp
+        src/core/shadow/ShadowMap.cpp
+        src/core/shadow/ShadowCascades.cpp
+        src/core/passes/ShadowPass.cpp
+        src/core/shadow/PointShadows.cpp
+        src/core/shadow/DirectionalShadowSet.cpp
+        src/core/shadow/PointShadowSet.cpp
 )
 
 target_compile_definitions(kailux_engine PUBLIC
