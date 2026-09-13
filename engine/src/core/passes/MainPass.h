@@ -71,7 +71,7 @@ namespace kailux
             ),
             DescriptorLayoutBinding(
                 vk::DescriptorType::eCombinedImageSampler,
-                details::kMaxPointShadows, // point shadow cubes
+                details::kMaxPointShadows * details::kMaxCameraViews, // point shadow cubes
                 vk::ShaderStageFlagBits::eFragment
             ),
             DescriptorLayoutBinding(
@@ -119,7 +119,7 @@ namespace kailux
             ),
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
-                details::kMaxPointShadows // point shadow cubes
+                details::kMaxPointShadows * details::kMaxCameraViews // point shadow cubes
             ),
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
@@ -158,7 +158,7 @@ namespace kailux
                 const auto [descriptor, count, stage] = kDescriptorLayoutBindings[i];
 
                 if (descriptor == vk::DescriptorType::eCombinedImageSampler &&
-                    count == details::kMaxPointShadows &&
+                    count == details::kMaxPointShadows * details::kMaxCameraViews &&
                     stage == vk::ShaderStageFlagBits::eFragment)
                     return i;
             }

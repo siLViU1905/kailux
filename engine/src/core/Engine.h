@@ -133,7 +133,7 @@ namespace kailux
         void                                        RecordMeshData(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex, bool writeIds) const;
         void                                        RecordSkybox(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex) const;
         void                                        RecordDirectionalShadows(const FrameData &frame, CommandRecorder &recorder, uint32_t viewIndex) const;
-        void                                        RecordPointShadows(const FrameData& frame, CommandRecorder &recorder) const;
+        void                                        RecordPointShadows(const FrameData& frame, CommandRecorder &recorder, uint32_t viewIndex) const;
         void                                        RecordGizmos(const FrameData &frame, const CommandRecorder &recorder) const;
         void                                        RecordImGuiData(const FrameData& frame);
         void                                        RecordPicker(const FrameData& frame, const CommandRecorder &recorder) const;
@@ -219,7 +219,7 @@ namespace kailux
         ShadowPass                                 mShadowPass;
 
         std::array<DirectionalShadowSet, details::kMaxCameraViews> mDirectionalShadowSets;
-        PointShadowSet                             mPointShadowSet;
+        std::array<PointShadowSet, details::kMaxCameraViews>       mPointShadowSets;
 
         OnLog                                      mOnInfoLog;
         OnLog                                      mOnWarningLog;

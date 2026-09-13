@@ -625,7 +625,7 @@ namespace kailux
         mPointShadowMap = ShadowMap::create(
             context,
             details::kPointShadowResolution,
-            details::kMaxPointShadows * details::kPointShadowFaceCount,
+            details::kMaxPointShadows * details::kPointShadowFaceCount * details::kMaxCameraViews,
             depthFormat,
             true
             );
@@ -713,7 +713,7 @@ namespace kailux
                 mPointShadowMap.GetSampler(),
                 mPointShadowMap.GetCubeView(0),
                 vk::ImageLayout::eShaderReadOnlyOptimal,
-                details::kMaxPointShadows
+                details::kMaxPointShadows * details::kMaxCameraViews
             ),
             DescriptorSetImageInfo(
                 textureRegistry.GetTexture(textureRegistry.GetDefaultTextureHandle(TextureType::Albedo)).GetSampler(),

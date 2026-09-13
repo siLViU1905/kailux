@@ -2,7 +2,7 @@
 
 #include "DirectionalShadowsData.h"
 #include "LightsData.h"
-#include "PointShadowData.h"
+#include "PointShadowViewsData.h"
 #include "core/Core.h"
 
 namespace kailux
@@ -11,7 +11,7 @@ namespace kailux
     {
         LightsData lights;
         DirectionalShadowsData directionalShadows;
-        PointShadowsData pointShadows;
+        PointShadowViewsData pointShadows;
     };
 
     KAILUX_CHECK_DATA_STRUCTURE_SIZE(SceneData)
