@@ -15,5 +15,7 @@ namespace kailux
 
         static MeshData generate_cube();
         static MeshData generate_sphere(uint32_t sectors = 32, uint32_t stacks = 32);
+
+        static void optimize_mesh(MeshData& meshData);
     };
 }

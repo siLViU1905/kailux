@@ -1,5 +1,8 @@
 #include "MeshGeometry.h"
 #include <numbers>
+#include <meshoptimizer.h>
+
+#include "core/Log.h"
 
 namespace kailux
 {
@@ -112,5 +115,73 @@ namespace kailux
         }
 
         return data;
+    }
+
+    void MeshGeometry::optimize_mesh(MeshData &meshData)
+    {
+        auto& vertices{meshData.vertices};
+        auto& indices{meshData.indices};
+
+        if (vertices.empty() || indices.empty())
+            return;
+
+        const auto indexCount{indices.size()};
+
+        std::vector<uint32_t> remap(indexCount);
+        const auto vertexCount{
+            meshopt_generateVertexRemap(
+                remap.data(),
+                indices.data(),
+                indexCount,
+                vertices.data(),
+                vertices.size(),
+                sizeof(Vertex)
+            )
+        };
+
+        std::vector<Vertex> newVertices(vertexCount);
+        std::vector<IndexType> newIndices(indexCount);
+
+        meshopt_remapIndexBuffer(
+            newIndices.data(),
+            indices.data(),
+            indexCount,
+            remap.data()
+        );
+        meshopt_remapVertexBuffer(
+            newVertices.data(),
+            vertices.data(),
+            vertices.size(),
+            sizeof(Vertex), remap.data()
+        );
+
+        vertices = std::move(newVertices);
+        indices = std::move(newIndices);
+
+        meshopt_optimizeVertexCache(
+            indices.data(),
+            indices.data(),
+            indexCount,
+            vertexCount
+        );
+
+        meshopt_optimizeOverdraw(
+            indices.data(),
+            indices.data(),
+            indexCount,
+            &vertices.front().position.x,
+            vertexCount,
+            sizeof(Vertex),
+            1.05f
+        );
+
+        meshopt_optimizeVertexFetch(
+            vertices.data(),
+            indices.data(),
+            indexCount,
+            vertices.data(),
+            vertexCount,
+            sizeof(Vertex)
+        );
     }
 }
