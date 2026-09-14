@@ -39,10 +39,6 @@ namespace kailux
         {
             MeshGeometry::optimize_mesh(submesh.meshData);
             MeshGeometry::generate_lods(submesh.meshData);
-            log::console.Debug("Submesh {}\n  ", submesh.name);
-            uint32_t lvl{};
-            for (const auto& lod : submesh.meshData.lods)
-                log::console.Debug("LOD lvl{}:\n  indices: {}\nerror: {}", lvl++, lod.indices.size(), lod.error);
         }
 
         return loadData;

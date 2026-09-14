@@ -552,12 +552,16 @@ namespace kailux
 
     void FrameData::CreateCullerBuffers(const Context &context)
     {
-        mCullerInputCommandsBuffer = BufferAllocator::alloc_host(context, details::kMaxMeshes * sizeof(vk::DrawIndexedIndirectCommand),
-                                                                 vk::BufferUsageFlagBits::eStorageBuffer |
-                                                                 vk::BufferUsageFlagBits::eIndirectBuffer);
-        mCullerCountBuffer = BufferAllocator::alloc_local(context, sizeof(uint32_t),
-                                                           vk::BufferUsageFlagBits::eStorageBuffer |
-                                                           vk::BufferUsageFlagBits::eIndirectBuffer);
+        mCullerInputCommandsBuffer = BufferAllocator::alloc_host(
+            context,
+            details::kMaxMeshes * details::kMaxGeometryLods * sizeof(vk::DrawIndexedIndirectCommand),
+            vk::BufferUsageFlagBits::eStorageBuffer |
+            vk::BufferUsageFlagBits::eIndirectBuffer);
+        mCullerCountBuffer = BufferAllocator::alloc_local(
+            context,
+            sizeof(uint32_t),
+            vk::BufferUsageFlagBits::eStorageBuffer |
+            vk::BufferUsageFlagBits::eIndirectBuffer);
     }
 
     void FrameData::CreateSceneTexture(const Context &context, vk::Format format)

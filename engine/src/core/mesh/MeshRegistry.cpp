@@ -79,7 +79,7 @@ namespace kailux
     {
         assert(handle.Valid());
         const auto &alloc{mAllocs[handle.index]};
-        const auto &l{alloc.lods[std::min(lod, alloc.lodCount)]};
+        const auto &l{alloc.lods[std::min(lod, alloc.lodCount - 1)]};
         return {
             static_cast<uint32_t>(alloc.indexOffset / sizeof(IndexType)) + l.firstIndex,
         l.indexCount,
@@ -265,7 +265,7 @@ namespace kailux
         }
 
         upload_buffer_region(vertices.data(), vsize, mVertexBuffer, voffset, context, cmd, stagingBuffers);
-        upload_buffer_region(indices.data(), isize, mIndexBuffer, ioffset, context, cmd, stagingBuffers);
+        upload_buffer_region(packed.data(), isize, mIndexBuffer, ioffset, context, cmd, stagingBuffers);
 
         auto handle = AllocSlot();
         mAllocs[handle.index] = {

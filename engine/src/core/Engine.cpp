@@ -1582,7 +1582,12 @@ namespace kailux
     void Engine::UpdateCullerBuffers(const FrameData &frame, const CommandRecorder &recorder)
     {
         std::vector<vk::DrawIndexedIndirectCommand> indirectCommands;
-        auto view = mScene.GetEntityRegistry().view<MeshComponent>(entt::exclude<PendingUploadComponent>);
+        auto view = mScene.GetEntityRegistry().view<
+            WorldTransform,
+            MeshMaterialData,
+            MeshComponent,
+            MaterialComponent>
+        (entt::exclude<PendingUploadComponent>);
         indirectCommands.reserve(
             mScene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)
             * details::kMaxGeometryLods
