@@ -1,4 +1,7 @@
 #include "PointShadowSet.h"
+
+#include "core/components/entt/PendingUploadComponent.h"
+#include "core/components/entt/WorldTransform.h"
 #include "core/scene/Scene.h"
 
 namespace kailux
@@ -6,6 +9,7 @@ namespace kailux
     void PointShadowSet::Update(const Scene &scene, entt::entity camera)
     {
         const auto selected{Select(scene, camera)};
+        const auto previous{mSlots};
 
         mSlots = {};
         mData = {};
@@ -25,8 +29,13 @@ namespace kailux
 
             const auto lightIndex{static_cast<uint32_t>(std::distance(entities.begin(), found))};
 
-            mSlots[slot].setup = PointShadows::build(lights.pointLights[lightIndex], lightIndex);
-            mSlots[slot].light = entity;
+            auto &current{mSlots[slot]};
+            current.setup = PointShadows::build(lights.pointLights[lightIndex], lightIndex);
+            current.light = entity;
+            current.signature = signature(scene, current.setup);
+
+            const bool sameSlot{previous[slot].light == entity};
+            current.dirty = !sameSlot || previous[slot].signature != current.signature;
 
             auto &gpuSlot{mData.slots[slot]};
             gpuSlot.positionAndFar = glm::vec4(mSlots[slot].setup.position, mSlots[slot].setup.farPlane);
@@ -37,6 +46,12 @@ namespace kailux
         }
 
         mData.count.x = slot;
+    }
+
+    bool PointShadowSet::NeedsRedraw(uint32_t slot) const
+    {
+        assert(slot < mSlots.size() && "Point shadow slot out of range");
+        return mSlots[slot].setup.Valid() && mSlots[slot].dirty;
     }
 
     const PointShadowsData & kailux::PointShadowSet::GetData() const
@@ -69,6 +84,47 @@ namespace kailux
             lights[i] = mSlots[i].light;
 
         return lights;
+    }
+
+    uint64_t PointShadowSet::signature(const Scene &scene, const PointShadowSetup &setup)
+    {
+        const auto mix{[](uint64_t h, uint64_t v)
+        {
+            return (h ^ (v + 0x9e3779b97f4a7c15ull + (h << 6) + (h >> 2)));
+        }};
+
+        uint64_t hash{};
+        const auto hashFloat{[&](float f)
+        {
+            uint32_t bits;
+            std::memcpy(&bits, &f, sizeof(uint32_t));
+            hash = mix(hash, bits);
+        }};
+
+        hashFloat(setup.position.x);
+        hashFloat(setup.position.y);
+        hashFloat(setup.position.z);
+        hashFloat(setup.farPlane);
+
+        const auto &registry{scene.GetEntityRegistry()};
+        const auto view{registry.view<WorldTransform, MeshComponent>(entt::exclude<PendingUploadComponent>)};
+
+        for (const auto entity: view)
+        {
+            const auto &world{view.get<WorldTransform>(entity)};
+            const auto sphere{view.get<MeshComponent>(entity).boundingSphere};
+
+            const glm::vec3 center{world.model * glm::vec4(glm::vec3(sphere), 1.f)};
+            if (glm::length(center - setup.position) > setup.farPlane + sphere.w)
+                continue;
+
+            hash = mix(hash, static_cast<uint64_t>(entity));
+            for (int c{}; c < 4; ++c)
+                for (int r{}; r < 4; ++r)
+                    hashFloat(world.model[c][r]);
+        }
+
+        return hash;
     }
 
     std::array<entt::entity, details::kMaxPointShadows> PointShadowSet::Select(const Scene &scene, entt::entity camera) const

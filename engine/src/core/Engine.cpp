@@ -1269,7 +1269,8 @@ namespace kailux
 
         for (uint32_t slot{}; slot < details::kMaxPointShadows; ++slot)
         {
-            const bool castShadows{objectCount > 0 && shadowSet.Enabled(slot)};
+            if (objectCount == 0 || !shadowSet.NeedsRedraw(slot))
+                continue;
 
             for (uint32_t face{}; face < details::kPointShadowFaceCount; ++face)
             {
@@ -1284,25 +1285,23 @@ namespace kailux
                     vk::AttachmentLoadOp::eClear
                 });
 
-                if (castShadows)
-                {
-                    recorder.SetViewportNoFlip(extent);
-                    recorder.SetScissor(extent);
+                recorder.SetViewportNoFlip(extent);
+                recorder.SetScissor(extent);
 
-                    mShadowPass.Bind(cmd);
-                    mMeshRegistry.Bind(cmd);
-                    frame.GetShadowDescriptorSet().Bind(mShadowPass.GetPipeline(), cmd);
-                    mShadowPass.Push(cmd, GraphicsPassesPushConstants::ShadowCascade{
-                        shadowSet.GetFace(slot, face)
-                    });
+                mShadowPass.Bind(cmd);
+                mMeshRegistry.Bind(cmd);
+                frame.GetShadowDescriptorSet().Bind(mShadowPass.GetPipeline(), cmd);
+                mShadowPass.Push(cmd, GraphicsPassesPushConstants::ShadowCascade{
+                                     shadowSet.GetFace(slot, face)
+                                 });
 
-                    cmd.drawIndexedIndirect(
-                        frame.GetCullerInputCommandsBuffer().GetBuffer(),
-                        0,
-                        objectCount,
-                        sizeof(vk::DrawIndexedIndirectCommand)
-                    );
-                }
+                cmd.drawIndexedIndirect(
+                    frame.GetCullerInputCommandsBuffer().GetBuffer(),
+                    0,
+                    objectCount,
+                    sizeof(vk::DrawIndexedIndirectCommand)
+                );
+
                 recorder.EndRendering();
             }
         }
