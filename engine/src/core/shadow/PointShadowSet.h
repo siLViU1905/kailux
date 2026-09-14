@@ -12,6 +12,8 @@ namespace kailux
     public:
         void Update(const Scene &scene, entt::entity camera);
 
+        bool NeedsRedraw(uint32_t slot) const;
+
         const PointShadowsData &GetData() const;
 
         const glm::mat4 &GetFace(uint32_t slot, uint32_t face) const;
@@ -26,7 +28,11 @@ namespace kailux
         {
             PointShadowSetup setup{};
             entt::entity     light{entt::null};
+            uint64_t         signature{};
+            bool             dirty{true};
         };
+
+        static uint64_t signature(const Scene& scene, const PointShadowSetup& setup);
 
         std::array<entt::entity, details::kMaxPointShadows> Select(const Scene &scene, entt::entity camera) const;
 

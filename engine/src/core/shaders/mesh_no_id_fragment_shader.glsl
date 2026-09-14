@@ -366,8 +366,8 @@ float samplePointShadow(uint slot, vec3 worldPos, vec3 N)
     if (d > farPlane || d < kPointShadowNear)
     return 1.0;
 
-    float reference = farPlane * (d - kPointShadowNear) / ((farPlane - kPointShadowNear) * d);
-    reference -= shadowSlot.params.y;
+    float biased = max(d - shadowSlot.params.y, kPointShadowNear);
+    float reference = farPlane * (biased - kPointShadowNear) / ((farPlane - kPointShadowNear) * biased);
 
     vec3 dir = normalize(v);
     vec3 helper = abs(dir.y) > 0.99 ? vec3(0.0, 0.0, 1.0) : vec3(0.0, 1.0, 0.0);
