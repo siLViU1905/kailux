@@ -83,8 +83,9 @@ find_package(assimp REQUIRED)
 find_package(portable-file-dialogs REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(Jolt REQUIRED)
-find_package(TBB REQUIRED)
 find_package(shaderc REQUIRED)
+find_package(TBB REQUIRED)
+find_package(meshoptimizer REQUIRED)
 
 set(SHADERS_BINARY_DIR "${CMAKE_BINARY_DIR}/app/shaders")
 add_custom_target(CopyShaders ALL
