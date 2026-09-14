@@ -1258,7 +1258,7 @@ namespace kailux
                     frame.GetCullerInputCommandsBuffer().GetBuffer(),
                     0,
                     objectCount,
-                    sizeof(vk::DrawIndexedIndirectCommand)
+                    details::kMaxGeometryLods * sizeof(vk::DrawIndexedIndirectCommand)
                 );
             }
 
@@ -1306,7 +1306,7 @@ namespace kailux
                     frame.GetCullerInputCommandsBuffer().GetBuffer(),
                     0,
                     objectCount,
-                    sizeof(vk::DrawIndexedIndirectCommand)
+                    details::kMaxGeometryLods * sizeof(vk::DrawIndexedIndirectCommand)
                 );
 
                 recorder.EndRendering();
