@@ -51,11 +51,13 @@ struct MeshData
 {
     mat4 model;
     vec4 boundingSphere;
+    vec4 lodErrors; // x - LDO1...w - LOD4
 
     MeshMaterialData material;
 
     uint idx;
-    uint __padding[3];
+    uint lodCount;
+    uint __padding[2];
 };
 layout (std430, set = 0, binding = 1) readonly buffer TransformBuffer {
     MeshData data[];

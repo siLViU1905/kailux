@@ -21,11 +21,13 @@ struct MeshData
 {
     mat4 modelMatrix;
     vec4 boundingSphere;
+    vec4 lodErrors; // x - LDO1...w - LOD4
 
     MeshMaterialData material;
 
     uint id;
-    uint _padding[3];
+    uint lodCount;
+    uint __padding[2];
 };
 
 
@@ -52,6 +54,7 @@ layout (std430, binding = 3) buffer CommandCountBuffer
 layout (push_constant) uniform CameraProperties
 {
     vec4 frustumPlanes[6];
+    vec4 cameraPosition;
     uint totalObjects;
 };
 
@@ -66,11 +69,13 @@ bool IsVisible(vec3 center, float radius)
 
 layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
+#define kMaxGeometryLod 5
+
 void main() {
     uint gId = gl_GlobalInvocationID.x;
 
     if (gId >= totalObjects)
-    return;
+        return;
 
     mat4 modelMatrix   = objects[gId].modelMatrix;
     vec4 localSphere   = objects[gId].boundingSphere;
@@ -88,11 +93,22 @@ void main() {
 
     if (IsVisible(worldCenter, worldRadius))
     {
+        uint lodCount = objects[gId].lodCount;
+        vec4 errors = objects[gId].lodErrors;
+
+        float dist = max(distance(cameraPosition.xyz, worldCenter) - worldRadius, 0.001);
+
+        uint lod = 0;
+        for(uint i = 1; i < lodCount; ++i)
+        {
+            float pixelError = errors[i - 1] * maxScale * cameraPosition.w / dist;
+            if (pixelError > 1.5)
+                    break;
+            lod = i;
+        }
+
         uint drawIndex = atomicAdd(drawCount, 1);
-        outputCommands[drawIndex].indexCount = inputCommands[gId].indexCount;
-        outputCommands[drawIndex].instanceCount = inputCommands[gId].instanceCount;
-        outputCommands[drawIndex].firstIndex = inputCommands[gId].firstIndex;
-        outputCommands[drawIndex].vertexOffset = inputCommands[gId].vertexOffset;
+        outputCommands[drawIndex] = inputCommands[gId * kMaxGeometryLod + lod];
         outputCommands[drawIndex].firstInstance = gId;
     }
 }
