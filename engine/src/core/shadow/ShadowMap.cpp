@@ -141,7 +141,8 @@ namespace kailux
         arrayInfo.subresourceRange.baseArrayLayer = 0;
         arrayInfo.subresourceRange.layerCount = layerCount;
 
-        mArrayView = vk::raii::ImageView(context.mDevice, arrayInfo);
+        if (!createCube)
+            mArrayView = vk::raii::ImageView(context.mDevice, arrayInfo);
 
         mLayerViews.clear();
         mLayerViews.reserve(layerCount);
