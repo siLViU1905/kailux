@@ -129,6 +129,9 @@ namespace kailux
 
         void CreateScene(const Window &window);
 
+        void CreateDirectionalShadowMap();
+        void CreatePointShadowMap();
+
         void                                        Submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
         void                                        RecordMeshData(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex, bool writeIds) const;
         void                                        RecordSkybox(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex) const;
@@ -217,6 +220,9 @@ namespace kailux
         uint32_t                                   mPickedEntity;
         ComputeCuller                              mComputeCuller;
         ShadowPass                                 mShadowPass;
+
+        ShadowMap                                  mDirectionalShadowMap;
+        ShadowMap                                  mPointShadowMap;
 
         std::array<DirectionalShadowSet, details::kMaxCameraViews> mDirectionalShadowSets;
         std::array<PointShadowSet, details::kMaxCameraViews>       mPointShadowSets;

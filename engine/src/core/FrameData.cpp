@@ -42,9 +42,7 @@ namespace kailux
                                                        mExtent(other.mExtent),
                                                        mSceneTexture(std::move(other.mSceneTexture)),
                                                        mOutIdTexture(std::move(other.mOutIdTexture)),
-                                                       mResolvedOutIdTexture(std::move(other.mResolvedOutIdTexture)),
-                                                       mDirectionalShadowMap(std::move(other.mDirectionalShadowMap)),
-                                                       mPointShadowMap(std::move(other.mPointShadowMap))
+                                                       mResolvedOutIdTexture(std::move(other.mResolvedOutIdTexture))
     {
     }
 
@@ -76,8 +74,6 @@ namespace kailux
             mSceneTexture = std::move(other.mSceneTexture);
             mOutIdTexture = std::move(other.mOutIdTexture);
             mResolvedOutIdTexture = std::move(other.mResolvedOutIdTexture);
-            mDirectionalShadowMap = std::move(other.mDirectionalShadowMap);
-            mPointShadowMap = std::move(other.mPointShadowMap);
         }
         return *this;
     }
@@ -92,6 +88,8 @@ namespace kailux
         const OutlinePass &outlinePass,
         const ComputeCuller &culler,
         const ShadowPass& shadowPass,
+        const ShadowMap& directionalShadowMap,
+        const ShadowMap& pointShadowMap,
         const TextureRegistry &textureRegistry
     )
     {
@@ -111,9 +109,7 @@ namespace kailux
         frame.CreateCullerBuffers(context);
         frame.CreateSceneTexture(context, swapchain.GetFormat());
         frame.CreateOutIdTexture(context);
-        frame.CreateDirectionalShadowMap(context, swapchain.GetDepthFormat());
-        frame.CreatePointShadowMap(context, swapchain.GetDepthFormat());
-        const auto descSetInfo{frame.MakeMeshDescriptorSetInfo(skybox, textureRegistry)};
+        const auto descSetInfo{frame.MakeMeshDescriptorSetInfo(skybox, textureRegistry, directionalShadowMap, pointShadowMap)};
         frame.CreateMeshDescriptorSet(context, mainPass.GetDescriptorLayout(), mainPass.GetDescriptorPool(), descSetInfo);
         const auto skyboxDescInfo{frame.MakeSkyboxDescriptorSetInfo(skybox.GetTexture())};
         frame.CreateSkyboxDescriptorSet(context, skybox.GetDescriptorLayout(), skybox.GetDescriptorPool(),
@@ -132,6 +128,7 @@ namespace kailux
         const auto shadowDescInfo{frame.MakeShadowDescriptorSetInfo()};
         frame.CreateShadowDescriptorSet(context, shadowPass.GetDescriptorLayout(), shadowPass.GetDescriptorPool(),
                                         shadowDescInfo);
+        frame.SeedPointShadowDescriptors(context, pointShadowMap);
         return frame;
     }
 
@@ -293,16 +290,6 @@ namespace kailux
     const Texture &FrameData::GetResolvedOutIdTexture() const
     {
         return mResolvedOutIdTexture;
-    }
-
-    const ShadowMap & FrameData::GetDirectionalShadowMap() const
-    {
-        return mDirectionalShadowMap;
-    }
-
-    const ShadowMap & FrameData::GetPointShadowMap() const
-    {
-        return mPointShadowMap;
     }
 
     std::array<vk::BufferMemoryBarrier2, FrameData::kBufferMemoryBarriersCount>
@@ -609,40 +596,18 @@ namespace kailux
         );
     }
 
-    void FrameData::CreateDirectionalShadowMap(const Context &context, vk::Format depthFormat)
-    {
-        mDirectionalShadowMap = ShadowMap::create(
-            context,
-            details::kShadowMapResolution,
-            details::kShadowCascadeCount * details::kMaxCameraViews,
-            depthFormat,
-            false
-            );
-    }
-
-    void FrameData::CreatePointShadowMap(const Context &context, vk::Format depthFormat)
-    {
-        mPointShadowMap = ShadowMap::create(
-            context,
-            details::kPointShadowResolution,
-            details::kMaxPointShadows * details::kPointShadowFaceCount * details::kMaxCameraViews,
-            depthFormat,
-            true
-            );
-    }
-
-    void FrameData::SeedPointShadowDescriptors(const Context &context)
+    void FrameData::SeedPointShadowDescriptors(const Context &context, const ShadowMap& pointShadowMap)
     {
         std::vector<DescriptorSetUpdateInfo> writes;
-        writes.reserve(mPointShadowMap.GetCubeCount());
+        writes.reserve(pointShadowMap.GetCubeCount());
 
-        for (uint32_t slot{}; slot < mPointShadowMap.GetCubeCount(); ++slot)
+        for (uint32_t slot{}; slot < pointShadowMap.GetCubeCount(); ++slot)
             writes.emplace_back(
                 MainPass::kMeshPointShadowBindStart,
                 slot,
                 DescriptorSetImageInfo(
-                    mPointShadowMap.GetSampler(),
-                    mPointShadowMap.GetCubeView(slot),
+                    pointShadowMap.GetSampler(),
+                    pointShadowMap.GetCubeView(slot),
                     vk::ImageLayout::eShaderReadOnlyOptimal,
                     1
                 )
@@ -652,7 +617,11 @@ namespace kailux
     }
 
     std::array<DescriptorSetInfo, FrameData::kDescriptorSetInfoCount> FrameData::MakeMeshDescriptorSetInfo(
-        const SkyboxPass &skybox, const TextureRegistry &textureRegistry) const
+        const SkyboxPass &skybox,
+        const TextureRegistry &textureRegistry,
+        const ShadowMap& directionalShadowMap,
+        const ShadowMap& pointShadowMap
+        ) const
     {
         return {
             DescriptorSetBufferInfo(
@@ -704,14 +673,14 @@ namespace kailux
                 1
             ),
             DescriptorSetImageInfo(
-                mDirectionalShadowMap.GetSampler(),
-                mDirectionalShadowMap.GetArrayView(),
+                directionalShadowMap.GetSampler(),
+                directionalShadowMap.GetArrayView(),
                 vk::ImageLayout::eShaderReadOnlyOptimal,
                 1
             ),
             DescriptorSetImageInfo(
-                mPointShadowMap.GetSampler(),
-                mPointShadowMap.GetCubeView(0),
+                pointShadowMap.GetSampler(),
+                pointShadowMap.GetCubeView(0),
                 vk::ImageLayout::eShaderReadOnlyOptimal,
                 details::kMaxPointShadows * details::kMaxCameraViews
             ),

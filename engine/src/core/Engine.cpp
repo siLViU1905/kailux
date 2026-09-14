@@ -67,6 +67,8 @@ namespace kailux
                                               mPickedEntity(other.mPickedEntity),
                                               mComputeCuller(std::move(other.mComputeCuller)),
                                               mShadowPass(std::move(other.mShadowPass)),
+                                              mDirectionalShadowMap(std::move(other.mDirectionalShadowMap)),
+                                              mPointShadowMap(std::move(other.mPointShadowMap)),
                                               mDirectionalShadowSets(other.mDirectionalShadowSets),
                                               mPointShadowSets(other.mPointShadowSets),
                                               mOnInfoLog(std::move(other.mOnInfoLog)),
@@ -113,6 +115,8 @@ namespace kailux
             mPickedEntity = other.mPickedEntity;
             mComputeCuller = std::move(other.mComputeCuller);
             mShadowPass = std::move(other.mShadowPass);
+            mDirectionalShadowMap = std::move(other.mDirectionalShadowMap);
+            mPointShadowMap = std::move(other.mPointShadowMap);
             mDirectionalShadowSets = other.mDirectionalShadowSets;
             mPointShadowSets = other.mPointShadowSets;
             mOnInfoLog = std::move(other.mOnInfoLog);
@@ -153,6 +157,8 @@ namespace kailux
         engine.CreateGizmoRegistry();
         engine.CreateComputePicker();
         engine.CreateComputeCuller();
+        engine.CreateDirectionalShadowMap();
+        engine.CreatePointShadowMap();
         engine.CreateFrameResources();
         engine.SeedDefaultTextures();
         engine.CreateImGui(window);
@@ -340,6 +346,8 @@ namespace kailux
                 mOutlinePass,
                 mComputeCuller,
                 mShadowPass,
+                mDirectionalShadowMap,
+                mPointShadowMap,
                 mTextureRegistry
             );
     }
@@ -459,6 +467,28 @@ namespace kailux
     void Engine::CreateScene(const Window &window)
     {
         mScene = Scene::create("MainScene");
+    }
+
+    void Engine::CreateDirectionalShadowMap()
+    {
+        mDirectionalShadowMap = ShadowMap::create(
+            mContext,
+            details::kShadowMapResolution,
+            details::kShadowCascadeCount * details::kMaxCameraViews,
+            mSwapchain.GetDepthFormat(),
+            false
+        );
+    }
+
+    void Engine::CreatePointShadowMap()
+    {
+        mPointShadowMap = ShadowMap::create(
+            mContext,
+            details::kPointShadowResolution,
+            details::kMaxPointShadows * details::kPointShadowFaceCount * details::kMaxCameraViews,
+            mSwapchain.GetDepthFormat(),
+            true
+        );
     }
 
     void Engine::Submit(const FrameData &frame, vk::Semaphore imageAvailableSemaphore,
@@ -908,7 +938,7 @@ namespace kailux
     void Engine::TransitionForShadowPass(const FrameData &frame, const CommandRecorder &recorder) const
     {
         recorder.ApplyImageBarrier({
-                frame.GetDirectionalShadowMap().GetImage(),
+                mDirectionalShadowMap.GetImage(),
                 vk::ImageLayout::eUndefined,
                 vk::ImageLayout::eDepthAttachmentOptimal,
                 vk::PipelineStageFlagBits2::eFragmentShader,
@@ -924,7 +954,7 @@ namespace kailux
     void Engine::TransitionShadowMapForSampling(const FrameData &frame, const CommandRecorder &recorder) const
     {
         recorder.ApplyImageBarrier({
-            frame.GetDirectionalShadowMap().GetImage(),
+            mDirectionalShadowMap.GetImage(),
             vk::ImageLayout::eDepthAttachmentOptimal,
             vk::ImageLayout::eShaderReadOnlyOptimal,
             vk::PipelineStageFlagBits2::eLateFragmentTests,
@@ -939,7 +969,7 @@ namespace kailux
     void Engine::TransitionForPointShadowPass(const FrameData &frame, const CommandRecorder &recorder) const
     {
         recorder.ApplyImageBarrier({
-            frame.GetPointShadowMap().GetImage(),
+            mPointShadowMap.GetImage(),
             vk::ImageLayout::eUndefined,
             vk::ImageLayout::eDepthAttachmentOptimal,
             vk::PipelineStageFlagBits2::eFragmentShader,
@@ -954,7 +984,7 @@ namespace kailux
     void Engine::TransitionPointShadowMapForSampling(const FrameData &frame, const CommandRecorder &recorder) const
     {
         recorder.ApplyImageBarrier({
-           frame.GetPointShadowMap().GetImage(),
+           mPointShadowMap.GetImage(),
            vk::ImageLayout::eDepthAttachmentOptimal,
            vk::ImageLayout::eShaderReadOnlyOptimal,
            vk::PipelineStageFlagBits2::eLateFragmentTests,
@@ -1189,8 +1219,7 @@ namespace kailux
     void Engine::RecordDirectionalShadows(const FrameData &frame, CommandRecorder &recorder, uint32_t viewIndex) const
     {
         const auto cmd{recorder.GetCommandBuffer()};
-        const auto &shadowMap{frame.GetDirectionalShadowMap()};
-        const auto extent{shadowMap.GetExtent()};
+        const auto extent{mDirectionalShadowMap.GetExtent()};
 
         const auto objectCount{mScene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)};
         const auto& shadowSet{mDirectionalShadowSets[viewIndex]};
@@ -1201,7 +1230,7 @@ namespace kailux
             recorder.BeginRendering({
                 {},
                 extent,
-                shadowMap.GetLayerView(viewIndex * details::kShadowCascadeCount + cascade),
+                mDirectionalShadowMap.GetLayerView(viewIndex * details::kShadowCascadeCount + cascade),
                 vk::ImageLayout::eDepthAttachmentOptimal,
                 vk::AttachmentLoadOp::eClear
             });
@@ -1233,8 +1262,7 @@ namespace kailux
     void Engine::RecordPointShadows(const FrameData &frame, CommandRecorder &recorder, uint32_t viewIndex) const
     {
         const auto cmd{recorder.GetCommandBuffer()};
-        const auto &shadowMap{frame.GetPointShadowMap()};
-        const auto extent{shadowMap.GetExtent()};
+        const auto extent{mPointShadowMap.GetExtent()};
         const auto &shadowSet{mPointShadowSets[viewIndex]};
 
         const auto objectCount{mScene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)};
@@ -1251,7 +1279,7 @@ namespace kailux
                 recorder.BeginRendering({
                     {},
                     extent,
-                    shadowMap.GetLayerView(layer),
+                    mPointShadowMap.GetLayerView(layer),
                     vk::ImageLayout::eDepthAttachmentOptimal,
                     vk::AttachmentLoadOp::eClear
                 });
