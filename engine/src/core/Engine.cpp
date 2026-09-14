@@ -909,8 +909,15 @@ namespace kailux
         frame.GetCullerDescriptorSet().Bind(mComputeCuller.GetPipeline(), cmd);
 
         const auto cameraData{BuildCameraData(camera, {extent.width, extent.height})};
+
         const auto planes{Camera::get_frustum_planes(cameraData.projection, cameraData.view)};
-        mComputeCuller.Push<ComputePassesPushConstants::CameraFrustum>(cmd, {planes, totalObjects});
+
+        const float projFactor{
+            0.5f * static_cast<float>(extent.height) * std::abs(cameraData.projection[1][1])
+        };
+        const glm::vec4 cameraPosition{glm::vec3(cameraData.positionAndExposure), projFactor};
+
+        mComputeCuller.Push<ComputePassesPushConstants::CameraFrustum>(cmd, {planes, cameraPosition, totalObjects});
 
         uint32_t groupX = (totalObjects + 255) / 256;
         mComputeCuller.Execute(cmd, {groupX, 1, 1});
@@ -1529,15 +1536,27 @@ namespace kailux
         data.reserve(view.size_hint());
         for (auto entity: view)
         {
-            const auto &world = view.get<WorldTransform>(entity);
-            auto boundingSphere = view.get<MeshComponent>(entity).boundingSphere;
-            auto material = view.get<MeshMaterialData>(entity);
+            const auto &world{view.get<WorldTransform>(entity)};
+            const auto &mesh{view.get<MeshComponent>(entity)};
+            auto boundingSphere{view.get<MeshComponent>(entity).boundingSphere};
+            auto material{view.get<MeshMaterialData>(entity)};
             material.materialIdx = view.get<MaterialComponent>(entity).handle.index;
+
+            const auto lodInfo{mMeshRegistry.GetLodInfo(mesh.handle)};
+            const glm::vec4 errors{
+                lodInfo.errors[0],
+                lodInfo.errors[1],
+                lodInfo.errors[2],
+                lodInfo.errors[3]
+            };
+
             data.emplace_back(
                 world.model,
                 boundingSphere,
+                errors,
                 material,
-                static_cast<uint32_t>(entity)
+                static_cast<uint32_t>(entity),
+                lodInfo.count
             );
         }
         frame.GetModelBuffer().Upload(data.data(), data.size() * sizeof(MeshData));
@@ -1564,18 +1583,27 @@ namespace kailux
     {
         std::vector<vk::DrawIndexedIndirectCommand> indirectCommands;
         auto view = mScene.GetEntityRegistry().view<MeshComponent>(entt::exclude<PendingUploadComponent>);
-        indirectCommands.reserve(view.size_hint());
-        view.each([this, &indirectCommands](const auto &mesh)
+        indirectCommands.reserve(
+            mScene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)
+            * details::kMaxGeometryLods
+        );
+        uint32_t objectIndex{};
+        for (const auto entity : view)
         {
-            auto meshView = mMeshRegistry.View(mesh.handle);
-            indirectCommands.emplace_back(
-                meshView.indexCount,
-                1,
-                meshView.firstIndex,
-                meshView.vertexOffset,
-                static_cast<uint32_t>(indirectCommands.size())
-            );
-        });
+            const auto &mesh{view.get<MeshComponent>(entity)};
+            for (uint32_t lod{}; lod < details::kMaxGeometryLods; ++lod)
+            {
+                const auto meshView{mMeshRegistry.View(mesh.handle, lod)};
+                indirectCommands.emplace_back(
+                    meshView.indexCount,
+                    1,
+                    meshView.firstIndex,
+                    meshView.vertexOffset,
+                    objectIndex
+                );
+            }
+            ++objectIndex;
+        }
         if (indirectCommands.empty())
             return;
 

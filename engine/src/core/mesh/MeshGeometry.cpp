@@ -1,8 +1,7 @@
 #include "MeshGeometry.h"
 #include <numbers>
 #include <meshoptimizer.h>
-
-#include "core/Log.h"
+#include "../Core.h"
 
 namespace kailux
 {
@@ -183,5 +182,69 @@ namespace kailux
             vertexCount,
             sizeof(Vertex)
         );
+    }
+
+    void MeshGeometry::generate_lods(MeshData &meshData)
+    {
+        meshData.lods.clear();
+
+        const auto &vertices{meshData.vertices};
+        if (vertices.empty() || meshData.indices.size() < details::kMinLodIndices)
+            return;
+
+        constexpr std::array<float, details::kMaxGeometryLods - 1> kTargets{0.25f, 0.0625f, 0.015f, 0.004f};
+        constexpr uint32_t kMinIndices{details::kMinLodIndices / 2};
+
+        std::vector src{meshData.indices};
+        const auto originalSize{static_cast<uint32_t>(meshData.indices.size())};
+
+        uint32_t level{};
+        float carriedError{};
+
+        while (level < kTargets.size())
+        {
+            const auto wanted{static_cast<uint32_t>(originalSize * kTargets[level]) / 3 * 3};
+            if (wanted < kMinIndices)
+                break;
+
+            const uint32_t step{std::max(wanted, static_cast<uint32_t>(src.size()) / 2 / 3 * 3)};
+
+            std::vector<IndexType> dst(src.size());
+            float error{};
+
+            const auto count{
+                meshopt_simplify(
+                    dst.data(),
+                    src.data(),
+                    src.size(),
+                    &vertices.front().position.x,
+                    vertices.size(),
+                    sizeof(Vertex),
+                    step,
+                    0.1f,
+                    meshopt_SimplifyLockBorder,
+                    &error
+                )
+            };
+            if (count >= src.size() * 0.95f)
+                break;
+
+            dst.resize(count);
+            src = std::move(dst);
+            carriedError = std::max(carriedError, error);
+
+            if (src.size() <= wanted)
+            {
+                std::vector lodIndices{src};
+                meshopt_optimizeVertexCache(
+                    lodIndices.data(),
+                    lodIndices.data(),
+                    lodIndices.size(),
+                    vertices.size()
+                );
+                meshData.lods.emplace_back(std::move(lodIndices), carriedError);
+                ++level;
+            }
+        }
     }
 }

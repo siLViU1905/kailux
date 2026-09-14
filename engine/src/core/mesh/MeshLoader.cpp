@@ -35,6 +35,16 @@ namespace kailux
 
         process_node(scene->mRootNode, scene, kParentMatrix, loadData, meshDirectoryPath);
 
+        for (auto& submesh : loadData.submeshes)
+        {
+            MeshGeometry::optimize_mesh(submesh.meshData);
+            MeshGeometry::generate_lods(submesh.meshData);
+            log::console.Debug("Submesh {}\n  ", submesh.name);
+            uint32_t lvl{};
+            for (const auto& lod : submesh.meshData.lods)
+                log::console.Debug("LOD lvl{}:\n  indices: {}\nerror: {}", lvl++, lod.indices.size(), lod.error);
+        }
+
         return loadData;
     }
 
@@ -103,7 +113,6 @@ namespace kailux
             for (uint32_t j = 0; j < face.mNumIndices; j++)
                 outMeshData.indices.push_back(face.mIndices[j]);
         }
-        MeshGeometry::optimize_mesh(outMeshData);
     }
 
     void MeshLoader::extract_material_paths(const aiMaterial *material, MaterialPaths &outPaths,

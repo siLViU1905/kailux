@@ -54,7 +54,7 @@ namespace kailux
         auto uploadShape = [&](auto genFn, MeshHandle &out)
         {
             auto data = genFn();
-            out = registry.UploadInternal(data.vertices, data.indices, context, cmd, stagingBuffers, true);
+            out = registry.UploadInternal(data.vertices, data.indices, context, cmd, stagingBuffers, true, {});
         };
 
         uploadShape([]() { return MeshGeometry::generate_cube(); }, registry.mBuiltins.cube);
@@ -75,14 +75,15 @@ namespace kailux
         a = {};
     }
 
-    MeshView MeshRegistry::View(MeshHandle handle) const
+    MeshView MeshRegistry::View(MeshHandle handle, uint32_t lod) const
     {
         assert(handle.Valid());
-        const auto &alloc = mAllocs[handle.index];
+        const auto &alloc{mAllocs[handle.index]};
+        const auto &l{alloc.lods[std::min(lod, alloc.lodCount)]};
         return {
-            static_cast<uint32_t>(alloc.indexOffset / sizeof(IndexType)),
-            alloc.indexCount,
-            static_cast<int32_t>(alloc.vertexOffset / sizeof(Vertex))
+            static_cast<uint32_t>(alloc.indexOffset / sizeof(IndexType)) + l.firstIndex,
+        l.indexCount,
+        static_cast<int32_t>(alloc.vertexOffset / sizeof(Vertex))
         };
     }
 
@@ -95,6 +96,20 @@ namespace kailux
     uint32_t MeshRegistry::GetMeshCount() const
     {
         return static_cast<uint32_t>(mAllocs.size());
+    }
+
+    LodInfo MeshRegistry::GetLodInfo(MeshHandle handle) const
+    {
+        assert(handle.Valid());
+        const auto &alloc = mAllocs[handle.index];
+
+        LodInfo info;
+        info.count = alloc.lodCount;
+
+        for (uint32_t i{1}; i < alloc.lodCount; ++i)
+            info.errors[i - 1] = alloc.lods[i].error;
+
+        return info;
     }
 
     BuiltinMeshes MeshRegistry::GetBuiltins() const
@@ -198,12 +213,44 @@ namespace kailux
         return {static_cast<uint32_t>(mAllocs.size() - 1)};
     }
 
-    MeshHandle MeshRegistry::UploadInternal(std::span<const Vertex> vertices, std::span<const IndexType> indices,
-                                            const Context &context, vk::CommandBuffer cmd,
-                                            std::vector<Buffer> &stagingBuffers, bool isBuiltin)
+    MeshHandle MeshRegistry::UploadInternal(
+        std::span<const Vertex> vertices,
+        std::span<const IndexType> indices,
+        const Context &context,
+        vk::CommandBuffer cmd,
+        std::vector<Buffer> &stagingBuffers,
+        bool isBuiltin,
+        std::span<const MeshGeometry::LodLevel> extraLods)
     {
-        vk::DeviceSize vsize = vertices.size_bytes();
-        vk::DeviceSize isize = indices.size_bytes();
+        auto totalIndices{indices.size()};
+        for (const auto &lod : extraLods)
+            totalIndices += lod.indices.size();
+
+        std::vector<IndexType> packed;
+        packed.reserve(totalIndices);
+        packed.assign(indices.begin(), indices.end());
+
+        std::array<LodAlloc, details::kMaxGeometryLods> lods{};
+        lods.front() = {
+            0,
+            static_cast<uint32_t>(indices.size()),
+            0.f
+        };
+
+        uint32_t lodCount{1};
+        for (const auto &lod : extraLods)
+        {
+            lods[lodCount] = {
+                static_cast<uint32_t>(packed.size()),
+                static_cast<uint32_t>(lod.indices.size()),
+                lod.error
+            };
+            packed.insert(packed.end(), lod.indices.begin(), lod.indices.end());
+            ++lodCount;
+        }
+
+        const vk::DeviceSize vsize{vertices.size_bytes()};
+        const vk::DeviceSize isize{packed.size() * sizeof(IndexType)};
 
         vk::DeviceSize voffset, ioffset;
 
@@ -225,7 +272,9 @@ namespace kailux
             voffset,
             static_cast<uint32_t>(vertices.size()),
             ioffset,
-            static_cast<uint32_t>(indices.size()),
+            static_cast<uint32_t>(packed.size()),
+            lods,
+            lodCount,
             isBuiltin
         };
         return handle;
@@ -243,8 +292,19 @@ namespace kailux
     }
 
     MeshHandle MeshRegistry::Upload(const Context &context,
-                                    vk::CommandBuffer cmd, const MeshGeometry::MeshData &data, std::vector<Buffer> &stagingBuffer)
+                                    vk::CommandBuffer cmd,
+                                    const MeshGeometry::MeshData &data,
+                                    std::vector<Buffer> &stagingBuffer
+    )
     {
-        return UploadInternal(data.vertices, data.indices, context, cmd, stagingBuffer, false);
+        return UploadInternal(
+            data.vertices,
+            data.indices,
+            context,
+            cmd,
+            stagingBuffer,
+            false,
+            data.lods
+        );
     }
 }
