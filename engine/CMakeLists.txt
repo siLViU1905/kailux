@@ -92,8 +92,9 @@ target_link_libraries(kailux_engine PUBLIC
         portable-file-dialogs::portable-file-dialogs
         nlohmann_json::nlohmann_json
         Jolt::Jolt
-        TBB::tbb
         shaderc::shaderc
+        TBB::tbb
+        meshoptimizer::meshoptimizer
 )
 
 target_precompile_headers(kailux_engine PUBLIC

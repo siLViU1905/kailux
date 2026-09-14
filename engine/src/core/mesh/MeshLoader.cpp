@@ -5,6 +5,7 @@
 #include <magic_enum/magic_enum.hpp>
 
 #include "core/Geometry.h"
+#include "core/Log.h"
 
 namespace kailux
 {
@@ -16,8 +17,7 @@ namespace kailux
                                                  aiProcess_Triangulate |
                                                  aiProcess_GenSmoothNormals |
                                                  aiProcess_CalcTangentSpace |
-                                                 aiProcess_FlipUVs |
-                                                 aiProcess_JoinIdenticalVertices
+                                                 aiProcess_FlipUVs
         );
 
         if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
@@ -103,6 +103,7 @@ namespace kailux
             for (uint32_t j = 0; j < face.mNumIndices; j++)
                 outMeshData.indices.push_back(face.mIndices[j]);
         }
+        MeshGeometry::optimize_mesh(outMeshData);
     }
 
     void MeshLoader::extract_material_paths(const aiMaterial *material, MaterialPaths &outPaths,
