@@ -21,6 +21,12 @@ namespace kailux
         int32_t vertexOffset{};
     };
 
+    struct LodInfo
+    {
+        uint32_t count{1};
+        std::array<float, details::kMaxGeometryLods - 1> errors{};
+    };
+
     struct MeshBufferRegions
     {
         vk::Buffer     vertexBuffer;
@@ -53,9 +59,11 @@ namespace kailux
                                    vk::CommandBuffer cmd,
                                    std::vector<Buffer> &stagingBuffers);
         void                  Destroy(MeshHandle handle);
-        MeshView              View(MeshHandle handle) const;
+        MeshView              View(MeshHandle handle, uint32_t lod = 0) const;
         void                  Bind(vk::CommandBuffer cmd) const;
         uint32_t              GetMeshCount() const;
+
+        LodInfo GetLodInfo(MeshHandle handle) const;
 
         BuiltinMeshes GetBuiltins() const;
 
@@ -82,23 +90,31 @@ namespace kailux
             void Free(vk::DeviceSize offset);
         };
 
+        struct LodAlloc
+        {
+            uint32_t firstIndex{};
+            uint32_t indexCount{};
+            float    error{};
+        };
         struct MeshAlloc
         {
             vk::DeviceSize vertexOffset;
             uint32_t vertexCount;
             vk::DeviceSize indexOffset;
             uint32_t indexCount;
+            std::array<LodAlloc, details::kMaxGeometryLods> lods{};
+            uint32_t lodCount{1};
             bool is_builtin{};
         };
 
-    private:
         MeshHandle AllocSlot();
         MeshHandle UploadInternal(std::span<const Vertex> vertices,
                                   std::span<const IndexType> indices,
                                   const Context &context,
                                   vk::CommandBuffer cmd,
                                   std::vector<Buffer> &stagingBuffers,
-                                  bool isBuiltin);
+                                  bool isBuiltin,
+                                  std::span<const MeshGeometry::LodLevel> extraLods);
 
         static void upload_buffer_region(const void *data,
                                          vk::DeviceSize size,
@@ -122,7 +138,7 @@ namespace kailux
         BuiltinMeshes mBuiltins;
 
     public:
-        MeshHandle      Upload(const Context &context,
+        MeshHandle Upload(const Context &context,
                                vk::CommandBuffer cmd,
                                const MeshGeometry::MeshData &data,
                                std::vector<Buffer> &stagingBuffer);

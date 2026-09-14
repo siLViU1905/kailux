@@ -13,6 +13,7 @@ namespace kailux
         struct CameraFrustum
         {
             std::array<glm::vec4, 6> frustumPlanes{};
+            glm::vec4                cameraPosition{};
             uint32_t                 totalObjects{};
         };
     };

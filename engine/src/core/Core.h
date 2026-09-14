@@ -100,6 +100,8 @@ namespace kailux::details
     constexpr uint32_t kFramesInFlight{2};
 
     constexpr uint32_t kMaxMeshes{1'000};
+    constexpr uint32_t kMaxGeometryLods{5};
+    constexpr uint32_t kMinLodIndices{1500};
     constexpr uint32_t kMaxTextures{4'096};
     constexpr uint32_t kMaxMaterials{kMaxMeshes};
     constexpr uint32_t kMaxPointLights{16};
