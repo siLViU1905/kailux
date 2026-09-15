@@ -6,6 +6,12 @@ namespace kailux
     class ImageLoader
     {
     public:
+        enum class ColorSpace
+        {
+            Srgb,
+            Linear
+        };
+
         struct ImageData
         {
             static constexpr uint32_t kChannels = 4;
@@ -17,7 +23,10 @@ namespace kailux
             std::vector<Pixel> pixels;
         };
 
-        using LoadResult = std::expected<ImageData, std::string>;
-        static LoadResult load_image(std::string_view path);
+        using Result = std::expected<ImageData, std::string>;
+        static Result load_image(std::string_view path, ColorSpace space);
+
+    private:
+        static Result cap_image(ImageData& image, ColorSpace space);
     };
 }

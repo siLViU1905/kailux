@@ -5,7 +5,6 @@
 #include <magic_enum/magic_enum.hpp>
 #include <execution>
 
-#include "core/Clock.h"
 #include "core/Geometry.h"
 #include "core/Log.h"
 
@@ -15,7 +14,6 @@ namespace kailux
     {
         Assimp::Importer importer;
 
-        auto start = Clock::now();
         const aiScene *scene = importer.ReadFile(path.data(),
                                                  aiProcess_Triangulate |
                                                  aiProcess_GenSmoothNormals |
@@ -26,20 +24,13 @@ namespace kailux
         if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
             return std::unexpected(std::format("Assimp failed to load '{}': {}", path, importer.GetErrorString()));
 
-        log::console.Info("Assimp processing took: {:.3f}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
-
         auto meshDirectoryPath = path.substr(0, path.find_last_of('/'));
 
         LoadData loadData;
-        start = Clock::now();
         process_materials(scene, loadData, meshDirectoryPath);
-        log::console.Info("Material processing took: {:.3f}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
 
-        start = Clock::now();
         process_node(scene->mRootNode, scene, kParentMatrix, loadData, meshDirectoryPath);
-        log::console.Info("Node processing took: {:.3f}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
 
-        start = Clock::now();
         std::for_each(std::execution::par,
                       loadData.submeshes.begin(), loadData.submeshes.end(),
                       [](auto &submesh)
@@ -47,7 +38,6 @@ namespace kailux
                           MeshGeometry::optimize_mesh(submesh.meshData);
                           MeshGeometry::generate_lods(submesh.meshData);
                       });
-        log::console.Info("Optimize + LOD took: {:.3f}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
 
         return loadData;
     }
@@ -170,19 +160,19 @@ namespace kailux
     TextureRegistry::MaterialData MeshLoader::process_material_paths(const MaterialPaths &paths)
     {
         TextureRegistry::MaterialData data;
-        auto imgData = ImageLoader::load_image(paths.albedoPath);
+        auto imgData = ImageLoader::load_image(paths.albedoPath, ImageLoader::ColorSpace::Srgb);
         if (imgData)
             data.albedoData = std::move(*imgData);
-        imgData = ImageLoader::load_image(paths.normalPath);
+        imgData = ImageLoader::load_image(paths.normalPath, ImageLoader::ColorSpace::Linear);
         if (imgData)
             data.normalData = std::move(*imgData);
-        imgData = ImageLoader::load_image(paths.roughnessPath);
+        imgData = ImageLoader::load_image(paths.roughnessPath, ImageLoader::ColorSpace::Linear);
         if (imgData)
             data.roughnessData = std::move(*imgData);
-        imgData = ImageLoader::load_image(paths.metallicPath);
+        imgData = ImageLoader::load_image(paths.metallicPath, ImageLoader::ColorSpace::Linear);
         if (imgData)
             data.metallicData = std::move(*imgData);
-        imgData = ImageLoader::load_image(paths.aoPath);
+        imgData = ImageLoader::load_image(paths.aoPath, ImageLoader::ColorSpace::Linear);
         if (imgData)
             data.aoData = std::move(*imgData);
         return data;
