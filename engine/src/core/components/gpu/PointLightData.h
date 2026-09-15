@@ -5,7 +5,7 @@ namespace kailux
 {
     struct PointLightData
     {
-        glm::vec4 positionAndIntensity{ 0.f,0.f, 0.f, 1.f };
+        glm::vec4 positionAndIntensity{ 0.f,0.f, 0.f, 10000.f };
         glm::vec4 colorAndEnabled{ 1.f, 1.f, 1.f, 1.f };
         glm::vec4 range{ 10.f, 0.f, 0.f, 0.f };
     };
