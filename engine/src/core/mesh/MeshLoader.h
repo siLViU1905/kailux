@@ -45,6 +45,11 @@ namespace kailux
             std::string aoPath;
         };
 
+        static void process_materials(
+                                 const aiScene *scene,
+                                 LoadData &outLoadData,
+                                 std::string_view directoryPath
+        );
         static void process_node(const aiNode *node,
                                  const aiScene *scene,
                                  const glm::mat4 &parentMatrix,

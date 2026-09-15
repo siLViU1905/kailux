@@ -3,7 +3,9 @@
 #include <assimp/postprocess.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <execution>
 
+#include "core/Clock.h"
 #include "core/Geometry.h"
 #include "core/Log.h"
 
@@ -13,6 +15,7 @@ namespace kailux
     {
         Assimp::Importer importer;
 
+        auto start = Clock::now();
         const aiScene *scene = importer.ReadFile(path.data(),
                                                  aiProcess_Triangulate |
                                                  aiProcess_GenSmoothNormals |
@@ -23,23 +26,28 @@ namespace kailux
         if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
             return std::unexpected(std::format("Assimp failed to load '{}': {}", path, importer.GetErrorString()));
 
+        log::console.Info("Assimp processing took: {:.3f}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
+
         auto meshDirectoryPath = path.substr(0, path.find_last_of('/'));
 
         LoadData loadData;
-        for (uint32_t i = 0; i < scene->mNumMaterials; i++)
-        {
-            MaterialPaths paths;
-            extract_material_paths(scene->mMaterials[i], paths, meshDirectoryPath);
-            loadData.materials.push_back(process_material_paths(paths));
-        }
+        start = Clock::now();
+        process_materials(scene, loadData, meshDirectoryPath);
+        log::console.Info("Material processing took: {:.3f}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
 
+        start = Clock::now();
         process_node(scene->mRootNode, scene, kParentMatrix, loadData, meshDirectoryPath);
+        log::console.Info("Node processing took: {:.3f}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
 
-        for (auto& submesh : loadData.submeshes)
-        {
-            MeshGeometry::optimize_mesh(submesh.meshData);
-            MeshGeometry::generate_lods(submesh.meshData);
-        }
+        start = Clock::now();
+        std::for_each(std::execution::par,
+                      loadData.submeshes.begin(), loadData.submeshes.end(),
+                      [](auto &submesh)
+                      {
+                          MeshGeometry::optimize_mesh(submesh.meshData);
+                          MeshGeometry::generate_lods(submesh.meshData);
+                      });
+        log::console.Info("Optimize + LOD took: {:.3f}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
 
         return loadData;
     }
@@ -47,6 +55,21 @@ namespace kailux
     glm::mat4 MeshLoader::ai_matrix4x4_to_glm(const aiMatrix4x4 &m)
     {
         return glm::transpose(glm::make_mat4(&m.a1));
+    }
+
+    void MeshLoader::process_materials(const aiScene *scene, LoadData &outLoadData, std::string_view directoryPath)
+    {
+        outLoadData.materials.resize(scene->mNumMaterials);
+
+        std::vector<uint32_t> materialIndices(scene->mNumMaterials);
+        std::ranges::iota(materialIndices, 0);
+
+        std::for_each(std::execution::par, materialIndices.begin(), materialIndices.end(), [&](auto i)
+        {
+            MaterialPaths paths;
+            extract_material_paths(scene->mMaterials[i], paths, directoryPath);
+            outLoadData.materials[i] = process_material_paths(paths);
+        });
     }
 
     void MeshLoader::process_node(const aiNode *node,
