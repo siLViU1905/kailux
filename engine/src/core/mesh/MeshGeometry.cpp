@@ -192,6 +192,14 @@ namespace kailux
         if (vertices.empty() || meshData.indices.size() < details::kMinLodIndices)
             return;
 
+        const float meshScale{
+            meshopt_simplifyScale(
+                &vertices.front().position.x,
+                vertices.size(),
+                sizeof(Vertex)
+            )
+        };
+
         constexpr std::array<float, details::kMaxGeometryLods - 1> kTargets{0.25f, 0.0625f, 0.015f, 0.004f};
         constexpr uint32_t kMinIndices{details::kMinLodIndices / 2};
 
@@ -242,7 +250,7 @@ namespace kailux
                     lodIndices.size(),
                     vertices.size()
                 );
-                meshData.lods.emplace_back(std::move(lodIndices), carriedError);
+                meshData.lods.emplace_back(std::move(lodIndices), carriedError * meshScale);
                 ++level;
             }
         }

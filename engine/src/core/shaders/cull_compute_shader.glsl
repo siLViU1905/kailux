@@ -87,8 +87,7 @@ void main() {
     float scaleX = length(modelMatrix[0].xyz);
     float scaleY = length(modelMatrix[1].xyz);
     float scaleZ = length(modelMatrix[2].xyz);
-    float maxScale = max(scaleX, max(scaleY, max(scaleZ, 1.0)));
-
+    float maxScale = max(scaleX, max(scaleY, scaleZ));
     float worldRadius = localRadius * maxScale;
 
     if (IsVisible(worldCenter, worldRadius))
@@ -103,7 +102,7 @@ void main() {
         {
             float pixelError = errors[i - 1] * maxScale * cameraPosition.w / dist;
             if (pixelError > 1.5)
-                    break;
+                break;
             lod = i;
         }
 
