@@ -727,11 +727,12 @@ namespace kailux
 
     bool Engine::is_mesh_type_supported(std::string_view path)
     {
-        static constexpr std::array<std::string_view, 3> supported =
+        using namespace std::string_view_literals;
+        static constexpr std::array supported =
         {
-            "fbx",
-            "gltf",
-            "obj"
+            "fbx"sv,
+            "gltf"sv,
+            "obj"sv
         };
 
         auto extension = path.substr(path.find_last_of('.') + 1);
@@ -741,10 +742,11 @@ namespace kailux
 
     bool Engine::is_image_type_supported(std::string_view path)
     {
-        static constexpr std::array<std::string_view, 2> supported =
+        using namespace std::string_view_literals;
+        static constexpr std::array supported =
         {
-            "jpeg",
-            "png"
+            "jpeg"sv,
+            "png"sv
         };
 
         auto extension = path.substr(path.find_last_of('.') + 1);
