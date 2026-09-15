@@ -117,6 +117,8 @@ namespace kailux::details
     constexpr uint32_t kPointShadowResolution{512};
     constexpr uint32_t kPointShadowFaceCount{6};
     constexpr uint32_t kMaxPointShadows{4};
+
+    constexpr uint32_t kMaxTextureDimension{1024};
 }
 
 namespace kailux::details

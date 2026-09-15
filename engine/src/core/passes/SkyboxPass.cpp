@@ -127,7 +127,7 @@ namespace kailux
         int i = 0;
         for (auto path: kSkyboxTexturePaths)
         {
-            auto result = ImageLoader::load_image(path);
+            auto result = ImageLoader::load_image(path, ImageLoader::ColorSpace::Srgb);
             if (!result)
                 return;
             faces[i++] = *result;
@@ -142,7 +142,7 @@ namespace kailux
         int i = 0;
         for (auto path: kIrradianceTexturePaths)
         {
-            auto result = ImageLoader::load_image(path);
+            auto result = ImageLoader::load_image(path, ImageLoader::ColorSpace::Srgb);
             if (!result)
                 return;
             faces[i++] = *result;
@@ -168,7 +168,7 @@ namespace kailux
                                  + std::string(faceNames[face])
                                  + ".png";
 
-                auto result = ImageLoader::load_image(path);
+                auto result = ImageLoader::load_image(path, ImageLoader::ColorSpace::Srgb);
                 if (!result)
                     return;
 
@@ -180,7 +180,7 @@ namespace kailux
 
     void SkyboxPass::CreateBrdfLutTexture(const Context &context)
     {
-        if (auto data = ImageLoader::load_image(kBRDFLutPath))
+        if (auto data = ImageLoader::load_image(kBRDFLutPath, ImageLoader::ColorSpace::Srgb))
             mBRDFLutTexture = TextureAllocator::create_from_image_data(context, *data);
     }
 }

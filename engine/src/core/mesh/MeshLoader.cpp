@@ -160,19 +160,19 @@ namespace kailux
     TextureRegistry::MaterialData MeshLoader::process_material_paths(const MaterialPaths &paths)
     {
         TextureRegistry::MaterialData data;
-        auto imgData = ImageLoader::load_image(paths.albedoPath);
+        auto imgData = ImageLoader::load_image(paths.albedoPath, ImageLoader::ColorSpace::Srgb);
         if (imgData)
             data.albedoData = std::move(*imgData);
-        imgData = ImageLoader::load_image(paths.normalPath);
+        imgData = ImageLoader::load_image(paths.normalPath, ImageLoader::ColorSpace::Linear);
         if (imgData)
             data.normalData = std::move(*imgData);
-        imgData = ImageLoader::load_image(paths.roughnessPath);
+        imgData = ImageLoader::load_image(paths.roughnessPath, ImageLoader::ColorSpace::Linear);
         if (imgData)
             data.roughnessData = std::move(*imgData);
-        imgData = ImageLoader::load_image(paths.metallicPath);
+        imgData = ImageLoader::load_image(paths.metallicPath, ImageLoader::ColorSpace::Linear);
         if (imgData)
             data.metallicData = std::move(*imgData);
-        imgData = ImageLoader::load_image(paths.aoPath);
+        imgData = ImageLoader::load_image(paths.aoPath, ImageLoader::ColorSpace::Linear);
         if (imgData)
             data.aoData = std::move(*imgData);
         return data;
