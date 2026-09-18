@@ -224,7 +224,7 @@ namespace kailux
 
             const auto oldScale = transform.scale;
             bool editDone{};
-            if (widgets::vec3_control("scale", transform.scale, 0.02f, 1.f, &editDone, "%.2f", fieldsWidth) &&
+            if (widgets::vec3_control("scale", transform.scale, 0.02f, 1.f, &editDone, "%.3f", fieldsWidth) &&
                 mUniformScale)
             {
                 float newValue = oldScale.x;
