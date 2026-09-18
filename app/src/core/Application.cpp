@@ -261,9 +261,7 @@ namespace kailux
         mEngine.Update(deltaTime);
 
         const auto sceneViewportMousePos = mEditor.GetLayer<EditorLayer>().GetPanel<ViewportPanel>().GetScaledMousePos();
-        const auto outlineColor = mEditor.GetLayer<EditorLayer>().GetPanel<MenuPanel>().GetOutlineColor();
         const auto selectedEntity = static_cast<uint32_t>(mEditor.GetLayer<EditorLayer>().GetPanel<HierarchyPanel>().GetSelectedEntity());
-        mEngine.SetOutlineInfo(outlineColor, selectedEntity);
         mEngine.SetSceneViewportMousePos(sceneViewportMousePos.x, sceneViewportMousePos.y);
     }
 

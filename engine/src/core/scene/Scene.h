@@ -74,6 +74,7 @@ namespace kailux
         entt::entity          GetNextCamera(entt::entity currentCamera) const;
         void                  SetMainCamera(entt::entity camera);
         entt::entity          GetSun() const;
+        entt::entity          GetSettingsEntity() const;
         SceneData             GetData() const;
         LightsData            GetLightData() const;
 
@@ -119,6 +120,7 @@ namespace kailux
         using        SunData = DirectionalLightData;
         entt::entity CreateSunEntity(const SunData& data);
         void         CreateSceneCamera();
+        void         CreateSceneSettings();
 
         void UpdateTransforms();
 
@@ -129,6 +131,7 @@ namespace kailux
         entt::registry mEntityRegistry;
         entt::entity   mSceneCameraEntity{entt::null};
         entt::entity   mSun{entt::null};
+        entt::entity   mSettingsEntity{entt::null};
 
         uint32_t mMeshEntityNameCount{};
         uint32_t mLightEntityNameCount{};

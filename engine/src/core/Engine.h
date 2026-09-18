@@ -84,7 +84,6 @@ namespace kailux
         void SetOnErrorLog(OnLog&& callback);
 
         void SetSceneViewportMousePos(uint32_t x, uint32_t y);
-        void SetOutlineInfo(glm::vec3 color, uint32_t entity);
 
         uint32_t GetPickedEntity() const;
 
@@ -140,7 +139,7 @@ namespace kailux
         void                                        RecordGizmos(const FrameData &frame, const CommandRecorder &recorder) const;
         void                                        RecordImGuiData(const FrameData& frame);
         void                                        RecordPicker(const FrameData& frame, const CommandRecorder &recorder) const;
-        void                                        RecordOutline(const FrameData& frame, const CommandRecorder &recorder) const;
+        void                                        RecordOutline(const FrameData& frame, const CommandRecorder &recorder);
         void                                        RenderSimulationView(const FrameData &frame, CommandRecorder &recorder);
 
         CameraData BuildCameraData(entt::entity entity, glm::ivec2 extent) const;

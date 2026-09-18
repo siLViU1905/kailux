@@ -1,6 +1,5 @@
 #pragma once
 #include "Panel.h"
-#include "core/FileDialog.h"
 
 namespace kailux
 {
@@ -21,8 +20,6 @@ namespace kailux
         using OnViewMenu = std::move_only_function<void()>;
         void SetOnViewMenu(OnViewMenu&& callback);
 
-        const glm::vec3 &GetOutlineColor() const;
-
         void SetDeviceInfo(const DeviceInfo &info);
 
     private:
@@ -36,8 +33,6 @@ namespace kailux
         OnSceneSave mOnSceneSave;
 
         OnViewMenu  mOnViewMenu;
-
-        glm::vec3   mOutlineColor;
 
         DeviceInfo mDeviceInfo;
         bool       mShowDevicesInfo{};

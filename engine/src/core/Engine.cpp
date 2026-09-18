@@ -16,6 +16,7 @@
 #include "components/entt/PendingUploadComponent.h"
 #include "components/entt/PhysicsComponent.h"
 #include "components/entt/PhysicsControlComponent.h"
+#include "components/entt/SceneSettings.h"
 #include "components/entt/TagComponent.h"
 #include "components/entt/WorldTransform.h"
 #include "components/gpu/CameraData.h"
@@ -855,11 +856,6 @@ namespace kailux
         mSceneViewportMousePos = {x, y};
     }
 
-    void Engine::SetOutlineInfo(glm::vec3 color, uint32_t entity)
-    {
-        mOutlineInfo = {{color, 1.f}, entity};
-    }
-
     uint32_t Engine::GetPickedEntity() const
     {
         return mPickedEntity;
@@ -923,10 +919,7 @@ namespace kailux
         };
         const glm::vec4 cameraPosition{glm::vec3(cameraData.positionAndExposure), projFactor};
 
-        const glm::vec4 params{
-            static_cast<float>(totalObjects),
-
-        };
+        const auto& settings{mScene.GetEntityRegistry().get<SceneSettings>(mScene.GetSettingsEntity())};
 
         mComputeCuller.Push<ComputePassesPushConstants::CullParams>(
             cmd,
@@ -935,10 +928,12 @@ namespace kailux
                 cameraPosition,
                 {
                     static_cast<float>(totalObjects),
-                    ComputePassesPushConstants::CullParams::kUnrestrictedLod,
                     preset == CullingPreset::SceneView
-                        ? ComputePassesPushConstants::CullParams::kSceneLodErrorThreshold
-                        : ComputePassesPushConstants::CullParams::kSimulationLodErrorThreshold,
+                        ? settings.sceneMaxLod
+                        : settings.simulationMaxLod,
+                    preset == CullingPreset::SceneView
+                        ? settings.sceneLodErrorThreshold
+                        : settings.simulationLodErrorThreshold,
                     0.f
                 }
             }
@@ -1402,11 +1397,12 @@ namespace kailux
         );
     }
 
-    void Engine::RecordOutline(const FrameData &frame, const CommandRecorder &recorder) const
+    void Engine::RecordOutline(const FrameData &frame, const CommandRecorder &recorder)
     {
         const auto cmd = recorder.GetCommandBuffer();
         mOutlinePass.Bind(cmd);
         frame.GetOutlineDescriptorSet().Bind(mOutlinePass.GetPipeline(), cmd);
+        mOutlineInfo.color = {mScene.GetEntityRegistry().get<SceneSettings>(mScene.GetSettingsEntity()).outlineColor, 0.f};
         mOutlinePass.Push(cmd, mOutlineInfo);
         cmd.draw(3, 1, 0, 0);
     }
