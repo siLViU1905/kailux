@@ -4,6 +4,7 @@
 #include "../components/entt/MeshComponent.h"
 #include "../components/entt/PhysicsComponent.h"
 #include "../components/entt/PhysicsControlComponent.h"
+#include "core/Clock.h"
 #include "core/components/entt/HierarchyComponent.h"
 #include "core/components/entt/LocalTransform.h"
 #include "core/components/entt/WorldTransform.h"
@@ -14,6 +15,11 @@ namespace kailux
         : mScene(scene)
         , mPhysicsRegistry(physicsRegistry)
     {
+    }
+
+    void PhysicsSystem::SetOnInfoLog(OnLog &&callback)
+    {
+        mOnInfoLog = std::move(callback);
     }
 
     void PhysicsSystem::SetOnWarningLog(OnLog&& callback)
@@ -50,9 +56,13 @@ namespace kailux
         mPhysicsRegistry.get().UpdateBodyScale(handle, scale);
     }
 
-    BodyHandle PhysicsSystem::UploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo& data)
+    PhysicsSystem::UploadResult PhysicsSystem::UploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo& data)
     {
-        return mPhysicsRegistry.get().CreateBody(data);
+        auto t = Clock::now();
+        const auto result{mPhysicsRegistry.get().CreateBody(data)};
+        if (result)
+            mOnInfoLog(std::format("Physics body attached in {:.3f}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(t)));
+        return result;
     }
 
     void PhysicsSystem::OnSimulationStart()
@@ -123,7 +133,7 @@ namespace kailux
         }
     }
 
-    void PhysicsSystem::AddPhysicsToEntity(entt::entity entity, PhysicsCreationOptions options)
+    std::optional<BodyHandle> PhysicsSystem::AddPhysicsToEntity(entt::entity entity, PhysicsCreationOptions options)
     {
         auto& reg = mScene.get().GetEntityRegistry();
 
@@ -137,35 +147,50 @@ namespace kailux
             for (const auto& sm : cache->submeshes)
                 infos.emplace_back(sm.vertices, sm.indices, sm.localTransform);
 
-            handle = UploadPhysicsBodyDataToRegistry({
-                std::move(infos),
-                cache->meshType,
-                transform,
-                {
-                    options.bodyType,
-                    options.canBecomeDynamic
-                }
-            });
+            const auto result{
+                UploadPhysicsBodyDataToRegistry({
+                    std::move(infos),
+                    cache->meshType,
+                    transform,
+                    {
+                        options.bodyType,
+                        options.canBecomeDynamic
+                    }
+                })
+            };
+            if (!result)
+            {
+                mOnWarningLog(result.error());
+                return std::nullopt;
+            }
+            handle = *result;
         }
         else if (const auto* source = reg.try_get<MeshSourceComponent>(entity))
         {
-            handle = UploadPhysicsBodyDataToRegistry({
-                {},
-                source->type,
-                transform,
-                {
-                    options.bodyType,
-                    options.canBecomeDynamic
-                }
-            });
+            const auto result{
+                UploadPhysicsBodyDataToRegistry({
+                    {},
+                    source->type,
+                    transform,
+                    {
+                        options.bodyType,
+                        options.canBecomeDynamic
+                    }
+                })
+            };
+            if (!result)
+            {
+                mOnWarningLog(result.error());
+                return std::nullopt;
+            }
+            handle = *result;
         }
         else
         {
             mOnWarningLog("Cannot add physics: entity has neither cached physics data nor a mesh component");
-            return;
+            return std::nullopt;
         }
 
-        reg.emplace<PhysicsComponent>(entity, handle, options.bodyType);
-        reg.emplace<PhysicsControlComponent>(entity);
+        return handle;
     }
 }

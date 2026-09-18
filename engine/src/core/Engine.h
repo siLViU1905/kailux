@@ -157,8 +157,6 @@ namespace kailux
 
         void RecreateSwapchainResources(const Window& window);
 
-        BodyHandle UploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo& data);
-
         void ExecuteCulling(const FrameData& frame, const CommandRecorder& recorder, entt::entity camera, vk::Extent2D extent);
 
         void ResizeSimulationView(glm::ivec2 extent);

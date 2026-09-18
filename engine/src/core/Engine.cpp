@@ -407,6 +407,10 @@ namespace kailux
     void Engine::CreatePhysicsSystem()
     {
         mPhysicsSystem = PhysicsSystem(mScene, mPhysicsRegistry);
+        mPhysicsSystem.SetOnInfoLog([this](auto msg)
+        {
+            mOnInfoLog(msg);
+        });
         mPhysicsSystem.SetOnWarningLog([this](auto msg)
         {
             mOnWarningLog(msg);
@@ -1631,55 +1635,10 @@ namespace kailux
         CreateEditorTextureIds();
     }
 
-    BodyHandle Engine::UploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo &data)
-    {
-        auto t = Clock::now();
-        auto handle = mPhysicsRegistry.CreateBody(data);
-        mOnInfoLog(std::format("Physics body attached in {:.3f}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(t)));
-        return handle;
-    }
-
     void Engine::AddPhysicsToEntity(entt::entity entity, PhysicsCreationOptions options)
     {
-        auto &reg = mScene.GetEntityRegistry();
-
-        const auto transform{Transform::from_matrix(reg.get<WorldTransform>(entity).model)};
-
-        BodyHandle handle;
-        if (const auto *cache = reg.try_get<CachedPhysicsData>(entity))
-        {
-            std::vector<SubmeshPhysicsInfo> infos;
-            infos.reserve(cache->submeshes.size());
-            for (const auto &sm: cache->submeshes)
-                infos.emplace_back(sm.vertices, sm.indices, sm.localTransform);
-
-            handle = UploadPhysicsBodyDataToRegistry({
-                std::move(infos),
-                cache->meshType,
-                transform,
-                {
-                    options.bodyType,
-                    options.canBecomeDynamic
-                }
-            });
-        } else if (const auto *source = reg.try_get<MeshSourceComponent>(entity))
-        {
-            handle = UploadPhysicsBodyDataToRegistry({
-                {},
-                source->type,
-                transform,
-                {
-                    options.bodyType,
-                    options.canBecomeDynamic
-                }
-            });
-        } else
-        {
-            mOnWarningLog("Cannot add physics: entity has neither cached physics data nor a mesh component");
-            return;
-        }
-
-        mScene.AttachPhysics(entity, {handle, options.bodyType, options.canBecomeDynamic});
+        if (const auto handle{mPhysicsSystem.AddPhysicsToEntity(entity, options)})
+            mScene.AttachPhysics(entity, {*handle, options.bodyType, options.canBecomeDynamic});
     }
 
     void Engine::AddLightEntity(LightType type)
