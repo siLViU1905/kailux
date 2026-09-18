@@ -172,7 +172,7 @@ namespace kailux
         mPendingDeleteEntity = mSelectedEntity;
     }
 
-    bool HierarchyPanel::OnEntityRename(entt::registry &registry, entt::entity entity)
+    std::optional<std::string> HierarchyPanel::OnEntityRename(entt::registry &registry, entt::entity entity)
     {
         if (ImGui::IsWindowAppearing() || mRenameTarget != entity)
         {
@@ -182,6 +182,8 @@ namespace kailux
         }
 
         ImGui::Text("Rename Entity");
+
+        std::optional<std::string> committedOldName;
 
         if (ImGui::InputText("##rename", &mRenameBuffer, ImGuiInputTextFlags_EnterReturnsTrue))
         {
@@ -198,7 +200,9 @@ namespace kailux
 
             if (!mRenameBuffer.empty() && !foundDuplicate)
             {
-                registry.get<TagComponent>(entity).name = mRenameBuffer;
+                auto& name{registry.get<TagComponent>(entity).name};
+                committedOldName = name;
+                name = mRenameBuffer;
                 mRenameNameExists = false;
                 ImGui::CloseCurrentPopup();
             }
@@ -206,7 +210,29 @@ namespace kailux
                 mRenameNameExists = foundDuplicate;
         }
 
-        return mRenameNameExists;
+        if (mRenameNameExists)
+            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Name already exists!");
+
+        return committedOldName;
+    }
+
+    void HierarchyPanel::propagate_rename_to_children(entt::registry &registry, entt::entity entity, std::string_view oldName)
+    {
+        const auto* hierarchy{registry.try_get<HierarchyComponent>(entity)};
+        if (!hierarchy || hierarchy->parent != entt::null)
+            return;
+
+        const auto& newName{registry.get<TagComponent>(entity).name};
+        for (const auto child : hierarchy->children)
+        {
+            auto& name{registry.get<TagComponent>(child).name};
+            if (name.substr(0, oldName.size()) == oldName)
+                name.replace(
+                    0,
+                    oldName.size(),
+                    newName
+                );
+        }
     }
 
     bool HierarchyPanel::can_delete_entity(const Scene &scene, entt::entity entity)
@@ -331,8 +357,8 @@ namespace kailux
             if (ImGui::IsWindowAppearing() || lastEntity != entity)
                 lastEntity = entity;
 
-            if (OnEntityRename(registry, entity))
-                ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Name already exists!");
+            if (const auto result{OnEntityRename(registry, entity)})
+                propagate_rename_to_children(registry, entity, *result);
 
             ImGui::Separator();
 
