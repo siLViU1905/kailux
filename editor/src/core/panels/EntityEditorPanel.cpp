@@ -214,7 +214,7 @@ namespace kailux
          widgets::vec3_control("pos", transform.position);
 
          widgets::property("Rotation");
-        if (widgets::vec3_control("rot", mRotationDegrees, 0.5f, 0.f, nullptr, "%.1f"))
+        if (widgets::vec3_control("rot", mRotationDegrees, 5.f, 0.f, nullptr, "%.1f"))
             transform.rotation = glm::quat(glm::radians(mRotationDegrees));
 
          widgets::property("Scale");
@@ -224,7 +224,7 @@ namespace kailux
 
             const auto oldScale = transform.scale;
             bool editDone{};
-            if (widgets::vec3_control("scale", transform.scale, 0.02f, 1.f, &editDone, "%.2f", fieldsWidth) &&
+            if (widgets::vec3_control("scale", transform.scale, 0.02f, 1.f, &editDone, "%.3f", fieldsWidth) &&
                 mUniformScale)
             {
                 float newValue = oldScale.x;
