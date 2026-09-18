@@ -157,7 +157,7 @@ namespace kailux
 
         void RecreateSwapchainResources(const Window& window);
 
-        void ExecuteCulling(const FrameData& frame, const CommandRecorder& recorder, entt::entity camera, vk::Extent2D extent);
+        void ExecuteCulling(const FrameData& frame, const CommandRecorder& recorder, entt::entity camera, vk::Extent2D extent, CullingPreset preset);
 
         void ResizeSimulationView(glm::ivec2 extent);
 

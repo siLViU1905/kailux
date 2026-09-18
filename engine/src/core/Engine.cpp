@@ -560,7 +560,7 @@ namespace kailux
             );
 
             UpdateFrameBuffers(frame, recorder);
-            ExecuteCulling(frame, recorder, mScene.GetSceneCamera(), mSwapchain.GetExtent());
+            ExecuteCulling(frame, recorder, mScene.GetSceneCamera(), mSwapchain.GetExtent(), CullingPreset::SceneView);
 
             TransitionForShadowPass(frame, recorder);
             for (uint32_t view{}; view < details::kMaxCameraViews; ++view)
@@ -893,7 +893,7 @@ namespace kailux
         return true;
     }
 
-    void Engine::ExecuteCulling(const FrameData &frame, const CommandRecorder &recorder, entt::entity camera, vk::Extent2D extent)
+    void Engine::ExecuteCulling(const FrameData &frame, const CommandRecorder &recorder, entt::entity camera, vk::Extent2D extent, CullingPreset preset)
     {
         const auto cmd = recorder.GetCommandBuffer();
 
@@ -923,7 +923,26 @@ namespace kailux
         };
         const glm::vec4 cameraPosition{glm::vec3(cameraData.positionAndExposure), projFactor};
 
-        mComputeCuller.Push<ComputePassesPushConstants::CameraFrustum>(cmd, {planes, cameraPosition, totalObjects});
+        const glm::vec4 params{
+            static_cast<float>(totalObjects),
+
+        };
+
+        mComputeCuller.Push<ComputePassesPushConstants::CullParams>(
+            cmd,
+            {
+                planes,
+                cameraPosition,
+                {
+                    static_cast<float>(totalObjects),
+                    ComputePassesPushConstants::CullParams::kUnrestrictedLod,
+                    preset == CullingPreset::SceneView
+                        ? ComputePassesPushConstants::CullParams::kSceneLodErrorThreshold
+                        : ComputePassesPushConstants::CullParams::kSimulationLodErrorThreshold,
+                    0.f
+                }
+            }
+        );
 
         uint32_t groupX = (totalObjects + 255) / 256;
         mComputeCuller.Execute(cmd, {groupX, 1, 1});
@@ -1404,7 +1423,7 @@ namespace kailux
         };
 
         recorder.BufferMemoryBarriers(frame.GetIndirectReadToWriteBarriers());
-        ExecuteCulling(frame, recorder, primaryCamera, extent);
+        ExecuteCulling(frame, recorder, primaryCamera, extent, CullingPreset::SimulationView);
 
         TransitionForSimulationPass(recorder);
 
