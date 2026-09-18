@@ -1,5 +1,7 @@
 #pragma once
 
+#include <expected>
+
 #include "impl/BroadPhaseLayer.h"
 #include "impl/ObjectVsBroadPhaseLayerFilter.h"
 #include "impl/ObjectLayerPairFilter.h"
@@ -50,7 +52,8 @@ namespace kailux
 
         static PhysicsRegistry create();
 
-        BodyHandle CreateBody(const PhysicsBodyInfo& info);
+        using BodyResult = std::expected<BodyHandle, std::string>;
+        BodyResult CreateBody(const PhysicsBodyInfo& info);
         void       DestroyBody(BodyHandle handle);
         void       SetBodyEnabled(BodyHandle handle, bool enabled = true);
         bool       IsBodyEnabled(BodyHandle handle) const;
@@ -80,12 +83,16 @@ namespace kailux
 
         static uint32_t pick_thread_count(uint32_t freeThreads);
 
+        static bool is_degenerate_triangle(const JPH::Float3 &a, const JPH::Float3 &b, const JPH::Float3 &c);
+        static bool scale_is_usbale(const glm::vec3& scale);
+
         void AllocResources();
 
         uint32_t AcquireSlot();
 
-        static JPH::ShapeRefC create_builtin_mesh_body(MeshType type, const Transform &transform);
-        static JPH::ShapeRefC create_loaded_mesh_body(const PhysicsBodyInfo &info);
+        using CreateResult = std::expected<JPH::ShapeRefC, std::string>;
+        static CreateResult create_builtin_mesh_body(MeshType type, const Transform &transform);
+        static CreateResult create_loaded_mesh_body(const PhysicsBodyInfo &info);
 
         struct ChildShapeResult
         {
@@ -93,7 +100,9 @@ namespace kailux
             JPH::Vec3      trans{JPH::Vec3::sZero()};
             JPH::Quat      rot{JPH::Quat::sIdentity()};
         };
-        static void build_submesh_shape(const PhysicsBodyInfo &info, size_t idx, ChildShapeResult &out);
+
+        using BuildResult = std::expected<void, std::string>;
+        static BuildResult build_submesh_shape(const PhysicsBodyInfo &info, size_t idx, ChildShapeResult &out);
 
         Scoped<JPH::TempAllocatorImpl>              mAllocator;
         Scoped<JPH::JobSystemThreadPool>            mJobSystem;
