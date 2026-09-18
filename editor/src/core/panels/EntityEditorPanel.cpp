@@ -214,7 +214,7 @@ namespace kailux
          widgets::vec3_control("pos", transform.position);
 
          widgets::property("Rotation");
-        if (widgets::vec3_control("rot", mRotationDegrees, 0.5f, 0.f, nullptr, "%.1f"))
+        if (widgets::vec3_control("rot", mRotationDegrees, 5.f, 0.f, nullptr, "%.1f"))
             transform.rotation = glm::quat(glm::radians(mRotationDegrees));
 
          widgets::property("Scale");
