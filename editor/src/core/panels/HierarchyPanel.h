@@ -53,8 +53,10 @@ namespace kailux
 
         static bool can_attach_physics(const entt::registry &registry, entt::entity entity);
 
-        void OnEntityDelete(Scene &scene, entt::entity entity);
-        bool OnEntityRename(entt::registry &registry, entt::entity entity);
+        void                       OnEntityDelete(Scene &scene, entt::entity entity);
+        std::optional<std::string> OnEntityRename(entt::registry &registry, entt::entity entity);
+
+        static void propagate_rename_to_children(entt::registry &registry, entt::entity entity, std::string_view oldName);
 
         void NotifyAndDestroyHierarchy(entt::registry& registry, entt::entity entity);
 
