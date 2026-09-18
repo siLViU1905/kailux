@@ -9,6 +9,7 @@
 #include <Jolt/Physics/Collision/Shape/MeshShape.h>
 #include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
 #include <Jolt/Physics/Collision/Shape/ScaledShape.h>
+#include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
 #include <execution>
 
 namespace kailux
@@ -87,36 +88,50 @@ namespace kailux
         return registry;
     }
 
-    BodyHandle PhysicsRegistry::CreateBody(const PhysicsBodyInfo &info)
+    PhysicsRegistry::BodyResult PhysicsRegistry::CreateBody(const PhysicsBodyInfo &info)
     {
         auto slot = AcquireSlot();
         if (slot == BodyHandle::kInvalidIndex)
-            return {};
+            return std::unexpected{"No more slots"};
 
         JPH::ShapeRefC shape;
         if (info.meshType == MeshType::Unknown)
-            return {};
+            return std::unexpected{"Unknown mesh type"};
         if (info.meshType != MeshType::Loaded)
-            shape = create_builtin_mesh_body(info.meshType, info.transform);
+        {
+            const auto result{create_builtin_mesh_body(info.meshType, info.transform)};
+            if (!result)
+                return std::unexpected{result.error()};
+            shape = *result;
+        }
         else
-            shape = create_loaded_mesh_body(info);
+        {
+            const auto result{create_loaded_mesh_body(info)};
+            if (!result)
+                return std::unexpected{result.error()};
+            shape = *result;
+        }
 
-        auto motionType = static_cast<JPH::EMotionType>(info.options.bodyType);
-        auto objectLayer = (info.options.bodyType == PhysicsBodyType::Static) ? layers::kNonMoving : layers::kMoving;
+        const auto motionType{static_cast<JPH::EMotionType>(info.options.bodyType)};
+        const auto objectLayer{
+            (info.options.bodyType == PhysicsBodyType::Static) ? layers::kNonMoving : layers::kMoving
+        };
 
-        const auto& transform = info.transform;
-        JPH::BodyCreationSettings settings(
+        const auto &transform{info.transform};
+        JPH::BodyCreationSettings settings{
             shape,
             {transform.position.x, transform.position.y, transform.position.z},
             {transform.rotation.x, transform.rotation.y, transform.rotation.z, transform.rotation.w},
             motionType,
             objectLayer
-            );
+        };
+
         if (info.options.bodyType == PhysicsBodyType::Static && info.options.canBecomeDynamic)
             settings.mAllowDynamicOrKinematic = true;
 
         mBodyIds[slot] = mPhysicsSystem->GetBodyInterface().CreateAndAddBody(settings, JPH::EActivation::Activate);
-        return {slot};
+
+        return BodyHandle{slot};
     }
 
     void PhysicsRegistry::DestroyBody(BodyHandle handle)
@@ -300,6 +315,24 @@ namespace kailux
         return threads;
     }
 
+    bool PhysicsRegistry::is_degenerate_triangle(const JPH::Float3 &a, const JPH::Float3 &b, const JPH::Float3 &c)
+    {
+        const JPH::Vec3 v0{a};
+        const JPH::Vec3 v1{b};
+        const JPH::Vec3 v2{c};
+
+        return (v1 - v0).Cross(v2 - v0).IsNearZero();
+    }
+
+    bool PhysicsRegistry::scale_is_usbale(const glm::vec3 &scale)
+    {
+        constexpr auto kEps{1e-6f};
+
+        return std::abs(scale.x) > kEps
+               && std::abs(scale.y) > kEps
+               && std::abs(scale.z) > kEps;
+    }
+
     void PhysicsRegistry::AllocResources()
     {
         mBodyIds.resize(kMaxBodies, JPH::BodyID(JPH::BodyID::cInvalidBodyID));
@@ -317,7 +350,7 @@ namespace kailux
         return slot;
     }
 
-    JPH::ShapeRefC PhysicsRegistry::create_builtin_mesh_body(MeshType type, const Transform &transform)
+    PhysicsRegistry::CreateResult PhysicsRegistry::create_builtin_mesh_body(MeshType type, const Transform &transform)
     {
         JPH::ShapeRefC shape;
         switch (type)
@@ -342,57 +375,173 @@ namespace kailux
         return shape;
     }
 
-    JPH::ShapeRefC PhysicsRegistry::create_loaded_mesh_body(const PhysicsBodyInfo &info)
+    PhysicsRegistry::CreateResult PhysicsRegistry::create_loaded_mesh_body(const PhysicsBodyInfo &info)
     {
-        auto submeshesCount = info.submeshes.size();
-        std::vector<ChildShapeResult> results(submeshesCount);
+        const auto submeshesCount{info.submeshes.size()};
 
         std::vector<size_t> indices(submeshesCount);
         std::iota(indices.begin(), indices.end(), size_t{});
 
+        std::vector<ChildShapeResult> results(submeshesCount);
+        std::vector<BuildResult> buildResults(submeshesCount);
+
         std::for_each(std::execution::par, indices.begin(), indices.end(),
-            [&info, &results](size_t idx)
+            [&info, &results, &buildResults](auto idx)
             {
-                build_submesh_shape(info, idx, results[idx]);
+                buildResults[idx] = build_submesh_shape(info, idx, results[idx]);
             });
 
-        JPH::StaticCompoundShapeSettings compoundSettings;
-        for (const auto&[shape, trans, rot] : results)
-            if (shape)
-                compoundSettings.AddShape(trans, rot, shape);
+        uint32_t failed{};
+        for (const auto &result : buildResults)
+            if (!result)
+            {
+                ++failed;
+                log::console.Warning("physics registry: {}", result.error());
+            }
 
-        return compoundSettings.Create().Get();
+        std::vector<const ChildShapeResult*> valid;
+        valid.reserve(results.size());
+        for (auto &result: results)
+            if (result.shape != nullptr)
+                valid.emplace_back(&result);
+
+        if (failed > 0)
+            log::console.Warning("physics registry: {}/{} submeshes skipped",failed, submeshesCount);
+
+        if (valid.empty())
+        {
+            constexpr std::string_view kErrorMsg{"physics registry: no valid submesh shape, body not created"};
+            log::console.Error(kErrorMsg);
+            return std::unexpected{kErrorMsg.data()};
+        }
+
+        if (valid.size() == 1uz)
+        {
+            const auto &shape{*valid.front()};
+
+            if (shape.trans.IsNearZero() && shape.rot.IsClose(JPH::Quat::sIdentity()))
+                return shape.shape;
+
+            const JPH::RotatedTranslatedShapeSettings settings{shape.trans, shape.rot, shape.shape};
+            settings.SetEmbedded();
+
+            const auto result{settings.Create()};
+            if (result.HasError())
+            {
+                const auto errorMsg{std::format("physics registry: RotatedTranslatedShape Jolt error: {}", result.GetError().c_str())};
+                log::console.Error("{}", errorMsg);
+                return std::unexpected{errorMsg};
+            }
+            return result.Get();
+        }
+
+        JPH::StaticCompoundShapeSettings compoundSettings;
+        compoundSettings.SetEmbedded();
+        for (const auto *result: valid)
+            compoundSettings.AddShape(result->trans, result->rot, result->shape);
+
+        const auto result{compoundSettings.Create()};
+        if (result.HasError())
+        {
+            const auto errorMsg{std::format("physics registry: StaticCompoundShape Jolt error: {}", result.GetError().c_str())};
+            log::console.Error("{}", errorMsg);
+            return std::unexpected{errorMsg};
+        }
+        return result.Get();
     }
 
-    void PhysicsRegistry::build_submesh_shape(const PhysicsBodyInfo &info, size_t idx, ChildShapeResult &out)
+    PhysicsRegistry::BuildResult PhysicsRegistry::build_submesh_shape(const PhysicsBodyInfo &info, size_t idx, ChildShapeResult &out)
     {
+        out = {};
+
         const auto& submesh = info.submeshes[idx];
 
+        const auto submeshFormatString{std::format("submesh {}: ", idx)};
+
+        if (submesh.vertices.empty())
+            return std::unexpected{submeshFormatString + "Shape has no vertices"};
+        if (submesh.indices.size() < 3)
+            return std::unexpected{submeshFormatString + "Shape has less than 3 indices"};
+
+
         glm::vec3 lScale, lTrans, lSkew; glm::quat lRot; glm::vec4 lPersp;
-        glm::decompose(submesh.localTransform, lScale, lRot, lTrans, lSkew, lPersp);
+        if (!glm::decompose(submesh.localTransform, lScale, lRot, lTrans, lSkew, lPersp))
+            return std::unexpected{submeshFormatString + "Transform could not be decomposed"};
+
+        if (!scale_is_usbale(lScale))
+            return std::unexpected{
+                submeshFormatString + std::format("Scale (x: {:.3f}, y:{:.3f}, z: {:.3f}) is not usable",
+                                                  lScale.x,
+                                                  lScale.y,
+                                                  lScale.z)
+            };
+
+        const bool useTriangleMesh{
+            info.options.bodyType == PhysicsBodyType::Static
+            && !info.options.canBecomeDynamic
+        };
 
         JPH::ShapeRefC childShape;
-        if (info.options.bodyType == PhysicsBodyType::Static && !info.options.canBecomeDynamic)
+        if (useTriangleMesh)
         {
             JPH::VertexList joltVertices;
             joltVertices.reserve(submesh.vertices.size());
             for (const auto& vertex : submesh.vertices)
                 joltVertices.emplace_back(
-                    vertex.position.x * lScale.x,
-                    vertex.position.y * lScale.y,
-                    vertex.position.z * lScale.z
+                    vertex.position.x,
+                    vertex.position.y,
+                    vertex.position.z
                 );
+
+            const auto vertexCount{static_cast<uint32_t>(joltVertices.size())};
+            const auto triangleCount{submesh.indices.size() / 3uz};
 
             JPH::IndexedTriangleList joltTriangles;
-            joltTriangles.reserve(submesh.indices.size() / 3);
-            for (size_t i = 0; i < submesh.indices.size(); i += 3)
-                joltTriangles.emplace_back(
-                    submesh.indices[i],
-                    submesh.indices[i + 1],
-                    submesh.indices[i + 2]
-                );
+            joltTriangles.reserve(triangleCount);
 
-            childShape = JPH::MeshShapeSettings(joltVertices, joltTriangles).Create().Get();
+            uint32_t skippedDegenerate{};
+            uint32_t skippedOutOfRange{};
+
+            for (size_t t{}; t < triangleCount; ++t)
+            {
+                const auto i0{submesh.indices[t * 3 + 0]};
+                const auto i1{submesh.indices[t * 3 + 1]};
+                const auto i2{submesh.indices[t * 3 + 2]};
+
+                if (i0 >= vertexCount || i1 >= vertexCount || i2 >= vertexCount)
+                {
+                    ++skippedOutOfRange;
+                    continue;
+                }
+
+                if (i0 == i1 || i1 == i2 || i0 == i2)
+                {
+                    ++skippedDegenerate;
+                    continue;
+                }
+
+                if (is_degenerate_triangle(joltVertices[i0], joltVertices[i1], joltVertices[i2]))
+                {
+                    ++skippedDegenerate;
+                    continue;
+                }
+
+                joltTriangles.emplace_back(i0, i1, i2);
+            }
+
+            if (joltTriangles.empty())
+                return std::unexpected{
+                    submeshFormatString + std::format("submesh {}: 0 valid triangles ({} degenerate, {} out of range)",
+                                                      idx, skippedDegenerate, skippedOutOfRange)
+                };
+
+            const JPH::MeshShapeSettings settings{std::move(joltVertices), std::move(joltTriangles)};
+            settings.SetEmbedded();
+
+            const auto result{settings.Create()};
+            if (result.HasError())
+                return std::unexpected{submeshFormatString + std::format("MeshShape Jolt error: {}", result.GetError().c_str())};
+            childShape = result.Get();
         }
         else
         {
@@ -400,16 +549,38 @@ namespace kailux
             hullVertices.reserve(submesh.vertices.size());
             for (const auto& vertex : submesh.vertices)
                 hullVertices.emplace_back(
-                    vertex.position.x * lScale.x,
-                    vertex.position.y * lScale.y,
-                    vertex.position.z * lScale.z
+                    vertex.position.x,
+                    vertex.position.y,
+                    vertex.position.z
                 );
 
-            childShape = JPH::ConvexHullShapeSettings(hullVertices).Create().Get();
+            if (hullVertices.size() < 3)
+                return std::unexpected{submeshFormatString + "hull has 0 vertices"};
+
+            const JPH::ConvexHullShapeSettings settings{hullVertices};
+            settings.SetEmbedded();
+
+            const auto result{settings.Create()};
+            if (result.HasError())
+                return std::unexpected{submeshFormatString + std::format("ConvexHull Jolt error: {}", result.GetError().c_str())};
+            childShape = result.Get();
+        }
+
+        if (lScale != glm::vec3{1.f})
+        {
+            const JPH::ScaledShapeSettings settings{childShape, {lScale.x, lScale.y, lScale.z}};
+            settings.SetEmbedded();
+
+            const auto result{settings.Create()};
+            if (result.HasError())
+                return std::unexpected{submeshFormatString + std::format("ScaledShape Jolt error: {}", result.GetError().c_str())};
+            childShape = result.Get();
         }
 
         out.shape = childShape;
         out.trans = {lTrans.x, lTrans.y, lTrans.z};
         out.rot   = {lRot.x, lRot.y, lRot.z, lRot.w};
+
+        return {};
     }
 }
