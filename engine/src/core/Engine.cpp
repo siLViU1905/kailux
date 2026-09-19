@@ -231,6 +231,48 @@ namespace kailux
         return mAssetPipeline.GetPendingQueue();
     }
 
+    void Engine::HandleMeshDragDrop(const std::filesystem::path &path, std::reference_wrapper<ThreadDispatcher> threadDispatcher)
+    {
+        std::optional<std::string> pathStr;
+        if (std::filesystem::is_directory(path))
+            pathStr = get_supported_mesh_type(path);
+        else if (is_mesh_type_supported(path))
+            pathStr = path.string();
+
+        if (!pathStr)
+        {
+            mOnWarningLog(std::format("No supported mesh found in '{}'", path.string()));
+            return;
+        }
+
+        if (mAssetPipeline.IsCached(*pathStr))
+            mAssetPipeline.GetPendingQueue().Emplace(
+                entt::null,
+                std::move(*pathStr),
+                MeshLoader::LoadData{},
+                "",
+                Transform{},
+                MeshMaterialData{},
+                MeshType::Loaded
+            );
+        else
+            threadDispatcher.get().Enqueue([this, p = *pathStr]()
+            {
+                if (auto data = MeshLoader::load(p))
+                    mAssetPipeline.GetPendingQueue().Emplace(
+                        entt::null,
+                        std::move(p),
+                        std::move(*data),
+                        "",
+                        Transform{},
+                        MeshMaterialData{},
+                        MeshType::Loaded
+                    );
+                else
+                    mOnWarningLog(data.error());
+            });
+    }
+
     void Engine::UnregisterMesh(MeshHandle handle, std::string_view path)
     {
         if (auto cache = mAssetPipeline.Uncache(path))
@@ -729,7 +771,16 @@ namespace kailux
         mCurrentFrame = (mCurrentFrame + 1) % details::kFramesInFlight;
     }
 
-    bool Engine::is_mesh_type_supported(std::string_view path)
+    std::optional<std::filesystem::path> Engine::get_supported_mesh_type(const std::filesystem::path &directory)
+    {
+        for (const auto& entry : std::filesystem::recursive_directory_iterator{directory})
+            if (entry.is_regular_file() && is_mesh_type_supported(entry.path()))
+                return entry.path();
+
+        return std::nullopt;
+    }
+
+    bool Engine::is_mesh_type_supported(const std::filesystem::path &path)
     {
         using namespace std::string_view_literals;
         static constexpr std::array supported =
@@ -739,28 +790,35 @@ namespace kailux
             "obj"sv
         };
 
-        auto extension = path.substr(path.find_last_of('.') + 1);
-
-        return std::ranges::contains(supported, extension);
+        return std::ranges::contains(supported, get_extension(path));
     }
 
-    bool Engine::is_image_type_supported(std::string_view path)
+    bool Engine::is_image_type_supported(const std::filesystem::path &path)
     {
         using namespace std::string_view_literals;
         static constexpr std::array supported =
         {
             "jpeg"sv,
+            "jpg"sv,
             "png"sv
         };
 
-        auto extension = path.substr(path.find_last_of('.') + 1);
-
-        return std::ranges::contains(supported, extension);
+        return std::ranges::contains(supported, get_extension(path));
     }
 
-    bool Engine::IsMeshCached(std::string_view path) const
+    std::string Engine::get_extension(const std::filesystem::path &path)
     {
-        return mAssetPipeline.IsCached(path);
+        auto extension{path.extension().string()};
+        if (!extension.empty())
+            extension.erase(0, 1);
+
+        std::ranges::transform(extension, extension.begin(),
+                               [](unsigned char c)
+                               {
+                                   return static_cast<char>(std::tolower(c));
+                               });
+
+        return extension;
     }
 
     const Scene & Engine::GetScene() const
@@ -820,7 +878,7 @@ namespace kailux
             pending.material  = request.material;
             pending.physics   = request.physics;
 
-            if (!IsMeshCached(pending.path))
+            if (!mAssetPipeline.IsCached(pending.path))
                 if (auto data = MeshLoader::load(pending.path))
                     pending.data = std::move(*data);
 

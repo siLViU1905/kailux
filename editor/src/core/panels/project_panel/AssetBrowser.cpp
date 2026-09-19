@@ -71,14 +71,13 @@ namespace kailux
 
                 ImGui::PopStyleColor(3);
 
-                if (!isDirectory)
-                    if (ImGui::BeginDragDropSource(s_DragDropSourceFlags))
-                    {
-                        std::string itemPath = entry.string();
-                        ImGui::SetDragDropPayload(s_DragDropPayloadType.data(), itemPath.c_str(), itemPath.size() + 1);
-                        ImGui::Text("%s", name.c_str());
-                        ImGui::EndDragDropSource();
-                    }
+                if (ImGui::BeginDragDropSource(s_DragDropSourceFlags))
+                {
+                    std::string itemPath = entry.string();
+                    ImGui::SetDragDropPayload(s_DragDropPayloadType.data(), itemPath.c_str(), itemPath.size() + 1);
+                    ImGui::Text("%s", name.c_str());
+                    ImGui::EndDragDropSource();
+                }
 
                 if (mIsRenaming && mItemToRenamePath == entry)
                 {

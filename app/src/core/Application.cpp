@@ -56,34 +56,7 @@ namespace kailux
         });
         hierarchyPanel.SetOnDragDrop([this](std::string_view path)
         {
-            if (Engine::is_mesh_type_supported(path))
-            {
-                std::string pathStr = path.data();
-                if (mEngine.IsMeshCached(pathStr))
-                    mEngine.GetPendingMeshDataQueue().Emplace(
-                        entt::null,
-                        std::move(pathStr),
-                        MeshLoader::LoadData{},
-                        "",
-                        Transform{},
-                        MeshMaterialData{},
-                        MeshType::Loaded
-                    );
-                else
-                    mThreadDispatcher->Enqueue([this, p = pathStr]()
-                    {
-                        if (auto data = MeshLoader::load(p))
-                            mEngine.GetPendingMeshDataQueue().Emplace(
-                                entt::null,
-                                std::move(p),
-                                std::move(*data),
-                                "",
-                                Transform{},
-                                MeshMaterialData{},
-                                MeshType::Loaded
-                            );
-                    });
-            }
+            mEngine.HandleMeshDragDrop(path, *mThreadDispatcher);
         });
         hierarchyPanel.SetOnNewMesh([this](auto type)
         {

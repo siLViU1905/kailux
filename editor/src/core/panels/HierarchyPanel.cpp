@@ -311,7 +311,6 @@ namespace kailux
 
         const bool selected = mSelectedEntity == entity;
 
-        // Nu mai lasam TreeNode sa-si deseneze singur highlight-ul; desenam noi o "pastila".
         ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth |
                                    ImGuiTreeNodeFlags_FramePadding;
         if (!hierarchy || hierarchy->children.empty())

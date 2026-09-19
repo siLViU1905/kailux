@@ -56,6 +56,8 @@ namespace kailux
 
         Queue<AssetPipeline::PendingMeshData> &GetPendingMeshDataQueue();
 
+        void HandleMeshDragDrop(const std::filesystem::path& path, std::reference_wrapper<ThreadDispatcher> threadDispatcher);
+
         void UnregisterMesh(MeshHandle handle, std::string_view path);
         void UnregisterMaterial(MaterialHandle handle);
 
@@ -68,10 +70,12 @@ namespace kailux
         void Update(float deltaTime);
         void Render(const Window &window);
 
-        static bool is_mesh_type_supported(std::string_view path);
-        static bool is_image_type_supported(std::string_view path);
+        static std::optional<std::filesystem::path> get_supported_mesh_type(const std::filesystem::path &directory);
 
-        bool IsMeshCached(std::string_view path) const;
+        static bool is_mesh_type_supported(const std::filesystem::path &path);
+        static bool is_image_type_supported(const std::filesystem::path &path);
+
+        static std::string get_extension(const std::filesystem::path &path);
 
         static constexpr std::string_view kSceneFileExtension = "klx";
         const Scene& GetScene() const;
