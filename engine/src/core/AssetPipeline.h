@@ -24,6 +24,21 @@ namespace kailux
             std::optional<PhysicsRecord> physics{std::nullopt};
         };
 
+        struct CachedSubmesh
+        {
+            MeshHandle     meshHandle;
+            MaterialHandle materialHandle;
+            glm::vec4      boundingSphere{};
+            glm::mat4      localTransform{1.f};
+            std::string    name;
+        };
+
+        struct CachedModel
+        {
+            std::vector<CachedSubmesh> submeshes;
+            uint32_t                   refCount{};
+        };
+
         AssetPipeline(Context &context,
                       MeshRegistry &meshRegistry,
                       TextureRegistry &textureRegistry,
@@ -37,14 +52,7 @@ namespace kailux
 
         bool IsCached(std::string_view path) const;
 
-        struct MeshCache
-        {
-            MeshHandle     meshHandle;
-            MaterialHandle materialHandle;
-            uint32_t       count{1};
-        };
-
-        std::optional<MeshCache> Uncache(std::string_view path);
+        std::optional<CachedModel> Uncache(std::string_view path);
 
         using OnLog = std::move_only_function<void(std::string_view)>;
         void SetOnInfoLog(OnLog &&callback);
@@ -59,13 +67,16 @@ namespace kailux
         void ProcessLoadedMesh(const PendingMeshData &data);
 
         entt::entity CreateParentMeshEntity(const PendingMeshData &data);
+        entt::entity CreateSubmeshEntity(
+            entt::entity parentEntity,
+            const CachedSubmesh &submesh,
+            const MeshMaterialData &material
+        );
 
         std::vector<MaterialHandle> LoadAndRegisterMaterials(
             std::span<const TextureRegistry::MaterialData> materials);
 
         MaterialHandle UploadMaterialDataToRegistry(const TextureRegistry::MaterialData &data);
-
-        void CacheMesh(std::string_view path, MeshHandle meshHandle, MaterialHandle materialHandle);
 
         static DescriptorSetUpdateInfo make_texture_write(TextureHandle handle, const Texture& texture);
 
@@ -77,7 +88,8 @@ namespace kailux
         std::span<FrameData>                    mFrames;
 
         Queue<PendingMeshData>                     mPendingMeshData;
-        std::unordered_map<std::string, MeshCache> mMeshCache;
+
+        std::unordered_map<std::string, CachedModel> mMeshCache;
 
         OnLog mOnInfoLog;
         OnLog mOnWarningLog;

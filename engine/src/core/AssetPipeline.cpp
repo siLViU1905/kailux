@@ -46,20 +46,41 @@ namespace kailux
         mOnAttachPhysics = std::move(callback);
     }
 
-    bool AssetPipeline::IsCached(std::string_view path) const
+    entt::entity AssetPipeline::CreateSubmeshEntity(
+        entt::entity parentEntity,
+        const CachedSubmesh &submesh,
+        const MeshMaterialData &material
+    )
     {
-        return mMeshCache.contains(std::string(path));
+        Scene &scene = mScene;
+
+        const auto &rootName{scene.GetEntityRegistry().get<TagComponent>(parentEntity).name};
+        const auto submeshName{std::format("{}_{}", rootName, submesh.name)};
+
+        const auto childEntity{
+            scene.CreateMeshEntity(
+                submeshName,
+                {submesh.meshHandle, submesh.boundingSphere},
+                submesh.materialHandle,
+                {},
+                material,
+                parentEntity
+            )
+        };
+
+        if (!childEntity)
+        {
+            mOnWarningLog(childEntity.error());
+            return entt::null;
+        }
+
+        scene.SetLocalTransform(*childEntity, Transform::from_matrix(submesh.localTransform));
+        return *childEntity;
     }
 
-    void AssetPipeline::CacheMesh(std::string_view path, MeshHandle meshHandle, MaterialHandle materialHandle)
+    bool AssetPipeline::IsCached(std::string_view path) const
     {
-        auto strPath = std::string(path);
-        if (IsCached(path))
-        {
-            ++mMeshCache[strPath].count;
-            return;
-        }
-        mMeshCache[strPath] = {meshHandle, materialHandle};
+        return mMeshCache.contains(std::string{path});
     }
 
     DescriptorSetUpdateInfo AssetPipeline::make_texture_write(TextureHandle handle, const Texture &texture)
@@ -76,20 +97,18 @@ namespace kailux
         };
     }
 
-    std::optional<AssetPipeline::MeshCache> AssetPipeline::Uncache(std::string_view path)
+    std::optional<AssetPipeline::CachedModel> AssetPipeline::Uncache(std::string_view path)
     {
-        auto it = mMeshCache.find(std::string(path));
+        const auto it{mMeshCache.find(std::string{path})};
         if (it == mMeshCache.end())
             return std::nullopt;
-        auto &count = it->second.count;
-        if (count > 1)
-        {
-            --count;
+
+        if (--it->second.refCount > 0u)
             return std::nullopt;
-        }
-        std::optional cache = it->second;
+
+        auto model{std::move(it->second)};
         mMeshCache.erase(it);
-        return cache;
+        return model;
     }
 
     void AssetPipeline::Poll()
@@ -186,7 +205,7 @@ namespace kailux
 
             if (data.target != entt::null)
             {
-                entity   = data.target;
+                entity = data.target;
                 meshName = scene.GetEntityRegistry().get<TagComponent>(entity).name;
 
                 if (!scene.AttachMesh(entity, component, materialHandle, data.material))
@@ -195,11 +214,11 @@ namespace kailux
                     return;
                 }
                 scene.AttachMeshSource(entity, source);
-            }
-            else
+            } else
             {
                 meshName = data.name.empty() ? scene.GetMeshEntityName() : data.name;
-                const auto created = scene.CreateMeshEntity(meshName, component, materialHandle, data.transform, data.material);
+                const auto created = scene.CreateMeshEntity(meshName, component, materialHandle, data.transform,
+                                                            data.material);
                 if (!created)
                 {
                     mOnWarningLog(created.error());
@@ -230,111 +249,122 @@ namespace kailux
                 break;
         }
         mOnInfoLog(std::format("Loaded '{}' successfully in {:.3f}ms.",
-                                meshName, Clock::get_elapsed<float, TimeType::Milliseconds>(now)));
+                               meshName, Clock::get_elapsed<float, TimeType::Milliseconds>(now)));
     }
 
     void AssetPipeline::ProcessLoadedMesh(const PendingMeshData &data)
     {
-        Scene& scene = mScene;
-        auto remainingMeshes = details::kMaxMeshes - static_cast<uint32_t>(scene.GetEntityRegistry().view<MeshComponent>().size());
-        if (data.data.submeshes.size() > remainingMeshes)
+        Scene &scene = mScene;
+
+        const auto parentEntity{CreateParentMeshEntity(data)};
+        const auto now{Clock::now()};
+
+        if (const auto it{mMeshCache.find(data.path)}; it != mMeshCache.end())
+        {
+            auto &model{it->second};
+            ++model.refCount;
+
+            for (const auto &submesh: model.submeshes)
+                CreateSubmeshEntity(parentEntity, submesh, data.material);
+
+            mOnInfoLog(std::format("Reused '{}' from cache: {} submeshes, refCount {} ({:.3f}ms)",
+                                   data.path, model.submeshes.size(), model.refCount,
+                                   Clock::get_elapsed<float, TimeType::Milliseconds>(now)));
+            return;
+        }
+
+        const auto &loadData{data.data};
+
+        if (loadData.submeshes.empty())
+        {
+            mOnWarningLog(std::format("'{}' is not cached and has no submesh data", data.path));
+            return;
+        }
+
+        const auto remainingMeshes{
+            details::kMaxMeshes
+            - static_cast<uint32_t>(scene.GetEntityRegistry().view<MeshComponent>().size())
+        };
+        if (loadData.submeshes.size() > remainingMeshes)
         {
             mOnWarningLog("The maximum number of meshes will be reached, mesh not loaded");
             return;
         }
-        auto now = Clock::now();
-        const auto &loadData = data.data;
 
-        auto parentEntity = CreateParentMeshEntity(data);
+        const auto materialHandles{LoadAndRegisterMaterials(loadData.materials)};
 
-        auto firstSubmeshKey = std::format("{}_sub0", data.path);
-        bool modelIsCached = IsCached(firstSubmeshKey);
+        auto &model{mMeshCache[data.path]};
+        model.refCount = 1u;
+        model.submeshes.reserve(loadData.submeshes.size());
 
-        std::vector<MaterialHandle> loadedMaterialHandles;
-        if (!modelIsCached)
-            loadedMaterialHandles = LoadAndRegisterMaterials(loadData.materials);
+        auto pendingEntities{create_shared<std::vector<entt::entity> >()};
 
-        auto pendingEntities = create_shared<std::vector<entt::entity> >();
         mTransferManager.get().EnqueueBuffer(
             mContext,
-            [&]
-    (auto cmd) -> TransferManager::RecordResult
+            [&](auto cmd) -> TransferManager::RecordResult
             {
                 auto &meshRegistry = mMeshRegistry.get();
-                auto &textureRegistry = mTextureRegistry.get();
-
                 TransferManager::RecordResult result;
-                uint32_t submeshIndex = 0;
-                for (const auto &submesh: loadData.submeshes)
+
+                for (uint32_t submeshIndex{}; submeshIndex < loadData.submeshes.size(); ++submeshIndex)
                 {
-                    auto cacheKey = std::format("{}_sub{}", data.path, submeshIndex);
+                    const auto &submesh{loadData.submeshes[submeshIndex]};
 
-                    MeshHandle meshHandle;
-                    MaterialHandle materialHandle;
-
-                    if (IsCached(cacheKey))
+                    if (submesh.materialIndex >= materialHandles.size())
                     {
-                        auto cache = mMeshCache.at(cacheKey);
-                        materialHandle = cache.materialHandle;
-                        meshHandle = cache.meshHandle;
-                    } else
-                    {
-                        meshHandle = meshRegistry.Upload(mContext, cmd, submesh.meshData, result.staging);
-                        materialHandle = loadedMaterialHandles[submesh.materialIndex];
-
-                        auto regions = meshRegistry.GetRegions(meshHandle);
-                        result.resources.emplace_back(
-                            regions.vertexBuffer, regions.vertexOffset, regions.vertexSize,
-                            vk::PipelineStageFlagBits2::eVertexInput,
-                            vk::AccessFlagBits2::eVertexAttributeRead
-                        );
-                        result.resources.emplace_back(
-                            regions.indexBuffer, regions.indexOffset, regions.indexSize,
-                            vk::PipelineStageFlagBits2::eVertexInput,
-                            vk::AccessFlagBits2::eIndexRead
-                        );
+                        mOnWarningLog(std::format("submesh {}: material index {} out of range ({})",
+                                                  submeshIndex, submesh.materialIndex,
+                                                  materialHandles.size()));
+                        continue;
                     }
-                    if (data.physics)
-                        mOnAttachPhysics(parentEntity, *data.physics);
 
-                    CacheMesh(cacheKey, meshHandle, materialHandle);
+                    const auto meshHandle{
+                        meshRegistry.Upload(mContext, cmd, submesh.meshData, result.staging)
+                    };
+                    const auto regions{meshRegistry.GetRegions(meshHandle)};
 
-                    const auto &rootName = mScene.get().GetEntityRegistry().get<TagComponent>(parentEntity).name;
-                    auto submeshName = std::format("{}_{}", rootName,
-                                                   submesh.name.empty() ? std::to_string(submeshIndex) : submesh.name);
+                    result.resources.emplace_back(
+                        regions.vertexBuffer, regions.vertexOffset, regions.vertexSize,
+                        vk::PipelineStageFlagBits2::eVertexInput,
+                        vk::AccessFlagBits2::eVertexAttributeRead
+                    );
+                    result.resources.emplace_back(
+                        regions.indexBuffer, regions.indexOffset, regions.indexSize,
+                        vk::PipelineStageFlagBits2::eVertexInput,
+                        vk::AccessFlagBits2::eIndexRead
+                    );
 
-                    if (auto childEntity = scene.CreateMeshEntity(
-                        submeshName,
-                        {
-                            meshHandle,
-                            submesh.boundingSphere
-                        },
-                        materialHandle,
-                        {},
-                        data.material,
-                        parentEntity
-                    ))
+                    const CachedSubmesh entry{
+                        meshHandle,
+                        materialHandles[submesh.materialIndex],
+                        submesh.boundingSphere,
+                        submesh.localTransform,
+                        submesh.name.empty() ? std::to_string(submeshIndex) : submesh.name
+                    };
+
+                    if (const auto child{CreateSubmeshEntity(parentEntity, entry, data.material)};
+                        child != entt::null)
                     {
-                        scene.SetLocalTransform(*childEntity, Transform::from_matrix(submesh.localTransform));
-
-                        scene.GetEntityRegistry().emplace<PendingUploadComponent>(*childEntity);
-                        pendingEntities->push_back(*childEntity);
-
-                        ++submeshIndex;
+                        scene.GetEntityRegistry().emplace<PendingUploadComponent>(child);
+                        pendingEntities->push_back(child);
                     }
-                    else
-                        mOnWarningLog(childEntity.error());
+
+                    model.submeshes.push_back(entry);
                 }
+
                 return result;
             },
             [this, pendingEntities]()
             {
                 auto &registry = mScene.get().GetEntityRegistry();
-                for (auto entity: *pendingEntities)
+                for (const auto entity: *pendingEntities)
                     if (registry.valid(entity))
                         registry.remove<PendingUploadComponent>(entity);
             }
         );
+
+        if (data.physics)
+            mOnAttachPhysics(parentEntity, *data.physics);
 
         auto &entityReg = scene.GetEntityRegistry();
         auto &physicsCache = entityReg.emplace<CachedPhysicsData>(parentEntity);
@@ -342,17 +372,13 @@ namespace kailux
         physicsCache.submeshes.reserve(loadData.submeshes.size());
         for (const auto &submesh: loadData.submeshes)
             physicsCache.submeshes.emplace_back(
-                std::move(submesh.meshData.vertices),
-                std::move(submesh.meshData.indices),
+                submesh.meshData.vertices,
+                submesh.meshData.indices,
                 submesh.localTransform
             );
 
-        const auto &name = entityReg.get<TagComponent>(parentEntity).name;
-        mOnInfoLog(std::format("Loaded '{}' successfully with {} submeshes and {} unique materials in {}ms.",
-                                name,
-                                loadData.submeshes.size(),
-                                loadData.materials.size(),
-                                Clock::get_elapsed<float, TimeType::Milliseconds>(now)
-        ));
+        mOnInfoLog(std::format("Loaded '{}' with {} submeshes and {} materials in {:.3f}ms",
+                               data.path, model.submeshes.size(), loadData.materials.size(),
+                               Clock::get_elapsed<float, TimeType::Milliseconds>(now)));
     }
 }

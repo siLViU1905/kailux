@@ -50,9 +50,9 @@ namespace kailux
     void Application::SetCallbacks()
     {
         auto &hierarchyPanel = mEditor.GetLayer<EditorLayer>().GetPanel<HierarchyPanel>();
-        hierarchyPanel.SetOnMeshDeleted([this](const auto& meshComponent, auto cacheKey)
+        hierarchyPanel.SetOnMeshDeleted([this](auto entity)
         {
-            mEngine.UnregisterMesh(meshComponent.handle, cacheKey);
+            mEngine.UnregisterMesh(entity);
         });
         hierarchyPanel.SetOnDragDrop([this](std::string_view path)
         {

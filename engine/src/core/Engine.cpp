@@ -273,13 +273,30 @@ namespace kailux
             });
     }
 
-    void Engine::UnregisterMesh(MeshHandle handle, std::string_view path)
+    void Engine::UnregisterMesh(entt::entity entity)
     {
-        if (auto cache = mAssetPipeline.Uncache(path))
-        {
-            mMeshRegistry.Destroy(cache->meshHandle);
+        auto &registry{mScene.GetEntityRegistry()};
 
-            auto materialHandle = cache->materialHandle;
+        auto root{entity};
+        while (const auto *hierarchy{registry.try_get<HierarchyComponent>(root)})
+        {
+            if (hierarchy->parent == entt::null)
+                break;
+            root = hierarchy->parent;
+        }
+
+        const auto *source{registry.try_get<MeshSourceComponent>(root)};
+        if (!source)
+            return;
+
+        const auto model{mAssetPipeline.Uncache(source->path)};
+        if (!model)
+            return;
+
+        for (const auto &submesh : model->submeshes)
+        {
+            mMeshRegistry.Destroy(submesh.meshHandle);
+            const auto materialHandle{submesh.materialHandle};
             mDeferredResourceEraser.Enqueue([this, materialHandle]()
             {
                 mTextureRegistry.ReleaseMaterial(materialHandle);

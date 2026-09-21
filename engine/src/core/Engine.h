@@ -58,7 +58,7 @@ namespace kailux
 
         void HandleMeshDragDrop(const std::filesystem::path& path, std::reference_wrapper<ThreadDispatcher> threadDispatcher);
 
-        void UnregisterMesh(MeshHandle handle, std::string_view path);
+        void UnregisterMesh(entt::entity entityh);
         void UnregisterMaterial(MaterialHandle handle);
 
         ImTextureID GetAssetBrowserDirectoryTextureId() const;
