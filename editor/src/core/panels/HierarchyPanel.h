@@ -16,7 +16,7 @@ namespace kailux
         using OnEntitySelected = std::move_only_function<void(entt::entity, const Scene&)>;
         void  SetOnEntitySelected(OnEntitySelected&& callback);
 
-        using OnMeshDeleted = std::move_only_function<void(MeshComponent, std::string_view)>;
+        using OnMeshDeleted = std::move_only_function<void(entt::entity)>;
         void  SetOnMeshDeleted(OnMeshDeleted&& callback);
 
         using OnDragDrop = std::move_only_function<void(std::string_view)>;
@@ -58,7 +58,8 @@ namespace kailux
 
         static void propagate_rename_to_children(entt::registry &registry, entt::entity entity, std::string_view oldName);
 
-        void NotifyAndDestroyHierarchy(entt::registry& registry, entt::entity entity);
+        void        NotifyAndDestroyHierarchy(entt::registry& registry, entt::entity entity);
+        static void destroy_subtree(entt::registry& registry, entt::entity entity);
 
         void RenderEntityNode(Scene& scene, entt::entity entity);
         void RenderAddPhysicsPopup(const Scene &scene);

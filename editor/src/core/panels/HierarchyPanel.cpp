@@ -268,37 +268,22 @@ namespace kailux
 
     void HierarchyPanel::NotifyAndDestroyHierarchy(entt::registry &registry, entt::entity entity)
     {
-        const auto *hierarchy = registry.try_get<HierarchyComponent>(entity);
+        if (const auto *source{registry.try_get<MeshSourceComponent>(entity)};
+            source && source->type == MeshType::Loaded)
+            mOnEntityDeleted(entity);
 
-        if (const auto *meshComponent = registry.try_get<MeshComponent>(entity))
-        {
-            std::string_view path;
-            uint32_t submeshIndex{~0u};
+        destroy_subtree(registry, entity);
+    }
 
-            if (const auto *source = registry.try_get<MeshSourceComponent>(entity))
-                path = source->path;
-            else if (hierarchy && hierarchy->parent != entt::null)
-            {
-                if (const auto *parentSource = registry.try_get<MeshSourceComponent>(hierarchy->parent))
-                    path = parentSource->path;
+    void HierarchyPanel::destroy_subtree(entt::registry &registry, entt::entity entity)
+    {
+        std::vector<entt::entity> children;
+        if (const auto *hierarchy{registry.try_get<HierarchyComponent>(entity)})
+            children = hierarchy->children;
 
-                if (auto *parentHierarchy = registry.try_get<HierarchyComponent>(hierarchy->parent))
-                {
-                    const auto it = std::ranges::find(parentHierarchy->children, entity);
-                    if (it != parentHierarchy->children.end())
-                        submeshIndex = static_cast<uint32_t>(
-                            std::distance(parentHierarchy->children.begin(), it));
-                }
-            }
-
-            if (!path.empty() && submeshIndex != ~0u)
-                mOnEntityDeleted(*meshComponent, std::format("{}_sub{}", path, submeshIndex));
-        }
-
-        if (hierarchy)
-            for (auto child: hierarchy->children)
-                if (registry.valid(child))
-                    NotifyAndDestroyHierarchy(registry, child);
+        for (const auto child : children)
+            if (registry.valid(child))
+                destroy_subtree(registry, child);
 
         registry.destroy(entity);
     }
@@ -311,7 +296,6 @@ namespace kailux
 
         const bool selected = mSelectedEntity == entity;
 
-        // Nu mai lasam TreeNode sa-si deseneze singur highlight-ul; desenam noi o "pastila".
         ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth |
                                    ImGuiTreeNodeFlags_FramePadding;
         if (!hierarchy || hierarchy->children.empty())
