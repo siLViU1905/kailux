@@ -33,7 +33,7 @@ namespace kailux
         static constexpr bool differs(glm::ivec2 a, glm::ivec2 b)
         {
             const auto dw = static_cast<int>(b.x)  - static_cast<int>(a.x);
-            const auto dh = static_cast<int>(b.x) - static_cast<int>(a.x);
+            const auto dh = static_cast<int>(b.y) - static_cast<int>(a.y);
             return std::abs(dw) > static_cast<int>(PixelThreshold) ||
                    std::abs(dh) > static_cast<int>(PixelThreshold);
         }

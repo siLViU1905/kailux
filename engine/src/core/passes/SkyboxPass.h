@@ -27,6 +27,8 @@ namespace kailux
         const Texture&          GetPrefilteredEnvTexture() const;
         const Texture&          GetBrdfLutTexture() const;
 
+        void Bind(vk::CommandBuffer cmd, bool multisampled) const;
+
     private:
         static constexpr std::string_view kVertexShaderPath = "shaders/skybox_vertex_shader.glsl";
         static constexpr std::string_view kFragmentShaderPath = "shaders/skybox_fragment_shader.glsl";
@@ -85,16 +87,23 @@ namespace kailux
                 )
         };
 
-        static PipelineInfo make_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits samples);
+        static PipelineInfo make_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits samples, bool writeIds);
 
         void CreateTexture(const Context &context);
         void CreateIrradianceTexture(const Context& context);
         void CreatePrefilteredEnvTexture(const Context& context);
         void CreateBrdfLutTexture(const Context& context);
 
+        void CreateMultisampledPipeline(const Context &context, const Swapchain &swapchain,
+                                        std::string_view vertShaderPath, std::string_view fragShaderPath,
+                                        const PipelineInfo &info,
+                                        std::span<const PushConstantRangeInfo> pushConstantRanges);
+
         Texture          mTexture;
         Texture          mIrradianceMapTexture;
         Texture          mPrefilteredEnvTexture;
         Texture          mBRDFLutTexture;
+
+        GraphicsPipeline mMultisampledPipeline;
     };
 }

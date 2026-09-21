@@ -30,7 +30,7 @@ namespace kailux
             swapchain,
             kVertexShaderPath,
             kFragmentShaderPath,
-            make_pipeline_info(swapchain, context.GetMaxUsableSampleCount()),
+            make_pipeline_info(swapchain, vk::SampleCountFlagBits::e1),
             kPushConstantRanges
             );
         pass.CreateNoIdPipeline(

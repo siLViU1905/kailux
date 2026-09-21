@@ -24,6 +24,7 @@
 #include "utilities/Queue.h"
 #include "utilities/ThreadDispatcher.h"
 #include "DeferredResourceEraser.h"
+#include "RenderTarget.h"
 #include "ResizeDebouncer.h"
 #include "SimulationView.h"
 #include "components/gpu/CameraData.h"
@@ -47,6 +48,7 @@ namespace kailux
 
         CameraData GetCameraData() const;
 
+        void SetSceneViewExtent(glm::ivec2 extent);
         void SetSimulationViewExtent(glm::ivec2 extent);
         void SetSimulationViewActive(bool active);
         void SetControlledCamera(entt::entity camera, InputSource source);
@@ -99,6 +101,8 @@ namespace kailux
 
         DeviceInfo GetDeviceInfo() const;
 
+        void SetRenderScale(float scale);
+
     private:
         static constexpr std::string_view kDirectoryIconPath = "assets/icons/directory_icon.png";
         static constexpr std::string_view kFileIconPath = "assets/icons/file_icon.png";
@@ -121,8 +125,6 @@ namespace kailux
 
         void SeedDefaultTextures();
 
-        void CreateEditorTextureIds();
-
         void CreateComputePicker();
         void CreateComputeCuller();
 
@@ -131,9 +133,12 @@ namespace kailux
         void CreateDirectionalShadowMap();
         void CreatePointShadowMap();
 
+        void CreateSceneViews();
+        void AcquireViewTextureIds();
+
         void                                        Submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
         void                                        RecordMeshData(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex, bool writeIds) const;
-        void                                        RecordSkybox(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex) const;
+        void                                        RecordSkybox(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex, bool multisampled) const;
         void                                        RecordDirectionalShadows(const FrameData &frame, CommandRecorder &recorder, uint32_t viewIndex) const;
         void                                        RecordPointShadows(const FrameData& frame, CommandRecorder &recorder, uint32_t viewIndex) const;
         void                                        RecordGizmos(const FrameData &frame, const CommandRecorder &recorder) const;
@@ -144,8 +149,8 @@ namespace kailux
 
         CameraData BuildCameraData(entt::entity entity, glm::ivec2 extent) const;
 
-        void UpdateFrameBuffers(FrameData& frame, const CommandRecorder& recorder);
-        void UpdateCameraBuffer(FrameData& frame) const;
+        void UpdateFrameBuffers(FrameData& frame, const RenderTarget &sceneView, const CommandRecorder& recorder);
+        void UpdateCameraBuffer(FrameData& frame, const RenderTarget &sceneView) const;
         void UpdateMeshDataBuffer(FrameData& frame) const;
         void UpdateMaterialBuffer(FrameData& frame) const;
 
@@ -158,7 +163,13 @@ namespace kailux
 
         void ExecuteCulling(const FrameData& frame, const CommandRecorder& recorder, entt::entity camera, vk::Extent2D extent, CullingPreset preset);
 
+        void ResizeSceneView(glm::ivec2 extent);
         void ResizeSimulationView(glm::ivec2 extent);
+        void RetireViews();
+
+        static constexpr float kMinRenderScale{0.25f};
+
+        static glm::ivec2 apply_scale(glm::ivec2 extent, float scale);
 
         void TransitionForShadowPass(const FrameData& frame, const CommandRecorder& recorder) const;
         void TransitionShadowMapForSampling(const FrameData& frame, const CommandRecorder& recorder) const;
@@ -166,15 +177,14 @@ namespace kailux
         void TransitionForPointShadowPass(const FrameData& frame, const CommandRecorder& recorder) const;
         void TransitionPointShadowMapForSampling(const FrameData& frame, const CommandRecorder& recorder) const;
 
-        void TransitionForMainPass(const FrameData& frame, const CommandRecorder& recorder) const;
+        void TransitionForMainPass(const RenderTarget &sceneView, const CommandRecorder& recorder) const;
         void TransitionForSimulationPass(const CommandRecorder &recorder) const;
-        void TransitionForGizmoPass(const FrameData& frame, const CommandRecorder& recorder) const;
-        void TransitionForOutlinePass(const FrameData& frame, const CommandRecorder& recorder, uint32_t imageIndex) const;
-        void TransitionForPickerAndPostProcess(const FrameData& frame, const CommandRecorder& recorder) const;
+        void TransitionForGizmoPass(const RenderTarget &sceneView, const CommandRecorder& recorder) const;
+        void TransitionForOutlinePass(const RenderTarget &sceneView, const CommandRecorder& recorder, uint32_t imageIndex) const;
+        void TransitionForPickerAndPostProcess(const FrameData& frame, const RenderTarget &sceneView, const CommandRecorder& recorder) const;
         void TransitionForPresent(const CommandRecorder& recorder, uint32_t imageIndex) const;
 
         Context                                    mContext;
-        vk::SampleCountFlagBits                    mSampleCount;
         Swapchain                                  mSwapchain;
         ImGuiBackend                               mImGuiBackend;
 
@@ -192,19 +202,24 @@ namespace kailux
         std::array<FrameData, details::kFramesInFlight>    mFrames;
         uint32_t                                   mCurrentFrame;
 
-        std::array<ImTextureID, details::kFramesInFlight>  mSceneTextureIds{};
-        std::array<ImTextureID, details::kFramesInFlight>  mSimulationTextureIds{};
-
         Scene                                      mScene;
         entt::entity                               mControlledCamera{entt::null};
         InputSource                                mInputSource;
         bool                                       mMouseLookActive{};
         OnEditorRender                             mOnEditorRender;
 
-        SimulationView                             mSimulationView;
-        SimulationView                             mRetiredSimulationView;
-        ResizeDebouncer<>                          mSimulationResize;
-        bool                                       mSimulationViewActive{};
+        std::array<RenderTarget, details::kFramesInFlight> mSceneViews;
+        RenderTarget                                       mSimulationView;
+        std::vector<RenderTarget>                          mRetiredViews;
+        ResizeDebouncer<>                                  mSceneResize;
+        ResizeDebouncer<>                                  mSimulationResize;
+        bool                                               mSimulationViewActive{};
+
+        glm::ivec2 mSceneViewExtent{};
+        float      mRenderScale{1.f};
+
+        static constexpr auto   kSceneSamples{vk::SampleCountFlagBits::e1};
+        vk::SampleCountFlagBits mSimulationSamples{vk::SampleCountFlagBits::e1};
 
         ComputePassesPushConstants::MouseCords     mSceneViewportMousePos;
         GraphicsPassesPushConstants::Outline       mOutlineInfo;

@@ -38,11 +38,7 @@ namespace kailux
                                                        mPickerBuffer(std::move(other.mPickerBuffer)),
                                                        mCullerInputCommandsBuffer(
                                                            std::move(other.mCullerInputCommandsBuffer)),
-                                                       mCullerCountBuffer(std::move(other.mCullerCountBuffer)),
-                                                       mExtent(other.mExtent),
-                                                       mSceneTexture(std::move(other.mSceneTexture)),
-                                                       mOutIdTexture(std::move(other.mOutIdTexture)),
-                                                       mResolvedOutIdTexture(std::move(other.mResolvedOutIdTexture))
+                                                       mCullerCountBuffer(std::move(other.mCullerCountBuffer))
     {
     }
 
@@ -70,10 +66,6 @@ namespace kailux
             mPickerBuffer = std::move(other.mPickerBuffer);
             mCullerInputCommandsBuffer = std::move(other.mCullerInputCommandsBuffer);
             mCullerCountBuffer = std::move(other.mCullerCountBuffer);
-            mExtent = other.mExtent;
-            mSceneTexture = std::move(other.mSceneTexture);
-            mOutIdTexture = std::move(other.mOutIdTexture);
-            mResolvedOutIdTexture = std::move(other.mResolvedOutIdTexture);
         }
         return *this;
     }
@@ -81,6 +73,7 @@ namespace kailux
     FrameData FrameData::create(
         const Context &context,
         const Swapchain &swapchain,
+        const RenderTarget &sceneView,
         const MainPass &mainPass,
         const SkyboxPass &skybox,
         const GizmoPass & gizmoPass,
@@ -94,7 +87,6 @@ namespace kailux
     )
     {
         FrameData frame;
-        frame.mExtent = swapchain.GetExtent();
         frame.CreateCommandPool(context);
         frame.CreateImGuiCommandPool(context);
         frame.CreateCommandBuffer(context);
@@ -107,8 +99,6 @@ namespace kailux
         frame.CreateSceneBuffer(context);
         frame.CreatePickerBuffer(context);
         frame.CreateCullerBuffers(context);
-        frame.CreateSceneTexture(context, swapchain.GetFormat());
-        frame.CreateOutIdTexture(context);
         const auto descSetInfo{frame.MakeMeshDescriptorSetInfo(skybox, textureRegistry, directionalShadowMap, pointShadowMap)};
         frame.CreateMeshDescriptorSet(context, mainPass.GetDescriptorLayout(), mainPass.GetDescriptorPool(), descSetInfo);
         const auto skyboxDescInfo{frame.MakeSkyboxDescriptorSetInfo(skybox.GetTexture())};
@@ -116,10 +106,10 @@ namespace kailux
                                         skyboxDescInfo);
         const auto gizmoDescInfo{frame.MakeGizmoDescriptorSetInfo()};
         frame.CreateGizmoDescriptorSet(context, gizmoPass.GetDescriptorLayout(), gizmoPass.GetDescriptorPool(), gizmoDescInfo);
-        const auto pickerDescInfo{frame.MakePickerDescriptorSetInfo()};
+        const auto pickerDescInfo{frame.MakePickerDescriptorSetInfo(sceneView)};
         frame.CreatePickerDescriptorSet(context, picker.GetDescriptorLayout(), picker.GetDescriptorPool(),
                                         pickerDescInfo);
-        const auto outlineDescInfo{frame.MakeOutlineDescriptorSetInfo()};
+        const auto outlineDescInfo{frame.MakeOutlineDescriptorSetInfo(sceneView)};
         frame.CreateOutlineDescriptorSet(context, outlinePass.GetDescriptorLayout(), outlinePass.GetDescriptorPool(),
                                          outlineDescInfo);
         const auto cullerDescInfo{frame.MakeCullerDescriptorSetInfo()};
@@ -143,19 +133,19 @@ namespace kailux
         mCommandPool.reset();
     }
 
-    void FrameData::RecreateTextures(const Context &context, const Swapchain &swapchain)
+    void FrameData::RebindSceneViewTextures(const Context &context, const RenderTarget &target)
     {
-        mExtent = swapchain.GetExtent();
+        if (!target.HasIdTexture())
+            return;
 
-        CreateSceneTexture(context, swapchain.GetFormat());
+        const auto &idTexture{target.GetReadableIdTexture()};
 
-        CreateOutIdTexture(context);
-        std::array pickerInfo{
+        const std::array<DescriptorSetUpdateInfo, 1> pickerInfo{
             DescriptorSetUpdateInfo(kPickerResolvedViewDescriptorSetBinding,
                                     0,
                                     DescriptorSetImageInfo(
                                         nullptr,
-                                        mResolvedOutIdTexture.GetImageView(),
+                                        idTexture.GetImageView(),
                                         vk::ImageLayout::eGeneral,
                                         1,
                                         vk::DescriptorType::eStorageImage
@@ -163,12 +153,12 @@ namespace kailux
         };
         mPickerDescriptorSet.UpdateInfo(context, pickerInfo);
 
-        std::array outlineInfo{
+        const std::array<DescriptorSetUpdateInfo, 1> outlineInfo{
             DescriptorSetUpdateInfo(kOutlineIdResolvedViewDescriptorSetBinding,
                                     0,
                                     DescriptorSetImageInfo(
-                                        mResolvedOutIdTexture.GetSampler(),
-                                        mResolvedOutIdTexture.GetImageView(),
+                                        idTexture.GetSampler(),
+                                        idTexture.GetImageView(),
                                         vk::ImageLayout::eShaderReadOnlyOptimal,
                                         1,
                                         vk::DescriptorType::eCombinedImageSampler
@@ -270,26 +260,6 @@ namespace kailux
     const Buffer &FrameData::GetCullerCountBuffer() const
     {
         return mCullerCountBuffer;
-    }
-
-    vk::Extent2D FrameData::GetExtent() const
-    {
-        return mExtent;
-    }
-
-    const Texture &FrameData::GetSceneTexture() const
-    {
-        return mSceneTexture;
-    }
-
-    const Texture &FrameData::GetOutIdTexture() const
-    {
-        return mOutIdTexture;
-    }
-
-    const Texture &FrameData::GetResolvedOutIdTexture() const
-    {
-        return mResolvedOutIdTexture;
     }
 
     std::array<vk::BufferMemoryBarrier2, FrameData::kBufferMemoryBarriersCount>
@@ -564,42 +534,6 @@ namespace kailux
             vk::BufferUsageFlagBits::eIndirectBuffer);
     }
 
-    void FrameData::CreateSceneTexture(const Context &context, vk::Format format)
-    {
-        mSceneTexture = TextureAllocator::create_empty(
-            context,
-            mExtent.width,
-            mExtent.height,
-            format,
-            vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
-            vk::ImageAspectFlagBits::eColor,
-            vk::SampleCountFlagBits::e1
-        );
-    }
-
-    void FrameData::CreateOutIdTexture(const Context &context)
-    {
-        mOutIdTexture = TextureAllocator::create_empty(
-            context,
-            mExtent.width,
-            mExtent.height,
-            vk::Format::eR32Uint,
-            vk::ImageUsageFlagBits::eColorAttachment,
-            vk::ImageAspectFlagBits::eColor,
-            context.GetMaxUsableSampleCount()
-        );
-        mResolvedOutIdTexture = TextureAllocator::create_empty(
-            context,
-            mExtent.width,
-            mExtent.height,
-            vk::Format::eR32Uint,
-            vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eStorage |
-            vk::ImageUsageFlagBits::eSampled,
-            vk::ImageAspectFlagBits::eColor,
-            vk::SampleCountFlagBits::e1
-        );
-    }
-
     void FrameData::SeedPointShadowDescriptors(const Context &context, const ShadowMap& pointShadowMap)
     {
         std::vector<DescriptorSetUpdateInfo> writes;
@@ -729,12 +663,12 @@ namespace kailux
     }
 
     std::array<DescriptorSetInfo, FrameData::kPickerDescriptorSetInfoCount>
-    FrameData::MakePickerDescriptorSetInfo() const
+    FrameData::MakePickerDescriptorSetInfo(const RenderTarget &sceneView) const
     {
         return {
             DescriptorSetImageInfo(
                 nullptr,
-                mResolvedOutIdTexture.GetImageView(),
+                sceneView.GetReadableIdTexture().GetImageView(),
                 vk::ImageLayout::eGeneral,
                 1,
                 vk::DescriptorType::eStorageImage
@@ -749,12 +683,12 @@ namespace kailux
     }
 
     std::array<DescriptorSetInfo, FrameData::kOutlineDescriptorSetInfoCount> FrameData::
-    MakeOutlineDescriptorSetInfo() const
+    MakeOutlineDescriptorSetInfo(const RenderTarget &sceneView) const
     {
         return {
             DescriptorSetImageInfo(
-                mResolvedOutIdTexture.GetSampler(),
-                mResolvedOutIdTexture.GetImageView(),
+                sceneView.GetReadableIdTexture().GetSampler(),
+                sceneView.GetReadableIdTexture().GetImageView(),
                 vk::ImageLayout::eShaderReadOnlyOptimal,
                 1,
                 vk::DescriptorType::eCombinedImageSampler
