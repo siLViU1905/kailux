@@ -14,7 +14,17 @@ namespace kailux
     void ViewportPanel::Render(Scene &scene)
     {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+
+        const bool wasOpen{mOpen};
         const bool visible{ImGui::Begin(mName.c_str(), &mOpen)};
+        if (wasOpen && !mOpen)
+        {
+            ImGui::End();
+            ImGui::PopStyleVar();
+            Close();
+            return;
+        }
+
         mFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
         mPlatformWindow = static_cast<GLFWwindow*>(ImGui::GetWindowViewport()->PlatformHandle);
 
