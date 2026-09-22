@@ -177,7 +177,7 @@ namespace kailux
         });
 
         auto& viewportPanel = mEditor.GetLayer<EditorLayer>().GetPanel<ViewportPanel>();
-        viewportPanel.SetSceneTextureId(mEngine.GetSceneTextureId());
+        viewportPanel.SetSceneTexture(mEngine.GetSceneTextureId(), mEngine.GetSceneViewExtent());
 
         viewportPanel.SetOnClick([this, &hierarchyPanel, &entityEditor]()
         {
@@ -228,7 +228,7 @@ namespace kailux
         entityEditor.SetCameraData(mEngine.GetCameraData());
 
         auto& viewportPanel{mEditor.GetLayer<EditorLayer>().GetPanel<ViewportPanel>()};
-        viewportPanel.SetSceneTextureId(mEngine.GetSceneTextureId());
+        viewportPanel.SetSceneTexture(mEngine.GetSceneTextureId(), mEngine.GetSceneViewExtent());
 
         auto& simulationPanel{mEditor.GetLayer<EditorLayer>().GetPanel<SimulationPanel>()};
         simulationPanel.SetTextureId(mEngine.GetSimulationTextureId());

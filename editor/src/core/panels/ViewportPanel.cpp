@@ -30,7 +30,7 @@ namespace kailux
 
             if (ImGui::IsItemHovered())
             {
-                mMousePos = compute_relative_mouse_pos(minBound, viewportSize);
+                mMousePos = compute_relative_mouse_pos(minBound, viewportSize, mSceneTextureExtent);
                 if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
                     mOnClick();
                 else if (ImGui::IsMouseClicked(ImGuiMouseButton_Middle))
@@ -46,9 +46,10 @@ namespace kailux
         ImGui::PopStyleVar();
     }
 
-    void ViewportPanel::SetSceneTextureId(ImTextureID id)
+    void ViewportPanel::SetSceneTexture(ImTextureID id, glm::ivec2 extent)
     {
         mSceneTextureId = id;
+        mSceneTextureExtent = extent;
     }
 
     ViewportPanel::MousePosition ViewportPanel::GetScaledMousePos() const
@@ -92,20 +93,23 @@ namespace kailux
         mOnSimulationPause = std::move(callback);
     }
 
-    ViewportPanel::MousePosition ViewportPanel::compute_relative_mouse_pos(ImVec2 minBound, ImVec2 viewportSize)
+    ViewportPanel::MousePosition ViewportPanel::compute_relative_mouse_pos(ImVec2 minBound, ImVec2 viewportSize, glm::ivec2 textureExtent)
     {
-        auto globalPos = ImGui::GetMousePos();
+        const auto globalPos{ImGui::GetMousePos()};
 
-        float relX = globalPos.x - minBound.x;
-        float relY = globalPos.y - minBound.y;
+        const float relX{globalPos.x - minBound.x};
+        const float relY{globalPos.y - minBound.y};
 
-        float textureWidth = ImGui::GetIO().DisplaySize.x;
-        float textureHeight = ImGui::GetIO().DisplaySize.y;
+        if (viewportSize.x <= 0.f || viewportSize.y <= 0.f)
+            return {};
 
-        auto scaledX = static_cast<uint32_t>((relX / viewportSize.x) * textureWidth);
-        auto scaledY = static_cast<uint32_t>((relY / viewportSize.y) * textureHeight);
+        const float u{std::clamp(relX / viewportSize.x, 0.f, 1.f)};
+        const float v{std::clamp(relY / viewportSize.y, 0.f, 1.f)};
 
-        return {scaledX, scaledY};
+        return {
+            static_cast<uint32_t>(u * static_cast<float>(textureExtent.x)),
+            static_cast<uint32_t>(v * static_cast<float>(textureExtent.y))
+        };
     }
 
     void ViewportPanel::RenderSimulationIndicator(ImVec2 minBound, ImVec2 viewportSize)

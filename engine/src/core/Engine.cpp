@@ -281,6 +281,11 @@ namespace kailux
         return mSceneViews[mCurrentFrame].GetTextureId();
     }
 
+    glm::ivec2 Engine::GetSceneViewExtent() const
+    {
+        return mSceneViewExtent;
+    }
+
     ImTextureID Engine::GetSimulationTextureId() const
     {
         return mSimulationView.GetTextureId();
@@ -906,10 +911,7 @@ namespace kailux
 
     void Engine::SetSceneViewportMousePos(uint32_t x, uint32_t y)
     {
-        mSceneViewportMousePos = {
-            static_cast<uint32_t>(x * mRenderScale),
-            static_cast<uint32_t>(y * mRenderScale)
-        };
+        mSceneViewportMousePos = {x, y};
     }
 
     void Engine::SetSelectedEntity(uint32_t entity)

@@ -64,6 +64,7 @@ namespace kailux
         ImTextureID GetAssetBrowserDirectoryTextureId() const;
         ImTextureID GetAssetBrowserFileTextureId() const;
         ImTextureID GetSceneTextureId() const;
+        glm::ivec2  GetSceneViewExtent() const;
         ImTextureID GetSimulationTextureId() const;
 
         void OnEvent(const Event& event, Window& window);
