@@ -2,15 +2,16 @@
 
 #include <fstream>
 #include <glm/gtc/type_ptr.hpp>
+#include "core/components/entt/SceneSettings.h"
 
 namespace kailux
 {
-    MenuPanel::MenuPanel() : mShowProfiler(false), mOutlineColor(1.f, 0.f, 0.f)
+    MenuPanel::MenuPanel() : mShowProfiler(false)
     {
     }
 
     MenuPanel::MenuPanel(std::string_view name, ImVec4 backgroundColor)
-        : Panel(name, backgroundColor), mShowProfiler(false), mOutlineColor(1.f, 0.f, 0.f)
+        : Panel(name, backgroundColor), mShowProfiler(false)
     {
     }
 
@@ -49,14 +50,39 @@ namespace kailux
 
             if (ImGui::BeginMenu("Scene"))
             {
+                auto &settings{scene.GetEntityRegistry().get<SceneSettings>(scene.GetSettingsEntity())};
+                if (ImGui::BeginMenu("Outline"))
+                {
+                    ImGui::ColorEdit3("Color", glm::value_ptr(settings.outlineColor));
+                    ImGui::EndMenu();
+                }
+                if (ImGui::BeginMenu("Geometry"))
+                {
+                    int sceneLod{static_cast<int>(settings.sceneMaxLod)};
+                    int simulationLod{static_cast<int>(settings.simulationMaxLod)};
+                    ImGui::SliderInt("Scene max lod", &sceneLod, 0, details::kMaxGeometryLods - 1);
+                    ImGui::SliderInt("Simulation max lod", &simulationLod, 0, details::kMaxGeometryLods - 1);
+                    settings.sceneMaxLod = sceneLod;
+                    settings.simulationMaxLod = simulationLod;
+
+                    float sceneLodError{settings.sceneLodErrorThreshold};
+                    float simulationLodError{settings.simulationLodErrorThreshold};
+                    ImGui::SliderFloat("Scene lod error", &sceneLodError, 0.f, 10.f);
+                    ImGui::SliderFloat("Simulation lod error", &simulationLodError, 0.f, 10.f);
+                    settings.sceneLodErrorThreshold = sceneLodError;
+                    settings.simulationLodErrorThreshold = simulationLodError;
+
+                    ImGui::EndMenu();
+                }
                 ImGui::EndMenu();
             }
 
             if (ImGui::BeginMenu("Settings"))
             {
-                if (ImGui::BeginMenu("Outline"))
+                if (ImGui::BeginMenu("Render Scale"))
                 {
-                    ImGui::ColorEdit3("Color", glm::value_ptr(mOutlineColor));
+                    if (ImGui::Combo("Scale", &mRenderScaleIndex, kScaleLabels.data(), kScaleLabels.size()))
+                        mOnRenderScaleChange(kScaleValues[mRenderScaleIndex]);
                     ImGui::EndMenu();
                 }
                 ImGui::EndMenu();
@@ -86,9 +112,9 @@ namespace kailux
         mOnViewMenu = std::move(callback);
     }
 
-    const glm::vec3 &MenuPanel::GetOutlineColor() const
+    void MenuPanel::SetOnRenderScaleChange(OnRenderScaleChange &&callback)
     {
-        return mOutlineColor;
+        mOnRenderScaleChange = std::move(callback);
     }
 
     void MenuPanel::SetDeviceInfo(const DeviceInfo &info)

@@ -12,6 +12,7 @@
 #include "../components/entt/PhysicsComponent.h"
 #include "core/components/entt/LocalTransform.h"
 #include "core/components/entt/PhysicsControlComponent.h"
+#include "core/components/entt/SceneSettings.h"
 #include "core/components/entt/WorldTransform.h"
 
 namespace kailux
@@ -23,6 +24,7 @@ namespace kailux
                                            mEntityRegistry(std::move(other.mEntityRegistry)),
                                            mSceneCameraEntity(other.mSceneCameraEntity),
                                            mSun(other.mSun),
+                                           mSettingsEntity(other.mSettingsEntity),
                                            mMeshEntityNameCount(other.mMeshEntityNameCount),
                                            mLightEntityNameCount(other.mLightEntityNameCount),
                                            mCameraEntityNameCount(other.mCameraEntityNameCount)
@@ -40,6 +42,7 @@ namespace kailux
             mEntityRegistry = std::move(other.mEntityRegistry);
             mSceneCameraEntity = other.mSceneCameraEntity;
             mSun = other.mSun;
+            mSettingsEntity = other.mSettingsEntity;
             mMeshEntityNameCount = other.mMeshEntityNameCount;
             mLightEntityNameCount = other.mLightEntityNameCount;
             mCameraEntityNameCount = other.mCameraEntityNameCount;
@@ -56,6 +59,7 @@ namespace kailux
         scene.mName = name;
         scene.mSun = scene.CreateSunEntity({});
         scene.CreateSceneCamera();
+        scene.CreateSceneSettings();
         return scene;
     }
 
@@ -216,6 +220,11 @@ namespace kailux
     entt::entity Scene::GetSun() const
     {
         return mSun;
+    }
+
+    entt::entity Scene::GetSettingsEntity() const
+    {
+        return mSettingsEntity;
     }
 
     SceneData Scene::GetData() const
@@ -449,6 +458,12 @@ namespace kailux
     void Scene::CreateSceneCamera()
     {
         mSceneCameraEntity = CreateBuiltinCameraEntity("SceneCamera");
+    }
+
+    void Scene::CreateSceneSettings()
+    {
+        mSettingsEntity = mEntityRegistry.create();
+        mEntityRegistry.emplace<SceneSettings>(mSettingsEntity);
     }
 
     void Scene::UpdateTransforms()

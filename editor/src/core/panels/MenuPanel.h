@@ -1,6 +1,5 @@
 #pragma once
 #include "Panel.h"
-#include "core/FileDialog.h"
 
 namespace kailux
 {
@@ -21,11 +20,15 @@ namespace kailux
         using OnViewMenu = std::move_only_function<void()>;
         void SetOnViewMenu(OnViewMenu&& callback);
 
-        const glm::vec3 &GetOutlineColor() const;
+        using OnRenderScaleChange = std::move_only_function<void(float)>;
+        void SetOnRenderScaleChange(OnRenderScaleChange&& callback);
 
         void SetDeviceInfo(const DeviceInfo &info);
 
     private:
+        static constexpr std::array kScaleLabels{"100%", "75%", "50%", "25%"};
+        static constexpr std::array kScaleValues{1.f, 0.75f, 0.5f, 0.25f};
+
         void RenderProfilerWindow();
         void RenderDeviceInfo();
 
@@ -37,7 +40,8 @@ namespace kailux
 
         OnViewMenu  mOnViewMenu;
 
-        glm::vec3   mOutlineColor;
+        int mRenderScaleIndex{};
+        OnRenderScaleChange mOnRenderScaleChange;
 
         DeviceInfo mDeviceInfo;
         bool       mShowDevicesInfo{};

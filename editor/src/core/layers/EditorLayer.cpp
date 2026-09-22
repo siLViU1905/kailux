@@ -92,8 +92,10 @@ namespace kailux
         projectPanel.GetAssetBrowser().SetDirectoryTextureId(directoryTextureId);
         projectPanel.GetAssetBrowser().SetFileTextureId(fileTextureId);
 
-        menuPanel.SetOnViewMenu([&hierarchyPanel, &entityEditorPanel, &projectPanel]()
+        menuPanel.SetOnViewMenu([&viewportPanel, &hierarchyPanel, &entityEditorPanel, &projectPanel]()
         {
+            if (ImGui::MenuItem("Scene Viewport", nullptr, viewportPanel.IsOpen()))
+                viewportPanel.Toggle();
             if (ImGui::MenuItem("Entities Hierarchy", nullptr, hierarchyPanel.IsOpen()))
                 hierarchyPanel.Toggle();
             if (ImGui::MenuItem("Entity Editor", nullptr, entityEditorPanel.IsOpen()))

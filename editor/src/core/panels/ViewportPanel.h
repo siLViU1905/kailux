@@ -11,7 +11,7 @@ namespace kailux
 
         void Render(Scene &scene) override;
 
-        void SetSceneTextureId(ImTextureID id);
+        void SetSceneTexture(ImTextureID id, glm::ivec2 extent);
 
         struct MousePosition
         {
@@ -33,11 +33,12 @@ namespace kailux
         void SetOnSimulationPause(OnSimulationPause&& callback);
 
     private:
-        static MousePosition compute_relative_mouse_pos(ImVec2 minBound, ImVec2 viewportSize);
+        static MousePosition compute_relative_mouse_pos(ImVec2 minBound, ImVec2 viewportSize, glm::ivec2 textureExtent);
 
         void RenderSimulationIndicator(ImVec2 minBound, ImVec2 viewportSize);
 
         ImTextureID   mSceneTextureId;
+        glm::ivec2    mSceneTextureExtent;
         MousePosition mMousePos;
         OnClick       mOnClick;
 

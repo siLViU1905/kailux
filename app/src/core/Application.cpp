@@ -110,6 +110,10 @@ namespace kailux
         {
             mLoadSceneDialog.Open("Choose a scene", {"Kailux Scene", "*.klx"});
         });
+        menuPanel.SetOnRenderScaleChange([this](float scale)
+        {
+            mEngine.SetRenderScale(scale);
+        });
         menuPanel.SetDeviceInfo(mEngine.GetDeviceInfo());
 
         auto &projectPanel = mEditor.GetLayer<EditorLayer>().GetPanel<ProjectPanel>();
@@ -146,7 +150,7 @@ namespace kailux
         });
 
         auto& viewportPanel = mEditor.GetLayer<EditorLayer>().GetPanel<ViewportPanel>();
-        viewportPanel.SetSceneTextureId(mEngine.GetSceneTextureId());
+        viewportPanel.SetSceneTexture(mEngine.GetSceneTextureId(), mEngine.GetSceneViewExtent());
 
         viewportPanel.SetOnClick([this, &hierarchyPanel, &entityEditor]()
         {
@@ -197,7 +201,7 @@ namespace kailux
         entityEditor.SetCameraData(mEngine.GetCameraData());
 
         auto& viewportPanel{mEditor.GetLayer<EditorLayer>().GetPanel<ViewportPanel>()};
-        viewportPanel.SetSceneTextureId(mEngine.GetSceneTextureId());
+        viewportPanel.SetSceneTexture(mEngine.GetSceneTextureId(), mEngine.GetSceneViewExtent());
 
         auto& simulationPanel{mEditor.GetLayer<EditorLayer>().GetPanel<SimulationPanel>()};
         simulationPanel.SetTextureId(mEngine.GetSimulationTextureId());
@@ -208,6 +212,9 @@ namespace kailux
         auto& editorLayer{mEditor.GetLayer<EditorLayer>()};
         auto& simulation{editorLayer.GetPanel<SimulationPanel>()};
         auto& viewport{editorLayer.GetPanel<ViewportPanel>()};
+
+        if (viewport.GetInputSource().Valid() && viewport.IsOpen())
+            mEngine.SetSceneViewExtent(viewport.GetInputSource().GetFramebufferSize());
 
         mEngine.SetSimulationViewActive(simulation.IsOpen());
         const auto extent{
@@ -234,10 +241,9 @@ namespace kailux
         mEngine.Update(deltaTime);
 
         const auto sceneViewportMousePos = mEditor.GetLayer<EditorLayer>().GetPanel<ViewportPanel>().GetScaledMousePos();
-        const auto outlineColor = mEditor.GetLayer<EditorLayer>().GetPanel<MenuPanel>().GetOutlineColor();
         const auto selectedEntity = static_cast<uint32_t>(mEditor.GetLayer<EditorLayer>().GetPanel<HierarchyPanel>().GetSelectedEntity());
-        mEngine.SetOutlineInfo(outlineColor, selectedEntity);
         mEngine.SetSceneViewportMousePos(sceneViewportMousePos.x, sceneViewportMousePos.y);
+        mEngine.SetSelectedEntity(selectedEntity);
     }
 
     void Application::DispatchEvent(const Event &event)

@@ -40,6 +40,12 @@ namespace kailux
         Running
     };
 
+    enum class CullingPreset : uint8_t
+    {
+        SceneView,
+        SimulationView
+    };
+
     enum class PhysicsBodyType : uint8_t;
 }
 

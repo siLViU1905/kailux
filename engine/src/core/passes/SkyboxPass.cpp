@@ -12,7 +12,8 @@ namespace kailux
                                                           mTexture(std::move(other.mTexture)),
                                                           mIrradianceMapTexture(std::move(other.mIrradianceMapTexture)),
                                                           mPrefilteredEnvTexture(std::move(other.mPrefilteredEnvTexture)),
-                                                          mBRDFLutTexture(std::move(other.mBRDFLutTexture))
+                                                          mBRDFLutTexture(std::move(other.mBRDFLutTexture)),
+                                                          mMultisampledPipeline(std::move(other.mMultisampledPipeline))
     {
     }
 
@@ -25,6 +26,7 @@ namespace kailux
             mIrradianceMapTexture = std::move(other.mIrradianceMapTexture);
             mPrefilteredEnvTexture = std::move(other.mPrefilteredEnvTexture);
             mBRDFLutTexture = std::move(other.mBRDFLutTexture);
+            mMultisampledPipeline = std::move(other.mMultisampledPipeline);
         }
         return *this;
     }
@@ -39,7 +41,15 @@ namespace kailux
             swapchain,
             kVertexShaderPath,
             kFragmentShaderPath,
-            make_pipeline_info(swapchain, context.GetMaxUsableSampleCount()),
+            make_pipeline_info(swapchain, vk::SampleCountFlagBits::e1, true),
+            kPushConstantRanges
+        );
+        pass.CreateMultisampledPipeline(
+            context,
+            swapchain,
+            kVertexShaderPath,
+            kFragmentShaderPath,
+            make_pipeline_info(swapchain, context.GetMaxUsableSampleCount(), false),
             kPushConstantRanges
         );
         pass.CreateTexture(context);
@@ -69,7 +79,12 @@ namespace kailux
         return mBRDFLutTexture;
     }
 
-    PipelineInfo SkyboxPass::make_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits samples)
+    void SkyboxPass::Bind(vk::CommandBuffer cmd, bool multisampled) const
+    {
+        multisampled ? mMultisampledPipeline.Bind(cmd) : mPipeline.Bind(cmd);
+    }
+
+    PipelineInfo SkyboxPass::make_pipeline_info(const Swapchain& swapchain, vk::SampleCountFlagBits samples, bool writeIds)
     {
         PipelineInfo info;
 
@@ -102,12 +117,15 @@ namespace kailux
         info.colorBlendAttachments.push_back(colorAttachment);
         info.colorFormats.push_back(swapchain.GetFormat());
 
-        vk::PipelineColorBlendAttachmentState idAttachment;
-        idAttachment.blendEnable = vk::False;
-        idAttachment.colorWriteMask = vk::ColorComponentFlagBits::eR;
+        if (writeIds)
+        {
+            vk::PipelineColorBlendAttachmentState idAttachment;
+            idAttachment.blendEnable = vk::False;
+            idAttachment.colorWriteMask = vk::ColorComponentFlagBits::eR;
 
-        info.colorBlendAttachments.push_back(idAttachment);
-        info.colorFormats.push_back(vk::Format::eR32Uint);
+            info.colorBlendAttachments.push_back(idAttachment);
+            info.colorFormats.push_back(vk::Format::eR32Uint);
+        }
 
         info.samples = samples;
 
@@ -182,5 +200,26 @@ namespace kailux
     {
         if (auto data = ImageLoader::load_image(kBRDFLutPath, ImageLoader::ColorSpace::Srgb))
             mBRDFLutTexture = TextureAllocator::create_from_image_data(context, *data);
+    }
+
+    void SkyboxPass::CreateMultisampledPipeline(const Context &context, const Swapchain &swapchain,
+                                                std::string_view vertShaderPath, std::string_view fragShaderPath,
+                                                const PipelineInfo &info,
+                                                std::span<const PushConstantRangeInfo> pushConstantRanges)
+    {
+        GraphicsShaderInfo shaderInfo;
+        if (!vertShaderPath.empty())
+            shaderInfo.emplace_back(vk::ShaderStageFlagBits::eVertex, vertShaderPath.data());
+        if (!fragShaderPath.empty())
+            shaderInfo.emplace_back(vk::ShaderStageFlagBits::eFragment, fragShaderPath.data());
+
+        mMultisampledPipeline = GraphicsPipeline::create(
+            context,
+            swapchain,
+            mDescriptorLayout,
+            shaderInfo,
+            info,
+            pushConstantRanges
+        );
     }
 }

@@ -51,11 +51,11 @@ layout (std430, binding = 3) buffer CommandCountBuffer
     uint drawCount;
 };
 
-layout (push_constant) uniform CameraProperties
+layout (push_constant) uniform CullParams
 {
     vec4 frustumPlanes[6];
     vec4 cameraPosition;
-    uint totalObjects;
+    vec4 params;
 };
 
 bool IsVisible(vec3 center, float radius)
@@ -73,6 +73,10 @@ layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
 void main() {
     uint gId = gl_GlobalInvocationID.x;
+
+    uint totalObjects = uint(params.x);
+    uint maxLod = uint(params.y);
+    float lodErrorThreshold = params.z;
 
     if (gId >= totalObjects)
         return;
@@ -98,10 +102,10 @@ void main() {
         float dist = max(distance(cameraPosition.xyz, worldCenter) - worldRadius, 0.001);
 
         uint lod = 0;
-        for(uint i = 1; i < lodCount; ++i)
+        for(uint i = 1; i < min(lodCount, maxLod + 1); ++i)
         {
             float pixelError = errors[i - 1] * maxScale * cameraPosition.w / dist;
-            if (pixelError > 1.5)
+            if (pixelError > lodErrorThreshold)
                 break;
             lod = i;
         }

@@ -66,7 +66,7 @@ namespace kailux
 
     InputSource Panel::GetInputSource() const
     {
-        return mPlatformWindow;
+        return mOpen ? mPlatformWindow : nullptr;
     }
 
     bool Panel::ConsumeToggleMouseLook()
