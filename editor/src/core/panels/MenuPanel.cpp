@@ -79,6 +79,12 @@ namespace kailux
 
             if (ImGui::BeginMenu("Settings"))
             {
+                if (ImGui::BeginMenu("Render Scale"))
+                {
+                    if (ImGui::Combo("Scale", &mRenderScaleIndex, kScaleLabels.data(), kScaleLabels.size()))
+                        mOnRenderScaleChange(kScaleValues[mRenderScaleIndex]);
+                    ImGui::EndMenu();
+                }
                 ImGui::EndMenu();
             }
 
@@ -104,6 +110,11 @@ namespace kailux
     void MenuPanel::SetOnViewMenu(OnViewMenu &&callback)
     {
         mOnViewMenu = std::move(callback);
+    }
+
+    void MenuPanel::SetOnRenderScaleChange(OnRenderScaleChange &&callback)
+    {
+        mOnRenderScaleChange = std::move(callback);
     }
 
     void MenuPanel::SetDeviceInfo(const DeviceInfo &info)

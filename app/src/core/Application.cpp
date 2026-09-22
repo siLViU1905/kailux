@@ -137,6 +137,10 @@ namespace kailux
         {
             mLoadSceneDialog.Open("Choose a scene", {"Kailux Scene", "*.klx"});
         });
+        menuPanel.SetOnRenderScaleChange([this](float scale)
+        {
+            mEngine.SetRenderScale(scale);
+        });
         menuPanel.SetDeviceInfo(mEngine.GetDeviceInfo());
 
         auto &projectPanel = mEditor.GetLayer<EditorLayer>().GetPanel<ProjectPanel>();

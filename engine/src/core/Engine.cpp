@@ -1807,9 +1807,9 @@ namespace kailux
         scale = std::clamp(scale, kMinRenderScale, 1.f);
         if (std::abs(scale - mRenderScale) < 1e-4f)
             return;
-
+        
         mRenderScale = scale;
 
-        ResizeSceneView(apply_scale(mSceneViewExtent, mRenderScale));
+        mSceneResize.Request(apply_scale(mSceneViewExtent, mRenderScale));
     }
 }
