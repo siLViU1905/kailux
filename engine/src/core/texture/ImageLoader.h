@@ -24,7 +24,7 @@ namespace kailux
         };
 
         using Result = std::expected<ImageData, std::string>;
-        static Result load_image(std::string_view path, ColorSpace space);
+        static Result load_image(const std::filesystem::path &path, ColorSpace space);
 
     private:
         static Result cap_image(ImageData& image, ColorSpace space);

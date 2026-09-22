@@ -8,18 +8,18 @@
 
 namespace kailux
 {
-    ImageLoader::Result ImageLoader::load_image(std::string_view path, ColorSpace space)
+    ImageLoader::Result ImageLoader::load_image(const std::filesystem::path &path, ColorSpace space)
     {
         int width, height, channels;
         ImageData::Pixel* data = stbi_load(
-            path.data(),
+            path.string().c_str(),
             &width,
             &height,
             &channels,
             STBI_rgb_alpha
             );
         if (!data)
-            return std::unexpected("Failed to load image from: " + std::string(path));
+            return std::unexpected(std::format("Failed to load image from: '{}'", path.string()));
 
         ImageData image;
         image.width = static_cast<uint32_t>(width);

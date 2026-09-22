@@ -20,7 +20,7 @@ namespace kailux
         void SetOnImportFiles(OnImport&& callback);
         void SetOnImportFolder(OnImport&& callback);
 
-        void Import(std::string_view path) const;
+        void Import(const std::filesystem::path &path) const;
 
     private:
         static constexpr float s_RelativeIconSize = 0.05f;

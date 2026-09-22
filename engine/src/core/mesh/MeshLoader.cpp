@@ -10,11 +10,11 @@
 
 namespace kailux
 {
-    MeshLoader::LoadResult MeshLoader::load(std::string_view path)
+    MeshLoader::LoadResult MeshLoader::load(const std::filesystem::path &path)
     {
         Assimp::Importer importer;
 
-        const aiScene *scene = importer.ReadFile(path.data(),
+        const aiScene *scene = importer.ReadFile(path.string().c_str(),
                                                  aiProcess_Triangulate |
                                                  aiProcess_GenSmoothNormals |
                                                  aiProcess_CalcTangentSpace |
@@ -22,14 +22,14 @@ namespace kailux
         );
 
         if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
-            return std::unexpected(std::format("Assimp failed to load '{}': {}", path, importer.GetErrorString()));
+            return std::unexpected(std::format("Assimp failed to load '{}': {}", path.string(), importer.GetErrorString()));
 
-        auto meshDirectoryPath = path.substr(0, path.find_last_of('/'));
+        const auto meshDirectoryPath{path.parent_path()};
 
         LoadData loadData;
         process_materials(scene, loadData, meshDirectoryPath);
 
-        process_node(scene->mRootNode, scene, kParentMatrix, loadData, meshDirectoryPath);
+        process_node(scene->mRootNode, scene, kParentMatrix, loadData);
 
         std::for_each(std::execution::par,
                       loadData.submeshes.begin(), loadData.submeshes.end(),
@@ -47,7 +47,7 @@ namespace kailux
         return glm::transpose(glm::make_mat4(&m.a1));
     }
 
-    void MeshLoader::process_materials(const aiScene *scene, LoadData &outLoadData, std::string_view directoryPath)
+    void MeshLoader::process_materials(const aiScene *scene, LoadData &outLoadData, const std::filesystem::path &directoryPath)
     {
         outLoadData.materials.resize(scene->mNumMaterials);
 
@@ -65,8 +65,7 @@ namespace kailux
     void MeshLoader::process_node(const aiNode *node,
                                   const aiScene *scene,
                                   const glm::mat4 &parentMatrix,
-                                  MeshLoader::LoadData &outLoadData,
-                                  std::string_view directoryPath
+                                  LoadData &outLoadData
     )
     {
         auto worldMatrix = parentMatrix * ai_matrix4x4_to_glm(node->mTransformation);
@@ -87,7 +86,7 @@ namespace kailux
         }
 
         for (uint32_t i = 0; i < node->mNumChildren; i++)
-            process_node(node->mChildren[i], scene, worldMatrix, outLoadData, directoryPath);
+            process_node(node->mChildren[i], scene, worldMatrix, outLoadData);
     }
 
     void MeshLoader::process_mesh(const aiMesh *mesh,
@@ -125,7 +124,7 @@ namespace kailux
     }
 
     void MeshLoader::extract_material_paths(const aiMaterial *material, MaterialPaths &outPaths,
-        std::string_view directoryPath)
+                                            const std::filesystem::path &directoryPath)
     {
         auto getMaterialMemberPtr = [](TextureType type, MaterialPaths& paths) -> std::string* {
             switch (type) {
@@ -141,18 +140,20 @@ namespace kailux
         std::ranges::for_each(TextureRegistry::kTextureTypes, [&](auto type)
         {
             auto aiType = static_cast<aiTextureType>(type);
-            auto& targetPath = *getMaterialMemberPtr(type, outPaths);
+            auto* targetPath{getMaterialMemberPtr(type, outPaths)};
+            if (!targetPath)
+            {
+                log::console.Error("mesh loader: texture type '{}' not implemented", magic_enum::enum_name(type));
+                return;
+            }
 
             if (material->GetTextureCount(aiType) &&
-                targetPath.empty()
+                targetPath->empty()
             )
             {
                 aiString path;
                 if (material->GetTexture(aiType, 0, &path) == aiReturn_SUCCESS)
-                {
-                    targetPath = path.C_Str();
-                    targetPath = std::string(directoryPath) + "/" + targetPath;
-                }
+                    *targetPath = std::format("{}/{}", directoryPath.string(), path.C_Str());
             }
         });
     }

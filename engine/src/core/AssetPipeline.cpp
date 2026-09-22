@@ -78,9 +78,9 @@ namespace kailux
         return *childEntity;
     }
 
-    bool AssetPipeline::IsCached(std::string_view path) const
+    bool AssetPipeline::IsCached(const std::filesystem::path &path) const
     {
-        return mMeshCache.contains(std::string{path});
+        return mMeshCache.contains(path.string());
     }
 
     DescriptorSetUpdateInfo AssetPipeline::make_texture_write(TextureHandle handle, const Texture &texture)
@@ -97,9 +97,9 @@ namespace kailux
         };
     }
 
-    std::optional<AssetPipeline::CachedModel> AssetPipeline::Uncache(std::string_view path)
+    std::optional<AssetPipeline::CachedModel> AssetPipeline::Uncache(const std::filesystem::path &path)
     {
-        const auto it{mMeshCache.find(std::string{path})};
+        const auto it{mMeshCache.find(path.string())};
         if (it == mMeshCache.end())
             return std::nullopt;
 
