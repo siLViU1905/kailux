@@ -54,7 +54,7 @@ namespace kailux
         {
             mEngine.UnregisterMesh(entity);
         });
-        hierarchyPanel.SetOnDragDrop([this](std::string_view path)
+        hierarchyPanel.SetOnDragDrop([this](const auto& path)
         {
             mEngine.HandleMeshDragDrop(path, *mThreadDispatcher);
         });

@@ -158,7 +158,7 @@ namespace kailux
         mOnImportFolder = std::move(callback);
     }
 
-    void AssetBrowser::Import(std::string_view path) const
+    void AssetBrowser::Import(const std::filesystem::path &path) const
     {
         namespace fs = std::filesystem;
         if (fs::exists(path))

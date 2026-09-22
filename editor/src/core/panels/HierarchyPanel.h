@@ -19,7 +19,7 @@ namespace kailux
         using OnMeshDeleted = std::move_only_function<void(entt::entity)>;
         void  SetOnMeshDeleted(OnMeshDeleted&& callback);
 
-        using OnDragDrop = std::move_only_function<void(std::string_view)>;
+        using OnDragDrop = std::move_only_function<void(const std::filesystem::path&)>;
         void  SetOnDragDrop(OnDragDrop&& callback);
 
         using OnNewMesh = std::move_only_function<void(MeshType)>;
