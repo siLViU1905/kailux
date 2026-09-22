@@ -50,9 +50,9 @@ namespace kailux
 
         Queue<PendingMeshData> &GetPendingQueue();
 
-        bool IsCached(std::string_view path) const;
+        bool IsCached(const std::filesystem::path &path) const;
 
-        std::optional<CachedModel> Uncache(std::string_view path);
+        std::optional<CachedModel> Uncache(const std::filesystem::path &path);
 
         using OnLog = std::move_only_function<void(std::string_view)>;
         void SetOnInfoLog(OnLog &&callback);

@@ -28,7 +28,7 @@ namespace kailux
             std::vector<TextureRegistry::MaterialData> materials;
         };
         using LoadResult = std::expected<LoadData, std::string>;
-        static LoadResult load(std::string_view path);
+        static LoadResult load(const std::filesystem::path &path);
 
     private:
         static constexpr float        kScaleFactor = 0.1f;
@@ -46,22 +46,21 @@ namespace kailux
         };
 
         static void process_materials(
-                                 const aiScene *scene,
-                                 LoadData &outLoadData,
-                                 std::string_view directoryPath
+            const aiScene *scene,
+            LoadData &outLoadData,
+            const std::filesystem::path &directoryPath
         );
         static void process_node(const aiNode *node,
                                  const aiScene *scene,
                                  const glm::mat4 &parentMatrix,
-                                 LoadData &outLoadData,
-                                 std::string_view directoryPath
+                                 LoadData &outLoadData
         );
         static void process_mesh(const aiMesh *mesh,
                                  MeshGeometry::MeshData &outMeshData
         );
         static void extract_material_paths(const aiMaterial *material,
                                            MaterialPaths &outPaths,
-                                           std::string_view directoryPath);
+                                           const std::filesystem::path &directoryPath);
         static TextureRegistry::MaterialData process_material_paths(const MaterialPaths& paths);
     };
 }
