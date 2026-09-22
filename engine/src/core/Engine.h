@@ -86,6 +86,7 @@ namespace kailux
         void SetOnErrorLog(OnLog&& callback);
 
         void SetSceneViewportMousePos(uint32_t x, uint32_t y);
+        void SetSelectedEntity(uint32_t entity);
 
         uint32_t GetPickedEntity() const;
 

@@ -270,6 +270,7 @@ namespace kailux
         const auto sceneViewportMousePos = mEditor.GetLayer<EditorLayer>().GetPanel<ViewportPanel>().GetScaledMousePos();
         const auto selectedEntity = static_cast<uint32_t>(mEditor.GetLayer<EditorLayer>().GetPanel<HierarchyPanel>().GetSelectedEntity());
         mEngine.SetSceneViewportMousePos(sceneViewportMousePos.x, sceneViewportMousePos.y);
+        mEngine.SetSelectedEntity(selectedEntity);
     }
 
     void Application::DispatchEvent(const Event &event)

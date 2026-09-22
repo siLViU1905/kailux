@@ -912,6 +912,11 @@ namespace kailux
         };
     }
 
+    void Engine::SetSelectedEntity(uint32_t entity)
+    {
+        mOutlineInfo.id = entity;
+    }
+
     uint32_t Engine::GetPickedEntity() const
     {
         return mPickedEntity;
@@ -1807,7 +1812,7 @@ namespace kailux
         scale = std::clamp(scale, kMinRenderScale, 1.f);
         if (std::abs(scale - mRenderScale) < 1e-4f)
             return;
-        
+
         mRenderScale = scale;
 
         mSceneResize.Request(apply_scale(mSceneViewExtent, mRenderScale));
