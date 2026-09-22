@@ -240,7 +240,7 @@ namespace kailux
         auto& simulation{editorLayer.GetPanel<SimulationPanel>()};
         auto& viewport{editorLayer.GetPanel<ViewportPanel>()};
 
-        if (viewport.GetInputSource().Valid())
+        if (viewport.GetInputSource().Valid() && viewport.IsOpen())
             mEngine.SetSceneViewExtent(viewport.GetInputSource().GetFramebufferSize());
 
         mEngine.SetSimulationViewActive(simulation.IsOpen());
