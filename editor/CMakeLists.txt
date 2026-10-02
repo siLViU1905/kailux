@@ -1,4 +1,4 @@
-add_executable(kailux_editor
+add_executable(prism
         src/core/panels/HierarchyPanel.cpp
         src/core/panels/Panel.cpp
         src/core/layers/EditorLayer.cpp
@@ -14,10 +14,10 @@ add_executable(kailux_editor
         main.cpp
 )
 
-target_precompile_headers(kailux_editor REUSE_FROM kailux_engine)
+target_precompile_headers(prism REUSE_FROM kailux)
 
-target_include_directories(kailux_editor PUBLIC src)
+target_include_directories(prism PUBLIC src)
 
-target_link_libraries(kailux_editor PRIVATE
-        kailux_engine
+target_link_libraries(prism PRIVATE
+        kailux
 )
