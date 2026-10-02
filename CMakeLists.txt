@@ -87,7 +87,7 @@ find_package(shaderc REQUIRED)
 find_package(TBB REQUIRED)
 find_package(meshoptimizer REQUIRED)
 
-set(SHADERS_BINARY_DIR "${CMAKE_BINARY_DIR}/app/shaders")
+set(SHADERS_BINARY_DIR "${CMAKE_BINARY_DIR}/editor/shaders")
 add_custom_target(CopyShaders ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/engine/src/core/shaders"
@@ -96,7 +96,7 @@ add_custom_target(CopyShaders ALL
         VERBATIM
 )
 
-set(ASSETS_BINARY_DIR "${CMAKE_BINARY_DIR}/app/assets")
+set(ASSETS_BINARY_DIR "${CMAKE_BINARY_DIR}/editor/assets")
 add_custom_target(CopyAssets ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/assets"
@@ -107,4 +107,3 @@ add_custom_target(CopyAssets ALL
 
 add_subdirectory(engine)
 add_subdirectory(editor)
-add_subdirectory(app)

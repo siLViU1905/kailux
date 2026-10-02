@@ -1,8 +1,6 @@
-add_library(kailux_editor
+add_executable(kailux_editor
         src/core/panels/HierarchyPanel.cpp
         src/core/panels/Panel.cpp
-        src/core/layers/Layer.cpp
-        src/core/Editor.cpp
         src/core/layers/EditorLayer.cpp
         src/core/panels/EntityEditorPanel.cpp
         src/core/panels/MenuPanel.cpp
@@ -12,6 +10,8 @@ add_library(kailux_editor
         src/core/panels/ViewportPanel.cpp
         src/core/panels/SimulationPanel.cpp
         src/core/UIWidgets.cpp
+        src/core/panels/PanelStack.cpp
+        main.cpp
 )
 
 target_precompile_headers(kailux_editor REUSE_FROM kailux_engine)
