@@ -30,6 +30,7 @@
 #include "components/gpu/CameraData.h"
 #include "gizmo/GizmoRegistry.h"
 #include "passes/GizmoPass.h"
+#include "scripting/ScriptSystem.h"
 #include "shadow/DirectionalShadowSet.h"
 #include "shadow/PointShadowSet.h"
 
@@ -127,6 +128,7 @@ namespace kailux
         void CreateGizmoRegistry();
         void CreateAssetPipeline();
         void CreatePhysicsSystem();
+        void CreateScriptSystem();
         void CreateImGui(Window& window);
 
         void SeedDefaultTextures();
@@ -203,6 +205,7 @@ namespace kailux
 
         AssetPipeline                                mAssetPipeline;
         PhysicsSystem                                mPhysicsSystem;
+        ScriptSystem                                 mScriptSystem;
         DeferredResourceEraser<details::kFramesInFlight + 1> mDeferredResourceEraser;
 
         std::array<FrameData, details::kFramesInFlight>    mFrames;

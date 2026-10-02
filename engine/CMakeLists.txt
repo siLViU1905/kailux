@@ -64,6 +64,8 @@ add_library(kailux_engine STATIC
         src/core/shadow/DirectionalShadowSet.cpp
         src/core/shadow/PointShadowSet.cpp
         src/core/RenderTarget.cpp
+        src/core/scripting/ScriptableEntity.cpp
+        src/core/scripting/ScriptSystem.cpp
 )
 
 target_compile_definitions(kailux_engine PUBLIC
