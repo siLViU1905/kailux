@@ -2,6 +2,18 @@
 
 A lightweight, modern C++ rendering engine.
 
+## Kailux and Prism
+
+The project is split in two parts:
+
+- **kailux** is the engine itself: rendering (Vulkan), scenes, physics, scripting, and the application core (window, main loop, layer stack). It is built as a library.
+- **prism** is the editor built on top of Kailux. It is a layer (`EditorLayer`) pushed onto a Kailux `Application`, providing the viewport, entity hierarchy, entity editor, asset browser, console and simulation view.
+
+```
+kailux - the engine library
+prism  - the editor executable
+```
+
 ## Requirements
 - Vulkan 1.3+
 - conan
@@ -33,4 +45,4 @@ scripts/linux_build.sh release
 scripts/linux_build.sh debug clean
 ```
 
-In the build folder (`build/[debug|release]/app`) you will find the executable `kailux_application`.
+In the build folder (`build/[debug|release]/prism`) you will find the executable, `prism`.

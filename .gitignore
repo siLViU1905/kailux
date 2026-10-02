@@ -1,5 +1,5 @@
-/engine/src/core/imgui_backend/bindings
-/engine/src/core/imgui_backend/misc
+/kailux/src/core/imgui_backend/bindings
+/kailux/src/core/imgui_backend/misc
 *.spv
 CMakeUserPresets.json
 /build

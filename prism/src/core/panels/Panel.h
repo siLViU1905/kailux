@@ -1,5 +1,5 @@
 #pragma once
-#include "../../../../engine/src/core/scene/Scene.h"
+#include "core/scene/Scene.h"
 
 namespace kailux
 {
