@@ -68,6 +68,7 @@ add_library(kailux_engine STATIC
         src/core/scripting/ScriptSystem.cpp
         src/core/layers/Layer.cpp
         src/core/layers/LayerStack.cpp
+        src/core/Application.cpp
 )
 
 target_compile_definitions(kailux_engine PUBLIC
