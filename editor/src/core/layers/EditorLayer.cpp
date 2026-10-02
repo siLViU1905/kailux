@@ -242,7 +242,9 @@ namespace kailux
     void EditorLayer::UpdatePanelState()
     {
         GetPanel<ProjectPanel>().UseFullWidth(!GetPanel<EntityEditorPanel>().IsOpen());
-        const auto& viewport{GetPanel<ViewportPanel>()};
+
+        auto& viewport{GetPanel<ViewportPanel>()};
+        auto& simulation{GetPanel<SimulationPanel>()};
 
         const bool isSimulationRunning{viewport.GetSimulationState() != SimulationState::Paused};
 
@@ -252,6 +254,13 @@ namespace kailux
 
         auto& hierarchyPanel{GetPanel<HierarchyPanel>()};
         isSimulationRunning ? hierarchyPanel.Lock() : hierarchyPanel.Unlock();
+
+        if (!isSimulationRunning)
+            simulation.Close();
+        else if (!mSimulationWasRunning)
+            simulation.Open();
+        else if (!simulation.IsOpen())
+            viewport.RequestSimulationState(SimulationState::Paused);
 
         mSimulationWasRunning = isSimulationRunning;
     }
