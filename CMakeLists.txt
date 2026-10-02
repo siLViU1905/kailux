@@ -105,5 +105,5 @@ add_custom_target(CopyAssets ALL
         VERBATIM
 )
 
-add_subdirectory(engine)
+add_subdirectory(kailux)
 add_subdirectory(editor)
