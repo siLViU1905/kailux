@@ -13,6 +13,7 @@
 #include "components/entt/HierarchyComponent.h"
 #include "components/entt/MaterialComponent.h"
 #include "components/entt/MeshComponent.h"
+#include "components/entt/NativeScriptComponent.h"
 #include "components/entt/PendingUploadComponent.h"
 #include "components/entt/PhysicsComponent.h"
 #include "components/entt/PhysicsControlComponent.h"
@@ -28,9 +29,11 @@
 
 namespace kailux
 {
-    Engine::Engine() : mAssetPipeline(mContext, mMeshRegistry, mTextureRegistry, mTransferManager, mScene,mFrames),
+    Engine::Engine() : mAssetPipeline(mContext, mMeshRegistry, mTextureRegistry, mTransferManager, mScene, mFrames),
                        mPhysicsSystem(mScene, mPhysicsRegistry),
+                       mScriptSystem(mScene),
                        mCurrentFrame(0),
+                       mOutlineInfo(),
                        mPickedEntity(~0u)
     {
     }
@@ -45,6 +48,7 @@ namespace kailux
                                               mGizmoRegistry(std::move(other.mGizmoRegistry)),
                                               mAssetPipeline(std::move(other.mAssetPipeline)),
                                               mPhysicsSystem(std::move(other.mPhysicsSystem)),
+                                              mScriptSystem(std::move(other.mScriptSystem)),
                                               mDeferredResourceEraser(std::move(other.mDeferredResourceEraser)),
                                               mFrames(std::move(other.mFrames)),
                                               mCurrentFrame(other.mCurrentFrame),
@@ -79,6 +83,7 @@ namespace kailux
     {
         CreateAssetPipeline();
         CreatePhysicsSystem();
+        CreateScriptSystem();
     }
 
     Engine &Engine::operator=(Engine &&other) noexcept
@@ -95,6 +100,7 @@ namespace kailux
             mGizmoRegistry = std::move(other.mGizmoRegistry);
             mAssetPipeline = std::move(other.mAssetPipeline);
             mPhysicsSystem = std::move(other.mPhysicsSystem);
+            mScriptSystem = std::move(other.mScriptSystem);
             mDeferredResourceEraser = std::move(other.mDeferredResourceEraser);
             mFrames = std::move(other.mFrames);
             mCurrentFrame = other.mCurrentFrame;
@@ -129,6 +135,7 @@ namespace kailux
 
             CreateAssetPipeline();
             CreatePhysicsSystem();
+            CreateScriptSystem();
         }
         return *this;
     }
@@ -173,6 +180,7 @@ namespace kailux
         engine.CreateScene(window);
         engine.CreateAssetPipeline();
         engine.CreatePhysicsSystem();
+        engine.CreateScriptSystem();
 
         return engine;
     }
@@ -468,7 +476,7 @@ namespace kailux
 
     void Engine::CreateAssetPipeline()
     {
-        mAssetPipeline = AssetPipeline(mContext, mMeshRegistry, mTextureRegistry, mTransferManager, mScene, mFrames);
+        mAssetPipeline = {mContext, mMeshRegistry, mTextureRegistry, mTransferManager, mScene, mFrames};
         mAssetPipeline.SetOnInfoLog([this](auto msg)
         {
             mOnInfoLog(msg);
@@ -485,7 +493,7 @@ namespace kailux
 
     void Engine::CreatePhysicsSystem()
     {
-        mPhysicsSystem = PhysicsSystem(mScene, mPhysicsRegistry);
+        mPhysicsSystem = {mScene, mPhysicsRegistry};
         mPhysicsSystem.SetOnInfoLog([this](auto msg)
         {
             mOnInfoLog(msg);
@@ -494,6 +502,12 @@ namespace kailux
         {
             mOnWarningLog(msg);
         });
+    }
+
+    void Engine::CreateScriptSystem()
+    {
+        mScriptSystem = {mScene};
+        mScriptSystem.SetConnections();
     }
 
     void Engine::CreateImGui(Window &window)
@@ -1014,6 +1028,7 @@ namespace kailux
         if (state == SimulationState::Paused)
         {
             mPhysicsSystem.SetSimulationState(state);
+            mScriptSystem.SetSimulationState(state);
             return true;
         }
 
@@ -1024,6 +1039,7 @@ namespace kailux
         }
         mScene.UpdateCameras();
         mPhysicsSystem.SetSimulationState(state);
+        mScriptSystem.SetSimulationState(state);
         return true;
     }
 
@@ -1679,6 +1695,8 @@ namespace kailux
 
         if (mPhysicsSystem.GetSimulationState() == SimulationState::Running)
             mPhysicsSystem.Update(deltaTime);
+
+        mScriptSystem.Update(deltaTime);
 
         mScene.Update();
 
