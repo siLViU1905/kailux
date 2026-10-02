@@ -1,6 +1,6 @@
 find_file(IMGUIZMO_CPP ImGuizmo.cpp PATHS ${imguizmo_INCLUDE_DIRS}/../src)
 
-add_library(kailux_engine STATIC
+add_library(kailux STATIC
         src/core/Context.cpp
         src/core/window/Window.cpp
         src/core/Swapchain.cpp
@@ -66,9 +66,12 @@ add_library(kailux_engine STATIC
         src/core/RenderTarget.cpp
         src/core/scripting/ScriptableEntity.cpp
         src/core/scripting/ScriptSystem.cpp
+        src/core/layers/Layer.cpp
+        src/core/layers/LayerStack.cpp
+        src/core/Application.cpp
 )
 
-target_compile_definitions(kailux_engine PUBLIC
+target_compile_definitions(kailux PUBLIC
         IMGUI_DEFINE_MATH_OPERATORS
 )
 
@@ -78,11 +81,11 @@ else()
     set(SIMD_FLAGS -mavx2 -mfma -msse3)
 endif()
 
-target_compile_options(kailux_engine PUBLIC ${SIMD_FLAGS})
+target_compile_options(kailux PUBLIC ${SIMD_FLAGS})
 
-target_include_directories(kailux_engine PUBLIC src)
+target_include_directories(kailux PUBLIC src)
 
-target_link_libraries(kailux_engine PUBLIC
+target_link_libraries(kailux PUBLIC
         Vulkan::Vulkan
         glfw
         imgui::imgui
@@ -100,7 +103,7 @@ target_link_libraries(kailux_engine PUBLIC
         meshoptimizer::meshoptimizer
 )
 
-target_precompile_headers(kailux_engine PUBLIC
+target_precompile_headers(kailux PUBLIC
         <vulkan/vulkan.hpp>
         <vulkan/vulkan_raii.hpp>
         <glm/glm.hpp>

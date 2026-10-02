@@ -87,16 +87,16 @@ find_package(shaderc REQUIRED)
 find_package(TBB REQUIRED)
 find_package(meshoptimizer REQUIRED)
 
-set(SHADERS_BINARY_DIR "${CMAKE_BINARY_DIR}/app/shaders")
+set(SHADERS_BINARY_DIR "${CMAKE_BINARY_DIR}/prism/shaders")
 add_custom_target(CopyShaders ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_CURRENT_SOURCE_DIR}/engine/src/core/shaders"
+        "${CMAKE_CURRENT_SOURCE_DIR}/kailux/src/core/shaders"
         "${SHADERS_BINARY_DIR}"
         COMMENT "Copying shaders folder to ${SHADERS_BINARY_DIR}"
         VERBATIM
 )
 
-set(ASSETS_BINARY_DIR "${CMAKE_BINARY_DIR}/app/assets")
+set(ASSETS_BINARY_DIR "${CMAKE_BINARY_DIR}/prism/assets")
 add_custom_target(CopyAssets ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/assets"
@@ -105,6 +105,5 @@ add_custom_target(CopyAssets ALL
         VERBATIM
 )
 
-add_subdirectory(engine)
-add_subdirectory(editor)
-add_subdirectory(app)
+add_subdirectory(kailux)
+add_subdirectory(prism)

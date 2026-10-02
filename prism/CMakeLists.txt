@@ -1,8 +1,6 @@
-add_library(kailux_editor
+add_executable(prism
         src/core/panels/HierarchyPanel.cpp
         src/core/panels/Panel.cpp
-        src/core/layers/Layer.cpp
-        src/core/Editor.cpp
         src/core/layers/EditorLayer.cpp
         src/core/panels/EntityEditorPanel.cpp
         src/core/panels/MenuPanel.cpp
@@ -12,12 +10,16 @@ add_library(kailux_editor
         src/core/panels/ViewportPanel.cpp
         src/core/panels/SimulationPanel.cpp
         src/core/UIWidgets.cpp
+        src/core/panels/PanelStack.cpp
+        main.cpp
 )
 
-target_precompile_headers(kailux_editor REUSE_FROM kailux_engine)
+add_dependencies(prism CopyShaders CopyAssets)
 
-target_include_directories(kailux_editor PUBLIC src)
+target_precompile_headers(prism REUSE_FROM kailux)
 
-target_link_libraries(kailux_editor PRIVATE
-        kailux_engine
+target_include_directories(prism PUBLIC src)
+
+target_link_libraries(prism PRIVATE
+        kailux
 )

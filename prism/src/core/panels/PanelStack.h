@@ -1,17 +1,21 @@
 #pragma once
-#include "../panels/Panel.h"
+#include "Panel.h"
 
 namespace kailux
 {
-    class Layer
+    class PanelStack
     {
     public:
-        KAILUX_DECLARE_NON_COPYABLE_MOVABLE(Layer)
+        PanelStack();
+        PanelStack(const PanelStack&) = delete;
+        PanelStack& operator=(const PanelStack&) = delete;
+        PanelStack(PanelStack&&) noexcept;
+        PanelStack& operator=(PanelStack&&) noexcept;
 
         template<std::derived_from<Panel> TPanel, typename... Args>
         TPanel& EmplacePanel(Args&&... args)
         {
-            auto& panel = mPanels.emplace_back(create_scoped<TPanel>(std::forward<Args>(args)...));
+            auto& panel{mPanels.emplace_back(create_scoped<TPanel>(std::forward<Args>(args)...))};
             return static_cast<TPanel &>(*panel);
         }
 
@@ -26,11 +30,8 @@ namespace kailux
         template<std::derived_from<Panel> TPanel>
         const TPanel& GetPanel() const
         {
-            return const_cast<Layer*>(this)->GetPanel<TPanel>();
+            return const_cast<PanelStack*>(this)->GetPanel<TPanel>();
         }
-
-    protected:
-        ~Layer() = default;
 
         void RenderPanels(Scene& scene) const;
 
