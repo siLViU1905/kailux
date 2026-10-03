@@ -124,11 +124,17 @@ namespace kailux
 
         const bool multisampled{info.samples != vk::SampleCountFlagBits::e1};
 
+        constexpr vk::ImageUsageFlags kPresentedUsage{
+            vk::ImageUsageFlagBits::eColorAttachment |
+            vk::ImageUsageFlagBits::eSampled |
+            vk::ImageUsageFlagBits::eTransferSrc
+        };
+
         mColor = TextureAllocator::create_empty(
             context, width, height, info.colorFormat,
             multisampled
                 ? vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransientAttachment
-                : vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
+                : kPresentedUsage,
             vk::ImageAspectFlagBits::eColor,
             info.samples
         );
@@ -136,7 +142,7 @@ namespace kailux
         if (multisampled)
             mResolved = TextureAllocator::create_empty(
                 context, width, height, info.colorFormat,
-                vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
+                kPresentedUsage,
                 vk::ImageAspectFlagBits::eColor,
                 vk::SampleCountFlagBits::e1
             );

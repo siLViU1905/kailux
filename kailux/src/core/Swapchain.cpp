@@ -78,6 +78,10 @@ namespace kailux
         if (surfaceCapabilities.maxImageCount > 0 && requestedImageCount > surfaceCapabilities.maxImageCount)
             requestedImageCount = surfaceCapabilities.maxImageCount;
 
+        vk::ImageUsageFlags imageUsage{vk::ImageUsageFlagBits::eColorAttachment};
+        if (surfaceCapabilities.supportedUsageFlags & vk::ImageUsageFlagBits::eTransferDst)
+            imageUsage |= vk::ImageUsageFlagBits::eTransferDst;
+
         vk::SwapchainCreateInfoKHR swapChainCreateInfo{
             vk::SwapchainCreateFlagsKHR(),
             context.GetSurface(),
@@ -86,7 +90,7 @@ namespace kailux
             mSurfaceFormat.colorSpace,
             mExtent,
             1,
-            vk::ImageUsageFlagBits::eColorAttachment,
+            imageUsage,
             vk::SharingMode::eExclusive
         };
 
