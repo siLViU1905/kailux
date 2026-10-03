@@ -3,6 +3,7 @@
 #include <fstream>
 #include <magic_enum/magic_enum.hpp>
 
+#include "EngineSpecification.h"
 #include "FileDialog.h"
 #include "Geometry.h"
 #include "command/CommandRecorder.h"
@@ -151,7 +152,7 @@ namespace kailux
         }
     }
 
-    Engine Engine::create(Window &window)
+    Engine Engine::create(Window &window, EngineSpecification specification)
     {
         Engine engine;
         engine.CreateRenderingContext(window);

@@ -19,8 +19,9 @@ namespace kailux
 
     struct ApplicationSpecification
     {
-        WindowInfo window;
-        uint32_t   workerThreads{2};
+        WindowInfo          window;
+        uint32_t            workerThreads{2};
+        EngineSpecification engine;
     };
 
     class Application

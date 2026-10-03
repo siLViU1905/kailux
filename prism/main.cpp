@@ -14,7 +14,10 @@ int main()
                 400,
                 "Kailux"
             },
-            2
+            2,
+            {
+                kailux::RenderMode::Editor
+            }
         };
 
         kailux::Application application{specification};

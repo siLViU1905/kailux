@@ -24,6 +24,7 @@
 #include "utilities/Queue.h"
 #include "utilities/ThreadDispatcher.h"
 #include "DeferredResourceEraser.h"
+#include "EngineSpecification.h"
 #include "RenderTarget.h"
 #include "ResizeDebouncer.h"
 #include "SimulationView.h"
@@ -42,7 +43,7 @@ namespace kailux
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(Engine)
         ~Engine();
 
-        static Engine create(Window& window);
+        static Engine create(Window& window, EngineSpecification specification);
 
         using OnEditorRender = std::move_only_function<void(Scene&)>;
         void SetOnEditorRender(OnEditorRender&& callback);
