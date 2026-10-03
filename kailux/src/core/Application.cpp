@@ -12,7 +12,7 @@ namespace kailux
         ThreadDispatcher::kMaxThreads = specification.workerThreads;
         mThreadDispatcher = ThreadDispatcher::get();
 
-        mEngine.SetOnEditorRender([this](Scene& scene)
+        mEngine.SetOnImGuiRender([this](Scene& scene)
         {
             RenderImGui(scene);
         });

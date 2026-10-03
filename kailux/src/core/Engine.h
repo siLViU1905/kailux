@@ -45,8 +45,8 @@ namespace kailux
 
         static Engine create(Window& window, EngineSpecification specification);
 
-        using OnEditorRender = std::move_only_function<void(Scene&)>;
-        void SetOnEditorRender(OnEditorRender&& callback);
+        using OnImGuiRender = std::move_only_function<void(Scene&)>;
+        void SetOnImGuiRender(OnImGuiRender&& callback);
 
         CameraData GetCameraData() const;
 
@@ -145,6 +145,13 @@ namespace kailux
         void CreateSceneViews();
         void AcquireViewTextureIds();
 
+        void CheckRuntimePresentSupport() const;
+
+        bool IsEditor() const;
+        bool UsesImGui() const;
+
+        entt::entity GetViewCamera() const;
+
         void                                        Submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
         void                                        RecordMeshData(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex, bool writeIds) const;
         void                                        RecordSkybox(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex, bool multisampled) const;
@@ -155,6 +162,9 @@ namespace kailux
         void                                        RecordPicker(const FrameData& frame, const CommandRecorder &recorder) const;
         void                                        RecordOutline(const FrameData& frame, const CommandRecorder &recorder);
         void                                        RenderSimulationView(const FrameData &frame, CommandRecorder &recorder);
+        void                                        RecordEditorPasses(FrameData& frame, CommandRecorder &recorder, const RenderTarget &sceneView, uint32_t imageIndex);
+        void                                        RecordRuntimePresent(const FrameData& frame, CommandRecorder &recorder, const RenderTarget &sceneView, uint32_t imageIndex);
+        void                                        RecordImGuiPass(const FrameData& frame, CommandRecorder &recorder, uint32_t imageIndex);
 
         CameraData BuildCameraData(entt::entity entity, glm::ivec2 extent) const;
 
@@ -192,7 +202,10 @@ namespace kailux
         void TransitionForOutlinePass(const RenderTarget &sceneView, const CommandRecorder& recorder, uint32_t imageIndex) const;
         void TransitionForPickerAndPostProcess(const FrameData& frame, const RenderTarget &sceneView, const CommandRecorder& recorder) const;
         void TransitionForPresent(const CommandRecorder& recorder, uint32_t imageIndex) const;
+        void TransitionForBlit(const RenderTarget &sceneView, const CommandRecorder& recorder, uint32_t imageIndex) const;
+        void TransitionAfterBlit(const CommandRecorder& recorder, uint32_t imageIndex) const;
 
+        EngineSpecification                        mSpecification;
         Context                                    mContext;
         Swapchain                                  mSwapchain;
         ImGuiBackend                               mImGuiBackend;
@@ -216,7 +229,7 @@ namespace kailux
         entt::entity                               mControlledCamera{entt::null};
         InputSource                                mInputSource;
         bool                                       mMouseLookActive{};
-        OnEditorRender                             mOnEditorRender;
+        OnImGuiRender                              mOnImGuiRender;
 
         std::array<RenderTarget, details::kFramesInFlight> mSceneViews;
         RenderTarget                                       mSimulationView;

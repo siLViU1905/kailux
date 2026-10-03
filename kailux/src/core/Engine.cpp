@@ -35,11 +35,15 @@ namespace kailux
                        mScriptSystem(mScene),
                        mCurrentFrame(0),
                        mOutlineInfo(),
-                       mPickedEntity(~0u)
+                       mPickedEntity(~0u),
+                       mOnInfoLog([](auto message) { log::file.Info("{}", message); }),
+                       mOnWarningLog([](auto message) { log::file.Warning("{}", message); }),
+                       mOnErrorLog([](auto message) { log::file.Error("{}", message); })
     {
     }
 
-    Engine::Engine(Engine &&other) noexcept : mContext(std::move(other.mContext)),
+    Engine::Engine(Engine &&other) noexcept : mSpecification(other.mSpecification),
+                                              mContext(std::move(other.mContext)),
                                               mSwapchain(std::move(other.mSwapchain)),
                                               mImGuiBackend(std::move(other.mImGuiBackend)),
                                               mTransferManager(std::move(other.mTransferManager)),
@@ -91,6 +95,7 @@ namespace kailux
     {
         if (this != &other)
         {
+            mSpecification = other.mSpecification;
             mContext = std::move(other.mContext);
             mSwapchain = std::move(other.mSwapchain);
             mImGuiBackend = std::move(other.mImGuiBackend);
@@ -155,7 +160,15 @@ namespace kailux
     Engine Engine::create(Window &window, EngineSpecification specification)
     {
         Engine engine;
+
+        engine.mSpecification = specification;
+        if (engine.mSpecification.renderMode == RenderMode::Editor)
+            engine.mSpecification.useImgui = true;
+
         engine.CreateRenderingContext(window);
+        if (!engine.IsEditor())
+            engine.CheckRuntimePresentSupport();
+
         OneTimeCommand::create_command_pools(engine.mContext);
         engine.CreateMainPass();
         engine.CreateSkybox();
@@ -176,8 +189,12 @@ namespace kailux
         engine.CreateFrameResources();
 
         engine.SeedDefaultTextures();
-        engine.CreateImGui(window);
-        engine.AcquireViewTextureIds();
+
+        if (engine.UsesImGui())
+            engine.CreateImGui(window);
+        if (engine.IsEditor())
+            engine.AcquireViewTextureIds();
+
         engine.CreateScene(window);
         engine.CreateAssetPipeline();
         engine.CreatePhysicsSystem();
@@ -186,9 +203,9 @@ namespace kailux
         return engine;
     }
 
-    void Engine::SetOnEditorRender(OnEditorRender &&callback)
+    void Engine::SetOnImGuiRender(OnImGuiRender &&callback)
     {
-        mOnEditorRender = std::move(callback);
+        mOnImGuiRender = std::move(callback);
     }
 
     CameraData Engine::GetCameraData() const
@@ -615,6 +632,46 @@ namespace kailux
             ImGuiBackend::get_texture_id_from_texture(mSimulationView.GetPresentedTexture()));
     }
 
+    void Engine::CheckRuntimePresentSupport() const
+    {
+        constexpr vk::FormatFeatureFlags kRequired{
+            vk::FormatFeatureFlagBits::eBlitSrc |
+            vk::FormatFeatureFlagBits::eBlitDst |
+            vk::FormatFeatureFlagBits::eSampledImageFilterLinear
+        };
+
+        const auto features{
+            mContext.GetPhysicalDevice().getFormatProperties(mSwapchain.GetFormat()).optimalTilingFeatures
+        };
+        if ((features & kRequired) != kRequired)
+            throw std::runtime_error("Runtime mode: the swapchain format does not support blitting");
+
+        const auto capabilities{
+            mContext.GetPhysicalDevice().getSurfaceCapabilitiesKHR(mContext.GetSurface())
+        };
+        if (!(capabilities.supportedUsageFlags & vk::ImageUsageFlagBits::eTransferDst))
+            throw std::runtime_error("Runtime mode: swapchain images cannot be used as a transfer destination");
+    }
+
+    bool Engine::IsEditor() const
+    {
+        return mSpecification.renderMode == RenderMode::Editor;
+    }
+
+    bool Engine::UsesImGui() const
+    {
+        return mSpecification.useImgui;
+    }
+
+    entt::entity Engine::GetViewCamera() const
+    {
+        if (!IsEditor())
+            if (const auto primary{mScene.GetPrimaryCamera()}; primary != entt::null)
+                return primary;
+
+        return mScene.GetSceneCamera();
+    }
+
     void Engine::Submit(const FrameData &frame, vk::Semaphore imageAvailableSemaphore,
                         vk::Semaphore renderFinishedSemaphore) const
     {
@@ -627,7 +684,7 @@ namespace kailux
         vk::SemaphoreSubmitInfo signalInfo{
             renderFinishedSemaphore,
             1,
-            vk::PipelineStageFlagBits2::eAllGraphics
+            vk::PipelineStageFlagBits2::eAllCommands
         };
 
         vk::CommandBufferSubmitInfo cmdInfo{frame.GetCommandBuffer()};
@@ -648,7 +705,8 @@ namespace kailux
         const auto &sceneView{mSceneViews[mCurrentFrame]};
 
         frame.Reset(mContext);
-        ReadOutputBuffers(frame);
+        if (IsEditor())
+            ReadOutputBuffers(frame);
 
         const auto acquired{mSwapchain.Acquire()};
         if (!acquired)
@@ -656,6 +714,12 @@ namespace kailux
             RecreateSwapchainResources(window);
             return;
         }
+
+        if (!IsEditor())
+            SetSceneViewExtent({
+                static_cast<int>(mSwapchain.GetExtent().width),
+                static_cast<int>(mSwapchain.GetExtent().height)
+            });
 
         if (const auto extent{mSceneResize.Poll(sceneView.GetExtent())})
             ResizeSceneView(*extent);
@@ -665,13 +729,14 @@ namespace kailux
                 ResizeSimulationView(*extent);
 
         const auto sceneExtent{sceneView.GetVkExtent()};
+        const auto viewCamera{GetViewCamera()};
 
         const auto renderFinishedSemaphore = mSwapchain.GetPresentSemaphore(acquired->imageIndex); {
             CommandRecorder recorder(frame.GetCommandBuffer());
 
             mDirectionalShadowSets[details::kSceneViewCameraIndex].Update(
                mScene,
-               mScene.GetSceneCamera(),
+               viewCamera,
                mSceneViews[mCurrentFrame].GetExtent()
                );
             mDirectionalShadowSets[details::kSimulationViewCameraIndex].Update(
@@ -679,14 +744,20 @@ namespace kailux
                 mSimulationViewActive ? mScene.GetPrimaryCamera() : entt::null,
                 mSimulationView.GetExtent()
             );
-            mPointShadowSets[details::kSceneViewCameraIndex].Update(mScene, mScene.GetSceneCamera());
+            mPointShadowSets[details::kSceneViewCameraIndex].Update(mScene, viewCamera);
             mPointShadowSets[details::kSimulationViewCameraIndex].Update(
                 mScene,
                 mSimulationViewActive ? mScene.GetPrimaryCamera() : entt::null
             );
 
             UpdateFrameBuffers(frame, sceneView, recorder);
-            ExecuteCulling(frame, recorder, mScene.GetSceneCamera(), sceneExtent, CullingPreset::SceneView);
+            ExecuteCulling(
+                frame,
+                recorder,
+                viewCamera,
+                sceneExtent,
+                IsEditor() ? CullingPreset::SceneView : CullingPreset::SimulationView
+                );
 
             TransitionForShadowPass(frame, recorder);
             for (uint32_t view{}; view < details::kMaxCameraViews; ++view)
@@ -749,110 +820,16 @@ namespace kailux
 
             recorder.EndRendering();
 
-            TransitionForGizmoPass(sceneView, recorder);
-
-            const std::array gizmoAttachments{
-                ColorAttachmentInfo(
-                    sceneView.GetColorTexture().GetImageView(),
-                    sceneView.GetResolveView(),
-                    vk::ImageLayout::eColorAttachmentOptimal,
-                    vk::AttachmentLoadOp::eLoad,
-                    vk::AttachmentStoreOp::eStore,
-                    {},
-                    sceneView.IsMultisampled()
-                        ? vk::ResolveModeFlagBits::eAverage
-                        : vk::ResolveModeFlagBits::eNone
-                ),
-                ColorAttachmentInfo(
-                    sceneView.GetIdTexture().GetImageView(),
-                    {},
-                    vk::ImageLayout::eColorAttachmentOptimal,
-                    vk::AttachmentLoadOp::eLoad,
-                    vk::AttachmentStoreOp::eStore,
-                    {}
-                )
-            };
-
-            recorder.BeginRendering({
-                gizmoAttachments,
-                sceneExtent,
-                sceneView.GetDepthTexture().GetImageView(),
-                vk::ImageLayout::eDepthAttachmentOptimal,
-                vk::AttachmentLoadOp::eLoad,
-                {}
-            });
-
-            RecordGizmos(frame, recorder);
-            recorder.EndRendering();
-
-            TransitionForOutlinePass(sceneView, recorder, acquired->imageIndex);
-
-            const std::array outlineAttachment{
-                ColorAttachmentInfo(
-                    sceneView.GetPresentedTexture().GetImageView(),
-                    {},
-                    vk::ImageLayout::eColorAttachmentOptimal,
-                    vk::AttachmentLoadOp::eLoad,
-                    vk::AttachmentStoreOp::eStore,
-                    {}
-                )
-            };
-
-            recorder.BeginRendering({
-                outlineAttachment,
-                sceneExtent,
-                {},
-                vk::ImageLayout::eUndefined,
-                {}
-            });
-
-            RecordOutline(frame, recorder);
-            recorder.EndRendering();
-
-            TransitionForPickerAndPostProcess(frame, sceneView, recorder);
-
-            RecordPicker(frame, recorder);
-
-            const std::array pickerMemBarrier{frame.GetPickerBufferMemoryBarrier()};
-            recorder.BufferMemoryBarriers(pickerMemBarrier);
-
-            if (mSimulationViewActive &&
-                mSimulationView.GetExtent().x > 0 &&
-                mSimulationView.GetExtent().y > 0
-            )
-                RenderSimulationView(frame, recorder);
-
-            const std::array imguiOverlay{
-                ColorAttachmentInfo
-                (mSwapchain.GetImageView(acquired->imageIndex),
-                 {},
-                 vk::ImageLayout::eColorAttachmentOptimal,
-                 vk::AttachmentLoadOp::eLoad,
-                 vk::AttachmentStoreOp::eStore,
-                 vk::ClearColorValue{std::array{0.f, 0.f, 0.f, 1.f}}
-                )
-            };
-
-            recorder.BeginRendering({
-                imguiOverlay,
-                mSwapchain.GetExtent(),
-                {},
-                vk::ImageLayout::eUndefined,
-                vk::AttachmentLoadOp::eClear,
-                vk::RenderingFlagBits::eContentsSecondaryCommandBuffers
-            });
-
-            RecordImGuiData(frame);
-            recorder.GetCommandBuffer().executeCommands(frame.GetImGuiCommandBuffer());
-
-            recorder.EndRendering();
-
-            TransitionForPresent(recorder, acquired->imageIndex);
+            if (IsEditor())
+                RecordEditorPasses(frame, recorder, sceneView, acquired->imageIndex);
+            else
+                RecordRuntimePresent(frame, recorder, sceneView, acquired->imageIndex);
         }
 
         Submit(mFrames[mCurrentFrame], acquired->imageAvailableSemaphore, renderFinishedSemaphore);
 
-        mImGuiBackend.UpdatePlatform();
+        if (UsesImGui())
+            mImGuiBackend.UpdatePlatform();
 
         if (!mSwapchain.Present(mContext, acquired->imageIndex, renderFinishedSemaphore))
             RecreateSwapchainResources(window);
@@ -1119,8 +1096,9 @@ namespace kailux
                 kSceneSamples,
                 true
             });
-            view.SetTextureId(
-                ImGuiBackend::get_texture_id_from_texture(view.GetPresentedTexture()));
+            if (IsEditor())
+                view.SetTextureId(
+                    ImGuiBackend::get_texture_id_from_texture(view.GetPresentedTexture()));
         }
 
         for (uint32_t i{}; i < details::kFramesInFlight; ++i)
@@ -1145,8 +1123,9 @@ namespace kailux
             false
         });
 
-        mSimulationView.SetTextureId(
-            ImGuiBackend::get_texture_id_from_texture(mSimulationView.GetPresentedTexture()));
+        if (IsEditor())
+            mSimulationView.SetTextureId(
+                ImGuiBackend::get_texture_id_from_texture(mSimulationView.GetPresentedTexture()));
     }
 
     void Engine::RetireViews()
@@ -1422,6 +1401,47 @@ namespace kailux
         });
     }
 
+    void Engine::TransitionForBlit(const RenderTarget &sceneView, const CommandRecorder &recorder,
+        uint32_t imageIndex) const
+    {
+        recorder.ApplyImageBarrier({
+            sceneView.GetPresentedTexture().GetImage(),
+            vk::ImageLayout::eColorAttachmentOptimal,
+            vk::ImageLayout::eTransferSrcOptimal,
+            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            vk::PipelineStageFlagBits2::eBlit,
+            vk::AccessFlagBits2::eColorAttachmentWrite,
+            vk::AccessFlagBits2::eTransferRead
+        });
+
+        recorder.ApplyImageBarrier({
+            mSwapchain.GetImage(imageIndex),
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eTransferDstOptimal,
+            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            vk::PipelineStageFlagBits2::eBlit,
+            vk::AccessFlagBits2::eNone,
+            vk::AccessFlagBits2::eTransferWrite
+        });
+    }
+
+    void Engine::TransitionAfterBlit(const CommandRecorder &recorder, uint32_t imageIndex) const
+    {
+        const bool overlay{UsesImGui()};
+
+        recorder.ApplyImageBarrier({
+            mSwapchain.GetImage(imageIndex),
+            vk::ImageLayout::eTransferDstOptimal,
+            overlay ? vk::ImageLayout::eColorAttachmentOptimal : vk::ImageLayout::ePresentSrcKHR,
+            vk::PipelineStageFlagBits2::eBlit,
+            overlay ? vk::PipelineStageFlagBits2::eColorAttachmentOutput : vk::PipelineStageFlagBits2::eBottomOfPipe,
+            vk::AccessFlagBits2::eTransferWrite,
+            overlay
+                ? vk::AccessFlagBits2::eColorAttachmentRead | vk::AccessFlagBits2::eColorAttachmentWrite
+                : vk::AccessFlagBits2::eNone
+        });
+    }
+
     void Engine::RecordMeshData(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex, bool writeIds) const
     {
         const auto cmd = recorder.GetCommandBuffer();
@@ -1589,7 +1609,8 @@ namespace kailux
         );
 
         mImGuiBackend.BeginFrame();
-        mOnEditorRender(mScene);
+        if (mOnImGuiRender)
+            mOnImGuiRender(mScene);
         mImGuiBackend.EndFrame();
 
         CommandRecorder recorder(frame.GetImGuiCommandBuffer(), inheritanceInfo);
@@ -1675,6 +1696,142 @@ namespace kailux
         });
     }
 
+    void Engine::RecordEditorPasses(FrameData &frame, CommandRecorder &recorder, const RenderTarget &sceneView,
+        uint32_t imageIndex)
+    {
+        const auto sceneExtent{sceneView.GetVkExtent()};
+        TransitionForGizmoPass(sceneView, recorder);
+        const std::array gizmoAttachments{
+            ColorAttachmentInfo(
+                sceneView.GetColorTexture().GetImageView(),
+                sceneView.GetResolveView(),
+                vk::ImageLayout::eColorAttachmentOptimal,
+                vk::AttachmentLoadOp::eLoad,
+                vk::AttachmentStoreOp::eStore,
+                {},
+                sceneView.IsMultisampled()
+                    ? vk::ResolveModeFlagBits::eAverage
+                    : vk::ResolveModeFlagBits::eNone
+            ),
+            ColorAttachmentInfo(
+                sceneView.GetIdTexture().GetImageView(),
+                {},
+                vk::ImageLayout::eColorAttachmentOptimal,
+                vk::AttachmentLoadOp::eLoad,
+                vk::AttachmentStoreOp::eStore,
+                {}
+            )
+        };
+        recorder.BeginRendering({
+            gizmoAttachments,
+            sceneExtent,
+            sceneView.GetDepthTexture().GetImageView(),
+            vk::ImageLayout::eDepthAttachmentOptimal,
+            vk::AttachmentLoadOp::eLoad,
+            {}
+        });
+        RecordGizmos(frame, recorder);
+        recorder.EndRendering();
+        TransitionForOutlinePass(sceneView, recorder, imageIndex);
+        const std::array outlineAttachment{
+            ColorAttachmentInfo(
+                sceneView.GetPresentedTexture().GetImageView(),
+                {},
+                vk::ImageLayout::eColorAttachmentOptimal,
+                vk::AttachmentLoadOp::eLoad,
+                vk::AttachmentStoreOp::eStore,
+                {}
+            )
+        };
+        recorder.BeginRendering({
+            outlineAttachment,
+            sceneExtent,
+            {},
+            vk::ImageLayout::eUndefined,
+            {}
+        });
+        RecordOutline(frame, recorder);
+        recorder.EndRendering();
+        TransitionForPickerAndPostProcess(frame, sceneView, recorder);
+        RecordPicker(frame, recorder);
+        const std::array pickerMemBarrier{frame.GetPickerBufferMemoryBarrier()};
+        recorder.BufferMemoryBarriers(pickerMemBarrier);
+        if (mSimulationViewActive &&
+            mSimulationView.GetExtent().x > 0 &&
+            mSimulationView.GetExtent().y > 0
+        )
+            RenderSimulationView(frame, recorder);
+        RecordImGuiPass(frame, recorder, imageIndex);
+        TransitionForPresent(recorder, imageIndex);
+    }
+
+    void Engine::RecordRuntimePresent(const FrameData &frame, CommandRecorder &recorder, const RenderTarget &sceneView,
+        uint32_t imageIndex)
+    {
+        TransitionForBlit(sceneView, recorder, imageIndex);
+        const auto sourceExtent{sceneView.GetVkExtent()};
+        const auto targetExtent{mSwapchain.GetExtent()};
+        constexpr vk::ImageSubresourceLayers kColorLayer{vk::ImageAspectFlagBits::eColor, 0, 0, 1};
+        const vk::ImageBlit2 region{
+            kColorLayer,
+            std::array{
+                vk::Offset3D{0, 0, 0},
+                vk::Offset3D{static_cast<int32_t>(sourceExtent.width), static_cast<int32_t>(sourceExtent.height), 1}
+            },
+            kColorLayer,
+            std::array{
+                vk::Offset3D{0, 0, 0},
+                vk::Offset3D{static_cast<int32_t>(targetExtent.width), static_cast<int32_t>(targetExtent.height), 1}
+            }
+        };
+
+        const bool sameSize{
+            sourceExtent.width == targetExtent.width &&
+            sourceExtent.height == targetExtent.height
+        };
+        const vk::BlitImageInfo2 blitInfo{
+            sceneView.GetPresentedTexture().GetImage(),
+            vk::ImageLayout::eTransferSrcOptimal,
+            mSwapchain.GetImage(imageIndex),
+            vk::ImageLayout::eTransferDstOptimal,
+            1,
+            &region,
+            sameSize ? vk::Filter::eNearest : vk::Filter::eLinear
+        };
+        recorder.GetCommandBuffer().blitImage2(blitInfo);
+        TransitionAfterBlit(recorder, imageIndex);
+        if (UsesImGui())
+        {
+            RecordImGuiPass(frame, recorder, imageIndex);
+            TransitionForPresent(recorder, imageIndex);
+        }
+    }
+
+    void Engine::RecordImGuiPass(const FrameData &frame, CommandRecorder &recorder, uint32_t imageIndex)
+    {
+        const std::array imguiOverlay{
+            ColorAttachmentInfo
+            (mSwapchain.GetImageView(imageIndex),
+             {},
+             vk::ImageLayout::eColorAttachmentOptimal,
+             vk::AttachmentLoadOp::eLoad,
+             vk::AttachmentStoreOp::eStore,
+             vk::ClearColorValue{std::array{0.f, 0.f, 0.f, 1.f}}
+            )
+        };
+        recorder.BeginRendering({
+            imguiOverlay,
+            mSwapchain.GetExtent(),
+            {},
+            vk::ImageLayout::eUndefined,
+            vk::AttachmentLoadOp::eClear,
+            vk::RenderingFlagBits::eContentsSecondaryCommandBuffers
+        });
+        RecordImGuiData(frame);
+        recorder.GetCommandBuffer().executeCommands(frame.GetImGuiCommandBuffer());
+        recorder.EndRendering();
+    }
+
     CameraData Engine::BuildCameraData(entt::entity entity, glm::ivec2 extent) const
     {
         const auto& camera{mScene.GetEntityRegistry().get<CameraComponent>(entity)};
@@ -1749,7 +1906,7 @@ namespace kailux
 
         std::array<CameraData, details::kMaxCameras + details::kMaxCameraViews> cameras{};
         cameras[details::kSceneViewCameraIndex] =
-            BuildCameraData(mScene.GetSceneCamera(), sceneExtent);
+            BuildCameraData(GetViewCamera(), sceneExtent);
 
         if (const auto primary{mScene.GetPrimaryCamera()}; primary != entt::null)
             cameras[details::kSimulationViewCameraIndex] =
