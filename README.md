@@ -62,4 +62,4 @@ cd build/debug/spectrum
 | WASD, Space, Ctrl | Move the primary camera (while mouse look is on) |
 | Tab | Switch to the next camera |
 | P | Pause / resume the simulation |
-The scene needs a camera; without one, Spectrum shows the scene from the editor camera and the simulation does not start.
+Spectrum renders the scene from the primary camera with the highest MSAA level the GPU supports(can be changed in `Context::GetMaxUsableSampleCount()`), the same way as the simulation view in Prism. The scene needs a camera; without one, Spectrum shows a black screen and the simulation does not start.
