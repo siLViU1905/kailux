@@ -10,8 +10,8 @@ int main()
 
         const kailux::ApplicationSpecification specification{
             {
-                700,
-                400,
+                1280,
+                720,
                 "Kailux"
             },
             2,
