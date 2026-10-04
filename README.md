@@ -2,16 +2,18 @@
 
 A lightweight, modern C++ rendering engine.
 
-## Kailux and Prism
+## Kailux, Prism and Spectrum
 
-The project is split in two parts:
+The project is split in three parts:
 
 - **kailux** is the engine itself: rendering (Vulkan), scenes, physics, scripting, and the application core (window, main loop, layer stack). It is built as a library.
 - **prism** is the editor built on top of Kailux. It is a layer (`EditorLayer`) pushed onto a Kailux `Application`, providing the viewport, entity hierarchy, entity editor, asset browser, console and simulation view.
+- **spectrum** is the runtime: it plays a saved scene full-window, without the editor. It is a layer (`RuntimeLayer`) pushed onto a Kailux `Application` started in runtime mode.
 
 ```
 kailux - the engine library
 prism  - the editor executable
+spectrum  - the runtime executable
 ```
 
 ## Requirements
@@ -45,4 +47,19 @@ scripts/linux_build.sh release
 scripts/linux_build.sh debug clean
 ```
 
-In the build folder (`build/[debug|release]/prism`) you will find the executable, `prism`.
+In the build folder you will find the executables: `build/[debug|release]/prism/prism` and `build/[debug|release]/spectrum/spectrum`.
+Each executable gets its own copy of `shaders/` and `assets/` next to it, so run it from its own folder.
+## Running a scene with Spectrum
+Save a scene from Prism (`.klx`), then pass it to Spectrum:
+```bash
+cd build/debug/spectrum
+./spectrum path/to/scene.klx
+```
+| Input | Action |
+|---|---|
+| Middle mouse button | Toggle mouse look |
+| Escape | Release the mouse |
+| WASD, Space, Ctrl | Move the primary camera (while mouse look is on) |
+| Tab | Switch to the next camera |
+| P | Pause / resume the simulation |
+The scene needs a camera; without one, Spectrum shows the scene from the editor camera and the simulation does not start.

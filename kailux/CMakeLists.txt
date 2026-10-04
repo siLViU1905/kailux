@@ -69,6 +69,7 @@ add_library(kailux STATIC
         src/core/layers/Layer.cpp
         src/core/layers/LayerStack.cpp
         src/core/Application.cpp
+        src/core/layers/RuntimeLayer.cpp
 )
 
 target_compile_definitions(kailux PUBLIC
