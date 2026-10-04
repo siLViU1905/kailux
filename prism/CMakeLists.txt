@@ -14,7 +14,7 @@ add_executable(prism
         main.cpp
 )
 
-add_dependencies(prism CopyShaders CopyAssets)
+kailux_copy_resources(prism)
 
 target_precompile_headers(prism REUSE_FROM kailux)
 

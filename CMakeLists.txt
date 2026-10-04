@@ -87,23 +87,28 @@ find_package(shaderc REQUIRED)
 find_package(TBB REQUIRED)
 find_package(meshoptimizer REQUIRED)
 
-set(SHADERS_BINARY_DIR "${CMAKE_BINARY_DIR}/prism/shaders")
-add_custom_target(CopyShaders ALL
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_CURRENT_SOURCE_DIR}/kailux/src/core/shaders"
-        "${SHADERS_BINARY_DIR}"
-        COMMENT "Copying shaders folder to ${SHADERS_BINARY_DIR}"
-        VERBATIM
-)
+set(KAILUX_SHADERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/kailux/src/core/shaders")
+set(KAILUX_ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
 
-set(ASSETS_BINARY_DIR "${CMAKE_BINARY_DIR}/prism/assets")
-add_custom_target(CopyAssets ALL
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_CURRENT_SOURCE_DIR}/assets"
-        "${ASSETS_BINARY_DIR}"
-        COMMENT "Copying assets folder to ${ASSETS_BINARY_DIR}"
-        VERBATIM
-)
+function(kailux_copy_resources target)
+    add_custom_target(${target}_resources
+            COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+            "${KAILUX_SHADERS_DIR}"
+            "$<TARGET_FILE_DIR:${target}>/shaders"
+            COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+            "${KAILUX_ASSETS_DIR}"
+            "$<TARGET_FILE_DIR:${target}>/assets"
+            COMMENT "Copying shaders and assets next to ${target}"
+            VERBATIM
+    )
+    add_dependencies(${target} ${target}_resources)
+
+    set_target_properties(${target} PROPERTIES
+            VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:${target}>"
+    )
+endfunction()
+
 
 add_subdirectory(kailux)
 add_subdirectory(prism)
+add_subdirectory(spectrum)
