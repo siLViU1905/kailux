@@ -7,12 +7,12 @@ namespace kailux
         const auto& windowInfo{specification.window};
         mWindow = Window::create(windowInfo.width, windowInfo.height, windowInfo.title);
         mWindow.UpdateUserPointer();
-        mEngine = Engine::create(mWindow);
+        mEngine = Engine::create(mWindow, specification.engine);
 
         ThreadDispatcher::kMaxThreads = specification.workerThreads;
         mThreadDispatcher = ThreadDispatcher::get();
 
-        mEngine.SetOnEditorRender([this](Scene& scene)
+        mEngine.SetOnImGuiRender([this](Scene& scene)
         {
             RenderImGui(scene);
         });
