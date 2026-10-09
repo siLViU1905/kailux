@@ -80,8 +80,11 @@ void main()
 
     fragIdx = mData.idx;
 
-    fragNormal = normalize(mat3(model) * aNormal);
-    fragTangent = vec4(normalize(mat3(model) * aTangent.xyz), aTangent.w);
+    mat3 modelMat3 = mat3(model);
+    fragNormal = normalize(transpose(inverse(modelMat3)) * aNormal);
+
+    float handedness = aTangent.w * (determinant(modelMat3) < 0.0 ? -1.0 : 1.0);
+    fragTangent = vec4(modelMat3 * aTangent.xyz, handedness);
 
     fragCameraIdx = cameraIdx;
     CameraData camera = cameras[cameraIdx];

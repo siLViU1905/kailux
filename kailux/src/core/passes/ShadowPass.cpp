@@ -1,6 +1,7 @@
 #include "ShadowPass.h"
 
 #include "core/mesh/Vertex.h"
+#include "core/Shader.h"
 
 namespace kailux
 {
@@ -22,11 +23,13 @@ namespace kailux
         ShadowPass pass;
         pass.CreateDescriptorLayout(context, kDescriptorLayoutBindings);
         pass.CreateDescriptorPool(context, maxFrames, kDescriptorPoolSizes);
+
+        GraphicsShaderInfo shaderInfo;
+        shaderInfo.emplace_back(vk::ShaderStageFlagBits::eVertex, kVertexShaderPath.data());
         pass.CreatePipeline(
             context,
             swapchain,
-            kVertexShaderPath,
-            {},
+            shaderInfo,
             make_pipeline_info(),
             kPushConstantRanges
         );

@@ -64,7 +64,9 @@ layout (location = 12) in float fragViewDepth;
 layout (location = 13) in flat uint fragCameraIdx;
 
 layout (location = 0) out vec4 outColor;
+#ifdef WRITE_IDS
 layout (location = 1) out uint outEntityId;
+#endif
 
 vec3 toneMapACES(vec3 color);
 
@@ -166,12 +168,16 @@ void main()
     float ao        = texAO * fragAO;
 
     vec3 Ng = normalize(fragNormal);
-    vec3 Tg = normalize(fragTangent.xyz - dot(fragTangent.xyz, Ng) * Ng);
-    vec3 Bg = cross(Ng, Tg) * fragTangent.w;
-    mat3 TBN = mat3(Tg, Bg, Ng);
-
-    vec3 normalFromMap = texNormal * 2.0 - 1.0;
     vec3 N = Ng;
+    vec3 T = fragTangent.xyz - dot(fragTangent.xyz, Ng) * Ng;
+    float tLength = length(T);
+    if (tLength > 1e-5)
+    {
+        T /= tLength;
+        vec3 B = cross(Ng, T) * fragTangent.w;
+        N = normalize(mat3(T, B, Ng) * (texNormal * 2.0 - 1.0));
+    }
+    
     vec3 V = normalize(viewPos - fragPos);
     vec3 R = reflect(-V, N);
 
@@ -249,7 +255,9 @@ void main()
 
     outColor = vec4(color, 1.0);
 
+    #ifdef WRITE_IDS
     outEntityId = fragIdx;
+    #endif
 }
 
 vec3 toneMapACES(vec3 color)

@@ -3,6 +3,7 @@
 #include "../descriptor/DescriptorSet.h"
 #include "../texture/ImageLoader.h"
 #include "../texture/TextureAllocator.h"
+#include "core/Shader.h"
 
 namespace kailux
 {
@@ -36,14 +37,18 @@ namespace kailux
         SkyboxPass pass;
         pass.CreateDescriptorLayout(context, kDescriptorLayoutBindings);
         pass.CreateDescriptorPool(context, maxFrames, kDescriptorPoolSizes);
+
+        GraphicsShaderInfo shaderInfo;
+        shaderInfo.emplace_back(vk::ShaderStageFlagBits::eVertex, kVertexShaderPath.data());
+        shaderInfo.emplace_back(vk::ShaderStageFlagBits::eFragment, kFragmentShaderPath.data());
         pass.CreatePipeline(
             context,
             swapchain,
-            kVertexShaderPath,
-            kFragmentShaderPath,
+            shaderInfo,
             make_pipeline_info(swapchain, vk::SampleCountFlagBits::e1, true),
             kPushConstantRanges
         );
+
         pass.CreateMultisampledPipeline(
             context,
             swapchain,

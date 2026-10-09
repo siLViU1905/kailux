@@ -34,7 +34,7 @@ namespace kailux
         ShaderModules result;
         result.modules.reserve(stages.size());
 
-        for (const auto &[stage, path]: stages)
+        for (const auto &[stage, path, macros]: stages)
         {
             auto cacheFile = path.substr(0, path.find_last_of('.'));
             cacheFile += ".spv";
@@ -46,7 +46,10 @@ namespace kailux
             }
             else
             {
-                spirv = Shader::compile_from_file(path, stage);
+                ShaderCompileInfo compileInfo;
+                compileInfo.macros = macros;
+
+                spirv = Shader::compile_from_file(path, stage, compileInfo);
                 Shader::cache_spirv(cacheFile, spirv);
             }
             auto module = Shader::create_module(context, spirv);

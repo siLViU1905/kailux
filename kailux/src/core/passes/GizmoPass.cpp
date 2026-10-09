@@ -1,5 +1,6 @@
 #include "GizmoPass.h"
 #include "../gizmo/GizmoVertex.h"
+#include "core/Shader.h"
 
 namespace kailux
 {
@@ -23,11 +24,14 @@ namespace kailux
         GizmoPass pass;
         pass.CreateDescriptorLayout(context, kDescriptorLayoutBindings);
         pass.CreateDescriptorPool(context, maxFrames, kDescriptorPoolSizes);
+
+        GraphicsShaderInfo shaderInfo;
+        shaderInfo.emplace_back(vk::ShaderStageFlagBits::eVertex, kVertexShaderPath.data());
+        shaderInfo.emplace_back(vk::ShaderStageFlagBits::eFragment, kFragmentShaderPath.data());
         pass.CreatePipeline(
             context,
             swapchain,
-            kVertexShaderPath,
-            kFragmentShaderPath,
+            shaderInfo,
             make_pipeline_info(swapchain, vk::SampleCountFlagBits::e1),
             kPushConstantRanges
         );
