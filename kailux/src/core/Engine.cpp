@@ -62,7 +62,7 @@ namespace kailux
                                               mInputSource(other.mInputSource),
                                               mMouseLookActive(other.mMouseLookActive),
                                               mSceneViews(std::move(other.mSceneViews)),
-                                              mSimulationView(std::move(other.mSimulationView)),
+                                              mSimulationViews(std::move(other.mSimulationViews)),
                                               mRetiredViews(std::move(other.mRetiredViews)),
                                               mSceneResize(other.mSceneResize),
                                               mSimulationResize(other.mSimulationResize),
@@ -115,7 +115,7 @@ namespace kailux
             mInputSource = other.mInputSource;
             mMouseLookActive = other.mMouseLookActive;
             mSceneViews = std::move(other.mSceneViews);
-            mSimulationView = std::move(other.mSimulationView);
+            mSimulationViews = std::move(other.mSimulationViews);
             mRetiredViews = std::move(other.mRetiredViews);
             mSceneResize = other.mSceneResize;
             mSimulationResize = other.mSimulationResize;
@@ -375,7 +375,7 @@ namespace kailux
 
     ImTextureID Engine::GetSimulationTextureId() const
     {
-        return mSimulationView.GetTextureId();
+        return GetCurrentSimulationView().GetTextureId();
     }
 
     void Engine::OnEvent(const Event &event, Window &window)
@@ -617,13 +617,15 @@ namespace kailux
 
         mSceneViewExtent = sceneViewExtent;
 
-        mSimulationView = RenderTarget::create(mContext, {
-            mSwapchain.GetFormat(),
-            mSwapchain.GetDepthFormat(),
-            initialExtent,
-            mSimulationSamples,
-            false
-        });
+        for (auto &view: mSimulationViews)
+            view = RenderTarget::create(mContext,
+                                        {
+                                            mSwapchain.GetFormat(),
+                                            mSwapchain.GetDepthFormat(),
+                                            initialExtent,
+                                            mSimulationSamples,
+                                            false
+                                        });
     }
 
     void Engine::AcquireViewTextureIds()
@@ -632,8 +634,9 @@ namespace kailux
             view.SetTextureId(
                 ImGuiBackend::get_texture_id_from_texture(view.GetPresentedTexture()));
 
-        mSimulationView.SetTextureId(
-            ImGuiBackend::get_texture_id_from_texture(mSimulationView.GetPresentedTexture()));
+        for (auto &view : mSimulationViews)
+            view.SetTextureId(
+                ImGuiBackend::get_texture_id_from_texture(view.GetPresentedTexture()));
     }
 
     void Engine::CheckRuntimePresentSupport() const
@@ -723,7 +726,7 @@ namespace kailux
             ResizeSceneView(*extent);
 
         if (mSimulationViewActive)
-            if (const auto extent{mSimulationResize.Poll(mSimulationView.GetExtent())})
+            if (const auto extent{mSimulationResize.Poll(GetCurrentSimulationView().GetExtent())})
                 ResizeSimulationView(*extent);
 
         const auto sceneExtent{sceneView.GetVkExtent()};
@@ -740,7 +743,7 @@ namespace kailux
             mDirectionalShadowSets[details::kSimulationViewCameraIndex].Update(
                 mScene,
                 mSimulationViewActive ? mScene.GetPrimaryCamera() : entt::null,
-                mSimulationView.GetExtent()
+                GetCurrentSimulationView().GetExtent()
             );
             mPointShadowSets[details::kSceneViewCameraIndex].Update(mScene, sceneCamera);
             mPointShadowSets[details::kSimulationViewCameraIndex].Update(
@@ -1063,20 +1066,23 @@ namespace kailux
 
         WaitIdle();
 
-        if (mSimulationView.GetTextureId())
-            mRetiredViews.push_back(std::move(mSimulationView));
+        for (auto &view : mSimulationViews)
+        {
+            if (view.GetTextureId())
+                mRetiredViews.push_back(std::move(view));
 
-        mSimulationView = RenderTarget::create(mContext, {
-            mSwapchain.GetFormat(),
-            mSwapchain.GetDepthFormat(),
-            extent,
-            mSimulationSamples,
-            false
-        });
+            view = RenderTarget::create(mContext, {
+                    mSwapchain.GetFormat(),
+                    mSwapchain.GetDepthFormat(),
+                    extent,
+                    mSimulationSamples,
+                    false
+                });
 
-        if (IsEditor())
-            mSimulationView.SetTextureId(
-                ImGuiBackend::get_texture_id_from_texture(mSimulationView.GetPresentedTexture()));
+            if (IsEditor())
+                view.SetTextureId(
+                    ImGuiBackend::get_texture_id_from_texture(view.GetPresentedTexture()));
+        }
     }
 
     void Engine::RetireViews()
@@ -1208,8 +1214,9 @@ namespace kailux
 
     void Engine::TransitionForSimulationPass(const CommandRecorder &recorder) const
     {
+        const auto& simulationView{GetCurrentSimulationView()};
         recorder.ApplyImageBarrier({
-            mSimulationView.GetColorTexture().GetImage(),
+            simulationView.GetColorTexture().GetImage(),
             vk::ImageLayout::eUndefined,
             vk::ImageLayout::eColorAttachmentOptimal,
             vk::PipelineStageFlagBits2::eTopOfPipe,
@@ -1219,7 +1226,7 @@ namespace kailux
         });
 
         recorder.ApplyImageBarrier({
-            mSimulationView.GetDepthTexture().GetImage(),
+            simulationView.GetDepthTexture().GetImage(),
             vk::ImageLayout::eUndefined,
             vk::ImageLayout::eDepthAttachmentOptimal,
             vk::PipelineStageFlagBits2::eTopOfPipe,
@@ -1229,9 +1236,9 @@ namespace kailux
             vk::ImageAspectFlagBits::eDepth
         });
 
-        if (mSimulationView.IsMultisampled())
+        if (simulationView.IsMultisampled())
             recorder.ApplyImageBarrier({
-                mSimulationView.GetPresentedTexture().GetImage(),
+                simulationView.GetPresentedTexture().GetImage(),
                 vk::ImageLayout::eUndefined,
                 vk::ImageLayout::eColorAttachmentOptimal,
                 vk::PipelineStageFlagBits2::eFragmentShader,
@@ -1356,7 +1363,7 @@ namespace kailux
     {
         if (hasSource)
             recorder.ApplyImageBarrier({
-                mSimulationView.GetPresentedTexture().GetImage(),
+                GetCurrentSimulationView().GetPresentedTexture().GetImage(),
                 vk::ImageLayout::eShaderReadOnlyOptimal,
                 vk::ImageLayout::eTransferSrcOptimal,
                 vk::PipelineStageFlagBits2::eFragmentShader,
@@ -1596,9 +1603,11 @@ namespace kailux
         if (primaryCamera == entt::null)
             return;
 
+        const auto& simulationView{GetCurrentSimulationView()};
+
         const vk::Extent2D extent{
-            static_cast<uint32_t>(mSimulationView.GetExtent().x),
-            static_cast<uint32_t>(mSimulationView.GetExtent().y)
+            static_cast<uint32_t>(simulationView.GetExtent().x),
+            static_cast<uint32_t>(simulationView.GetExtent().y)
         };
 
         recorder.BufferMemoryBarriers(frame.GetIndirectReadToWriteBarriers());
@@ -1608,13 +1617,13 @@ namespace kailux
 
         const std::array attachments{
             ColorAttachmentInfo{
-                mSimulationView.GetColorTexture().GetImageView(),
-                mSimulationView.GetResolveView(),
+                simulationView.GetColorTexture().GetImageView(),
+                simulationView.GetResolveView(),
                 vk::ImageLayout::eColorAttachmentOptimal,
                 vk::AttachmentLoadOp::eClear,
                 vk::AttachmentStoreOp::eStore,
                 vk::ClearColorValue{std::array{0.f, 0.f, 0.f, 1.f}},
-                mSimulationView.IsMultisampled()
+                simulationView.IsMultisampled()
                     ? vk::ResolveModeFlagBits::eAverage
                     : vk::ResolveModeFlagBits::eNone
             }
@@ -1623,7 +1632,7 @@ namespace kailux
         recorder.BeginRendering({
             attachments,
             extent,
-            mSimulationView.GetDepthTexture().GetImageView(),
+            simulationView.GetDepthTexture().GetImageView(),
             vk::ImageLayout::eDepthAttachmentOptimal,
             vk::AttachmentLoadOp::eClear
         });
@@ -1632,12 +1641,12 @@ namespace kailux
         recorder.SetScissor(extent);
 
         RecordMeshData(frame, recorder, details::kSimulationViewCameraIndex, false);
-        RecordSkybox(frame, recorder, details::kSimulationViewCameraIndex, mSimulationView.IsMultisampled());
+        RecordSkybox(frame, recorder, details::kSimulationViewCameraIndex, simulationView.IsMultisampled());
 
         recorder.EndRendering();
 
         recorder.ApplyImageBarrier({
-            mSimulationView.GetPresentedTexture().GetImage(),
+            simulationView.GetPresentedTexture().GetImage(),
             vk::ImageLayout::eColorAttachmentOptimal,
             vk::ImageLayout::eShaderReadOnlyOptimal,
             vk::PipelineStageFlagBits2::eColorAttachmentOutput,
@@ -1708,8 +1717,8 @@ namespace kailux
         const std::array pickerMemBarrier{frame.GetPickerBufferMemoryBarrier()};
         recorder.BufferMemoryBarriers(pickerMemBarrier);
         if (mSimulationViewActive &&
-            mSimulationView.GetExtent().x > 0 &&
-            mSimulationView.GetExtent().y > 0
+            GetCurrentSimulationView().GetExtent().x > 0 &&
+            GetCurrentSimulationView().GetExtent().y > 0
         )
             RenderSimulationView(frame, recorder);
         RecordImGuiPass(frame, recorder, imageIndex);
@@ -1720,8 +1729,8 @@ namespace kailux
     {
         const bool hasView{
             mScene.GetPrimaryCamera() != entt::null &&
-            mSimulationView.GetExtent().x > 0 &&
-            mSimulationView.GetExtent().y > 0
+            GetCurrentSimulationView().GetExtent().x > 0 &&
+            GetCurrentSimulationView().GetExtent().y > 0
         };
 
              RenderSimulationView(frame, recorder);
@@ -1729,7 +1738,7 @@ namespace kailux
         const auto swapchainImage{mSwapchain.GetImage(imageIndex)};
         if (hasView)
         {
-            const auto sourceExtent{mSimulationView.GetVkExtent()};
+            const auto sourceExtent{GetCurrentSimulationView().GetVkExtent()};
             const auto targetExtent{mSwapchain.GetExtent()};
             constexpr vk::ImageSubresourceLayers kColorLayer{vk::ImageAspectFlagBits::eColor, 0, 0, 1};
             const vk::ImageBlit2 region{
@@ -1749,7 +1758,7 @@ namespace kailux
                 sourceExtent.height == targetExtent.height
             };
             const vk::BlitImageInfo2 blitInfo{
-                mSimulationView.GetPresentedTexture().GetImage(),
+                GetCurrentSimulationView().GetPresentedTexture().GetImage(),
                 vk::ImageLayout::eTransferSrcOptimal,
                 swapchainImage,
                 vk::ImageLayout::eTransferDstOptimal,
@@ -1924,10 +1933,11 @@ namespace kailux
     void Engine::UpdateCameraBuffer(FrameData &frame, const RenderTarget &sceneView) const
     {
         const auto sceneExtent{sceneView.GetExtent()};
+        const auto& simulationView{GetCurrentSimulationView()};
 
         const auto simulationExtent{
-            (mSimulationView.GetExtent().x > 0 && mSimulationView.GetExtent().y > 0)
-                ? mSimulationView.GetExtent()
+            (simulationView.GetExtent().x > 0 && simulationView.GetExtent().y > 0)
+                ? simulationView.GetExtent()
                 : sceneExtent
         };
 

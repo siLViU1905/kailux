@@ -71,6 +71,11 @@ namespace kailux
         glm::ivec2  GetSceneViewExtent() const;
         ImTextureID GetSimulationTextureId() const;
 
+        decltype(auto) GetCurrentSimulationView(this auto&& self)
+        {
+            return self.mSimulationViews[self.mCurrentFrame];
+        }
+
         void OnEvent(const Event& event, Window& window);
         void Update(float deltaTime);
         void Render(const Window &window);
@@ -231,7 +236,7 @@ namespace kailux
         OnImGuiRender                              mOnImGuiRender;
 
         std::array<RenderTarget, details::kFramesInFlight> mSceneViews;
-        RenderTarget                                       mSimulationView;
+        std::array<RenderTarget, details::kFramesInFlight> mSimulationViews;
         std::vector<RenderTarget>                          mRetiredViews;
         ResizeDebouncer<>                                  mSceneResize;
         ResizeDebouncer<>                                  mSimulationResize;
