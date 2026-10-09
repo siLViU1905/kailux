@@ -1,4 +1,5 @@
 #include "ComputePicker.h"
+#include "core/Shader.h"
 
 namespace kailux
 {

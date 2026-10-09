@@ -33,6 +33,8 @@ namespace kailux
     {
         std::string_view shaderPath = info.computeShaderPath;
         std::string cacheFile{shaderPath.substr(0, shaderPath.find_last_of('.'))};
+        for (const auto &[name, value] : info.macros)
+            cacheFile += std::format("_{}_{}", name, value);
         cacheFile += ".spv";
         std::vector<uint32_t> spirv;
         if (std::filesystem::exists(cacheFile))

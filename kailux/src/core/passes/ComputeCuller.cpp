@@ -1,4 +1,5 @@
 #include "ComputeCuller.h"
+#include "core/Shader.h"
 
 namespace kailux
 {
