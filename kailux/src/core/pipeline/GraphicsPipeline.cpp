@@ -37,6 +37,8 @@ namespace kailux
         for (const auto &[stage, path, macros]: stages)
         {
             auto cacheFile = path.substr(0, path.find_last_of('.'));
+            for (const auto &[name, value] : macros)
+                cacheFile += std::format("_{}_{}", name, value);
             cacheFile += ".spv";
 
             const bool cacheValid{
