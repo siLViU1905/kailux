@@ -1,6 +1,7 @@
 #include "MainPass.h"
 
 #include "core/mesh/Vertex.h"
+#include "core/Shader.h"
 
 namespace kailux
 {
@@ -25,19 +26,24 @@ namespace kailux
         MainPass pass;
         pass.CreateDescriptorLayout(context, kDescriptorLayoutBindings);
         pass.CreateDescriptorPool(context, maxFrames, kDescriptorPoolSizes);
+
+        GraphicsShaderInfo shaderInfo;
+        shaderInfo.emplace_back(vk::ShaderStageFlagBits::eVertex, kVertexShaderPath.data());
+        std::vector<ShaderMacro> macros{{"WRITE_IDS", "1"}};
+        shaderInfo.emplace_back(vk::ShaderStageFlagBits::eFragment, kFragmentShaderPath.data(), std::move(macros));
         pass.CreatePipeline(
             context,
             swapchain,
-            kVertexShaderPath,
-            kFragmentShaderPath,
+            shaderInfo,
             make_pipeline_info(swapchain, vk::SampleCountFlagBits::e1),
             kPushConstantRanges
-            );
+        );
+
         pass.CreateNoIdPipeline(
             context,
             swapchain,
             kVertexShaderPath,
-            kNoIdFragmentShaderPath,
+            kFragmentShaderPath,
             make_no_id_pipeline_info(swapchain, context.GetMaxUsableSampleCount()),
             kPushConstantRanges
             );

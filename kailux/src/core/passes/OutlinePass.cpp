@@ -1,4 +1,5 @@
 #include "OutlinePass.h"
+#include "core/Shader.h"
 
 namespace kailux
 {
@@ -22,7 +23,11 @@ namespace kailux
         OutlinePass pass;
         pass.CreateDescriptorLayout(context, kDescriptorLayoutBindings);
         pass.CreateDescriptorPool(context, frameCount, kDescriptorPoolSizes);
-        pass.CreatePipeline(context, swapchain, kOutlineVertexShaderPath, kOutlineFragmentShaderPath, make_pipeline_info(swapchain), kPushConstantRanges);
+
+        GraphicsShaderInfo shaderInfo;
+        shaderInfo.emplace_back(vk::ShaderStageFlagBits::eVertex, kVertexShaderPath.data());
+        shaderInfo.emplace_back(vk::ShaderStageFlagBits::eFragment, kFragmentShaderPath.data());
+        pass.CreatePipeline(context, swapchain, shaderInfo, make_pipeline_info(swapchain), kPushConstantRanges);
         return pass;
     }
 
