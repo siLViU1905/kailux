@@ -185,6 +185,11 @@ namespace kailux
         void ResizeSimulationView(glm::ivec2 extent);
         void RetireViews();
 
+        decltype(auto) GetCurrentSimulationView(this auto&& self)
+        {
+            return self.mSimulationViews[self.mCurrentFrame];
+        }
+
         static constexpr float kMinRenderScale{0.25f};
 
         static glm::ivec2 apply_scale(glm::ivec2 extent, float scale);
@@ -231,7 +236,7 @@ namespace kailux
         OnImGuiRender                              mOnImGuiRender;
 
         std::array<RenderTarget, details::kFramesInFlight> mSceneViews;
-        RenderTarget                                       mSimulationView;
+        std::array<RenderTarget, details::kFramesInFlight> mSimulationViews;
         std::vector<RenderTarget>                          mRetiredViews;
         ResizeDebouncer<>                                  mSceneResize;
         ResizeDebouncer<>                                  mSimulationResize;
