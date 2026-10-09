@@ -71,11 +71,6 @@ namespace kailux
         glm::ivec2  GetSceneViewExtent() const;
         ImTextureID GetSimulationTextureId() const;
 
-        decltype(auto) GetCurrentSimulationView(this auto&& self)
-        {
-            return self.mSimulationViews[self.mCurrentFrame];
-        }
-
         void OnEvent(const Event& event, Window& window);
         void Update(float deltaTime);
         void Render(const Window &window);
@@ -189,6 +184,11 @@ namespace kailux
         void ResizeSceneView(glm::ivec2 extent);
         void ResizeSimulationView(glm::ivec2 extent);
         void RetireViews();
+
+        decltype(auto) GetCurrentSimulationView(this auto&& self)
+        {
+            return self.mSimulationViews[self.mCurrentFrame];
+        }
 
         static constexpr float kMinRenderScale{0.25f};
 

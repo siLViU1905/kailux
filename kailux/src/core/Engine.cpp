@@ -1733,7 +1733,9 @@ namespace kailux
             GetCurrentSimulationView().GetExtent().y > 0
         };
 
-             RenderSimulationView(frame, recorder);
+        if (hasView)
+            RenderSimulationView(frame, recorder);
+
         TransitionForBlit(recorder, imageIndex, hasView);
         const auto swapchainImage{mSwapchain.GetImage(imageIndex)};
         if (hasView)
