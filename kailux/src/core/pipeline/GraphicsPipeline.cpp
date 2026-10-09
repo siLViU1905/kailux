@@ -34,20 +34,32 @@ namespace kailux
         ShaderModules result;
         result.modules.reserve(stages.size());
 
-        for (const auto &[stage, path]: stages)
+        for (const auto &[stage, path, macros]: stages)
         {
             auto cacheFile = path.substr(0, path.find_last_of('.'));
+            for (const auto &[name, value] : macros)
+                cacheFile += std::format("_{}_{}", name, value);
             cacheFile += ".spv";
+
+            const bool cacheValid{
+                std::filesystem::exists(cacheFile) &&
+                std::filesystem::last_write_time(cacheFile) >= std::filesystem::last_write_time(path)
+            };
+
             std::vector<uint32_t> spirv;
-            if (std::filesystem::exists(cacheFile))
+            if (cacheValid)
             {
                 spirv = Shader::load_spirv(cacheFile);
                 log::console.Debug("Found cached spirv '{}'", cacheFile);
             }
             else
             {
-                spirv = Shader::compile_from_file(path, stage);
-                Shader::cache_spirv(cacheFile, spirv);
+                ShaderCompileInfo compileInfo;
+                compileInfo.macros = macros;
+                spirv = Shader::compile_from_file(path, stage, compileInfo);
+
+                if (!spirv.empty())
+                    Shader::cache_spirv(cacheFile, spirv);
             }
             auto module = Shader::create_module(context, spirv);
 

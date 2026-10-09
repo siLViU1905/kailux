@@ -3,10 +3,13 @@
 
 namespace kailux
 {
+    struct ShaderMacro;
+
     struct ShaderStageInfo
     {
-        vk::ShaderStageFlagBits stage{};
-        std::string             path;
+        vk::ShaderStageFlagBits  stage{};
+        std::string              path;
+        std::vector<ShaderMacro> macros;
     };
     using GraphicsShaderInfo = std::vector<ShaderStageInfo>;
 

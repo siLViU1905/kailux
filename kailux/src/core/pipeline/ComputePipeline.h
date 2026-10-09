@@ -3,9 +3,12 @@
 
 namespace kailux
 {
+    struct ShaderMacro;
+
     struct ComputeShaderInfo
     {
         std::string computeShaderPath;
+        std::vector<ShaderMacro> macros;
     };
 
     class ComputePipeline final : public Pipeline<ComputePipeline>

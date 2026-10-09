@@ -56,16 +56,10 @@ namespace kailux
     }
 
     void GraphicsPass::CreatePipeline(const Context &context, const Swapchain &swapchain,
-                                      std::string_view vertShaderPath, std::string_view fragShaderPath,
+                                      const GraphicsShaderInfo &shaderInfo,
                                       const PipelineInfo &info,
                                       std::span<const PushConstantRangeInfo> pushConstantRanges)
     {
-        GraphicsShaderInfo shaderInfo;
-        if (!vertShaderPath.empty())
-            shaderInfo.emplace_back(vk::ShaderStageFlagBits::eVertex, vertShaderPath.data());
-        if (!fragShaderPath.empty())
-            shaderInfo.emplace_back(vk::ShaderStageFlagBits::eFragment, fragShaderPath.data());
-
         mPipeline = GraphicsPipeline::create(
             context,
             swapchain,
