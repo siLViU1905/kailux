@@ -123,6 +123,12 @@ namespace kailux
             objectLayer
         };
 
+        if (info.options.bodyType != PhysicsBodyType::Static || info.options.canBecomeDynamic)
+        {
+            settings.mMotionQuality = JPH::EMotionQuality::LinearCast;
+            settings.mEnhancedInternalEdgeRemoval = true;
+        }
+
         if (info.options.bodyType == PhysicsBodyType::Static && info.options.canBecomeDynamic)
             settings.mAllowDynamicOrKinematic = true;
 
