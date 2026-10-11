@@ -111,6 +111,8 @@ namespace kailux
 
         void SetRenderScale(float scale);
 
+        void SetWindowRefreshRate(float refreshRate);
+
     private:
         static constexpr std::string_view kDirectoryIconPath = "assets/icons/directory_icon.png";
         static constexpr std::string_view kFileIconPath = "assets/icons/file_icon.png";
@@ -244,6 +246,8 @@ namespace kailux
 
         glm::ivec2 mSceneViewExtent{};
         float      mRenderScale{1.f};
+
+        float mWindowRefreshRate{};
 
         static constexpr auto   kSceneSamples{vk::SampleCountFlagBits::e1};
         vk::SampleCountFlagBits mSimulationSamples{vk::SampleCountFlagBits::e1};

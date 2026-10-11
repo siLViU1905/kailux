@@ -74,6 +74,13 @@ namespace kailux
 
         void Update(float deltaTime);
 
+        void MoveKinematic(
+            BodyHandle handle,
+            const glm::vec3 &position,
+            const glm::quat &rotation,
+            float deltaTime
+        );
+
     private:
         static constexpr uint32_t kAllocatorSize = 10 * 1024 * 1024;
 

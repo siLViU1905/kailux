@@ -26,9 +26,13 @@ namespace kailux
 
         glm::ivec2 GetFramebufferSize() const;
 
+        float GetRefreshRate() const;
+
         bool operator==(const InputSource& other) const;
 
     private:
+        GLFWmonitor* GetWindowMonitor() const;
+
         GLFWwindow* mHandle{};
     };
 }

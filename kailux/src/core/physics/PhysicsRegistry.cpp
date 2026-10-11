@@ -71,7 +71,6 @@ namespace kailux
         registry.mBroadPhaseLayer = create_scoped<impl::BroadPhaseLayer>();
         registry.mObjectVsBroadPhaseLayer = create_scoped<impl::ObjectVsBroadPhaseLayerFilter>();
         registry.mObjectPairFilter = create_scoped<impl::ObjectLayerPairFilter>();
-        registry.mPhysicsSystem = create_scoped<JPH::PhysicsSystem>();
 
         registry.mPhysicsSystem = create_scoped<JPH::PhysicsSystem>();
         registry.mPhysicsSystem->Init(
@@ -92,28 +91,21 @@ namespace kailux
 
     PhysicsRegistry::BodyResult PhysicsRegistry::CreateBody(const PhysicsBodyInfo &info)
     {
-        auto slot = AcquireSlot();
-        if (slot == BodyHandle::kInvalidIndex)
-            return std::unexpected{"No more slots"};
-
         if (info.meshType == MeshType::Unknown)
             return std::unexpected{"Unknown mesh type"};
 
-        JPH::ShapeRefC base;
-        if (info.meshType != MeshType::Loaded)
-        {
-            const auto result{create_builtin_mesh_body(info.meshType)};
-            if (!result)
-                return std::unexpected{result.error()};
-            base = *result;
-        }
-        else
-        {
-            const auto result{create_loaded_mesh_body(info)};
-            if (!result)
-                return std::unexpected{result.error()};
-            base = *result;
-        }
+        const auto baseResult{
+            (info.meshType != MeshType::Loaded)
+                  ? create_builtin_mesh_body(info.meshType)
+                  : create_loaded_mesh_body(info)
+        };
+        if (!baseResult)
+            return std::unexpected{baseResult.error()};
+        const JPH::ShapeRefC base{*baseResult};
+
+        const auto slot{AcquireSlot()};
+        if (slot == BodyHandle::kInvalidIndex)
+            return std::unexpected{"No more slots"};
 
         const auto shape{make_scaled_shape(base, info.transform.scale)};
 
@@ -134,7 +126,7 @@ namespace kailux
         if (info.options.bodyType == PhysicsBodyType::Static && info.options.canBecomeDynamic)
             settings.mAllowDynamicOrKinematic = true;
 
-        mBodyIds[slot] = mPhysicsSystem->GetBodyInterface().CreateAndAddBody(settings, JPH::EActivation::Activate);
+        mBodyIds[slot]    = mPhysicsSystem->GetBodyInterface().CreateAndAddBody(settings, JPH::EActivation::Activate);
         mBaseShapes[slot] = base;
 
         return BodyHandle{slot};
@@ -305,6 +297,22 @@ namespace kailux
             mAllocator.get(),
             mJobSystem.get()
             );
+    }
+
+    void PhysicsRegistry::MoveKinematic(
+        BodyHandle handle,
+        const glm::vec3 &position,
+        const glm::quat &rotation,
+        float deltaTime
+    )
+    {
+        assert(handle.Valid());
+        mPhysicsSystem->GetBodyInterface().MoveKinematic(
+            mBodyIds[handle.index],
+            {position.x, position.y, position.z},
+            {rotation.x, rotation.y, rotation.z, rotation.w},
+            deltaTime
+        );
     }
 
     uint32_t PhysicsRegistry::pick_thread_count(uint32_t freeThreads)

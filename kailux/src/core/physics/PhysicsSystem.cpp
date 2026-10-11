@@ -5,6 +5,7 @@
 #include "../components/entt/MeshComponent.h"
 #include "../components/entt/PhysicsComponent.h"
 #include "../components/entt/PhysicsControlComponent.h"
+#include "../components/entt/PhysicsInterpolation.h"
 #include "core/Clock.h"
 #include "core/components/entt/HierarchyComponent.h"
 #include "core/components/entt/LocalTransform.h"
@@ -80,14 +81,36 @@ namespace kailux
 
     void PhysicsSystem::Update(float deltaTime)
     {
-        UpdateControls();
-        UpdateTransforms();
-        mPhysicsRegistry.get().Update(deltaTime);
+        mAccumulator = std::min(mAccumulator + deltaTime, kMaxFrameTime);
+
+        ApplyImpulses();
+
+        while (mAccumulator >= mFixedStep)
+        {
+            ApplyForces();
+            MoveKinematicBodies(mFixedStep);
+            mPhysicsRegistry.get().Update(mFixedStep);
+            StoreStepResults();
+            mAccumulator -= mFixedStep;
+        }
+
+        UpdateTransforms(mAccumulator / mFixedStep);
+        ReadVelocities();
     }
 
-    void PhysicsSystem::UpdateBodyType(BodyHandle handle, PhysicsBodyType type)
+    void PhysicsSystem::SetTickRate(float refreshRate)
     {
-        mPhysicsRegistry.get().SetBodyType(handle, type);
+        mFixedStep = 1.f / std::clamp(refreshRate, 30.f, 240.f);
+    }
+
+    float PhysicsSystem::GetTickRate() const
+    {
+        return 1.f / mFixedStep;
+    }
+
+    bool PhysicsSystem::UpdateBodyType(BodyHandle handle, PhysicsBodyType type)
+    {
+        return mPhysicsRegistry.get().SetBodyType(handle, type);
     }
 
     void PhysicsSystem::UpdateBodyScale(BodyHandle handle, const glm::vec3& scale)
@@ -106,8 +129,9 @@ namespace kailux
 
     void PhysicsSystem::OnSimulationStart()
     {
-        auto& registry = mScene.get().GetEntityRegistry();
-        const auto view = registry.view<WorldTransform, PhysicsComponent>();
+        mAccumulator = 0.f;
+        auto& registry{mScene.get().GetEntityRegistry()};
+        const auto view{registry.view<WorldTransform, PhysicsComponent>()};
 
         for (const auto entity : view)
         {
@@ -121,53 +145,123 @@ namespace kailux
             );
 
             if (physicsComp.IsDynamic())
+            {
                 mPhysicsRegistry.get().ResetVelocities(physicsComp.handle);
+                registry.emplace_or_replace<PhysicsInterpolation>(
+                    entity,
+                    world.position,
+                    world.position,
+                    world.rotation,
+                    world.rotation
+                );
+            }
         }
     }
 
-    void PhysicsSystem::UpdateControls()
+    void PhysicsSystem::ApplyImpulses()
     {
-        auto& registry = mScene.get().GetEntityRegistry();
-        auto view = registry.view<PhysicsComponent, PhysicsControlComponent>();
-
-        for (auto entity : view)
+        const auto view{mScene.get().GetEntityRegistry().view<PhysicsComponent, PhysicsControlComponent>()};
+        view.each([this](const auto& phys, auto& control)
         {
-            auto phys = view.get<PhysicsComponent>(entity);
-            auto& control = view.get<PhysicsControlComponent>(entity);
-
-            control.velocity = mPhysicsRegistry.get().GetLinearVelocity(phys.handle);
-
-            if (control.applyForce)
-                mPhysicsRegistry.get().AddForce(phys.handle, control.force);
-
-            if (control.applyImpulse)
+            if (control.applyImpulse && phys.IsDynamic())
                 mPhysicsRegistry.get().AddImpulse(phys.handle, control.impulse);
-        }
+            control.applyImpulse = false;
+        });
     }
 
-    void PhysicsSystem::UpdateTransforms()
+    void PhysicsSystem::ApplyForces()
     {
-        Scene& scene = mScene;
-        auto &registry = scene.GetEntityRegistry();
-        const auto view = registry.view<LocalTransform, PhysicsComponent>();
-
-        for (const auto entity: view)
+        const auto view{mScene.get().GetEntityRegistry().view<PhysicsComponent, PhysicsControlComponent>()};
+        view.each([this](const auto& phys, auto& control)
         {
-            const auto &physics = view.get<PhysicsComponent>(entity);
+            if (control.applyForce && phys.IsDynamic())
+                mPhysicsRegistry.get().AddForce(phys.handle, control.force);
+        });
+    }
+
+    void PhysicsSystem::MoveKinematicBodies(float step)
+    {
+        const auto view{mScene.get().GetEntityRegistry().view<WorldTransform, PhysicsComponent>()};
+        view.each([this, step](const auto& transform, const auto& phys)
+        {
+            if (phys.type != PhysicsBodyType::Kinematic)
+                return;
+
+            const auto world{Transform::from_matrix(transform.model)};
+            mPhysicsRegistry.get().MoveKinematic(phys.handle, world.position, world.rotation, step);
+        });
+    }
+
+    void PhysicsSystem::StoreStepResults() const
+    {
+        const auto view{mScene.get().GetEntityRegistry().view<PhysicsComponent, PhysicsInterpolation>()};
+        view.each([this](const auto& phys, auto& state)
+        {
+            if (!phys.IsDynamic())
+                return;
+
+            state.prevPosition = state.currPosition;
+            state.prevRotation = state.currRotation;
+            mPhysicsRegistry.get().GetBodyTransform(phys.handle, state.currPosition, state.currRotation);
+        });
+    }
+
+    void PhysicsSystem::ReadVelocities()
+    {
+        const auto view{mScene.get().GetEntityRegistry().view<PhysicsComponent, PhysicsControlComponent>()};
+        view.each([this](const auto& phys, auto& control)
+        {
+            control.velocity = mPhysicsRegistry.get().GetLinearVelocity(phys.handle);
+        });
+    }
+
+    void PhysicsSystem::UpdateTransforms(float alpha) const
+    {
+        Scene& scene    = mScene;
+        auto& registry{scene.GetEntityRegistry()};
+        const auto view{registry.view<LocalTransform, PhysicsComponent>()};
+
+        for (const auto entity : view)
+        {
+            const auto& physics = view.get<PhysicsComponent>(entity);
             if (!physics.IsDynamic())
                 continue;
 
             glm::vec3 worldPos;
             glm::quat worldRot;
-            mPhysicsRegistry.get().GetBodyTransform(physics.handle, worldPos, worldRot);
-
-            const auto local = glm::inverse(scene.GetParentWorldMatrix(entity))
-                                    * glm::translate(glm::mat4(1.f), worldPos)
-                                    * glm::toMat4(worldRot);
+            if (const auto* state{registry.try_get<PhysicsInterpolation>(entity)})
+            {
+                worldPos = glm::mix(state->prevPosition, state->currPosition, alpha);
+                worldRot = glm::slerp(state->prevRotation, state->currRotation, alpha);
+            }
+            else
+                mPhysicsRegistry.get().GetBodyTransform(physics.handle, worldPos, worldRot);
 
             Transform updated{view.get<LocalTransform>(entity)};
-            updated.position = glm::vec3(local[3]);
-            updated.rotation = glm::quat_cast(local);
+
+            const auto* hierarchy{registry.try_get<HierarchyComponent>(entity)};
+            if (!hierarchy || hierarchy->parent == entt::null)
+            {
+                updated.position = worldPos;
+                updated.rotation = worldRot;
+            }
+            else
+            {
+                const auto parent{scene.GetParentWorldMatrix(entity)};
+
+                const auto parentRot{
+                    glm::quat_cast(glm::mat3{
+                            glm::normalize(glm::vec3{parent[0]}),
+                            glm::normalize(glm::vec3{parent[1]}),
+                            glm::normalize(glm::vec3{parent[2]})
+                        }
+                    )
+                };
+
+                updated.position = glm::vec3(glm::inverse(parent) * glm::vec4(worldPos, 1.f));
+                updated.rotation = glm::normalize(glm::inverse(parentRot) * worldRot);
+            }
+
             scene.SetLocalTransform(entity, updated);
         }
     }

@@ -8,6 +8,7 @@ namespace kailux
         mWindow = Window::create(windowInfo.width, windowInfo.height, windowInfo.title);
         mWindow.UpdateUserPointer();
         mEngine = Engine::create(mWindow, specification.engine);
+        mEngine.SetWindowRefreshRate(mWindow.GetInputSource().GetRefreshRate());
 
         ThreadDispatcher::kMaxThreads = specification.workerThreads;
         mThreadDispatcher = ThreadDispatcher::get();
