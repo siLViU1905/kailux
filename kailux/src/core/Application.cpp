@@ -10,7 +10,7 @@ namespace kailux
 
         const auto& engineInfo{specification.engine};
         mEngine = Engine::create(mWindow, engineInfo);
-        mEngine.GetPhysicsSystem().SetTickRate(1.f / engineInfo.physicsTickRate);
+        mEngine.GetPhysicsSystem().SetTickRate(engineInfo.physicsTickRate);
 
         ThreadDispatcher::kMaxThreads = specification.workerThreads;
         mThreadDispatcher = ThreadDispatcher::get();
