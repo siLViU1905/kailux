@@ -179,10 +179,18 @@ namespace kailux
         return mPhysicsSystem->GetBodyInterface().IsAdded(id);
     }
 
-    void PhysicsRegistry::SetBodyType(BodyHandle handle, PhysicsBodyType type)
+    bool PhysicsRegistry::SetBodyType(BodyHandle handle, PhysicsBodyType type)
     {
         assert(handle.Valid());
-        auto id = mBodyIds[handle.index];
+        const auto id{mBodyIds[handle.index]};
+
+        if (type != PhysicsBodyType::Static)
+        {
+            const JPH::BodyLockRead lock(mPhysicsSystem->GetBodyLockInterface(), id);
+            if (!lock.Succeeded() || !lock.GetBody().CanBeKinematicOrDynamic())
+                return false;
+        }
+
         auto& bodyInterface = mPhysicsSystem->GetBodyInterface();
 
         auto motionType = static_cast<JPH::EMotionType>(type);
@@ -193,6 +201,7 @@ namespace kailux
         bodyInterface.SetMotionType(id, motionType, activation);
 
         bodyInterface.SetObjectLayer(id, layer);
+        return true;
     }
 
     void PhysicsRegistry::AddForce(BodyHandle handle, const glm::vec3 &force)

@@ -260,12 +260,17 @@ namespace kailux
         ImGui::BeginDisabled(mSimulationRunning);
 
          widgets::property("Body type");
+        const bool locked{!physics.canBecomeDynamic};
+        ImGui::BeginDisabled(locked);
         int typeIndex = static_cast<int>(physics.type);
         if (ImGui::Combo("##body_type", &typeIndex, HierarchyPanel::s_BodyTypeOptions.data()))
         {
             physics.type = static_cast<PhysicsBodyType>(typeIndex);
             mOnBodyTypeChange(physics, physics.type);
         }
+        ImGui::EndDisabled();
+        if (locked)
+            ImGui::SetItemTooltip("Created as a static mesh; re-add physics with \"can become dynamic\" to change type");
 
          widgets::property("Velocity");
          widgets::vec3_control("vel", control.velocity);

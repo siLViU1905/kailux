@@ -57,7 +57,8 @@ namespace kailux
         void       DestroyBody(BodyHandle handle);
         void       SetBodyEnabled(BodyHandle handle, bool enabled = true);
         bool       IsBodyEnabled(BodyHandle handle) const;
-        void       SetBodyType(BodyHandle handle, PhysicsBodyType type);
+
+        bool SetBodyType(BodyHandle handle, PhysicsBodyType type);
 
         void      AddForce(BodyHandle handle, const glm::vec3& force);
         void      AddImpulse(BodyHandle handle, const glm::vec3& impulse);
