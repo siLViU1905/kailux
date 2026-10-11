@@ -19,7 +19,7 @@ namespace kailux::impl
     }
 
 #if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
-    const char *GetBroadPhaseLayerName(JPH::BroadPhaseLayer inLayer) const
+    const char *BroadPhaseLayer::GetBroadPhaseLayerName(JPH::BroadPhaseLayer inLayer) const
     {
         switch (static_cast<JPH::BroadPhaseLayer::Type>(inLayer))
         {
