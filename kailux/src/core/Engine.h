@@ -87,6 +87,11 @@ namespace kailux
         void         SaveScene(const std::filesystem::path &path);
         void         LoadScene(const std::filesystem::path &path, const Window &window);
 
+        decltype(auto) GetPhysicsSystem(this auto&& self)
+        {
+            return (self.mPhysicsSystem);
+        }
+
         using OnLog = std::move_only_function<void(std::string_view)>;
         void SetOnInfoLog(OnLog&& callback);
         void SetOnWarningLog(OnLog&& callback);
@@ -110,8 +115,6 @@ namespace kailux
         DeviceInfo GetDeviceInfo() const;
 
         void SetRenderScale(float scale);
-
-        void SetWindowRefreshRate(float refreshRate);
 
     private:
         static constexpr std::string_view kDirectoryIconPath = "assets/icons/directory_icon.png";
@@ -246,8 +249,6 @@ namespace kailux
 
         glm::ivec2 mSceneViewExtent{};
         float      mRenderScale{1.f};
-
-        float mWindowRefreshRate{};
 
         static constexpr auto   kSceneSamples{vk::SampleCountFlagBits::e1};
         vk::SampleCountFlagBits mSimulationSamples{vk::SampleCountFlagBits::e1};

@@ -88,7 +88,7 @@ namespace kailux
             const auto* mode{glfwGetVideoMode(monitors[i])};
 
             const int ox{std::max(0, std::min(wx + ww, mx + mode->width) - std::max(wx, mx))};
-            const int oy{std::max(0, std::min(wy + wh, mx + mode->height) - std::max(wy, my))};
+            const int oy{std::max(0, std::min(wy + wh, my + mode->height) - std::max(wy, my))};
             if (ox * oy > bestOverlap)
             {
                 bestOverlap = ox * oy;

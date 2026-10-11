@@ -268,66 +268,40 @@ namespace kailux
 
     std::optional<BodyHandle> PhysicsSystem::AddPhysicsToEntity(entt::entity entity, PhysicsCreationOptions options)
     {
-        auto& reg = mScene.get().GetEntityRegistry();
-
-        const auto* old{reg.try_get<PhysicsComponent>(entity)};
-        if (old && old->handle.Valid())
-            mPhysicsRegistry.get().DestroyBody(old->handle);
+        auto& reg{mScene.get().GetEntityRegistry()};
 
         const auto transform{Transform::from_matrix(reg.get<WorldTransform>(entity).model)};
 
-        BodyHandle handle;
-        if (const auto* cache = reg.try_get<CachedPhysicsData>(entity))
-        {
-            std::vector<SubmeshPhysicsInfo> infos;
-            infos.reserve(cache->submeshes.size());
-            for (const auto& sm : cache->submeshes)
-                infos.emplace_back(sm.vertices, sm.indices, sm.localTransform);
+        PhysicsBodyInfo info{{}, MeshType::Unknown, transform, options};
 
-            const auto result{
-                UploadPhysicsBodyDataToRegistry({
-                    std::move(infos),
-                    cache->meshType,
-                    transform,
-                    {
-                        options.bodyType,
-                        options.canBecomeDynamic
-                    }
-                })
-            };
-            if (!result)
-            {
-                mOnWarningLog(result.error());
-                return std::nullopt;
-            }
-            handle = *result;
-        }
-        else if (const auto* source = reg.try_get<MeshSourceComponent>(entity))
+        if (const auto* cache{reg.try_get<CachedPhysicsData>(entity)})
         {
-            const auto result{
-                UploadPhysicsBodyDataToRegistry({
-                    {},
-                    source->type,
-                    transform,
-                    {
-                        options.bodyType,
-                        options.canBecomeDynamic
-                    }
-                })
-            };
-            if (!result)
-            {
-                mOnWarningLog(result.error());
-                return std::nullopt;
-            }
-            handle = *result;
+            info.meshType = cache->meshType;
+            info.submeshes.reserve(cache->submeshes.size());
+            for (const auto& sm : cache->submeshes)
+                info.submeshes.emplace_back(sm.vertices, sm.indices, sm.localTransform);
         }
+        else if (const auto* source{reg.try_get<MeshSourceComponent>(entity)})
+            info.meshType = source->type;
         else
         {
             mOnWarningLog("Cannot add physics: entity has neither cached physics data nor a mesh component");
             return std::nullopt;
         }
 
-        return handle;
+        const auto result{UploadPhysicsBodyDataToRegistry(info)};
+        if (!result)
+        {
+            mOnWarningLog(result.error());
+            return std::nullopt;
+        }
+
+        if (const auto* old{reg.try_get<PhysicsComponent>(entity)}; old && old->handle.Valid())
+        {
+            mPhysicsRegistry.get().DestroyBody(old->handle);
+            reg.remove<PhysicsInterpolation>(entity);
+        }
+
+        return *result;
     }
 }

@@ -14,5 +14,7 @@ namespace kailux
         RenderMode renderMode{RenderMode::Editor};
 
         bool useImgui{};
+
+        float physicsTickRate{1.f / 60.f};
     };
 }

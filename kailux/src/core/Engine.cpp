@@ -69,7 +69,6 @@ namespace kailux
                                               mSimulationViewActive(other.mSimulationViewActive),
                                               mSceneViewExtent(other.mSceneViewExtent),
                                               mRenderScale(other.mRenderScale),
-                                              mWindowRefreshRate(other.mWindowRefreshRate),
                                               mSimulationSamples(other.mSimulationSamples),
                                               mMainPass(std::move(other.mMainPass)),
                                               mSkyboxPass(std::move(other.mSkyboxPass)),
@@ -123,7 +122,6 @@ namespace kailux
             mSimulationViewActive = other.mSimulationViewActive;
             mSceneViewExtent = other.mSceneViewExtent;
             mRenderScale = other.mRenderScale;
-            mWindowRefreshRate = other.mWindowRefreshRate;
             mSimulationSamples = other.mSimulationSamples;
             mMainPass = std::move(other.mMainPass);
             mSkyboxPass = std::move(other.mSkyboxPass);
@@ -520,7 +518,6 @@ namespace kailux
     {
         mPhysicsSystem = {mScene, mPhysicsRegistry};
         mPhysicsSystem.AttachToScene();
-        mPhysicsSystem.SetTickRate(mWindowRefreshRate);
         mPhysicsSystem.SetOnInfoLog([this](auto msg)
         {
             mOnInfoLog(msg);
@@ -2117,10 +2114,5 @@ namespace kailux
         mRenderScale = scale;
 
         mSceneResize.Request(apply_scale(mSceneViewExtent, mRenderScale));
-    }
-
-    void Engine::SetWindowRefreshRate(float refreshRate)
-    {
-        mWindowRefreshRate = refreshRate;
     }
 }
