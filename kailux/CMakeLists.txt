@@ -74,7 +74,7 @@ add_library(kailux STATIC
 
 if(WIN32)
     target_sources(kailux PRIVATE
-#            src/core/utilities/dynamic_library/DynamicLibraryWindowsImpl.cpp
+            src/core/utilities/dynamic_library/DynamicLibraryWindowsImpl.cpp
     )
 elseif(UNIX)
     target_sources(kailux PRIVATE

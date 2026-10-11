@@ -53,6 +53,11 @@ namespace kailux
 
         void Close();
 
+        ~DynamicLibrary()
+        {
+            Close();
+        }
+
     private:
        explicit DynamicLibrary(void *handle) : mHandle(handle)
        {
