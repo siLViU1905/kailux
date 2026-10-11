@@ -137,7 +137,9 @@ namespace kailux
     void PhysicsRegistry::DestroyBody(BodyHandle handle)
     {
         assert(handle.Valid());
-        auto id = mBodyIds[handle.index];
+        const auto id{mBodyIds[handle.index]};
+        if (id.IsInvalid())
+            return;
 
         auto& bodyInterface = mPhysicsSystem->GetBodyInterface();
 
@@ -146,7 +148,8 @@ namespace kailux
 
         bodyInterface.DestroyBody(id);
 
-        mBodyIds[handle.index] = JPH::BodyID(JPH::BodyID::cInvalidBodyID);
+        mBodyIds[handle.index] = JPH::BodyID{};
+        // mBaseShapes[handle.index] = nullptr;
         mFreeSlots.push_back(handle.index);
     }
 

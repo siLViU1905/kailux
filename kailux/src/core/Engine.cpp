@@ -517,6 +517,7 @@ namespace kailux
     void Engine::CreatePhysicsSystem()
     {
         mPhysicsSystem = {mScene, mPhysicsRegistry};
+        mPhysicsSystem.AttachToScene();
         mPhysicsSystem.SetOnInfoLog([this](auto msg)
         {
             mOnInfoLog(msg);
@@ -889,7 +890,9 @@ namespace kailux
             return;
         }
 
+        mPhysicsSystem.DestroyAllBodies();
         mScene = std::move(scene);
+        mPhysicsSystem.AttachToScene();
         mScene.SetSavePath(path);
 
         for (const auto &request : *requests)

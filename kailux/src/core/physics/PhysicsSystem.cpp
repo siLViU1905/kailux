@@ -1,5 +1,6 @@
 #include "PhysicsSystem.h"
 
+#include "../scene/Scene.h"
 #include "../components/entt/CachedPhysicsData.h"
 #include "../components/entt/MeshComponent.h"
 #include "../components/entt/PhysicsComponent.h"
@@ -25,6 +26,44 @@ namespace kailux
     void PhysicsSystem::SetOnWarningLog(OnLog&& callback)
     {
         mOnWarningLog = std::move(callback);
+    }
+
+    namespace details
+    {
+        static void on_physics_component_destroyed(entt::registry& registry, entt::entity entity)
+        {
+            const auto* physics{registry.ctx().find<PhysicsRegistry*>()};
+            if (!physics || !*physics)
+                return;
+
+            const auto& component{registry.get<PhysicsComponent>(entity)};
+            if (component.handle.Valid())
+                (*physics)->DestroyBody(component.handle);
+        }
+    }
+
+    void PhysicsSystem::AttachToScene() const
+    {
+        auto& registry{mScene.get().GetEntityRegistry()};
+        registry.ctx().insert_or_assign<PhysicsRegistry*>(&mPhysicsRegistry.get());
+
+        auto sink{registry.on_destroy<PhysicsComponent>()};
+        sink.disconnect<&details::on_physics_component_destroyed>();
+        sink.connect<&details::on_physics_component_destroyed>();
+    }
+
+    void PhysicsSystem::DestroyAllBodies() const
+    {
+        auto& registry{mScene.get().GetEntityRegistry()};
+        for (const auto entity : registry.view<PhysicsComponent>())
+        {
+            auto& component{registry.get<PhysicsComponent>(entity)};
+            if (component.handle.Valid())
+            {
+                mPhysicsRegistry.get().DestroyBody(component.handle);
+                component.handle = {};
+            }
+        }
     }
 
     SimulationState PhysicsSystem::GetSimulationState() const
@@ -136,6 +175,10 @@ namespace kailux
     std::optional<BodyHandle> PhysicsSystem::AddPhysicsToEntity(entt::entity entity, PhysicsCreationOptions options)
     {
         auto& reg = mScene.get().GetEntityRegistry();
+
+        const auto* old{reg.try_get<PhysicsComponent>(entity)};
+        if (old && old->handle.Valid())
+            mPhysicsRegistry.get().DestroyBody(old->handle);
 
         const auto transform{Transform::from_matrix(reg.get<WorldTransform>(entity).model)};
 

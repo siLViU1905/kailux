@@ -1,10 +1,11 @@
 #pragma once
 
-#include "../scene/Scene.h"
 #include "PhysicsRegistry.h"
 
 namespace kailux
 {
+    class Scene;
+
     class PhysicsSystem
     {
     public:
@@ -23,6 +24,9 @@ namespace kailux
         using OnLog = std::move_only_function<void(std::string_view)>;
         void SetOnInfoLog(OnLog&& callback);
         void SetOnWarningLog(OnLog&& callback);
+
+        void AttachToScene() const;
+        void DestroyAllBodies() const;
 
     private:
         void OnSimulationStart();
