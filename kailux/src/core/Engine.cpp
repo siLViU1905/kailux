@@ -276,7 +276,10 @@ namespace kailux
     {
         std::optional<std::string> pathStr;
         if (std::filesystem::is_directory(path))
-            pathStr = get_supported_mesh_type(path);
+        {
+            if (const auto supported{get_supported_mesh_type(path)})
+                pathStr = supported->string();
+        }
         else if (is_mesh_type_supported(path))
             pathStr = path.string();
 
