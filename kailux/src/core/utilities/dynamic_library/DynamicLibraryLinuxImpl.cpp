@@ -1,3 +1,5 @@
+#ifdef __unix__
+
 #include "DynamicLibrary.h"
 
 #include <dlfcn.h>
@@ -52,3 +54,5 @@ namespace kailux
         }
     }
 }
+
+#endif

@@ -1,3 +1,5 @@
+#ifdef _WIN32
+
 #include "DynamicLibrary.h"
 
 #ifndef WIN32_LEAN_AND_MEAN
@@ -85,3 +87,5 @@ namespace kailux
         }
     }
 }
+
+#endif
