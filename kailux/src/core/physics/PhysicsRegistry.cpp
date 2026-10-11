@@ -23,6 +23,7 @@ namespace kailux
                                                                          mObjectPairFilter(std::move(other.mObjectPairFilter)),
                                                                          mPhysicsSystem(std::move(other.mPhysicsSystem)),
                                                                          mBodyIds(std::move(other.mBodyIds)),
+                                                                         mBaseShapes(std::move(other.mBaseShapes)),
                                                                          mFreeSlots(std::move(other.mFreeSlots))
     {
     }
@@ -38,6 +39,7 @@ namespace kailux
             mObjectPairFilter = std::move(other.mObjectPairFilter);
             mPhysicsSystem = std::move(other.mPhysicsSystem);
             mBodyIds = std::move(other.mBodyIds);
+            mBaseShapes = std::move(other.mBaseShapes);
             mFreeSlots = std::move(other.mFreeSlots);
         }
         return *this;
@@ -94,23 +96,26 @@ namespace kailux
         if (slot == BodyHandle::kInvalidIndex)
             return std::unexpected{"No more slots"};
 
-        JPH::ShapeRefC shape;
         if (info.meshType == MeshType::Unknown)
             return std::unexpected{"Unknown mesh type"};
+
+        JPH::ShapeRefC base;
         if (info.meshType != MeshType::Loaded)
         {
-            const auto result{create_builtin_mesh_body(info.meshType, info.transform)};
+            const auto result{create_builtin_mesh_body(info.meshType)};
             if (!result)
                 return std::unexpected{result.error()};
-            shape = *result;
+            base = *result;
         }
         else
         {
             const auto result{create_loaded_mesh_body(info)};
             if (!result)
                 return std::unexpected{result.error()};
-            shape = *result;
+            base = *result;
         }
+
+        const auto shape{make_scaled_shape(base, info.transform.scale)};
 
         const auto motionType{static_cast<JPH::EMotionType>(info.options.bodyType)};
         const auto objectLayer{
@@ -130,6 +135,7 @@ namespace kailux
             settings.mAllowDynamicOrKinematic = true;
 
         mBodyIds[slot] = mPhysicsSystem->GetBodyInterface().CreateAndAddBody(settings, JPH::EActivation::Activate);
+        mBaseShapes[slot] = base;
 
         return BodyHandle{slot};
     }
@@ -149,7 +155,7 @@ namespace kailux
         bodyInterface.DestroyBody(id);
 
         mBodyIds[handle.index] = JPH::BodyID{};
-        // mBaseShapes[handle.index] = nullptr;
+        mBaseShapes[handle.index] = nullptr;
         mFreeSlots.push_back(handle.index);
     }
 
@@ -267,46 +273,19 @@ namespace kailux
     void PhysicsRegistry::UpdateBodyScale(BodyHandle handle, const glm::vec3 &scale)
     {
         assert(handle.Valid());
-        auto id = mBodyIds[handle.index];
+        const auto id{mBodyIds[handle.index]};
+        const auto& base{mBaseShapes[handle.index]};
+        if (id.IsInvalid() || base == nullptr || !scale_is_usable(scale))
+            return;
 
-        auto& bodyInterface = mPhysicsSystem->GetBodyInterface();
-        JPH::ShapeRefC currentShape = bodyInterface.GetShape(id);
-        auto baseShape = currentShape;
+        const auto& bodyInterface{mPhysicsSystem->GetBodyInterface()};
+        const auto activation{
+            bodyInterface.GetMotionType(id) == JPH::EMotionType::Dynamic
+            ? JPH::EActivation::Activate
+            : JPH::EActivation::DontActivate
+        };
 
-        if (currentShape->GetSubType() == JPH::EShapeSubType::Scaled)
-        {
-            const auto* scaledShape = static_cast<const JPH::ScaledShape*>(currentShape.GetPtr());
-            baseShape = scaledShape->GetInnerShape();
-        }
-
-        JPH::ShapeRefC newShape;
-        if (baseShape->GetSubType() == JPH::EShapeSubType::Sphere)
-        {
-            const auto* sphereShape = static_cast<const JPH::SphereShape*>(baseShape.GetPtr());
-
-            float maxScale = std::max({scale.x, scale.y, scale.z});
-            newShape = new JPH::SphereShape(sphereShape->GetRadius() * maxScale);
-        }
-        else if (baseShape->GetSubType() == JPH::EShapeSubType::Box)
-        {
-            const auto* boxShape = static_cast<const JPH::BoxShape*>(baseShape.GetPtr());
-            JPH::Vec3 originalHalfExtents = boxShape->GetHalfExtent();
-
-            newShape = new JPH::BoxShape(JPH::Vec3(
-                originalHalfExtents.GetX() * scale.x,
-                originalHalfExtents.GetY() * scale.y,
-                originalHalfExtents.GetZ() * scale.z
-            ));
-        }
-        else
-            newShape = new JPH::ScaledShape(baseShape, {scale.x, scale.y, scale.z});
-
-        bodyInterface.SetShape(
-            id,
-            newShape,
-            true,
-            JPH::EActivation::Activate
-            );
+        bodyInterface.SetShape(id, make_scaled_shape(base, scale), true, activation);
     }
 
     void PhysicsRegistry::Update(float deltaTime)
@@ -337,7 +316,7 @@ namespace kailux
         return (v1 - v0).Cross(v2 - v0).IsNearZero();
     }
 
-    bool PhysicsRegistry::scale_is_usbale(const glm::vec3 &scale)
+    bool PhysicsRegistry::scale_is_usable(const glm::vec3 &scale)
     {
         constexpr auto kEps{1e-6f};
 
@@ -346,9 +325,44 @@ namespace kailux
                && std::abs(scale.z) > kEps;
     }
 
+    JPH::ShapeRefC PhysicsRegistry::make_scaled_shape(const JPH::ShapeRefC &base, const glm::vec3 &scale)
+    {
+        const auto absScale{glm::abs(scale)};
+
+        switch (base->GetSubType())
+        {
+            case JPH::EShapeSubType::Sphere:
+            {
+                const auto radius{static_cast<const JPH::SphereShape*>(base.GetPtr())->GetRadius()};
+                return new JPH::SphereShape{
+                    radius * std::max({absScale.x, absScale.y, absScale.z})
+                };
+            }
+            case JPH::EShapeSubType::Box:
+            {
+                const auto* box{static_cast<const JPH::BoxShape*>(base.GetPtr())};
+                const auto half{box->GetHalfExtent() * JPH::Vec3{absScale.x, absScale.y, absScale.z}};
+                return new JPH::BoxShape{
+                    half,
+                    std::min(JPH::cDefaultConvexRadius, half.ReduceMin())
+                };
+            }
+            default:
+            {
+                JPH::Vec3 joltScale{scale.x, scale.y, scale.z};
+                if (joltScale.IsClose(JPH::Vec3::sReplicate(1.f)))
+                    return base;
+                if (!base->IsValidScale(joltScale))
+                    joltScale = base->MakeScaleValid(joltScale);
+                return new JPH::ScaledShape{base, joltScale};
+            }
+        }
+    }
+
     void PhysicsRegistry::AllocResources()
     {
         mBodyIds.resize(kMaxBodies, JPH::BodyID(JPH::BodyID::cInvalidBodyID));
+        mBaseShapes.resize(kMaxBodies);
 
         for (uint32_t i = 0; i < kMaxBodies; ++i)
             mFreeSlots.push_back(i);
@@ -363,21 +377,19 @@ namespace kailux
         return slot;
     }
 
-    PhysicsRegistry::CreateResult PhysicsRegistry::create_builtin_mesh_body(MeshType type, const Transform &transform)
+    PhysicsRegistry::CreateResult PhysicsRegistry::create_builtin_mesh_body(MeshType type)
     {
         JPH::ShapeRefC shape;
         switch (type)
         {
             case MeshType::Cube:
             {
-                JPH::Vec3 halfExtents(transform.scale.x * 0.5f, transform.scale.y * 0.5f, transform.scale.z * 0.5f);
-                shape = new JPH::BoxShape(halfExtents);
+                shape = new JPH::BoxShape(JPH::Vec3::sReplicate(0.5f));
                 break;
             }
             case MeshType::Sphere:
             {
-                float radius = transform.scale.x * 0.5f;
-                shape = new JPH::SphereShape(radius);
+                shape = new JPH::SphereShape(0.5f);
                 break;
             }
             case MeshType::Loaded:
@@ -481,7 +493,7 @@ namespace kailux
         if (!glm::decompose(submesh.localTransform, lScale, lRot, lTrans, lSkew, lPersp))
             return std::unexpected{submeshFormatString + "Transform could not be decomposed"};
 
-        if (!scale_is_usbale(lScale))
+        if (!scale_is_usable(lScale))
             return std::unexpected{
                 submeshFormatString + std::format("Scale (x: {:.3f}, y:{:.3f}, z: {:.3f}) is not usable",
                                                   lScale.x,

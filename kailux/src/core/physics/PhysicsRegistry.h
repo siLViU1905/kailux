@@ -86,14 +86,16 @@ namespace kailux
         static uint32_t pick_thread_count(uint32_t freeThreads);
 
         static bool is_degenerate_triangle(const JPH::Float3 &a, const JPH::Float3 &b, const JPH::Float3 &c);
-        static bool scale_is_usbale(const glm::vec3& scale);
+        static bool scale_is_usable(const glm::vec3& scale);
+
+        static JPH::ShapeRefC make_scaled_shape(const JPH::ShapeRefC& base, const glm::vec3& scale);
 
         void AllocResources();
 
         uint32_t AcquireSlot();
 
         using CreateResult = std::expected<JPH::ShapeRefC, std::string>;
-        static CreateResult create_builtin_mesh_body(MeshType type, const Transform &transform);
+        static CreateResult create_builtin_mesh_body(MeshType type);
         static CreateResult create_loaded_mesh_body(const PhysicsBodyInfo &info);
 
         struct ChildShapeResult
@@ -113,7 +115,8 @@ namespace kailux
         Scoped<impl::ObjectLayerPairFilter>         mObjectPairFilter;
         Scoped<JPH::PhysicsSystem>                  mPhysicsSystem;
 
-        std::vector<JPH::BodyID> mBodyIds;
-        std::deque<uint32_t>     mFreeSlots;
+        std::vector<JPH::BodyID>    mBodyIds;
+        std::vector<JPH::ShapeRefC> mBaseShapes;
+        std::deque<uint32_t>        mFreeSlots;
     };
 }
