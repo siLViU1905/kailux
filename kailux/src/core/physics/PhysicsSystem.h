@@ -55,6 +55,8 @@ namespace kailux
         float mAccumulator{};
         int   mCollisionSteps{1};
 
+        JPH::EPhysicsUpdateError mLastUpdateError{JPH::EPhysicsUpdateError::None};
+
         OnLog mOnInfoLog;
         OnLog mOnWarningLog;
     };

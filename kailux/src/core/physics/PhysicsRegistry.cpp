@@ -289,9 +289,9 @@ namespace kailux
         bodyInterface.SetShape(id, make_scaled_shape(base, scale), true, activation);
     }
 
-    void PhysicsRegistry::Update(float deltaTime, int collisionSteps)
+    JPH::EPhysicsUpdateError PhysicsRegistry::Update(float deltaTime, int collisionSteps)
     {
-        mPhysicsSystem->Update(
+        return mPhysicsSystem->Update(
             deltaTime,
             collisionSteps,
             mAllocator.get(),

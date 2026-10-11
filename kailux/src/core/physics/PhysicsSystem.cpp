@@ -79,6 +79,23 @@ namespace kailux
             OnSimulationStart();
     }
 
+    namespace details
+    {
+        static std::string describe_update_error(JPH::EPhysicsUpdateError error)
+        {
+            using E = JPH::EPhysicsUpdateError;
+
+            std::string message{"Physics dropped contacts:"};
+            if ((error & E::ManifoldCacheFull) != E::None)
+                message += " manifold cache full (raise kMaxContactConstraints);";
+            if ((error & E::BodyPairCacheFull) != E::None)
+                message += " body pair cache full (raise kMaxBodyPairs);";
+            if ((error & E::ContactConstraintsFull) != E::None)
+                message += " contact constraints full (raise kMaxContactConstraints);";
+            return message;
+        }
+    }
+
     void PhysicsSystem::Update(float deltaTime)
     {
         mAccumulator = std::min(mAccumulator + deltaTime, kMaxFrameTime);
@@ -89,9 +106,12 @@ namespace kailux
         {
             ApplyForces();
             MoveKinematicBodies(mFixedStep);
-            mPhysicsRegistry.get().Update(mFixedStep, mCollisionSteps);
+            const auto updateErr{mPhysicsRegistry.get().Update(mFixedStep, mCollisionSteps)};
             StoreStepResults();
             mAccumulator -= mFixedStep;
+
+            if (updateErr != JPH::EPhysicsUpdateError::None && updateErr != mLastUpdateError)
+                mOnWarningLog(details::describe_update_error(updateErr));
         }
 
         UpdateTransforms(mAccumulator / mFixedStep);
