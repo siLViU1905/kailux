@@ -64,6 +64,8 @@ namespace kailux
         void      SetLinearVelocity(BodyHandle handle, const glm::vec3& velocity);
         glm::vec3 GetLinearVelocity(BodyHandle handle) const;
 
+        void ResetVelocities(BodyHandle handle);
+
         void SetBodyTransform(BodyHandle handle, const glm::vec3& position, const glm::quat& rotation);
         void GetBodyTransform(BodyHandle handle, glm::vec3& outPosition, glm::quat& outRotation) const;
 

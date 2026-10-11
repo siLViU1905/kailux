@@ -121,7 +121,7 @@ namespace kailux
             );
 
             if (physicsComp.IsDynamic())
-                mPhysicsRegistry.get().SetLinearVelocity(physicsComp.handle, glm::vec3(0.f));
+                mPhysicsRegistry.get().ResetVelocities(physicsComp.handle);
         }
     }
 

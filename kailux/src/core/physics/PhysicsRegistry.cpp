@@ -207,7 +207,7 @@ namespace kailux
     {
         assert(handle.Valid());
         auto id = mBodyIds[handle.index];
-        mPhysicsSystem->GetBodyInterface().AddImpulse(id, {velocity.x, velocity.y, velocity.z});
+        mPhysicsSystem->GetBodyInterface().SetLinearVelocity(id, {velocity.x, velocity.y, velocity.z});
     }
 
     glm::vec3 PhysicsRegistry::GetLinearVelocity(BodyHandle handle) const
@@ -216,6 +216,16 @@ namespace kailux
         auto id = mBodyIds[handle.index];
         auto velocity = mPhysicsSystem->GetBodyInterface().GetLinearVelocity(id);
         return {velocity.GetX(), velocity.GetY(), velocity.GetZ()};
+    }
+
+    void PhysicsRegistry::ResetVelocities(BodyHandle handle)
+    {
+        assert(handle.Valid());
+        mPhysicsSystem->GetBodyInterface().SetLinearAndAngularVelocity(
+            mBodyIds[handle.index],
+            JPH::Vec3::sZero(),
+            JPH::Vec3::sZero()
+        );
     }
 
     void PhysicsRegistry::SetBodyTransform(BodyHandle handle, const glm::vec3 &position, const glm::quat &rotation)
