@@ -89,7 +89,7 @@ namespace kailux
         {
             ApplyForces();
             MoveKinematicBodies(mFixedStep);
-            mPhysicsRegistry.get().Update(mFixedStep);
+            mPhysicsRegistry.get().Update(mFixedStep, mCollisionSteps);
             StoreStepResults();
             mAccumulator -= mFixedStep;
         }
@@ -101,6 +101,8 @@ namespace kailux
     void PhysicsSystem::SetTickRate(float refreshRate)
     {
         mFixedStep = 1.f / std::clamp(refreshRate, 30.f, 240.f);
+
+        mCollisionSteps = static_cast<int>(std::ceil(mFixedStep * 60.f - 1e-4f));
     }
 
     float PhysicsSystem::GetTickRate() const

@@ -53,6 +53,7 @@ namespace kailux
 
         float mFixedStep{1.f / 60.f};
         float mAccumulator{};
+        int   mCollisionSteps{1};
 
         OnLog mOnInfoLog;
         OnLog mOnWarningLog;

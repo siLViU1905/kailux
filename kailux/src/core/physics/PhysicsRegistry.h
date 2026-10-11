@@ -72,7 +72,7 @@ namespace kailux
 
         void UpdateBodyScale(BodyHandle handle, const glm::vec3& scale);
 
-        void Update(float deltaTime);
+        void Update(float deltaTime, int collisionSteps);
 
         void MoveKinematic(
             BodyHandle handle,
@@ -88,8 +88,6 @@ namespace kailux
         static constexpr uint32_t kNumBodyMutexes = 0;
         static constexpr uint32_t kMaxBodyPairs = 65536;
         static constexpr uint32_t kMaxContactConstraints = 10240;
-
-        static constexpr uint32_t kCollisionSteps = 1;
 
         static uint32_t pick_thread_count(uint32_t freeThreads);
 

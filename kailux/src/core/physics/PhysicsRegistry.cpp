@@ -289,11 +289,11 @@ namespace kailux
         bodyInterface.SetShape(id, make_scaled_shape(base, scale), true, activation);
     }
 
-    void PhysicsRegistry::Update(float deltaTime)
+    void PhysicsRegistry::Update(float deltaTime, int collisionSteps)
     {
         mPhysicsSystem->Update(
             deltaTime,
-            kCollisionSteps,
+            collisionSteps,
             mAllocator.get(),
             mJobSystem.get()
             );
