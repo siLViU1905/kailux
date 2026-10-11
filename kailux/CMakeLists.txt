@@ -72,6 +72,17 @@ add_library(kailux STATIC
         src/core/layers/RuntimeLayer.cpp
 )
 
+if(WIN32)
+    target_sources(kailux PRIVATE
+#            src/core/utilities/dynamic_library/DynamicLibraryWindowsImpl.cpp
+    )
+elseif(UNIX)
+    target_sources(kailux PRIVATE
+            src/core/utilities/dynamic_library/DynamicLibraryLinuxImpl.cpp
+    )
+    target_link_libraries(kailux PUBLIC ${CMAKE_DL_LIBS})
+endif()
+
 target_compile_definitions(kailux PUBLIC
         IMGUI_DEFINE_MATH_OPERATORS
 )
