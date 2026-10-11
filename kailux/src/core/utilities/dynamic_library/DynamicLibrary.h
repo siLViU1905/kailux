@@ -14,7 +14,7 @@ namespace kailux
        DynamicLibrary() = default;
 
        DynamicLibrary(DynamicLibrary &&other) noexcept
-           : mHandle(std::exchange(other.mHandle, nullptr))
+           : pHandle(std::exchange(other.pHandle, nullptr))
        {
        }
        DynamicLibrary &operator=(DynamicLibrary &&other) noexcept
@@ -22,7 +22,7 @@ namespace kailux
            if (this != &other)
            {
                Close();
-               mHandle = std::exchange(other.mHandle, nullptr);
+               pHandle = std::exchange(other.pHandle, nullptr);
            }
            return *this;
        }
@@ -59,10 +59,10 @@ namespace kailux
         }
 
     private:
-       explicit DynamicLibrary(void *handle) : mHandle(handle)
+       explicit DynamicLibrary(void *handle) : pHandle(handle)
        {
        }
 
-        void* mHandle{};
+        void* pHandle{};
     };
 }

@@ -1,6 +1,7 @@
 #include "DynamicLibrary.h"
 
 #include <dlfcn.h>
+#include <format>
 
 namespace kailux
 {
@@ -28,11 +29,11 @@ namespace kailux
 
     DynamicLibrary::SymbolResult DynamicLibrary::GetSymbolAddress(std::string_view name) const
     {
-        if (!mHandle)
+        if (!pHandle)
             return std::unexpected{"dynamic library: library not loaded"};
 
         dlerror();
-        void* ptr{dlsym(mHandle, name.data())};
+        void* ptr{dlsym(pHandle, std::string{name}.c_str())};
         if (!ptr)
             return std::unexpected{
                 std::format(
@@ -44,10 +45,10 @@ namespace kailux
 
     void DynamicLibrary::Close()
     {
-        if (mHandle)
+        if (pHandle)
         {
-            dlclose(mHandle);
-            mHandle = nullptr;
+            dlclose(pHandle);
+            pHandle = nullptr;
         }
     }
 }

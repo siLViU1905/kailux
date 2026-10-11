@@ -63,10 +63,10 @@ namespace kailux
 
     DynamicLibrary::SymbolResult DynamicLibrary::GetSymbolAddress(std::string_view name) const
     {
-        if (!mHandle)
+        if (!pHandle)
             return std::unexpected{"dynamic library: library not loaded"};
 
-        const auto proc{GetProcAddress(static_cast<HMODULE>(mHandle), name.data())};
+        const auto proc{GetProcAddress(static_cast<HMODULE>(pHandle), std::string{name}.c_str())};
         if (!proc)
             return std::unexpected{
                 std::format(
@@ -78,10 +78,10 @@ namespace kailux
 
     void DynamicLibrary::Close()
     {
-        if (mHandle)
+        if (pHandle)
         {
-            FreeLibrary(static_cast<HMODULE>(mHandle));
-            mHandle = nullptr;
+            FreeLibrary(static_cast<HMODULE>(pHandle));
+            pHandle = nullptr;
         }
     }
 }
