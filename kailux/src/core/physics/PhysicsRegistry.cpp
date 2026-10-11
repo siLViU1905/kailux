@@ -58,7 +58,7 @@ namespace kailux
 
         log::console.Debug("physics registry: creating");
         PhysicsRegistry registry;
-        registry.mAllocator = create_scoped<JPH::TempAllocatorImpl>(kAllocatorSize);
+        registry.mAllocator = create_scoped<JPH::TempAllocatorImplWithMallocFallback>(kAllocatorSize);
 
         auto threads = pick_thread_count(2);
         log::console.Debug("physics registry: created job system with {} threads", threads);

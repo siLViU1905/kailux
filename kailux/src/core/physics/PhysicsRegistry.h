@@ -82,7 +82,7 @@ namespace kailux
         );
 
     private:
-        static constexpr uint32_t kAllocatorSize = 10 * 1024 * 1024;
+        static constexpr uint32_t kAllocatorSize = 100 * 1024 * 1024;
 
         static constexpr uint32_t kMaxBodies = 65536;
         static constexpr uint32_t kNumBodyMutexes = 0;
@@ -116,12 +116,12 @@ namespace kailux
         using BuildResult = std::expected<void, std::string>;
         static BuildResult build_submesh_shape(const PhysicsBodyInfo &info, size_t idx, ChildShapeResult &out);
 
-        Scoped<JPH::TempAllocatorImpl>              mAllocator;
-        Scoped<JPH::JobSystemThreadPool>            mJobSystem;
-        Scoped<impl::BroadPhaseLayer>               mBroadPhaseLayer;
-        Scoped<impl::ObjectVsBroadPhaseLayerFilter> mObjectVsBroadPhaseLayer;
-        Scoped<impl::ObjectLayerPairFilter>         mObjectPairFilter;
-        Scoped<JPH::PhysicsSystem>                  mPhysicsSystem;
+        Scoped<JPH::TempAllocatorImplWithMallocFallback> mAllocator;
+        Scoped<JPH::JobSystemThreadPool>                 mJobSystem;
+        Scoped<impl::BroadPhaseLayer>                    mBroadPhaseLayer;
+        Scoped<impl::ObjectVsBroadPhaseLayerFilter>      mObjectVsBroadPhaseLayer;
+        Scoped<impl::ObjectLayerPairFilter>              mObjectPairFilter;
+        Scoped<JPH::PhysicsSystem>                       mPhysicsSystem;
 
         std::vector<JPH::BodyID>    mBodyIds;
         std::vector<JPH::ShapeRefC> mBaseShapes;
