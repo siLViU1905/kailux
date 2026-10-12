@@ -279,7 +279,7 @@ namespace kailux
 
         widgets::property("Mass");
         ImGui::BeginDisabled(!physics.canBecomeDynamic);
-        ImGui::SetNextItemWidth(std::numeric_limits<float>::min());
+        ImGui::SetNextItemWidth(-std::numeric_limits<float>::min());
         ImGui::DragFloat("##mass", &physics.mass, 0.5f, 0.f, 1.0e6f,
                          physics.mass > 0.f ? "%.2f kg" : "auto", ImGuiSliderFlags_AlwaysClamp);
         if (ImGui::IsItemDeactivatedAfterEdit())

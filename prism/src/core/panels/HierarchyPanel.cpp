@@ -418,7 +418,7 @@ namespace kailux
                 ImGuiSliderFlags_AlwaysClamp
             );
             ImGui::EndDisabled();
-            ImGui::SetTooltip("0 = auto, computed from volume (1000 kg/m^3).\n"
+            ImGui::SetItemTooltip("0 = auto, computed from volume (1000 kg/m^3).\n"
                 "Keep bodies that touch within about 1:10 of each other.");
 
             ImGui::Separator();
