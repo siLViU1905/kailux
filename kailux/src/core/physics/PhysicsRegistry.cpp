@@ -84,6 +84,11 @@ namespace kailux
             *registry.mObjectVsBroadPhaseLayer,
             *registry.mObjectPairFilter
         );
+        auto settings{registry.mPhysicsSystem->GetPhysicsSettings()};
+        settings.mNumVelocitySteps = 20;
+        settings.mNumPositionSteps = 4;
+        registry.mPhysicsSystem->SetPhysicsSettings(settings);
+
         log::console.Debug("physics registry: physics system initialized");
 
         registry.AllocResources();
