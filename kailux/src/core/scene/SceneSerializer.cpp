@@ -79,7 +79,7 @@ namespace kailux
             }
 
             if (const auto *physics = registry.try_get<PhysicsComponent>(entity))
-                record.physics = {physics->type, physics->canBecomeDynamic};
+                record.physics = {physics->type, physics->canBecomeDynamic, physics->mass};
 
             document.entities.push_back(std::move(record));
         }

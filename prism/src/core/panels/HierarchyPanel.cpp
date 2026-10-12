@@ -407,13 +407,27 @@ namespace kailux
                 ImGui::SetTooltip("If unchecked, a loaded mesh uses a non-convex\n"
                     "collision shape and can't switch to Dynamic later.");
 
+            ImGui::BeginDisabled(isStatic && !mPhysicsCanBecomeDynamic);
+            ImGui::DragFloat(
+                "Mass",
+                &mPhysicsMass,
+                0.5f,
+                0.f,
+                1.0e6f,
+                mPhysicsMass > 0.f ? "%.2f kg" : "auto",
+                ImGuiSliderFlags_AlwaysClamp
+            );
+            ImGui::EndDisabled();
+            ImGui::SetTooltip("0 = auto, computed from volume (1000 kg/m^3).\n"
+                "Keep bodies that touch within about 1:10 of each other.");
+
             ImGui::Separator();
 
             if (ImGui::Button("Add"))
             {
                 auto type = static_cast<PhysicsBodyType>(mPhysicsBodyType);
                 bool canDyn = isStatic ? mPhysicsCanBecomeDynamic : true;
-                mOnAddPhysics(mPhysicsTargetEntity, type, canDyn);
+                mOnAddPhysics(mPhysicsTargetEntity, type, canDyn, mPhysicsMass);
                 mPhysicsTargetEntity = entt::null;
                 ImGui::CloseCurrentPopup();
             }

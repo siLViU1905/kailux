@@ -104,6 +104,7 @@ namespace kailux
 
         void UpdateBodyType(BodyHandle handle, PhysicsBodyType type);
         void UpdateBodyScale(BodyHandle handle, const glm::vec3& scale);
+        void UpdateBodyMass(BodyHandle handle, float mass);
 
         bool RequestSimulationState(SimulationState state);
 

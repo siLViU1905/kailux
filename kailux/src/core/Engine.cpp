@@ -510,7 +510,14 @@ namespace kailux
         });
         mAssetPipeline.SetOnAttachPhysics([this](auto entity, auto physicsRecord)
         {
-            AddPhysicsToEntity(entity, {physicsRecord.type, physicsRecord.canBecomeDynamic});
+            AddPhysicsToEntity(
+                entity,
+                {
+                    physicsRecord.type,
+                    physicsRecord.canBecomeDynamic,
+                    physicsRecord.mass
+                }
+            );
         });
     }
 
@@ -959,6 +966,11 @@ namespace kailux
     void Engine::UpdateBodyScale(BodyHandle handle, const glm::vec3 &scale)
     {
         mPhysicsRegistry.UpdateBodyScale(handle, scale);
+    }
+
+    void Engine::UpdateBodyMass(BodyHandle handle, float mass)
+    {
+        mPhysicsRegistry.SetBodyMass(handle, mass);
     }
 
     bool Engine::RequestSimulationState(SimulationState state)
@@ -2065,7 +2077,15 @@ namespace kailux
     void Engine::AddPhysicsToEntity(entt::entity entity, PhysicsCreationOptions options)
     {
         if (const auto handle{mPhysicsSystem.AddPhysicsToEntity(entity, options)})
-            mScene.AttachPhysics(entity, {*handle, options.bodyType, options.canBecomeDynamic});
+            mScene.AttachPhysics(
+                entity,
+                {
+                    *handle,
+                    options.bodyType,
+                    options.canBecomeDynamic,
+                    options.mass
+                }
+            );
     }
 
     void Engine::AddLightEntity(LightType type)

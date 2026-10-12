@@ -35,6 +35,7 @@ namespace kailux
     {
         PhysicsBodyType bodyType{PhysicsBodyType::Static};
         bool            canBecomeDynamic{true};
+        float           mass{};
     };
 
     struct PhysicsBodyInfo
@@ -72,6 +73,8 @@ namespace kailux
 
         void UpdateBodyScale(BodyHandle handle, const glm::vec3& scale);
 
+        void SetBodyMass(BodyHandle handle, float mass);
+
         JPH::EPhysicsUpdateError Update(float deltaTime, int collisionSteps);
 
         void MoveKinematic(
@@ -96,6 +99,8 @@ namespace kailux
         static bool scale_is_usable(const glm::vec3& scale);
 
         static JPH::ShapeRefC make_scaled_shape(const JPH::ShapeRefC& base, const glm::vec3& scale);
+
+        void ApplyMassOverride(JPH::BodyID id, float mass);
 
         void AllocResources();
 
@@ -124,6 +129,7 @@ namespace kailux
 
         std::vector<JPH::BodyID>    mBodyIds;
         std::vector<JPH::ShapeRefC> mBaseShapes;
+        std::vector<float>          mMassOverrides;
         std::deque<uint32_t>        mFreeSlots;
     };
 }

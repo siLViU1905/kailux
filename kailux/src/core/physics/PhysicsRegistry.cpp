@@ -24,6 +24,7 @@ namespace kailux
                                                                          mPhysicsSystem(std::move(other.mPhysicsSystem)),
                                                                          mBodyIds(std::move(other.mBodyIds)),
                                                                          mBaseShapes(std::move(other.mBaseShapes)),
+                                                                         mMassOverrides(std::move(other.mMassOverrides)),
                                                                          mFreeSlots(std::move(other.mFreeSlots))
     {
     }
@@ -40,6 +41,7 @@ namespace kailux
             mPhysicsSystem = std::move(other.mPhysicsSystem);
             mBodyIds = std::move(other.mBodyIds);
             mBaseShapes = std::move(other.mBaseShapes);
+            mMassOverrides = std::move(other.mMassOverrides);
             mFreeSlots = std::move(other.mFreeSlots);
         }
         return *this;
@@ -136,8 +138,15 @@ namespace kailux
         if (info.options.bodyType == PhysicsBodyType::Static && info.options.canBecomeDynamic)
             settings.mAllowDynamicOrKinematic = true;
 
-        mBodyIds[slot]    = mPhysicsSystem->GetBodyInterface().CreateAndAddBody(settings, JPH::EActivation::Activate);
-        mBaseShapes[slot] = base;
+        if (info.options.mass > 0.f)
+        {
+            settings.mOverrideMassProperties = JPH::EOverrideMassProperties::CalculateInertia;
+            settings.mMassPropertiesOverride.mMass = info.options.mass;
+        }
+
+        mBodyIds[slot]       = mPhysicsSystem->GetBodyInterface().CreateAndAddBody(settings, JPH::EActivation::Activate);
+        mBaseShapes[slot]    = base;
+        mMassOverrides[slot] = std::max(info.options.mass, 0.f);
 
         return BodyHandle{slot};
     }
@@ -158,6 +167,7 @@ namespace kailux
 
         mBodyIds[handle.index] = JPH::BodyID{};
         mBaseShapes[handle.index] = nullptr;
+        mMassOverrides[handle.index] = 0.f;
         mFreeSlots.push_back(handle.index);
     }
 
@@ -303,6 +313,20 @@ namespace kailux
         };
 
         bodyInterface.SetShape(id, make_scaled_shape(base, scale), true, activation);
+
+        if (const auto mass{mMassOverrides[handle.index]}; mass > 0.f)
+            ApplyMassOverride(id, mass);
+    }
+
+    void PhysicsRegistry::SetBodyMass(BodyHandle handle, float mass)
+    {
+        assert(handle.Valid());
+        const auto id{mBodyIds[handle.index]};
+        if (id.IsInvalid())
+            return;
+
+        mMassOverrides[handle.index] = std::max(mass, 0.f);
+        ApplyMassOverride(id, mMassOverrides[handle.index]);
     }
 
     JPH::EPhysicsUpdateError PhysicsRegistry::Update(float deltaTime, int collisionSteps)
@@ -408,10 +432,27 @@ namespace kailux
         }
     }
 
+    void PhysicsRegistry::ApplyMassOverride(JPH::BodyID id, float mass)
+    {
+        const JPH::BodyLockWrite lock{mPhysicsSystem->GetBodyLockInterface(), id};
+        if (!lock.Succeeded())
+            return;
+
+        auto& body{lock.GetBody()};
+        auto* motion{body.GetMotionPropertiesUnchecked()};
+        if (motion == nullptr)
+            return;
+
+        auto props{body.GetShape()->GetMassProperties()};
+        props.ScaleToMass(mass);
+        motion->SetMassProperties(motion->GetAllowedDOFs(), props);
+    }
+
     void PhysicsRegistry::AllocResources()
     {
         mBodyIds.resize(kMaxBodies, JPH::BodyID(JPH::BodyID::cInvalidBodyID));
         mBaseShapes.resize(kMaxBodies);
+        mMassOverrides.resize(kMaxBodies, 0.f);
 
         for (uint32_t i = 0; i < kMaxBodies; ++i)
             mFreeSlots.push_back(i);
