@@ -91,6 +91,7 @@ namespace kailux
 
         static uint32_t pick_thread_count(uint32_t freeThreads);
 
+        static bool is_valid_pose(const glm::vec3& position, const glm::quat& rotation);
         static bool is_degenerate_triangle(const JPH::Float3 &a, const JPH::Float3 &b, const JPH::Float3 &c);
         static bool scale_is_usable(const glm::vec3& scale);
 

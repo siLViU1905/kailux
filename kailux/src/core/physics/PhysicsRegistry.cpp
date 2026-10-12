@@ -93,6 +93,10 @@ namespace kailux
     {
         if (info.meshType == MeshType::Unknown)
             return std::unexpected{"Unknown mesh type"};
+        if (!is_valid_pose(info.transform.position, info.transform.rotation))
+            return std::unexpected{"Invalid transform (NaN, infinite or zero rotation)"};
+        if (!scale_is_usable(info.transform.scale))
+            return std::unexpected{"Scale is zero on at least one axis"};
 
         const auto baseResult{
             (info.meshType != MeshType::Loaded)
@@ -244,19 +248,25 @@ namespace kailux
     void PhysicsRegistry::SetBodyTransform(BodyHandle handle, const glm::vec3 &position, const glm::quat &rotation)
     {
         assert(handle.Valid());
+        if (!is_valid_pose(position, rotation))
+            return;
+
         auto id = mBodyIds[handle.index];
 
         auto& bodyInterface = mPhysicsSystem->GetBodyInterface();
-
-        JPH::Vec3 joltPos(position.x, position.y, position.z);
-
-        JPH::Quat joltRot(rotation.x, rotation.y, rotation.z, rotation.w);
 
         auto activation = (bodyInterface.GetMotionType(id) == JPH::EMotionType::Dynamic)
                                     ? JPH::EActivation::Activate
                                     : JPH::EActivation::DontActivate;
 
-        bodyInterface.SetPositionAndRotation(id, joltPos, joltRot, activation);
+        const auto unit{glm::normalize(rotation)};
+
+        bodyInterface.SetPositionAndRotation(
+            id,
+            {position.x, position.y, position.z},
+            {unit.x, unit.y, unit.z, unit.w},
+            activation
+        );
     }
 
     void PhysicsRegistry::GetBodyTransform(BodyHandle handle, glm::vec3 &outPosition, glm::quat &outRotation) const
@@ -313,10 +323,15 @@ namespace kailux
     )
     {
         assert(handle.Valid());
+        if (!is_valid_pose(position, rotation))
+            return;
+
+        const auto unit{glm::normalize(rotation)};
+
         mPhysicsSystem->GetBodyInterface().MoveKinematic(
             mBodyIds[handle.index],
             {position.x, position.y, position.z},
-            {rotation.x, rotation.y, rotation.z, rotation.w},
+            {unit.x, unit.y, unit.z, unit.w},
             deltaTime
         );
     }
@@ -328,6 +343,17 @@ namespace kailux
         if (maxThreads > freeThreads)
             threads = maxThreads - freeThreads;
         return threads;
+    }
+
+    bool PhysicsRegistry::is_valid_pose(const glm::vec3 &position, const glm::quat &rotation)
+    {
+        const glm::vec4 rot{rotation.x, rotation.y, rotation.z, rotation.w};
+
+        const bool finite{
+            !glm::any(glm::isnan(position)) && !glm::any(glm::isinf(position)) &&
+            !glm::any(glm::isnan(rot)) && !glm::any(glm::isinf(rot))
+        };
+        return finite && glm::length(rot) > 1e-6f;
     }
 
     bool PhysicsRegistry::is_degenerate_triangle(const JPH::Float3 &a, const JPH::Float3 &b, const JPH::Float3 &c)
