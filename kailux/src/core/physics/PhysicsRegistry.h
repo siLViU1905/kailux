@@ -85,7 +85,7 @@ namespace kailux
         );
 
     private:
-        static constexpr uint32_t kAllocatorSize = 100 * 1024 * 1024;
+        static constexpr uint32_t kAllocatorSize = 16 * 1024 * 1024;
 
         static constexpr uint32_t kMaxBodies = 65536;
         static constexpr uint32_t kNumBodyMutexes = 0;

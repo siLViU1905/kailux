@@ -449,7 +449,8 @@ namespace kailux
             return;
 
         auto props{body.GetShape()->GetMassProperties()};
-        props.ScaleToMass(mass);
+        if (mass > 0.f)
+            props.ScaleToMass(mass);
         motion->SetMassProperties(motion->GetAllowedDOFs(), props);
     }
 

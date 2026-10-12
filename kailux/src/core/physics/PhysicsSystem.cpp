@@ -112,6 +112,7 @@ namespace kailux
 
             if (updateErr != JPH::EPhysicsUpdateError::None && updateErr != mLastUpdateError)
                 mOnWarningLog(details::describe_update_error(updateErr));
+            mLastUpdateError = updateErr;
         }
 
         UpdateTransforms(mAccumulator / mFixedStep);
