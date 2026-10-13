@@ -508,7 +508,11 @@ namespace kailux
         if (const auto it{mShapeCache.find(key)}; it != mShapeCache.end())
             return it->second;
 
-        auto result{create_loaded_mesh_body(info)};
+        auto result{
+            triangleMesh
+                ? create_loaded_mesh_body(info)
+                : create_single_hull(*info.mesh)
+        };
         if (result)
             mShapeCache.emplace(std::move(key), *result);
         return result;
@@ -612,6 +616,40 @@ namespace kailux
             log::console.Error("{}", errorMsg);
             return std::unexpected{errorMsg};
         }
+        return result.Get();
+    }
+
+    PhysicsRegistry::CreateResult PhysicsRegistry::create_single_hull(const PhysicsMeshData &mesh)
+    {
+        size_t total{};
+        for (const auto& submesh : mesh.submeshes)
+            total += submesh.positions.size();
+
+        JPH::Array<JPH::Vec3> points;
+        points.reserve(total);
+
+        glm::vec3 low{std::numeric_limits<float>::max()};
+        glm::vec3 high{std::numeric_limits<float>::lowest()};
+        for (const auto& submesh : mesh.submeshes)
+            for (const auto& position : submesh.positions)
+            {
+                const glm::vec3 point{submesh.localTransform * glm::vec4{position, 1.f}};
+                points.emplace_back(point.x, point.y, point.z);
+                low = glm::min(low, point);
+                high = glm::max(high, point);
+            }
+
+        if (points.size() < 4)
+            return std::unexpected{"physics registry: not enough points for a convex hull"};
+
+        JPH::ConvexHullShapeSettings settings{points};
+        settings.mHullTolerance = std::max(1e-3f, 0.005f * glm::length(high - low));
+        settings.SetEmbedded();
+
+        const auto result{settings.Create()};
+        if (result.HasError())
+            return std::unexpected{std::format("physics registry: ConvexHull Jolt error: {}",
+                                          result.GetError().c_str())};
         return result.Get();
     }
 

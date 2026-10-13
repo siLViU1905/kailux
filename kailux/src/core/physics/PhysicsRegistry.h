@@ -121,6 +121,7 @@ namespace kailux
 
         static CreateResult create_builtin_mesh_body(MeshType type);
         static CreateResult create_loaded_mesh_body(const PhysicsBodyInfo &info);
+        static CreateResult create_single_hull(const PhysicsMeshData& mesh);
 
         decltype(auto) GetBodies(this auto&& self)
         {
