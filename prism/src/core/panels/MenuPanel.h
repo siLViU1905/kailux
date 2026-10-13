@@ -23,6 +23,7 @@ namespace kailux
         using OnRenderScaleChange = std::move_only_function<void(float)>;
         void SetOnRenderScaleChange(OnRenderScaleChange&& callback);
 
+        void SetPhysicsInfo(float lastUpdate, float tickRate);
         void SetDeviceInfo(const DeviceInfo &info);
 
     private:
@@ -42,6 +43,13 @@ namespace kailux
 
         int mRenderScaleIndex{};
         OnRenderScaleChange mOnRenderScaleChange;
+
+        struct PhysicsInfo
+        {
+            float lastUpdateMs{};
+            float tickRate{};
+        };
+        PhysicsInfo mPhysicsInfo;
 
         DeviceInfo mDeviceInfo;
         bool       mShowDevicesInfo{};

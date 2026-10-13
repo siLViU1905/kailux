@@ -126,6 +126,11 @@ namespace kailux
         mOnBodyScaleChange = std::move(callback);
     }
 
+    void EntityEditorPanel::SetOnBodyMassChange(OnBodyMassChange &&callback)
+    {
+        mOnBodyMassChange = std::move(callback);
+    }
+
     void EntityEditorPanel::RenderGizmo(Scene &scene)
     {
         if (mLocked)
@@ -260,12 +265,27 @@ namespace kailux
         ImGui::BeginDisabled(mSimulationRunning);
 
          widgets::property("Body type");
+        const bool locked{!physics.canBecomeDynamic};
+        ImGui::BeginDisabled(locked);
         int typeIndex = static_cast<int>(physics.type);
         if (ImGui::Combo("##body_type", &typeIndex, HierarchyPanel::s_BodyTypeOptions.data()))
         {
             physics.type = static_cast<PhysicsBodyType>(typeIndex);
             mOnBodyTypeChange(physics, physics.type);
         }
+        ImGui::EndDisabled();
+        if (locked)
+            ImGui::SetItemTooltip("Created as a static mesh; re-add physics with \"can become dynamic\" to change type");
+
+        widgets::property("Mass");
+        ImGui::BeginDisabled(!physics.canBecomeDynamic);
+        ImGui::SetNextItemWidth(-std::numeric_limits<float>::min());
+        ImGui::DragFloat("##mass", &physics.mass, 0.5f, 0.f, 1.0e6f,
+                         physics.mass > 0.f ? "%.2f kg" : "auto", ImGuiSliderFlags_AlwaysClamp);
+        if (ImGui::IsItemDeactivatedAfterEdit())
+            mOnBodyMassChange(physics, physics.mass);
+        ImGui::EndDisabled();
+        ImGui::SetItemTooltip("0 = auto, computed from volume (1000 kg/m^3)");
 
          widgets::property("Velocity");
          widgets::vec3_control("vel", control.velocity);

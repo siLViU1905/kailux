@@ -149,9 +149,9 @@ namespace kailux
                 extent = GetPanel<ViewportPanel>().GetInputSource().GetFramebufferSize();
             mEngine.AddCameraEntity(extent.x, extent.y);
         });
-        hierarchyPanel.SetOnAddPhysics([this](auto entity, auto bodyType, auto canBecomeDynamic)
+        hierarchyPanel.SetOnAddPhysics([this](auto entity, auto bodyType, auto canBecomeDynamic, auto mass)
         {
-            mEngine.AddPhysicsToEntity(entity, {bodyType, canBecomeDynamic});
+            mEngine.AddPhysicsToEntity(entity, {bodyType, canBecomeDynamic, mass});
         });
         auto& menuPanel{GetPanel<MenuPanel>()};
         menuPanel.SetOnSceneSave([this](const auto& path)
@@ -201,6 +201,10 @@ namespace kailux
         entityEditor.SetOnBodyScaleChange([this](auto component, const auto& scale)
         {
             mEngine.UpdateBodyScale(component.handle, scale);
+        });
+        entityEditor.SetOnBodyMassChange([this](auto component, auto mass)
+        {
+            mEngine.UpdateBodyMass(component.handle, mass);
         });
 
         auto& viewportPanel{GetPanel<ViewportPanel>()};
@@ -261,6 +265,11 @@ namespace kailux
             simulation.Open();
         else if (!simulation.IsOpen())
             viewport.RequestSimulationState(SimulationState::Paused);
+
+        GetPanel<MenuPanel>().SetPhysicsInfo(
+            mEngine.GetPhysicsSystem().GetLastUpdateMs(),
+            mEngine.GetPhysicsSystem().GetTickRate()
+        );
 
         mSimulationWasRunning = isSimulationRunning;
     }

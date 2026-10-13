@@ -26,23 +26,30 @@ namespace kailux
 
     struct SubmeshPhysicsInfo
     {
-        std::vector<Vertex>                  vertices;
+        std::vector<glm::vec3>               positions;
         std::vector<MeshRegistry::IndexType> indices;
         glm::mat4                            localTransform{1.f};
+    };
+
+    struct PhysicsMeshData
+    {
+        std::string                     key;
+        std::vector<SubmeshPhysicsInfo> submeshes;
     };
 
     struct PhysicsCreationOptions
     {
         PhysicsBodyType bodyType{PhysicsBodyType::Static};
         bool            canBecomeDynamic{true};
+        float           mass{};
     };
 
     struct PhysicsBodyInfo
     {
-        std::vector<SubmeshPhysicsInfo> submeshes;
-        MeshType                        meshType;
-        Transform                       transform;
-        PhysicsCreationOptions          options;
+        Shared<const PhysicsMeshData> mesh;
+        MeshType                      meshType{MeshType::Unknown};
+        Transform                     transform;
+        PhysicsCreationOptions        options;
     };
 
     class PhysicsRegistry
@@ -57,42 +64,71 @@ namespace kailux
         void       DestroyBody(BodyHandle handle);
         void       SetBodyEnabled(BodyHandle handle, bool enabled = true);
         bool       IsBodyEnabled(BodyHandle handle) const;
-        void       SetBodyType(BodyHandle handle, PhysicsBodyType type);
+
+        bool SetBodyType(BodyHandle handle, PhysicsBodyType type);
 
         void      AddForce(BodyHandle handle, const glm::vec3& force);
         void      AddImpulse(BodyHandle handle, const glm::vec3& impulse);
         void      SetLinearVelocity(BodyHandle handle, const glm::vec3& velocity);
         glm::vec3 GetLinearVelocity(BodyHandle handle) const;
 
+        void ResetVelocities(BodyHandle handle);
+
         void SetBodyTransform(BodyHandle handle, const glm::vec3& position, const glm::quat& rotation);
         void GetBodyTransform(BodyHandle handle, glm::vec3& outPosition, glm::quat& outRotation) const;
 
         void UpdateBodyScale(BodyHandle handle, const glm::vec3& scale);
 
-        void Update(float deltaTime);
+        void SetBodyMass(BodyHandle handle, float mass);
+
+        JPH::EPhysicsUpdateError Update(float deltaTime, int collisionSteps);
+
+        void MoveKinematic(
+            BodyHandle handle,
+            const glm::vec3 &position,
+            const glm::quat &rotation,
+            float deltaTime
+        );
+
+        void PruneShapeCache();
+
+        void OptimizeBroadPhaseIfNeeded();
 
     private:
-        static constexpr uint32_t kAllocatorSize = 10 * 1024 * 1024;
+        static constexpr uint32_t kAllocatorSize = 16 * 1024 * 1024;
 
         static constexpr uint32_t kMaxBodies = 65536;
         static constexpr uint32_t kNumBodyMutexes = 0;
         static constexpr uint32_t kMaxBodyPairs = 65536;
-        static constexpr uint32_t kMaxContactConstraints = 10240;
-
-        static constexpr uint32_t kCollisionSteps = 1;
+        static constexpr uint32_t kMaxContactConstraints = 65536;
 
         static uint32_t pick_thread_count(uint32_t freeThreads);
 
+        static bool is_valid_pose(const glm::vec3& position, const glm::quat& rotation);
         static bool is_degenerate_triangle(const JPH::Float3 &a, const JPH::Float3 &b, const JPH::Float3 &c);
-        static bool scale_is_usbale(const glm::vec3& scale);
+        static bool scale_is_usable(const glm::vec3& scale);
+
+        static JPH::ShapeRefC make_scaled_shape(const JPH::ShapeRefC& base, const glm::vec3& scale);
+
+        void ApplyMassOverride(JPH::BodyID id, float mass);
 
         void AllocResources();
 
         uint32_t AcquireSlot();
 
         using CreateResult = std::expected<JPH::ShapeRefC, std::string>;
-        static CreateResult create_builtin_mesh_body(MeshType type, const Transform &transform);
+        CreateResult GetOrCreateLoadedShape(const PhysicsBodyInfo& info);
+
+        static CreateResult create_builtin_mesh_body(MeshType type);
         static CreateResult create_loaded_mesh_body(const PhysicsBodyInfo &info);
+        static CreateResult create_single_hull(const PhysicsMeshData& mesh);
+
+        decltype(auto) GetBodies(this auto&& self)
+        {
+            assert(std::this_thread::get_id() == self.mOwnerThreadId && "PhysicsRegistry used off the main thread");
+            return (self.mPhysicsSystem->GetBodyInterfaceNoLock());
+        }
+        const JPH::BodyLockInterface& GetLocks() const;
 
         struct ChildShapeResult
         {
@@ -104,14 +140,23 @@ namespace kailux
         using BuildResult = std::expected<void, std::string>;
         static BuildResult build_submesh_shape(const PhysicsBodyInfo &info, size_t idx, ChildShapeResult &out);
 
-        Scoped<JPH::TempAllocatorImpl>              mAllocator;
-        Scoped<JPH::JobSystemThreadPool>            mJobSystem;
-        Scoped<impl::BroadPhaseLayer>               mBroadPhaseLayer;
-        Scoped<impl::ObjectVsBroadPhaseLayerFilter> mObjectVsBroadPhaseLayer;
-        Scoped<impl::ObjectLayerPairFilter>         mObjectPairFilter;
-        Scoped<JPH::PhysicsSystem>                  mPhysicsSystem;
+        Scoped<JPH::TempAllocatorImplWithMallocFallback> mAllocator;
+        Scoped<JPH::JobSystemThreadPool>                 mJobSystem;
+        Scoped<impl::BroadPhaseLayer>                    mBroadPhaseLayer;
+        Scoped<impl::ObjectVsBroadPhaseLayerFilter>      mObjectVsBroadPhaseLayer;
+        Scoped<impl::ObjectLayerPairFilter>              mObjectPairFilter;
+        Scoped<JPH::PhysicsSystem>                       mPhysicsSystem;
 
-        std::vector<JPH::BodyID> mBodyIds;
-        std::deque<uint32_t>     mFreeSlots;
+        std::vector<JPH::BodyID>                        mBodyIds;
+        std::vector<JPH::ShapeRefC>                     mBaseShapes;
+        std::vector<float>                              mMassOverrides;
+        std::unordered_map<std::string, JPH::ShapeRefC> mShapeCache;
+        std::deque<uint32_t>                            mFreeSlots;
+
+        bool mBroadPhaseDirty{};
+
+#ifndef NDEBUG
+        std::thread::id mOwnerThreadId{std::this_thread::get_id()};
+#endif
     };
 }

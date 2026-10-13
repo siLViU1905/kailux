@@ -267,6 +267,14 @@ namespace kailux
             for (const auto &submesh: model.submeshes)
                 CreateSubmeshEntity(parentEntity, submesh, data.material);
 
+            scene.GetEntityRegistry().emplace<CachedPhysicsData>(
+                parentEntity,
+                model.physics,
+                MeshType::Loaded
+                );
+            if (data.physics)
+                mOnAttachPhysics(parentEntity, *data.physics);
+
             mOnInfoLog(std::format("Reused '{}' from cache: {} submeshes, refCount {} ({:.3f}ms)",
                                    data.path, model.submeshes.size(), model.refCount,
                                    Clock::get_elapsed<float, TimeType::Milliseconds>(now)));
@@ -363,19 +371,25 @@ namespace kailux
             }
         );
 
-        if (data.physics)
-            mOnAttachPhysics(parentEntity, *data.physics);
+        auto physicsMesh{std::make_shared<PhysicsMeshData>()};
+        physicsMesh->key = data.path;
+        physicsMesh->submeshes.reserve(loadData.submeshes.size());
+        for (const auto &submesh: loadData.submeshes)
+        {
+            auto &out{physicsMesh->submeshes.emplace_back()};
+            out.positions.reserve(submesh.meshData.vertices.size());
+            for (const auto &vertex: submesh.meshData.vertices)
+                out.positions.push_back(vertex.position);
+            out.indices        = submesh.meshData.indices;
+            out.localTransform = submesh.localTransform;
+        }
+        model.physics = physicsMesh;
 
         auto &entityReg = scene.GetEntityRegistry();
-        auto &physicsCache = entityReg.emplace<CachedPhysicsData>(parentEntity);
-        physicsCache.meshType = data.type;
-        physicsCache.submeshes.reserve(loadData.submeshes.size());
-        for (const auto &submesh: loadData.submeshes)
-            physicsCache.submeshes.emplace_back(
-                submesh.meshData.vertices,
-                submesh.meshData.indices,
-                submesh.localTransform
-            );
+        entityReg.emplace<CachedPhysicsData>(parentEntity, std::move(physicsMesh), data.type);
+
+        if (data.physics)
+            mOnAttachPhysics(parentEntity, *data.physics);
 
         mOnInfoLog(std::format("Loaded '{}' with {} submeshes and {} materials in {:.3f}ms",
                                data.path, model.submeshes.size(), loadData.materials.size(),

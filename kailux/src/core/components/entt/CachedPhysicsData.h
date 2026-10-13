@@ -5,7 +5,7 @@ namespace kailux
 {
     struct CachedPhysicsData
     {
-        std::vector<SubmeshPhysicsInfo> submeshes;
-        MeshType                        meshType{MeshType::Unknown};
+        Shared<const PhysicsMeshData> mesh;
+        MeshType                      meshType{MeshType::Unknown};
     };
 }

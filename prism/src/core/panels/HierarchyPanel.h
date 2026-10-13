@@ -31,7 +31,7 @@ namespace kailux
         using OnNewCamera = std::move_only_function<void()>;
         void  SetOnNewCamera(OnNewCamera&& callback);
 
-        using OnAddPhysics = std::move_only_function<void(entt::entity, PhysicsBodyType, bool)>;
+        using OnAddPhysics = std::move_only_function<void(entt::entity, PhysicsBodyType, bool, float)>;
         void SetOnAddPhysics(OnAddPhysics&& callback);
 
         void         SelectEntity(entt::entity entity);
@@ -84,5 +84,6 @@ namespace kailux
 
         int          mPhysicsBodyType{};
         bool         mPhysicsCanBecomeDynamic{true};
+        float        mPhysicsMass{};
     };
 }

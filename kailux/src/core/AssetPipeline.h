@@ -35,8 +35,9 @@ namespace kailux
 
         struct CachedModel
         {
-            std::vector<CachedSubmesh> submeshes;
-            uint32_t                   refCount{};
+            std::vector<CachedSubmesh>    submeshes;
+            Shared<const PhysicsMeshData> physics;
+            uint32_t                      refCount{};
         };
 
         AssetPipeline(Context &context,

@@ -59,7 +59,7 @@ namespace kailux
         data.vertices.reserve((stacks + 1) * (sectors + 1));
         data.indices.reserve(stacks * sectors * 6);
 
-        constexpr float radius = 1.f;
+        constexpr float radius = 0.5f;
 
         const float sectorStep = 2.f * std::numbers::pi_v<float> / static_cast<float>(sectors);
         const float stackStep = std::numbers::pi_v<float> / static_cast<float>(stacks);

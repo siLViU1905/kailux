@@ -117,6 +117,11 @@ namespace kailux
         mOnRenderScaleChange = std::move(callback);
     }
 
+    void MenuPanel::SetPhysicsInfo(float lastUpdate, float tickRate)
+    {
+        mPhysicsInfo = {lastUpdate, tickRate};
+    }
+
     void MenuPanel::SetDeviceInfo(const DeviceInfo &info)
     {
         mDeviceInfo = info;
@@ -124,8 +129,6 @@ namespace kailux
 
     void MenuPanel::RenderProfilerWindow()
     {
-        ImGui::Begin("Profiler", &mShowProfiler);
-
         static std::array<float, 100> frameTimeHistory{};
         static int offset = 0;
 
@@ -140,10 +143,16 @@ namespace kailux
 
         auto overlay = std::format("Frametime: {}", average);
 
+        ImGui::Begin("Profiler", &mShowProfiler);
+
         ImGui::PlotLines("Frame Time", frameTimeHistory.data(), 100, offset, overlay.c_str(), 0.0f, 50.0f,
                          ImVec2(0, 80.0f));
 
         ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+
+        ImGui::Separator();
+
+        ImGui::Text("Physics: %.2f ms  (%.0f Hz)", mPhysicsInfo.lastUpdateMs, mPhysicsInfo.tickRate);
 
         ImGui::End();
     }

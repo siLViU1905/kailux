@@ -19,13 +19,13 @@ namespace kailux::impl
     }
 
 #if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
-    const char *GetBroadPhaseLayerName(JPH::BroadPhaseLayer inLayer) const
+    const char *BroadPhaseLayer::GetBroadPhaseLayerName(JPH::BroadPhaseLayer inLayer) const
     {
-        switch (inLayer)
+        switch (static_cast<JPH::BroadPhaseLayer::Type>(inLayer))
         {
-            case broad_phase_layers::kNonMoving:
+            case static_cast<JPH::BroadPhaseLayer::Type>(broad_phase_layers::kNonMoving):
                 return "NON_MOVING";
-            case broad_phase_layers::kMoving:
+            case static_cast<JPH::BroadPhaseLayer::Type>(broad_phase_layers::kMoving):
                 return "MOVING";
             default:
                 return "UNKNOWN";

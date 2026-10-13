@@ -347,7 +347,7 @@ namespace kailux
         if (mEntityRegistry.valid(entity))
         {
             mEntityRegistry.emplace_or_replace<PhysicsComponent>(entity, component);
-            mEntityRegistry.emplace<PhysicsControlComponent>(entity);
+            mEntityRegistry.emplace_or_replace<PhysicsControlComponent>(entity);
         }
     }
 
