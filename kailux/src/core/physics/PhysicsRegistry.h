@@ -90,6 +90,8 @@ namespace kailux
             float deltaTime
         );
 
+        void PruneShapeCache();
+
     private:
         static constexpr uint32_t kAllocatorSize = 16 * 1024 * 1024;
 
@@ -113,8 +115,11 @@ namespace kailux
         uint32_t AcquireSlot();
 
         using CreateResult = std::expected<JPH::ShapeRefC, std::string>;
+        CreateResult GetOrCreateLoadedShape(const PhysicsBodyInfo& info);
+
         static CreateResult create_builtin_mesh_body(MeshType type);
         static CreateResult create_loaded_mesh_body(const PhysicsBodyInfo &info);
+
 
         struct ChildShapeResult
         {
@@ -133,9 +138,10 @@ namespace kailux
         Scoped<impl::ObjectLayerPairFilter>              mObjectPairFilter;
         Scoped<JPH::PhysicsSystem>                       mPhysicsSystem;
 
-        std::vector<JPH::BodyID>    mBodyIds;
-        std::vector<JPH::ShapeRefC> mBaseShapes;
-        std::vector<float>          mMassOverrides;
-        std::deque<uint32_t>        mFreeSlots;
+        std::vector<JPH::BodyID>                        mBodyIds;
+        std::vector<JPH::ShapeRefC>                     mBaseShapes;
+        std::vector<float>                              mMassOverrides;
+        std::unordered_map<std::string, JPH::ShapeRefC> mShapeCache;
+        std::deque<uint32_t>                            mFreeSlots;
     };
 }

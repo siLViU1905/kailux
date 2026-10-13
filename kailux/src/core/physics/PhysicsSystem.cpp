@@ -55,16 +55,7 @@ namespace kailux
 
     void PhysicsSystem::DestroyAllBodies() const
     {
-        auto& registry{mScene.get().GetEntityRegistry()};
-        for (const auto entity : registry.view<PhysicsComponent>())
-        {
-            auto& component{registry.get<PhysicsComponent>(entity)};
-            if (component.handle.Valid())
-            {
-                mPhysicsRegistry.get().DestroyBody(component.handle);
-                component.handle = {};
-            }
-        }
+        mPhysicsRegistry.get().PruneShapeCache();
     }
 
     SimulationState PhysicsSystem::GetSimulationState() const

@@ -24,7 +24,7 @@ namespace kailux
                                                                          mPhysicsSystem(std::move(other.mPhysicsSystem)),
                                                                          mBodyIds(std::move(other.mBodyIds)),
                                                                          mBaseShapes(std::move(other.mBaseShapes)),
-                                                                         mMassOverrides(std::move(other.mMassOverrides)),
+                                                                         mShapeCache(std::move(other.mShapeCache)),
                                                                          mFreeSlots(std::move(other.mFreeSlots))
     {
     }
@@ -42,6 +42,7 @@ namespace kailux
             mBodyIds = std::move(other.mBodyIds);
             mBaseShapes = std::move(other.mBaseShapes);
             mMassOverrides = std::move(other.mMassOverrides);
+            mShapeCache = std::move(other.mShapeCache);
             mFreeSlots = std::move(other.mFreeSlots);
         }
         return *this;
@@ -108,7 +109,7 @@ namespace kailux
         const auto baseResult{
             (info.meshType != MeshType::Loaded)
                   ? create_builtin_mesh_body(info.meshType)
-                  : create_loaded_mesh_body(info)
+                  : GetOrCreateLoadedShape(info)
         };
         if (!baseResult)
             return std::unexpected{baseResult.error()};
@@ -365,6 +366,14 @@ namespace kailux
         );
     }
 
+    void PhysicsRegistry::PruneShapeCache()
+    {
+        std::erase_if(mShapeCache, [](const auto& entry)
+        {
+            return entry.second->GetRefCount() == 1;
+        });
+    }
+
     uint32_t PhysicsRegistry::pick_thread_count(uint32_t freeThreads)
     {
         uint32_t threads = 1;
@@ -471,6 +480,25 @@ namespace kailux
         auto slot = mFreeSlots.front();
         mFreeSlots.pop_front();
         return slot;
+    }
+
+    PhysicsRegistry::CreateResult PhysicsRegistry::GetOrCreateLoadedShape(const PhysicsBodyInfo &info)
+    {
+        if (!info.mesh)
+            return std::unexpected{"Loaded mesh has no physics data"};
+
+        const bool triangleMesh{
+            info.options.bodyType == PhysicsBodyType::Static && !info.options.canBecomeDynamic
+        };
+        auto key{std::format("{}#{}", info.mesh->key, triangleMesh ? "mesh" : "hull")};
+
+        if (const auto it{mShapeCache.find(key)}; it != mShapeCache.end())
+            return it->second;
+
+        auto result{create_loaded_mesh_body(info)};
+        if (result)
+            mShapeCache.emplace(std::move(key), *result);
+        return result;
     }
 
     PhysicsRegistry::CreateResult PhysicsRegistry::create_builtin_mesh_body(MeshType type)
