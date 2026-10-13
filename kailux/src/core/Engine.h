@@ -87,6 +87,11 @@ namespace kailux
         void         SaveScene(const std::filesystem::path &path);
         void         LoadScene(const std::filesystem::path &path, const Window &window);
 
+        decltype(auto) GetPhysicsSystem(this auto&& self)
+        {
+            return (self.mPhysicsSystem);
+        }
+
         using OnLog = std::move_only_function<void(std::string_view)>;
         void SetOnInfoLog(OnLog&& callback);
         void SetOnWarningLog(OnLog&& callback);
@@ -99,6 +104,7 @@ namespace kailux
 
         void UpdateBodyType(BodyHandle handle, PhysicsBodyType type);
         void UpdateBodyScale(BodyHandle handle, const glm::vec3& scale);
+        void UpdateBodyMass(BodyHandle handle, float mass);
 
         bool RequestSimulationState(SimulationState state);
 

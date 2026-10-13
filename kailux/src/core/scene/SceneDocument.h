@@ -14,7 +14,7 @@ namespace kailux
         uint8_t major{};
         uint8_t minor{};
     };
-    constexpr Version kSceneVersion{2, 1};
+    constexpr Version kSceneVersion{2, 2};
 
     constexpr uint32_t kNoEntity{~0u};
 
@@ -30,6 +30,7 @@ namespace kailux
     {
         PhysicsBodyType type{PhysicsBodyType::Static};
         bool            canBecomeDynamic{false};
+        float           mass{};
     };
 
     struct PointLightRecord
@@ -72,7 +73,7 @@ namespace kailux
     };
 
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(MeshRecord, path, type)
-    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(PhysicsRecord, type, canBecomeDynamic)
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(PhysicsRecord, type, canBecomeDynamic, mass)
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Transform, position, rotation, scale)
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(MeshMaterialData, albedoAndRoughness, pbrParams)
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(PointLightRecord, intensity, range, colorAndEnabled)

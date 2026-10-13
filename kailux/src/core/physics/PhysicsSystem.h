@@ -1,10 +1,11 @@
 #pragma once
 
-#include "../scene/Scene.h"
 #include "PhysicsRegistry.h"
 
 namespace kailux
 {
+    class Scene;
+
     class PhysicsSystem
     {
     public:
@@ -12,22 +13,37 @@ namespace kailux
 
         void Update(float deltaTime);
 
+        void  SetTickRate(float refreshRate);
+        float GetTickRate() const;
+
         void SetSimulationState(SimulationState state);
         SimulationState GetSimulationState() const;
 
+        float GetLastUpdateMs() const;
+
         std::optional<BodyHandle> AddPhysicsToEntity(entt::entity entity, PhysicsCreationOptions options);
 
-        void UpdateBodyType(BodyHandle handle, PhysicsBodyType type);
+        bool UpdateBodyType(BodyHandle handle, PhysicsBodyType type);
         void UpdateBodyScale(BodyHandle handle, const glm::vec3& scale);
 
         using OnLog = std::move_only_function<void(std::string_view)>;
         void SetOnInfoLog(OnLog&& callback);
         void SetOnWarningLog(OnLog&& callback);
 
+        void AttachToScene() const;
+        void DestroyAllBodies() const;
+
     private:
+        static constexpr auto kMaxFrameTime{0.25f};
+
+
         void OnSimulationStart();
-        void UpdateControls();
-        void UpdateTransforms();
+        void ApplyImpulses();
+        void ApplyForces();
+        void MoveKinematicBodies(float step);
+        void StoreStepResults() const;
+        void ReadVelocities();
+        void UpdateTransforms(float alpha) const;
 
         using UploadResult = std::expected<BodyHandle, std::string>;
         UploadResult UploadPhysicsBodyDataToRegistry(const PhysicsBodyInfo& data);
@@ -36,6 +52,14 @@ namespace kailux
         std::reference_wrapper<PhysicsRegistry> mPhysicsRegistry;
 
         SimulationState mSimulationState{SimulationState::Paused};
+
+        float mFixedStep{1.f / 60.f};
+        float mAccumulator{};
+        int   mCollisionSteps{1};
+
+        JPH::EPhysicsUpdateError mLastUpdateError{JPH::EPhysicsUpdateError::None};
+
+        float mLastUpdateMs{};
 
         OnLog mOnInfoLog;
         OnLog mOnWarningLog;

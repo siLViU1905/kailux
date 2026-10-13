@@ -29,6 +29,9 @@ namespace kailux
         using OnBodyScaleChange = std::move_only_function<void(PhysicsComponent, const glm::vec3&)>;
         void SetOnBodyScaleChange(OnBodyScaleChange&& callback);
 
+        using OnBodyMassChange = std::move_only_function<void(PhysicsComponent, float)>;
+        void SetOnBodyMassChange(OnBodyMassChange&& callback);
+
     private:
         static constexpr std::array<std::string_view, 3> kOperations{"Move", "Rotate", "Scale"};
         static constexpr std::array                      kOperationValues{ImGuizmo::TRANSLATE, ImGuizmo::ROTATE, ImGuizmo::SCALE};
@@ -62,5 +65,6 @@ namespace kailux
 
         OnBodyTypeChange  mOnBodyTypeChange;
         OnBodyScaleChange mOnBodyScaleChange;
+        OnBodyMassChange  mOnBodyMassChange;
     };
 }

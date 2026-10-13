@@ -23,7 +23,13 @@ namespace kailux
                                                                          mObjectPairFilter(std::move(other.mObjectPairFilter)),
                                                                          mPhysicsSystem(std::move(other.mPhysicsSystem)),
                                                                          mBodyIds(std::move(other.mBodyIds)),
-                                                                         mFreeSlots(std::move(other.mFreeSlots))
+                                                                         mBaseShapes(std::move(other.mBaseShapes)),
+                                                                         mShapeCache(std::move(other.mShapeCache)),
+                                                                         mFreeSlots(std::move(other.mFreeSlots)),
+                                                                         mBroadPhaseDirty(other.mBroadPhaseDirty)
+#ifndef NDEBUG
+                                                                         ,mOwnerThreadId(other.mOwnerThreadId)
+#endif
     {
     }
 
@@ -38,7 +44,14 @@ namespace kailux
             mObjectPairFilter = std::move(other.mObjectPairFilter);
             mPhysicsSystem = std::move(other.mPhysicsSystem);
             mBodyIds = std::move(other.mBodyIds);
+            mBaseShapes = std::move(other.mBaseShapes);
+            mMassOverrides = std::move(other.mMassOverrides);
+            mShapeCache = std::move(other.mShapeCache);
             mFreeSlots = std::move(other.mFreeSlots);
+            mBroadPhaseDirty = other.mBroadPhaseDirty;
+#ifndef NDEBUG
+            mOwnerThreadId = other.mOwnerThreadId;
+#endif
         }
         return *this;
     }
@@ -56,7 +69,7 @@ namespace kailux
 
         log::console.Debug("physics registry: creating");
         PhysicsRegistry registry;
-        registry.mAllocator = create_scoped<JPH::TempAllocatorImpl>(kAllocatorSize);
+        registry.mAllocator = create_scoped<JPH::TempAllocatorImplWithMallocFallback>(kAllocatorSize);
 
         auto threads = pick_thread_count(2);
         log::console.Debug("physics registry: created job system with {} threads", threads);
@@ -69,7 +82,6 @@ namespace kailux
         registry.mBroadPhaseLayer = create_scoped<impl::BroadPhaseLayer>();
         registry.mObjectVsBroadPhaseLayer = create_scoped<impl::ObjectVsBroadPhaseLayerFilter>();
         registry.mObjectPairFilter = create_scoped<impl::ObjectLayerPairFilter>();
-        registry.mPhysicsSystem = create_scoped<JPH::PhysicsSystem>();
 
         registry.mPhysicsSystem = create_scoped<JPH::PhysicsSystem>();
         registry.mPhysicsSystem->Init(
@@ -81,6 +93,11 @@ namespace kailux
             *registry.mObjectVsBroadPhaseLayer,
             *registry.mObjectPairFilter
         );
+        auto settings{registry.mPhysicsSystem->GetPhysicsSettings()};
+        settings.mNumVelocitySteps = 20;
+        settings.mNumPositionSteps = 4;
+        registry.mPhysicsSystem->SetPhysicsSettings(settings);
+
         log::console.Debug("physics registry: physics system initialized");
 
         registry.AllocResources();
@@ -90,27 +107,27 @@ namespace kailux
 
     PhysicsRegistry::BodyResult PhysicsRegistry::CreateBody(const PhysicsBodyInfo &info)
     {
-        auto slot = AcquireSlot();
+        if (info.meshType == MeshType::Unknown)
+            return std::unexpected{"Unknown mesh type"};
+        if (!is_valid_pose(info.transform.position, info.transform.rotation))
+            return std::unexpected{"Invalid transform (NaN, infinite or zero rotation)"};
+        if (!scale_is_usable(info.transform.scale))
+            return std::unexpected{"Scale is zero on at least one axis"};
+
+        const auto baseResult{
+            (info.meshType != MeshType::Loaded)
+                  ? create_builtin_mesh_body(info.meshType)
+                  : GetOrCreateLoadedShape(info)
+        };
+        if (!baseResult)
+            return std::unexpected{baseResult.error()};
+        const JPH::ShapeRefC base{*baseResult};
+
+        const auto slot{AcquireSlot()};
         if (slot == BodyHandle::kInvalidIndex)
             return std::unexpected{"No more slots"};
 
-        JPH::ShapeRefC shape;
-        if (info.meshType == MeshType::Unknown)
-            return std::unexpected{"Unknown mesh type"};
-        if (info.meshType != MeshType::Loaded)
-        {
-            const auto result{create_builtin_mesh_body(info.meshType, info.transform)};
-            if (!result)
-                return std::unexpected{result.error()};
-            shape = *result;
-        }
-        else
-        {
-            const auto result{create_loaded_mesh_body(info)};
-            if (!result)
-                return std::unexpected{result.error()};
-            shape = *result;
-        }
+        const auto shape{make_scaled_shape(base, info.transform.scale)};
 
         const auto motionType{static_cast<JPH::EMotionType>(info.options.bodyType)};
         const auto objectLayer{
@@ -126,10 +143,26 @@ namespace kailux
             objectLayer
         };
 
+        if (info.options.bodyType != PhysicsBodyType::Static || info.options.canBecomeDynamic)
+        {
+            settings.mMotionQuality = JPH::EMotionQuality::LinearCast;
+            settings.mEnhancedInternalEdgeRemoval = true;
+        }
+
         if (info.options.bodyType == PhysicsBodyType::Static && info.options.canBecomeDynamic)
             settings.mAllowDynamicOrKinematic = true;
 
-        mBodyIds[slot] = mPhysicsSystem->GetBodyInterface().CreateAndAddBody(settings, JPH::EActivation::Activate);
+        if (info.options.mass > 0.f)
+        {
+            settings.mOverrideMassProperties = JPH::EOverrideMassProperties::CalculateInertia;
+            settings.mMassPropertiesOverride.mMass = info.options.mass;
+        }
+
+        mBodyIds[slot]       = GetBodies().CreateAndAddBody(settings, JPH::EActivation::Activate);
+        mBaseShapes[slot]    = base;
+        mMassOverrides[slot] = std::max(info.options.mass, 0.f);
+
+        mBroadPhaseDirty = true;
 
         return BodyHandle{slot};
     }
@@ -137,16 +170,20 @@ namespace kailux
     void PhysicsRegistry::DestroyBody(BodyHandle handle)
     {
         assert(handle.Valid());
-        auto id = mBodyIds[handle.index];
+        const auto id{mBodyIds[handle.index]};
+        if (id.IsInvalid())
+            return;
 
-        auto& bodyInterface = mPhysicsSystem->GetBodyInterface();
+        auto& bodyInterface = GetBodies();
 
         if (bodyInterface.IsAdded(id))
             bodyInterface.RemoveBody(id);
 
         bodyInterface.DestroyBody(id);
 
-        mBodyIds[handle.index] = JPH::BodyID(JPH::BodyID::cInvalidBodyID);
+        mBodyIds[handle.index] = JPH::BodyID{};
+        mBaseShapes[handle.index] = nullptr;
+        mMassOverrides[handle.index] = 0.f;
         mFreeSlots.push_back(handle.index);
     }
 
@@ -155,7 +192,7 @@ namespace kailux
         assert(handle.Valid());
         auto id = mBodyIds[handle.index];
 
-        auto& bodyInterface = mPhysicsSystem->GetBodyInterface();
+        auto& bodyInterface = GetBodies();
         bool isAdded = bodyInterface.IsAdded(id);
         if (enabled && !isAdded)
             bodyInterface.AddBody(id, JPH::EActivation::Activate);
@@ -167,14 +204,22 @@ namespace kailux
     {
         assert(handle.Valid());
         auto id = mBodyIds[handle.index];
-        return mPhysicsSystem->GetBodyInterface().IsAdded(id);
+        return GetBodies().IsAdded(id);
     }
 
-    void PhysicsRegistry::SetBodyType(BodyHandle handle, PhysicsBodyType type)
+    bool PhysicsRegistry::SetBodyType(BodyHandle handle, PhysicsBodyType type)
     {
         assert(handle.Valid());
-        auto id = mBodyIds[handle.index];
-        auto& bodyInterface = mPhysicsSystem->GetBodyInterface();
+        const auto id{mBodyIds[handle.index]};
+
+        if (type != PhysicsBodyType::Static)
+        {
+            const JPH::BodyLockRead lock(GetLocks(), id);
+            if (!lock.Succeeded() || !lock.GetBody().CanBeKinematicOrDynamic())
+                return false;
+        }
+
+        auto& bodyInterface = GetBodies();
 
         auto motionType = static_cast<JPH::EMotionType>(type);
         auto layer      = (type == PhysicsBodyType::Static) ? layers::kNonMoving : layers::kMoving;
@@ -184,126 +229,162 @@ namespace kailux
         bodyInterface.SetMotionType(id, motionType, activation);
 
         bodyInterface.SetObjectLayer(id, layer);
+        return true;
     }
 
     void PhysicsRegistry::AddForce(BodyHandle handle, const glm::vec3 &force)
     {
         assert(handle.Valid());
         auto id = mBodyIds[handle.index];
-        mPhysicsSystem->GetBodyInterface().AddForce(id, {force.x, force.y, force.z});
+        GetBodies().AddForce(id, {force.x, force.y, force.z});
     }
 
     void PhysicsRegistry::AddImpulse(BodyHandle handle, const glm::vec3 &impulse)
     {
         assert(handle.Valid());
         auto id = mBodyIds[handle.index];
-        mPhysicsSystem->GetBodyInterface().AddImpulse(id, {impulse.x, impulse.y, impulse.z});
+        GetBodies().AddImpulse(id, {impulse.x, impulse.y, impulse.z});
     }
 
     void PhysicsRegistry::SetLinearVelocity(BodyHandle handle, const glm::vec3 &velocity)
     {
         assert(handle.Valid());
         auto id = mBodyIds[handle.index];
-        mPhysicsSystem->GetBodyInterface().AddImpulse(id, {velocity.x, velocity.y, velocity.z});
+        GetBodies().SetLinearVelocity(id, {velocity.x, velocity.y, velocity.z});
     }
 
     glm::vec3 PhysicsRegistry::GetLinearVelocity(BodyHandle handle) const
     {
         assert(handle.Valid());
         auto id = mBodyIds[handle.index];
-        auto velocity = mPhysicsSystem->GetBodyInterface().GetLinearVelocity(id);
+        auto velocity = GetBodies().GetLinearVelocity(id);
         return {velocity.GetX(), velocity.GetY(), velocity.GetZ()};
+    }
+
+    void PhysicsRegistry::ResetVelocities(BodyHandle handle)
+    {
+        assert(handle.Valid());
+        GetBodies().SetLinearAndAngularVelocity(
+            mBodyIds[handle.index],
+            JPH::Vec3::sZero(),
+            JPH::Vec3::sZero()
+        );
     }
 
     void PhysicsRegistry::SetBodyTransform(BodyHandle handle, const glm::vec3 &position, const glm::quat &rotation)
     {
         assert(handle.Valid());
+        if (!is_valid_pose(position, rotation))
+            return;
+
         auto id = mBodyIds[handle.index];
 
-        auto& bodyInterface = mPhysicsSystem->GetBodyInterface();
-
-        JPH::Vec3 joltPos(position.x, position.y, position.z);
-
-        JPH::Quat joltRot(rotation.x, rotation.y, rotation.z, rotation.w);
+        auto& bodyInterface = GetBodies();
 
         auto activation = (bodyInterface.GetMotionType(id) == JPH::EMotionType::Dynamic)
                                     ? JPH::EActivation::Activate
                                     : JPH::EActivation::DontActivate;
 
-        bodyInterface.SetPositionAndRotation(id, joltPos, joltRot, activation);
+        const auto unit{glm::normalize(rotation)};
+
+        bodyInterface.SetPositionAndRotation(
+            id,
+            {position.x, position.y, position.z},
+            {unit.x, unit.y, unit.z, unit.w},
+            activation
+        );
     }
 
     void PhysicsRegistry::GetBodyTransform(BodyHandle handle, glm::vec3 &outPosition, glm::quat &outRotation) const
     {
         assert(handle.Valid());
-        auto id = mBodyIds[handle.index];
+        const auto id{mBodyIds[handle.index]};
 
-        JPH::BodyLockRead lock(mPhysicsSystem->GetBodyLockInterface(), id);
-        if (lock.Succeeded())
-        {
-            const auto& body = lock.GetBody();
+        JPH::RVec3 pos;
+        JPH::Quat rot;
+        GetBodies().GetPositionAndRotation(id, pos, rot);
 
-            auto pos = body.GetPosition();
-            outPosition = {pos.GetX(), pos.GetY(), pos.GetZ()};
-
-            auto rot = body.GetRotation();
-            outRotation = {rot.GetW(), rot.GetX(), rot.GetY(), rot.GetZ()};
-        }
+        outPosition = {pos.GetX(), pos.GetY(), pos.GetZ()};
+        outRotation = {rot.GetW(), rot.GetX(), rot.GetY(), rot.GetZ()};
     }
 
     void PhysicsRegistry::UpdateBodyScale(BodyHandle handle, const glm::vec3 &scale)
     {
         assert(handle.Valid());
-        auto id = mBodyIds[handle.index];
+        const auto id{mBodyIds[handle.index]};
+        const auto& base{mBaseShapes[handle.index]};
+        if (id.IsInvalid() || base == nullptr || !scale_is_usable(scale))
+            return;
 
-        auto& bodyInterface = mPhysicsSystem->GetBodyInterface();
-        JPH::ShapeRefC currentShape = bodyInterface.GetShape(id);
-        auto baseShape = currentShape;
+        const auto& bodyInterface{GetBodies()};
+        const auto activation{
+            bodyInterface.GetMotionType(id) == JPH::EMotionType::Dynamic
+            ? JPH::EActivation::Activate
+            : JPH::EActivation::DontActivate
+        };
 
-        if (currentShape->GetSubType() == JPH::EShapeSubType::Scaled)
-        {
-            const auto* scaledShape = static_cast<const JPH::ScaledShape*>(currentShape.GetPtr());
-            baseShape = scaledShape->GetInnerShape();
-        }
+        bodyInterface.SetShape(id, make_scaled_shape(base, scale), true, activation);
 
-        JPH::ShapeRefC newShape;
-        if (baseShape->GetSubType() == JPH::EShapeSubType::Sphere)
-        {
-            const auto* sphereShape = static_cast<const JPH::SphereShape*>(baseShape.GetPtr());
-
-            float maxScale = std::max({scale.x, scale.y, scale.z});
-            newShape = new JPH::SphereShape(sphereShape->GetRadius() * maxScale);
-        }
-        else if (baseShape->GetSubType() == JPH::EShapeSubType::Box)
-        {
-            const auto* boxShape = static_cast<const JPH::BoxShape*>(baseShape.GetPtr());
-            JPH::Vec3 originalHalfExtents = boxShape->GetHalfExtent();
-
-            newShape = new JPH::BoxShape(JPH::Vec3(
-                originalHalfExtents.GetX() * scale.x,
-                originalHalfExtents.GetY() * scale.y,
-                originalHalfExtents.GetZ() * scale.z
-            ));
-        }
-        else
-            newShape = new JPH::ScaledShape(baseShape, {scale.x, scale.y, scale.z});
-
-        bodyInterface.SetShape(
-            id,
-            newShape,
-            true,
-            JPH::EActivation::Activate
-            );
+        if (const auto mass{mMassOverrides[handle.index]}; mass > 0.f)
+            ApplyMassOverride(id, mass);
     }
 
-    void PhysicsRegistry::Update(float deltaTime)
+    void PhysicsRegistry::SetBodyMass(BodyHandle handle, float mass)
     {
-        mPhysicsSystem->Update(
+        assert(handle.Valid());
+        const auto id{mBodyIds[handle.index]};
+        if (id.IsInvalid())
+            return;
+
+        mMassOverrides[handle.index] = std::max(mass, 0.f);
+        ApplyMassOverride(id, mMassOverrides[handle.index]);
+    }
+
+    JPH::EPhysicsUpdateError PhysicsRegistry::Update(float deltaTime, int collisionSteps)
+    {
+        return mPhysicsSystem->Update(
             deltaTime,
-            kCollisionSteps,
+            collisionSteps,
             mAllocator.get(),
             mJobSystem.get()
             );
+    }
+
+    void PhysicsRegistry::MoveKinematic(
+        BodyHandle handle,
+        const glm::vec3 &position,
+        const glm::quat &rotation,
+        float deltaTime
+    )
+    {
+        assert(handle.Valid());
+        if (!is_valid_pose(position, rotation))
+            return;
+
+        const auto unit{glm::normalize(rotation)};
+
+        GetBodies().MoveKinematic(
+            mBodyIds[handle.index],
+            {position.x, position.y, position.z},
+            {unit.x, unit.y, unit.z, unit.w},
+            deltaTime
+        );
+    }
+
+    void PhysicsRegistry::PruneShapeCache()
+    {
+        std::erase_if(mShapeCache, [](const auto& entry)
+        {
+            return entry.second->GetRefCount() == 1;
+        });
+    }
+
+    void PhysicsRegistry::OptimizeBroadPhaseIfNeeded()
+    {
+        if (!mBroadPhaseDirty)
+            return;
+        mPhysicsSystem->OptimizeBroadPhase();
+        mBroadPhaseDirty = false;
     }
 
     uint32_t PhysicsRegistry::pick_thread_count(uint32_t freeThreads)
@@ -315,6 +396,17 @@ namespace kailux
         return threads;
     }
 
+    bool PhysicsRegistry::is_valid_pose(const glm::vec3 &position, const glm::quat &rotation)
+    {
+        const glm::vec4 rot{rotation.x, rotation.y, rotation.z, rotation.w};
+
+        const bool finite{
+            !glm::any(glm::isnan(position)) && !glm::any(glm::isinf(position)) &&
+            !glm::any(glm::isnan(rot)) && !glm::any(glm::isinf(rot))
+        };
+        return finite && glm::length(rot) > 1e-6f;
+    }
+
     bool PhysicsRegistry::is_degenerate_triangle(const JPH::Float3 &a, const JPH::Float3 &b, const JPH::Float3 &c)
     {
         const JPH::Vec3 v0{a};
@@ -324,7 +416,7 @@ namespace kailux
         return (v1 - v0).Cross(v2 - v0).IsNearZero();
     }
 
-    bool PhysicsRegistry::scale_is_usbale(const glm::vec3 &scale)
+    bool PhysicsRegistry::scale_is_usable(const glm::vec3 &scale)
     {
         constexpr auto kEps{1e-6f};
 
@@ -333,9 +425,62 @@ namespace kailux
                && std::abs(scale.z) > kEps;
     }
 
+    JPH::ShapeRefC PhysicsRegistry::make_scaled_shape(const JPH::ShapeRefC &base, const glm::vec3 &scale)
+    {
+        const auto absScale{glm::abs(scale)};
+
+        switch (base->GetSubType())
+        {
+            case JPH::EShapeSubType::Sphere:
+            {
+                const auto radius{static_cast<const JPH::SphereShape*>(base.GetPtr())->GetRadius()};
+                return new JPH::SphereShape{
+                    radius * std::max({absScale.x, absScale.y, absScale.z})
+                };
+            }
+            case JPH::EShapeSubType::Box:
+            {
+                const auto* box{static_cast<const JPH::BoxShape*>(base.GetPtr())};
+                const auto half{box->GetHalfExtent() * JPH::Vec3{absScale.x, absScale.y, absScale.z}};
+                return new JPH::BoxShape{
+                    half,
+                    std::min(JPH::cDefaultConvexRadius, half.ReduceMin())
+                };
+            }
+            default:
+            {
+                JPH::Vec3 joltScale{scale.x, scale.y, scale.z};
+                if (joltScale.IsClose(JPH::Vec3::sReplicate(1.f)))
+                    return base;
+                if (!base->IsValidScale(joltScale))
+                    joltScale = base->MakeScaleValid(joltScale);
+                return new JPH::ScaledShape{base, joltScale};
+            }
+        }
+    }
+
+    void PhysicsRegistry::ApplyMassOverride(JPH::BodyID id, float mass)
+    {
+        const JPH::BodyLockWrite lock{GetLocks(), id};
+        if (!lock.Succeeded())
+            return;
+
+        auto& body{lock.GetBody()};
+        auto* motion{body.GetMotionPropertiesUnchecked()};
+        if (motion == nullptr)
+            return;
+
+        auto props{body.GetShape()->GetMassProperties()};
+        if (mass > 0.f)
+            props.ScaleToMass(mass);
+        motion->SetMassProperties(motion->GetAllowedDOFs(), props);
+    }
+
     void PhysicsRegistry::AllocResources()
     {
         mBodyIds.resize(kMaxBodies, JPH::BodyID(JPH::BodyID::cInvalidBodyID));
+        mBaseShapes.resize(kMaxBodies);
+        mMassOverrides.resize(kMaxBodies, 0.f);
 
         for (uint32_t i = 0; i < kMaxBodies; ++i)
             mFreeSlots.push_back(i);
@@ -350,21 +495,42 @@ namespace kailux
         return slot;
     }
 
-    PhysicsRegistry::CreateResult PhysicsRegistry::create_builtin_mesh_body(MeshType type, const Transform &transform)
+    PhysicsRegistry::CreateResult PhysicsRegistry::GetOrCreateLoadedShape(const PhysicsBodyInfo &info)
+    {
+        if (!info.mesh)
+            return std::unexpected{"Loaded mesh has no physics data"};
+
+        const bool triangleMesh{
+            info.options.bodyType == PhysicsBodyType::Static && !info.options.canBecomeDynamic
+        };
+        auto key{std::format("{}#{}", info.mesh->key, triangleMesh ? "mesh" : "hull")};
+
+        if (const auto it{mShapeCache.find(key)}; it != mShapeCache.end())
+            return it->second;
+
+        auto result{
+            triangleMesh
+                ? create_loaded_mesh_body(info)
+                : create_single_hull(*info.mesh)
+        };
+        if (result)
+            mShapeCache.emplace(std::move(key), *result);
+        return result;
+    }
+
+    PhysicsRegistry::CreateResult PhysicsRegistry::create_builtin_mesh_body(MeshType type)
     {
         JPH::ShapeRefC shape;
         switch (type)
         {
             case MeshType::Cube:
             {
-                JPH::Vec3 halfExtents(transform.scale.x * 0.5f, transform.scale.y * 0.5f, transform.scale.z * 0.5f);
-                shape = new JPH::BoxShape(halfExtents);
+                shape = new JPH::BoxShape(JPH::Vec3::sReplicate(0.5f));
                 break;
             }
             case MeshType::Sphere:
             {
-                float radius = transform.scale.x * 0.5f;
-                shape = new JPH::SphereShape(radius);
+                shape = new JPH::SphereShape(0.5f);
                 break;
             }
             case MeshType::Loaded:
@@ -377,7 +543,10 @@ namespace kailux
 
     PhysicsRegistry::CreateResult PhysicsRegistry::create_loaded_mesh_body(const PhysicsBodyInfo &info)
     {
-        const auto submeshesCount{info.submeshes.size()};
+        if (!info.mesh || info.mesh->submeshes.empty())
+            return std::unexpected{"physics registry: loaded mesh has no physics data"};
+
+        const auto submeshesCount{info.mesh->submeshes.size()};
 
         std::vector<size_t> indices(submeshesCount);
         std::iota(indices.begin(), indices.end(), size_t{});
@@ -450,15 +619,55 @@ namespace kailux
         return result.Get();
     }
 
+    PhysicsRegistry::CreateResult PhysicsRegistry::create_single_hull(const PhysicsMeshData &mesh)
+    {
+        size_t total{};
+        for (const auto& submesh : mesh.submeshes)
+            total += submesh.positions.size();
+
+        JPH::Array<JPH::Vec3> points;
+        points.reserve(total);
+
+        glm::vec3 low{std::numeric_limits<float>::max()};
+        glm::vec3 high{std::numeric_limits<float>::lowest()};
+        for (const auto& submesh : mesh.submeshes)
+            for (const auto& position : submesh.positions)
+            {
+                const glm::vec3 point{submesh.localTransform * glm::vec4{position, 1.f}};
+                points.emplace_back(point.x, point.y, point.z);
+                low = glm::min(low, point);
+                high = glm::max(high, point);
+            }
+
+        if (points.size() < 4)
+            return std::unexpected{"physics registry: not enough points for a convex hull"};
+
+        JPH::ConvexHullShapeSettings settings{points};
+        settings.mHullTolerance = std::max(1e-3f, 0.005f * glm::length(high - low));
+        settings.SetEmbedded();
+
+        const auto result{settings.Create()};
+        if (result.HasError())
+            return std::unexpected{std::format("physics registry: ConvexHull Jolt error: {}",
+                                          result.GetError().c_str())};
+        return result.Get();
+    }
+
+    const JPH::BodyLockInterface & PhysicsRegistry::GetLocks() const
+    {
+        assert(std::this_thread::get_id() == mOwnerThreadId && "PhysicsRegistry used off the main thread");
+        return mPhysicsSystem->GetBodyLockInterfaceNoLock();
+    }
+
     PhysicsRegistry::BuildResult PhysicsRegistry::build_submesh_shape(const PhysicsBodyInfo &info, size_t idx, ChildShapeResult &out)
     {
         out = {};
 
-        const auto& submesh = info.submeshes[idx];
+        const auto& submesh{info.mesh->submeshes[idx]};
 
         const auto submeshFormatString{std::format("submesh {}: ", idx)};
 
-        if (submesh.vertices.empty())
+        if (submesh.positions.empty())
             return std::unexpected{submeshFormatString + "Shape has no vertices"};
         if (submesh.indices.size() < 3)
             return std::unexpected{submeshFormatString + "Shape has less than 3 indices"};
@@ -468,7 +677,7 @@ namespace kailux
         if (!glm::decompose(submesh.localTransform, lScale, lRot, lTrans, lSkew, lPersp))
             return std::unexpected{submeshFormatString + "Transform could not be decomposed"};
 
-        if (!scale_is_usbale(lScale))
+        if (!scale_is_usable(lScale))
             return std::unexpected{
                 submeshFormatString + std::format("Scale (x: {:.3f}, y:{:.3f}, z: {:.3f}) is not usable",
                                                   lScale.x,
@@ -485,12 +694,12 @@ namespace kailux
         if (useTriangleMesh)
         {
             JPH::VertexList joltVertices;
-            joltVertices.reserve(submesh.vertices.size());
-            for (const auto& vertex : submesh.vertices)
+            joltVertices.reserve(submesh.positions.size());
+            for (const auto& position : submesh.positions)
                 joltVertices.emplace_back(
-                    vertex.position.x,
-                    vertex.position.y,
-                    vertex.position.z
+                    position.x,
+                    position.y,
+                    position.z
                 );
 
             const auto vertexCount{static_cast<uint32_t>(joltVertices.size())};
@@ -546,12 +755,12 @@ namespace kailux
         else
         {
             JPH::Array<JPH::Vec3> hullVertices;
-            hullVertices.reserve(submesh.vertices.size());
-            for (const auto& vertex : submesh.vertices)
+            hullVertices.reserve(submesh.positions.size());
+            for (const auto& position : submesh.positions)
                 hullVertices.emplace_back(
-                    vertex.position.x,
-                    vertex.position.y,
-                    vertex.position.z
+                    position.x,
+                    position.y,
+                    position.z
                 );
 
             if (hullVertices.size() < 3)

@@ -63,5 +63,38 @@ namespace kailux
         return {width, height};
     }
 
+    float InputSource::GetRefreshRate() const
+    {
+        return static_cast<float>(glfwGetVideoMode(GetWindowMonitor())->refreshRate);
+    }
+
     bool InputSource::operator==(const InputSource &other) const = default;
+
+    GLFWmonitor * InputSource::GetWindowMonitor() const
+    {
+        int wx, wy, ww, wh;
+        glfwGetWindowPos(mHandle, &wx, &wy);
+        glfwGetWindowSize(mHandle, &ww, &wh);
+
+        int count;
+        auto** monitors{glfwGetMonitors(&count)};
+        auto* bestMonitor{glfwGetPrimaryMonitor()};
+        int bestOverlap{};
+
+        for (int i{}; i < count; ++i)
+        {
+            int mx, my;
+            glfwGetMonitorPos(monitors[i], &mx, &my);
+            const auto* mode{glfwGetVideoMode(monitors[i])};
+
+            const int ox{std::max(0, std::min(wx + ww, mx + mode->width) - std::max(wx, mx))};
+            const int oy{std::max(0, std::min(wy + wh, my + mode->height) - std::max(wy, my))};
+            if (ox * oy > bestOverlap)
+            {
+                bestOverlap = ox * oy;
+                bestMonitor = monitors[i];
+            }
+        }
+        return bestMonitor;
+    }
 }
