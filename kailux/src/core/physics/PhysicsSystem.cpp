@@ -144,6 +144,7 @@ namespace kailux
     void PhysicsSystem::OnSimulationStart()
     {
         mAccumulator = 0.f;
+        mPhysicsRegistry.get().OptimizeBroadPhaseIfNeeded();
         auto& registry{mScene.get().GetEntityRegistry()};
         const auto view{registry.view<WorldTransform, PhysicsComponent>()};
 

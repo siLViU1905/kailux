@@ -25,7 +25,8 @@ namespace kailux
                                                                          mBodyIds(std::move(other.mBodyIds)),
                                                                          mBaseShapes(std::move(other.mBaseShapes)),
                                                                          mShapeCache(std::move(other.mShapeCache)),
-                                                                         mFreeSlots(std::move(other.mFreeSlots))
+                                                                         mFreeSlots(std::move(other.mFreeSlots)),
+                                                                         mBroadPhaseDirty(other.mBroadPhaseDirty)
 #ifndef NDEBUG
                                                                          ,mOwnerThreadId(other.mOwnerThreadId)
 #endif
@@ -47,6 +48,7 @@ namespace kailux
             mMassOverrides = std::move(other.mMassOverrides);
             mShapeCache = std::move(other.mShapeCache);
             mFreeSlots = std::move(other.mFreeSlots);
+            mBroadPhaseDirty = other.mBroadPhaseDirty;
 #ifndef NDEBUG
             mOwnerThreadId = other.mOwnerThreadId;
 #endif
@@ -159,6 +161,8 @@ namespace kailux
         mBodyIds[slot]       = GetBodies().CreateAndAddBody(settings, JPH::EActivation::Activate);
         mBaseShapes[slot]    = base;
         mMassOverrides[slot] = std::max(info.options.mass, 0.f);
+
+        mBroadPhaseDirty = true;
 
         return BodyHandle{slot};
     }
@@ -373,6 +377,14 @@ namespace kailux
         {
             return entry.second->GetRefCount() == 1;
         });
+    }
+
+    void PhysicsRegistry::OptimizeBroadPhaseIfNeeded()
+    {
+        if (!mBroadPhaseDirty)
+            return;
+        mPhysicsSystem->OptimizeBroadPhase();
+        mBroadPhaseDirty = false;
     }
 
     uint32_t PhysicsRegistry::pick_thread_count(uint32_t freeThreads)

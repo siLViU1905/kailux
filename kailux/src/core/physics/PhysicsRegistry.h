@@ -92,6 +92,8 @@ namespace kailux
 
         void PruneShapeCache();
 
+        void OptimizeBroadPhaseIfNeeded();
+
     private:
         static constexpr uint32_t kAllocatorSize = 16 * 1024 * 1024;
 
@@ -149,6 +151,8 @@ namespace kailux
         std::vector<float>                              mMassOverrides;
         std::unordered_map<std::string, JPH::ShapeRefC> mShapeCache;
         std::deque<uint32_t>                            mFreeSlots;
+
+        bool mBroadPhaseDirty{};
 
 #ifndef NDEBUG
         std::thread::id mOwnerThreadId{std::this_thread::get_id()};
