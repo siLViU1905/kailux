@@ -120,6 +120,12 @@ namespace kailux
         static CreateResult create_builtin_mesh_body(MeshType type);
         static CreateResult create_loaded_mesh_body(const PhysicsBodyInfo &info);
 
+        decltype(auto) GetBodies(this auto&& self)
+        {
+            assert(std::this_thread::get_id() == self.mOwnerThreadId && "PhysicsRegistry used off the main thread");
+            return (self.mPhysicsSystem->GetBodyInterfaceNoLock());
+        }
+        const JPH::BodyLockInterface& GetLocks() const;
 
         struct ChildShapeResult
         {
@@ -143,5 +149,9 @@ namespace kailux
         std::vector<float>                              mMassOverrides;
         std::unordered_map<std::string, JPH::ShapeRefC> mShapeCache;
         std::deque<uint32_t>                            mFreeSlots;
+
+#ifndef NDEBUG
+        std::thread::id mOwnerThreadId{std::this_thread::get_id()};
+#endif
     };
 }

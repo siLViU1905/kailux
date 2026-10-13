@@ -26,6 +26,9 @@ namespace kailux
                                                                          mBaseShapes(std::move(other.mBaseShapes)),
                                                                          mShapeCache(std::move(other.mShapeCache)),
                                                                          mFreeSlots(std::move(other.mFreeSlots))
+#ifndef NDEBUG
+                                                                         ,mOwnerThreadId(other.mOwnerThreadId)
+#endif
     {
     }
 
@@ -44,6 +47,9 @@ namespace kailux
             mMassOverrides = std::move(other.mMassOverrides);
             mShapeCache = std::move(other.mShapeCache);
             mFreeSlots = std::move(other.mFreeSlots);
+#ifndef NDEBUG
+            mOwnerThreadId = other.mOwnerThreadId;
+#endif
         }
         return *this;
     }
@@ -150,7 +156,7 @@ namespace kailux
             settings.mMassPropertiesOverride.mMass = info.options.mass;
         }
 
-        mBodyIds[slot]       = mPhysicsSystem->GetBodyInterface().CreateAndAddBody(settings, JPH::EActivation::Activate);
+        mBodyIds[slot]       = GetBodies().CreateAndAddBody(settings, JPH::EActivation::Activate);
         mBaseShapes[slot]    = base;
         mMassOverrides[slot] = std::max(info.options.mass, 0.f);
 
@@ -164,7 +170,7 @@ namespace kailux
         if (id.IsInvalid())
             return;
 
-        auto& bodyInterface = mPhysicsSystem->GetBodyInterface();
+        auto& bodyInterface = GetBodies();
 
         if (bodyInterface.IsAdded(id))
             bodyInterface.RemoveBody(id);
@@ -182,7 +188,7 @@ namespace kailux
         assert(handle.Valid());
         auto id = mBodyIds[handle.index];
 
-        auto& bodyInterface = mPhysicsSystem->GetBodyInterface();
+        auto& bodyInterface = GetBodies();
         bool isAdded = bodyInterface.IsAdded(id);
         if (enabled && !isAdded)
             bodyInterface.AddBody(id, JPH::EActivation::Activate);
@@ -194,7 +200,7 @@ namespace kailux
     {
         assert(handle.Valid());
         auto id = mBodyIds[handle.index];
-        return mPhysicsSystem->GetBodyInterface().IsAdded(id);
+        return GetBodies().IsAdded(id);
     }
 
     bool PhysicsRegistry::SetBodyType(BodyHandle handle, PhysicsBodyType type)
@@ -204,12 +210,12 @@ namespace kailux
 
         if (type != PhysicsBodyType::Static)
         {
-            const JPH::BodyLockRead lock(mPhysicsSystem->GetBodyLockInterface(), id);
+            const JPH::BodyLockRead lock(GetLocks(), id);
             if (!lock.Succeeded() || !lock.GetBody().CanBeKinematicOrDynamic())
                 return false;
         }
 
-        auto& bodyInterface = mPhysicsSystem->GetBodyInterface();
+        auto& bodyInterface = GetBodies();
 
         auto motionType = static_cast<JPH::EMotionType>(type);
         auto layer      = (type == PhysicsBodyType::Static) ? layers::kNonMoving : layers::kMoving;
@@ -226,35 +232,35 @@ namespace kailux
     {
         assert(handle.Valid());
         auto id = mBodyIds[handle.index];
-        mPhysicsSystem->GetBodyInterface().AddForce(id, {force.x, force.y, force.z});
+        GetBodies().AddForce(id, {force.x, force.y, force.z});
     }
 
     void PhysicsRegistry::AddImpulse(BodyHandle handle, const glm::vec3 &impulse)
     {
         assert(handle.Valid());
         auto id = mBodyIds[handle.index];
-        mPhysicsSystem->GetBodyInterface().AddImpulse(id, {impulse.x, impulse.y, impulse.z});
+        GetBodies().AddImpulse(id, {impulse.x, impulse.y, impulse.z});
     }
 
     void PhysicsRegistry::SetLinearVelocity(BodyHandle handle, const glm::vec3 &velocity)
     {
         assert(handle.Valid());
         auto id = mBodyIds[handle.index];
-        mPhysicsSystem->GetBodyInterface().SetLinearVelocity(id, {velocity.x, velocity.y, velocity.z});
+        GetBodies().SetLinearVelocity(id, {velocity.x, velocity.y, velocity.z});
     }
 
     glm::vec3 PhysicsRegistry::GetLinearVelocity(BodyHandle handle) const
     {
         assert(handle.Valid());
         auto id = mBodyIds[handle.index];
-        auto velocity = mPhysicsSystem->GetBodyInterface().GetLinearVelocity(id);
+        auto velocity = GetBodies().GetLinearVelocity(id);
         return {velocity.GetX(), velocity.GetY(), velocity.GetZ()};
     }
 
     void PhysicsRegistry::ResetVelocities(BodyHandle handle)
     {
         assert(handle.Valid());
-        mPhysicsSystem->GetBodyInterface().SetLinearAndAngularVelocity(
+        GetBodies().SetLinearAndAngularVelocity(
             mBodyIds[handle.index],
             JPH::Vec3::sZero(),
             JPH::Vec3::sZero()
@@ -269,7 +275,7 @@ namespace kailux
 
         auto id = mBodyIds[handle.index];
 
-        auto& bodyInterface = mPhysicsSystem->GetBodyInterface();
+        auto& bodyInterface = GetBodies();
 
         auto activation = (bodyInterface.GetMotionType(id) == JPH::EMotionType::Dynamic)
                                     ? JPH::EActivation::Activate
@@ -288,19 +294,14 @@ namespace kailux
     void PhysicsRegistry::GetBodyTransform(BodyHandle handle, glm::vec3 &outPosition, glm::quat &outRotation) const
     {
         assert(handle.Valid());
-        auto id = mBodyIds[handle.index];
+        const auto id{mBodyIds[handle.index]};
 
-        JPH::BodyLockRead lock(mPhysicsSystem->GetBodyLockInterface(), id);
-        if (lock.Succeeded())
-        {
-            const auto& body = lock.GetBody();
+        JPH::RVec3 pos;
+        JPH::Quat rot;
+        GetBodies().GetPositionAndRotation(id, pos, rot);
 
-            auto pos = body.GetPosition();
-            outPosition = {pos.GetX(), pos.GetY(), pos.GetZ()};
-
-            auto rot = body.GetRotation();
-            outRotation = {rot.GetW(), rot.GetX(), rot.GetY(), rot.GetZ()};
-        }
+        outPosition = {pos.GetX(), pos.GetY(), pos.GetZ()};
+        outRotation = {rot.GetW(), rot.GetX(), rot.GetY(), rot.GetZ()};
     }
 
     void PhysicsRegistry::UpdateBodyScale(BodyHandle handle, const glm::vec3 &scale)
@@ -311,7 +312,7 @@ namespace kailux
         if (id.IsInvalid() || base == nullptr || !scale_is_usable(scale))
             return;
 
-        const auto& bodyInterface{mPhysicsSystem->GetBodyInterface()};
+        const auto& bodyInterface{GetBodies()};
         const auto activation{
             bodyInterface.GetMotionType(id) == JPH::EMotionType::Dynamic
             ? JPH::EActivation::Activate
@@ -358,7 +359,7 @@ namespace kailux
 
         const auto unit{glm::normalize(rotation)};
 
-        mPhysicsSystem->GetBodyInterface().MoveKinematic(
+        GetBodies().MoveKinematic(
             mBodyIds[handle.index],
             {position.x, position.y, position.z},
             {unit.x, unit.y, unit.z, unit.w},
@@ -448,7 +449,7 @@ namespace kailux
 
     void PhysicsRegistry::ApplyMassOverride(JPH::BodyID id, float mass)
     {
-        const JPH::BodyLockWrite lock{mPhysicsSystem->GetBodyLockInterface(), id};
+        const JPH::BodyLockWrite lock{GetLocks(), id};
         if (!lock.Succeeded())
             return;
 
@@ -600,6 +601,12 @@ namespace kailux
             return std::unexpected{errorMsg};
         }
         return result.Get();
+    }
+
+    const JPH::BodyLockInterface & PhysicsRegistry::GetLocks() const
+    {
+        assert(std::this_thread::get_id() == mOwnerThreadId && "PhysicsRegistry used off the main thread");
+        return mPhysicsSystem->GetBodyLockInterfaceNoLock();
     }
 
     PhysicsRegistry::BuildResult PhysicsRegistry::build_submesh_shape(const PhysicsBodyInfo &info, size_t idx, ChildShapeResult &out)
