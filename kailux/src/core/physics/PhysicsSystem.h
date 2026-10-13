@@ -19,6 +19,8 @@ namespace kailux
         void SetSimulationState(SimulationState state);
         SimulationState GetSimulationState() const;
 
+        float GetLastUpdateMs() const;
+
         std::optional<BodyHandle> AddPhysicsToEntity(entt::entity entity, PhysicsCreationOptions options);
 
         bool UpdateBodyType(BodyHandle handle, PhysicsBodyType type);
@@ -56,6 +58,8 @@ namespace kailux
         int   mCollisionSteps{1};
 
         JPH::EPhysicsUpdateError mLastUpdateError{JPH::EPhysicsUpdateError::None};
+
+        float mLastUpdateMs{};
 
         OnLog mOnInfoLog;
         OnLog mOnWarningLog;

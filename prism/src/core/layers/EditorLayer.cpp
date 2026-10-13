@@ -266,6 +266,11 @@ namespace kailux
         else if (!simulation.IsOpen())
             viewport.RequestSimulationState(SimulationState::Paused);
 
+        GetPanel<MenuPanel>().SetPhysicsInfo(
+            mEngine.GetPhysicsSystem().GetLastUpdateMs(),
+            mEngine.GetPhysicsSystem().GetTickRate()
+        );
+
         mSimulationWasRunning = isSimulationRunning;
     }
 

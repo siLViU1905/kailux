@@ -63,6 +63,11 @@ namespace kailux
         return mSimulationState;
     }
 
+    float PhysicsSystem::GetLastUpdateMs() const
+    {
+        return mLastUpdateMs;
+    }
+
     void PhysicsSystem::SetSimulationState(SimulationState state)
     {
         mSimulationState = state;
@@ -89,6 +94,8 @@ namespace kailux
 
     void PhysicsSystem::Update(float deltaTime)
     {
+        const auto start{Clock::now()};
+
         mAccumulator = std::min(mAccumulator + deltaTime, kMaxFrameTime);
 
         ApplyImpulses();
@@ -108,6 +115,8 @@ namespace kailux
 
         UpdateTransforms(mAccumulator / mFixedStep);
         ReadVelocities();
+
+        mLastUpdateMs = Clock::get_elapsed<float, TimeType::Milliseconds>(start);
     }
 
     void PhysicsSystem::SetTickRate(float refreshRate)
