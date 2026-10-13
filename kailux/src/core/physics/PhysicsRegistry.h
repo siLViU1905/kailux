@@ -26,9 +26,15 @@ namespace kailux
 
     struct SubmeshPhysicsInfo
     {
-        std::vector<Vertex>                  vertices;
+        std::vector<glm::vec3>               positions;
         std::vector<MeshRegistry::IndexType> indices;
         glm::mat4                            localTransform{1.f};
+    };
+
+    struct PhysicsMeshData
+    {
+        std::string                     key;
+        std::vector<SubmeshPhysicsInfo> submeshes;
     };
 
     struct PhysicsCreationOptions
@@ -40,10 +46,10 @@ namespace kailux
 
     struct PhysicsBodyInfo
     {
-        std::vector<SubmeshPhysicsInfo> submeshes;
-        MeshType                        meshType;
-        Transform                       transform;
-        PhysicsCreationOptions          options;
+        Shared<const PhysicsMeshData> mesh;
+        MeshType                      meshType{MeshType::Unknown};
+        Transform                     transform;
+        PhysicsCreationOptions        options;
     };
 
     class PhysicsRegistry

@@ -498,7 +498,10 @@ namespace kailux
 
     PhysicsRegistry::CreateResult PhysicsRegistry::create_loaded_mesh_body(const PhysicsBodyInfo &info)
     {
-        const auto submeshesCount{info.submeshes.size()};
+        if (!info.mesh || info.mesh->submeshes.empty())
+            return std::unexpected{"physics registry: loaded mesh has no physics data"};
+
+        const auto submeshesCount{info.mesh->submeshes.size()};
 
         std::vector<size_t> indices(submeshesCount);
         std::iota(indices.begin(), indices.end(), size_t{});
@@ -575,11 +578,11 @@ namespace kailux
     {
         out = {};
 
-        const auto& submesh = info.submeshes[idx];
+        const auto& submesh{info.mesh->submeshes[idx]};
 
         const auto submeshFormatString{std::format("submesh {}: ", idx)};
 
-        if (submesh.vertices.empty())
+        if (submesh.positions.empty())
             return std::unexpected{submeshFormatString + "Shape has no vertices"};
         if (submesh.indices.size() < 3)
             return std::unexpected{submeshFormatString + "Shape has less than 3 indices"};
@@ -606,12 +609,12 @@ namespace kailux
         if (useTriangleMesh)
         {
             JPH::VertexList joltVertices;
-            joltVertices.reserve(submesh.vertices.size());
-            for (const auto& vertex : submesh.vertices)
+            joltVertices.reserve(submesh.positions.size());
+            for (const auto& position : submesh.positions)
                 joltVertices.emplace_back(
-                    vertex.position.x,
-                    vertex.position.y,
-                    vertex.position.z
+                    position.x,
+                    position.y,
+                    position.z
                 );
 
             const auto vertexCount{static_cast<uint32_t>(joltVertices.size())};
@@ -667,12 +670,12 @@ namespace kailux
         else
         {
             JPH::Array<JPH::Vec3> hullVertices;
-            hullVertices.reserve(submesh.vertices.size());
-            for (const auto& vertex : submesh.vertices)
+            hullVertices.reserve(submesh.positions.size());
+            for (const auto& position : submesh.positions)
                 hullVertices.emplace_back(
-                    vertex.position.x,
-                    vertex.position.y,
-                    vertex.position.z
+                    position.x,
+                    position.y,
+                    position.z
                 );
 
             if (hullVertices.size() < 3)

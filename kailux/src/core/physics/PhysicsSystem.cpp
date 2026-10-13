@@ -299,10 +299,8 @@ namespace kailux
 
         if (const auto* cache{reg.try_get<CachedPhysicsData>(entity)})
         {
+            info.mesh = cache->mesh;
             info.meshType = cache->meshType;
-            info.submeshes.reserve(cache->submeshes.size());
-            for (const auto& sm : cache->submeshes)
-                info.submeshes.emplace_back(sm.vertices, sm.indices, sm.localTransform);
         }
         else if (const auto* source{reg.try_get<MeshSourceComponent>(entity)})
             info.meshType = source->type;
