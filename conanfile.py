@@ -14,6 +14,7 @@ class kailux(ConanFile):
     def requirements(self):
         self.requires("glfw/3.4")
         self.requires("imgui/1.92.6-docking", force=True)
+        self.requires("imgui_backends/1.92.6")
         self.requires("glm/1.0.1")
         self.requires("entt/3.16.0")
         self.requires("magic_enum/0.9.7")
@@ -35,15 +36,13 @@ class kailux(ConanFile):
         cmake_layout(self)
 
     def generate(self):
-        imgui = self.dependencies["imgui"]
-        bindings_dir = os.path.join(imgui.package_folder, "res", "bindings")
+        backends = self.dependencies["imgui_backends"].package_folder
+
+        bindings_dir = os.path.join(backends, "res", "bindings")
         bindings_dest_dir = os.path.join(self.source_folder, "kailux", "src", "core", "imgui_backend", "bindings")
+        copy(self, "*", bindings_dir, bindings_dest_dir)
 
-        for pattern in ["*imgui_impl_glfw*", "*imgui_impl_vulkan*"]:
-            copy(self, pattern, bindings_dir, bindings_dest_dir)
-
-        misc_dir = os.path.join(imgui.package_folder, "res", "misc", "cpp")
+        misc_dir = os.path.join(backends, "res", "misc", "cpp")
         misc_dest_dir = os.path.join(self.source_folder, "kailux", "src", "core", "imgui_backend", "misc")
 
-        for pattern in ["*imgui_stdlib*"]:
-            copy(self, pattern, misc_dir, misc_dest_dir)
+        copy(self, "*", misc_dir, misc_dest_dir)
