@@ -52,9 +52,18 @@ namespace kailux
         bool PopLayer(const Layer& layer);
         bool PopOverlay(const Layer& layer);
 
-        Window&           GetWindow();
-        Engine&           GetEngine();
-        ThreadDispatcher& GetThreadDispatcher();
+        decltype(auto) GetWindow(this auto&& self)
+        {
+            return (self.mWindow);
+        }
+        decltype(auto) GetEngine(this auto&& self)
+        {
+            return (self.mEngine);
+        }
+        decltype(auto) GetThreadDispatcher(this auto&& self)
+        {
+            return (self.mThreadDispatcher);
+        }
 
         ~Application();
 
@@ -62,10 +71,10 @@ namespace kailux
         void DispatchEvent(const Event& event);
         void RenderImGui(Scene& scene);
 
-        Window                    mWindow;
-        Engine                    mEngine;
-        Clock                     mClock;
-        Shared<ThreadDispatcher>  mThreadDispatcher;
-        LayerStack                mLayerStack;
+        Window           mWindow;
+        Engine           mEngine;
+        Clock            mClock;
+        ThreadDispatcher mThreadDispatcher;
+        LayerStack       mLayerStack;
     };
 }
