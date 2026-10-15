@@ -4,54 +4,46 @@
 
 namespace kailux
 {
-    Shared<ThreadDispatcher> ThreadDispatcher::get()
+    ThreadDispatcher::ThreadDispatcher() = default;
+
+    ThreadDispatcher::ThreadDispatcher(ThreadDispatcher &&) noexcept = default;
+
+    ThreadDispatcher & ThreadDispatcher::operator=(ThreadDispatcher &&) noexcept = default;
+
+    ThreadDispatcher ThreadDispatcher::create(uint32_t threads)
     {
-        static Shared<ThreadDispatcher> dispatcher(new ThreadDispatcher(kMaxThreads));
+        ThreadDispatcher dispatcher;
+        dispatcher.mState = create_scoped<State>();
+
+        auto& state{*dispatcher.mState};
+        state.workers.reserve(threads);
+        for (uint32_t i{}; i < threads; ++i)
+            state.workers.emplace_back([&state](auto stopToken)
+            {
+                state.WorkerLoop(stopToken);
+            });
+
+        log::console.Debug("thread dispatcher: created with {} threads", threads);
         return dispatcher;
     }
 
-    ThreadDispatcher::~ThreadDispatcher()
-    {
-        for (auto& worker : mWorkers)
-            worker.request_stop();
+    ThreadDispatcher::~ThreadDispatcher() = default;
 
-        mCondition.notify_all();
-        mWorkers.clear();
-    }
-
-    ThreadDispatcher::ThreadDispatcher(uint32_t threads):mThreads(threads)
+    void ThreadDispatcher::State::WorkerLoop(std::stop_token stopToken)
     {
-        log::console.Debug("thread dispatcher: creating");
-        CreateWorkers();
-        log::console.Debug("thread dispatcher: created with {} threads", mWorkers.size());
-    }
-
-    void ThreadDispatcher::CreateWorkers()
-    {
-        mWorkers.reserve(mThreads);
-        for (uint32_t i = 0; i < mThreads; ++i)
-            mWorkers.emplace_back([this](std::stop_token stopToken)
-            {
-                WorkerLoop(stopToken);
-            });
-    }
-
-    void ThreadDispatcher::WorkerLoop(std::stop_token stopToken)
-    {
-        while (!stopToken.stop_requested())
+        while (true)
         {
-            Task task; {
-                std::unique_lock lock(mWaitMutex);
-                mCondition.wait(lock, [this, &stopToken]()
+            Task task;
+            {
+                std::unique_lock lock{mutex};
+                if (!condition.wait(lock, stopToken, [this]()
                 {
-                    return stopToken.stop_requested() || !mTasks.empty();
-                });
-
-                if (stopToken.stop_requested() && mTasks.empty())
+                    return !tasks.empty();
+                }))
                     return;
 
-                task = std::move(mTasks.front());
-                mTasks.pop_front();
+                task = std::move(tasks.front());
+                tasks.pop_front();
             }
             task();
         }

@@ -12,8 +12,7 @@ namespace kailux
         mEngine = Engine::create(mWindow, engineInfo);
         mEngine.GetPhysicsSystem().SetTickRate(engineInfo.physicsTickRate);
 
-        ThreadDispatcher::kMaxThreads = specification.workerThreads;
-        mThreadDispatcher = ThreadDispatcher::get();
+        mThreadDispatcher = ThreadDispatcher::create(specification.workerThreads);
 
         mEngine.SetOnImGuiRender([this](Scene& scene)
         {
@@ -61,21 +60,6 @@ namespace kailux
     bool Application::PopOverlay(const Layer &layer)
     {
         return mLayerStack.PopOverlay(layer);
-    }
-
-    Window & Application::GetWindow()
-    {
-        return mWindow;
-    }
-
-    Engine & Application::GetEngine()
-    {
-        return mEngine;
-    }
-
-    ThreadDispatcher & Application::GetThreadDispatcher()
-    {
-        return *mThreadDispatcher;
     }
 
     Application::~Application()
