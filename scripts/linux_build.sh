@@ -32,6 +32,7 @@ JOBS=$(nproc)
 echo "[INFO] Build type: ${BUILD_TYPE}, jobs: ${JOBS}"
 
 conan export scripts/imguizmo
+conan export scripts/imgui
 
 if [ "$DO_CLEAN" -eq 1 ] && [ -d "build" ]; then
     echo "[INFO] Clean requested: removing build/"

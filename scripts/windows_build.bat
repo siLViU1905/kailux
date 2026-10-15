@@ -32,6 +32,7 @@ if "%BUILD_TYPE%"=="" (
 echo [INFO] Build type: %BUILD_TYPE%
 
 conan export scripts\imguizmo
+conan export scripts\imgui
 
 if %DO_CLEAN%==1 (
     if exist build (
