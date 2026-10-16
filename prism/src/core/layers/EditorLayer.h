@@ -49,10 +49,18 @@ namespace kailux
         void SyncEngineFromPanels();
 
         void SaveScene();
+        void SaveScene(const std::filesystem::path& path);
         void OpenSaveSceneDialog();
 
+        decltype(auto) GetActiveScene(this auto&& self)
+        {
+            return (self.mApplication.GetSceneManager().GetActiveScene());
+        }
+
+        Application&      mApplication;
         Window&           mWindow;
         Engine&           mEngine;
+        SceneManager&     mSceneManager;
         ThreadDispatcher& mThreadDispatcher;
 
         PanelStack        mPanels;

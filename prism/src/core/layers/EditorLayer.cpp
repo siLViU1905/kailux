@@ -3,8 +3,10 @@
 namespace kailux
 {
     EditorLayer::EditorLayer(Application &application) : Layer("EditorLayer"),
+                                                         mApplication(application),
                                                          mWindow(application.GetWindow()),
                                                          mEngine(application.GetEngine()),
+                                                         mSceneManager(application.GetSceneManager()),
                                                          mThreadDispatcher(application.GetThreadDispatcher())
     {
     }
@@ -117,7 +119,7 @@ namespace kailux
         auto& hierarchyPanel{GetPanel<HierarchyPanel>()};
         hierarchyPanel.SetOnMeshDeleted([this](auto entity)
         {
-            mEngine.UnregisterMesh(entity);
+            mEngine.UnregisterMesh(GetActiveScene(), entity);
         });
         hierarchyPanel.SetOnDragDrop([this](const auto& path)
         {
@@ -137,7 +139,7 @@ namespace kailux
         });
         hierarchyPanel.SetOnNewLight([this](auto type)
         {
-            mEngine.AddLightEntity(type);
+            mEngine.AddLightEntity(GetActiveScene(), type);
         });
         hierarchyPanel.SetOnNewCamera([this]()
         {
@@ -147,11 +149,11 @@ namespace kailux
                 extent = simulationPanel.GetInputSource().GetFramebufferSize();
             else
                 extent = GetPanel<ViewportPanel>().GetInputSource().GetFramebufferSize();
-            mEngine.AddCameraEntity(extent.x, extent.y);
+            mEngine.AddCameraEntity(GetActiveScene(), extent.x, extent.y);
         });
         hierarchyPanel.SetOnAddPhysics([this](auto entity, auto bodyType, auto canBecomeDynamic, auto mass)
         {
-            mEngine.AddPhysicsToEntity(entity, {bodyType, canBecomeDynamic, mass});
+            mEngine.AddPhysicsToEntity(GetActiveScene(), entity, {bodyType, canBecomeDynamic, mass});
         });
         auto& menuPanel{GetPanel<MenuPanel>()};
         menuPanel.SetOnSceneSave([this](const auto& path)
@@ -161,7 +163,7 @@ namespace kailux
                 OpenSaveSceneDialog();
                 return;
             }
-            mEngine.SaveScene(path);
+            SaveScene(path);
         });
         menuPanel.SetOnSceneOpen([this]()
         {
@@ -193,6 +195,16 @@ namespace kailux
         {
             projectPanel.GetConsole().Log<LogSeverity::Error>(message);
         });
+
+        mSceneManager.SetOnInfoLog([&projectPanel](auto message)
+        {
+            projectPanel.GetConsole().Log<LogSeverity::Info>(message);
+        });
+        mSceneManager.SetOnErrorLog([&projectPanel](auto message)
+        {
+            projectPanel.GetConsole().Log<LogSeverity::Error>(message);
+        });
+
         auto& entityEditor{GetPanel<EntityEditorPanel>()};
         entityEditor.SetOnBodyTypeChange([this](auto component, auto type)
         {
@@ -218,11 +230,11 @@ namespace kailux
         });
         viewportPanel.SetOnSimulationStart([this]()
         {
-            return mEngine.RequestSimulationState(SimulationState::Running);
+            return mEngine.RequestSimulationState(GetActiveScene(), SimulationState::Running);
         });
         viewportPanel.SetOnSimulationPause([this]()
         {
-            mEngine.RequestSimulationState(SimulationState::Paused);
+            mEngine.RequestSimulationState(GetActiveScene(), SimulationState::Paused);
         });
     }
 
@@ -230,10 +242,10 @@ namespace kailux
     {
         if (mLoadSceneDialog.Poll())
             if (const auto path{mLoadSceneDialog.TryPopPath()})
-                mEngine.LoadScene(*path, mWindow);
+                (void)mApplication.LoadScene(*path);
         if (mSaveSceneDialog.Poll())
             if (const auto path{mSaveSceneDialog.TryPopPath()})
-                mEngine.SaveScene(*path);
+                SaveScene(*path);
         const auto& assetBrowser{GetPanel<ProjectPanel>().GetAssetBrowser()};
         if (mImportFilesDialog.Poll())
             while (const auto path{mImportFilesDialog.TryPopPath()})
@@ -276,7 +288,7 @@ namespace kailux
 
     void EditorLayer::SyncPanelsFromEngine()
     {
-        GetPanel<EntityEditorPanel>().SetCameraData(mEngine.GetCameraData());
+        GetPanel<EntityEditorPanel>().SetCameraData(mEngine.GetCameraData(GetActiveScene()));
         GetPanel<ViewportPanel>().SetSceneTexture(mEngine.GetSceneTextureId(), mEngine.GetSceneViewExtent());
         GetPanel<SimulationPanel>().SetTextureId(mEngine.GetSimulationTextureId());
     }
@@ -297,14 +309,14 @@ namespace kailux
         const bool simulationHasInput{simulation.IsOpen() && simulation.IsFocused()};
         mEngine.SetControlledCamera(
             simulationHasInput
-                ? mEngine.GetScene().GetPrimaryCamera()
-                : mEngine.GetScene().GetSceneCamera(),
+                ? GetActiveScene().GetPrimaryCamera()
+                : GetActiveScene().GetSceneCamera(),
             simulationHasInput
                 ? simulation.GetInputSource()
                 : viewport.GetInputSource()
         );
         if (simulation.ConsumeToggleMouseLook() || viewport.ConsumeToggleMouseLook())
-            mEngine.ToggleMouseLook();
+            mEngine.ToggleMouseLook(GetActiveScene());
 
         const auto mousePos{viewport.GetScaledMousePos()};
         mEngine.SetSceneViewportMousePos(mousePos.x, mousePos.y);
@@ -313,11 +325,16 @@ namespace kailux
 
     void EditorLayer::SaveScene()
     {
-        const auto& savePath{mEngine.GetScene().GetSavePath()};
+        const auto& savePath{GetActiveScene().GetSavePath()};
         if (savePath.empty())
             OpenSaveSceneDialog();
         else
-            mEngine.SaveScene(savePath);
+            SaveScene(savePath);
+    }
+
+    void EditorLayer::SaveScene(const std::filesystem::path &path)
+    {
+        (void)mSceneManager.SaveActive(path);
     }
 
     void EditorLayer::OpenSaveSceneDialog()
@@ -325,7 +342,7 @@ namespace kailux
         mSaveSceneDialog.Open(
             "Choose where to save the scene",
             {},
-            std::format("{}.{}", mEngine.GetScene().GetName(), Engine::kSceneFileExtension)
+            std::format("{}.{}", GetActiveScene().GetName(), SceneManager::kSceneFileExtension)
         );
     }
 }
