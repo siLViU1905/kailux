@@ -1,6 +1,5 @@
 #pragma once
 
-#include "scene/Scene.h"
 #include "mesh/MeshRegistry.h"
 #include "physics/PhysicsRegistry.h"
 #include "texture/TextureRegistry.h"
@@ -9,6 +8,8 @@
 
 namespace kailux
 {
+    class Scene;
+
     class AssetPipeline
     {
     public:
@@ -22,6 +23,7 @@ namespace kailux
             MeshMaterialData             material;
             MeshType                     type{MeshType::Unknown};
             std::optional<PhysicsRecord> physics{std::nullopt};
+            SceneId                      scene{kInvalidSceneId};
         };
 
         struct CachedSubmesh
@@ -44,10 +46,11 @@ namespace kailux
                       MeshRegistry &meshRegistry,
                       TextureRegistry &textureRegistry,
                       TransferManager &transferManager,
-                      Scene &scene,
                       std::span<FrameData> frames);
 
-        void Poll();
+        void Poll(Scene &scene);
+
+        void FlushCompletedUploads(Scene &scene);
 
         Queue<PendingMeshData> &GetPendingQueue();
 
@@ -59,16 +62,23 @@ namespace kailux
         void SetOnInfoLog(OnLog &&callback);
         void SetOnWarningLog(OnLog &&callback);
 
-        using OnAttachPhysics = std::move_only_function<void(entt::entity, PhysicsRecord)>;
+        using OnAttachPhysics = std::move_only_function<void(Scene&, entt::entity, PhysicsRecord)>;
         void SetOnAttachPhysics(OnAttachPhysics &&callback);
 
     private:
-        void ProcessBuiltinMesh(const PendingMeshData &data);
+        struct CompleteUpload
+        {
+            SceneId                   scene{kInvalidSceneId};
+            std::vector<entt::entity> entities;
+        };
 
-        void ProcessLoadedMesh(const PendingMeshData &data);
+        void ProcessBuiltinMesh(Scene &scene, const PendingMeshData &data);
 
-        entt::entity CreateParentMeshEntity(const PendingMeshData &data);
+        void ProcessLoadedMesh(Scene &scene, const PendingMeshData &data);
+
+        entt::entity CreateParentMeshEntity(Scene &scene, const PendingMeshData &data);
         entt::entity CreateSubmeshEntity(
+            Scene &scene,
             entt::entity parentEntity,
             const CachedSubmesh &submesh,
             const MeshMaterialData &material
@@ -85,12 +95,12 @@ namespace kailux
         std::reference_wrapper<MeshRegistry>    mMeshRegistry;
         std::reference_wrapper<TextureRegistry> mTextureRegistry;
         std::reference_wrapper<TransferManager> mTransferManager;
-        std::reference_wrapper<Scene>           mScene;
         std::span<FrameData>                    mFrames;
 
         Queue<PendingMeshData>                     mPendingMeshData;
 
         std::unordered_map<std::string, CachedModel> mMeshCache;
+        std::vector<CompleteUpload>                  mCompletedUploads;
 
         OnLog mOnInfoLog;
         OnLog mOnWarningLog;

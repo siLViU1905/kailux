@@ -2,10 +2,10 @@
 
 #include <glm/gtx/matrix_decompose.hpp>
 
+#include "scene/Scene.h"
 #include "Clock.h"
 #include "Geometry.h"
 #include "components/entt/CachedPhysicsData.h"
-#include "components/entt/HierarchyComponent.h"
 #include "components/entt/PendingUploadComponent.h"
 #include "components/entt/TagComponent.h"
 
@@ -15,13 +15,11 @@ namespace kailux
                                  MeshRegistry &meshRegistry,
                                  TextureRegistry &textureRegistry,
                                  TransferManager &transferManager,
-                                 Scene &scene,
                                  std::span<FrameData> frames)
         : mContext(context),
           mMeshRegistry(meshRegistry),
           mTextureRegistry(textureRegistry),
           mTransferManager(transferManager),
-          mScene(scene),
           mFrames(frames)
     {
     }
@@ -47,13 +45,12 @@ namespace kailux
     }
 
     entt::entity AssetPipeline::CreateSubmeshEntity(
+        Scene &scene,
         entt::entity parentEntity,
         const CachedSubmesh &submesh,
         const MeshMaterialData &material
     )
     {
-        Scene &scene = mScene;
-
         const auto &rootName{scene.GetEntityRegistry().get<TagComponent>(parentEntity).name};
         const auto submeshName{std::format("{}_{}", rootName, submesh.name)};
 
@@ -111,22 +108,23 @@ namespace kailux
         return model;
     }
 
-    void AssetPipeline::Poll()
+    void AssetPipeline::Poll(Scene &scene)
     {
         if (auto data = mPendingMeshData.TryPop())
         {
             if (data->type == MeshType::Unknown)
                 return;
+            if (data->scene != kInvalidSceneId && data->scene != scene.GetId())
+                return;
             if (data->type != MeshType::Loaded)
-                ProcessBuiltinMesh(*data);
+                ProcessBuiltinMesh(scene, *data);
             else
-                ProcessLoadedMesh(*data);
+                ProcessLoadedMesh(scene, *data);
         }
     }
 
-    entt::entity AssetPipeline::CreateParentMeshEntity(const PendingMeshData &data)
+    entt::entity AssetPipeline::CreateParentMeshEntity(Scene &scene, const PendingMeshData &data)
     {
-        Scene &scene = mScene;
         auto  &entityReg = scene.GetEntityRegistry();
 
         const MeshSourceComponent source{data.path, data.type};
@@ -184,9 +182,8 @@ namespace kailux
         return textureRegistry.RegisterMaterial(result.slot).value_or(textureRegistry.GetDefaultMaterialHandle());
     }
 
-    void AssetPipeline::ProcessBuiltinMesh(const PendingMeshData &data)
+    void AssetPipeline::ProcessBuiltinMesh(Scene &scene, const PendingMeshData &data)
     {
-        Scene &scene = mScene;
         auto &textureRegistry = mTextureRegistry.get();
         auto &meshRegistry = mMeshRegistry.get();
 
@@ -229,7 +226,7 @@ namespace kailux
             }
 
             if (data.physics)
-                mOnAttachPhysics(entity, *data.physics);
+                mOnAttachPhysics(scene, entity, *data.physics);
         };
         switch (data.type)
         {
@@ -252,11 +249,9 @@ namespace kailux
                                meshName, Clock::get_elapsed<float, TimeType::Milliseconds>(now)));
     }
 
-    void AssetPipeline::ProcessLoadedMesh(const PendingMeshData &data)
+    void AssetPipeline::ProcessLoadedMesh(Scene &scene, const PendingMeshData &data)
     {
-        Scene &scene = mScene;
-
-        const auto parentEntity{CreateParentMeshEntity(data)};
+        const auto parentEntity{CreateParentMeshEntity(scene, data)};
         const auto now{Clock::now()};
 
         if (const auto it{mMeshCache.find(data.path)}; it != mMeshCache.end())
@@ -265,7 +260,7 @@ namespace kailux
             ++model.refCount;
 
             for (const auto &submesh: model.submeshes)
-                CreateSubmeshEntity(parentEntity, submesh, data.material);
+                CreateSubmeshEntity(scene, parentEntity, submesh, data.material);
 
             scene.GetEntityRegistry().emplace<CachedPhysicsData>(
                 parentEntity,
@@ -273,7 +268,7 @@ namespace kailux
                 MeshType::Loaded
                 );
             if (data.physics)
-                mOnAttachPhysics(parentEntity, *data.physics);
+                mOnAttachPhysics(scene, parentEntity, *data.physics);
 
             mOnInfoLog(std::format("Reused '{}' from cache: {} submeshes, refCount {} ({:.3f}ms)",
                                    data.path, model.submeshes.size(), model.refCount,
@@ -350,7 +345,7 @@ namespace kailux
                         submesh.name.empty() ? std::to_string(submeshIndex) : submesh.name
                     };
 
-                    if (const auto child{CreateSubmeshEntity(parentEntity, entry, data.material)};
+                    if (const auto child{CreateSubmeshEntity(scene, parentEntity, entry, data.material)};
                         child != entt::null)
                     {
                         scene.GetEntityRegistry().emplace<PendingUploadComponent>(child);
@@ -362,12 +357,9 @@ namespace kailux
 
                 return result;
             },
-            [this, pendingEntities]()
+            [this, sceneId = scene.GetId(), pendingEntities]()
             {
-                auto &registry = mScene.get().GetEntityRegistry();
-                for (const auto entity: *pendingEntities)
-                    if (registry.valid(entity))
-                        registry.remove<PendingUploadComponent>(entity);
+                mCompletedUploads.emplace_back(sceneId, std::move(*pendingEntities));
             }
         );
 
@@ -389,10 +381,24 @@ namespace kailux
         entityReg.emplace<CachedPhysicsData>(parentEntity, std::move(physicsMesh), data.type);
 
         if (data.physics)
-            mOnAttachPhysics(parentEntity, *data.physics);
+            mOnAttachPhysics(scene, parentEntity, *data.physics);
 
         mOnInfoLog(std::format("Loaded '{}' with {} submeshes and {} materials in {:.3f}ms",
                                data.path, model.submeshes.size(), loadData.materials.size(),
                                Clock::get_elapsed<float, TimeType::Milliseconds>(now)));
+    }
+
+    void AssetPipeline::FlushCompletedUploads(Scene &scene)
+    {
+        auto &registry{scene.GetEntityRegistry()};
+        for (const auto &upload : mCompletedUploads)
+        {
+            if (upload.scene != scene.GetId())
+                continue;
+            for (const auto entity : upload.entities)
+                if (registry.valid(entity))
+                    registry.remove<PendingUploadComponent>(entity);
+        }
+        mCompletedUploads.clear();
     }
 }
