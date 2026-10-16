@@ -4,20 +4,18 @@
 
 namespace kailux
 {
-    ScriptSystem::ScriptSystem(Scene &scene) : mScene(scene)
-    {
-    }
+    ScriptSystem::ScriptSystem() = default;
 
-    void ScriptSystem::SetSimulationState(SimulationState state)
+    void ScriptSystem::SetSimulationState(Scene& scene, SimulationState state)
     {
         if (state == mSimulationState)
             return;
 
         mSimulationState = state;
         if (state == SimulationState::Running)
-            OnSimulationStart();
+            on_simulation_start(scene);
         else
-            OnSimulationStop();
+            on_simulation_stop(scene);
     }
 
     SimulationState ScriptSystem::GetSimulationState() const
@@ -25,12 +23,12 @@ namespace kailux
         return mSimulationState;
     }
 
-    void ScriptSystem::Update(float deltaTime) const
+    void ScriptSystem::Update(Scene& scene, float deltaTime) const
     {
         if (mSimulationState != SimulationState::Running)
             return;
 
-        const auto view{mScene.get().GetEntityRegistry().view<NativeScriptComponent>()};
+        const auto view{scene.GetEntityRegistry().view<NativeScriptComponent>()};
         view.each([deltaTime](auto& script)
         {
             if (script.instance)
@@ -38,30 +36,30 @@ namespace kailux
         });
     }
 
-    void ScriptSystem::SetConnections() const
+    void ScriptSystem::connect(Scene& scene)
     {
-        mScene.get().GetEntityRegistry()
-                .on_destroy<NativeScriptComponent>()
-                .connect<&ScriptSystem::on_component_destroyed>();
+        auto sink{scene.GetEntityRegistry().on_destroy<NativeScriptComponent>()};
+        sink.disconnect<&ScriptSystem::on_component_destroyed>();
+        sink.connect<&ScriptSystem::on_component_destroyed>();
     }
 
-    void ScriptSystem::OnSimulationStart() const
+    void ScriptSystem::on_simulation_start(Scene& scene)
     {
-        auto& registry{mScene.get().GetEntityRegistry()};
+        auto& registry{scene.GetEntityRegistry()};
         for (const auto entity : registry.view<NativeScriptComponent>())
         {
             auto& script{registry.get<NativeScriptComponent>(entity)};
             if (script.instance)
                 continue;
 
-            script.instance = script.Instantiate(mScene.get(), entity);
+            script.instance = script.Instantiate(scene, entity);
             script.instance->OnCreate();
         }
     }
 
-    void ScriptSystem::OnSimulationStop() const
+    void ScriptSystem::on_simulation_stop(Scene& scene)
     {
-        auto& registry{mScene.get().GetEntityRegistry()};
+        auto& registry{scene.GetEntityRegistry()};
         for (const auto entity : registry.view<NativeScriptComponent>())
         {
             auto& script{registry.get<NativeScriptComponent>(entity)};

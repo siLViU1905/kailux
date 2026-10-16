@@ -6,13 +6,12 @@
 #include "FrameData.h"
 #include "components/gpu/MeshMaterialData.h"
 #include "mesh/MeshLoader.h"
+#include "scene/Scene.h"
 #include "scene/SceneDocument.h"
 #include "utilities/Queue.h"
 
 namespace kailux
 {
-    class Scene;
-
     class AssetPipeline
     {
     public:
