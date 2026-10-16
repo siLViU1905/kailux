@@ -13,9 +13,8 @@
 
 namespace kailux
 {
-    PhysicsSystem::PhysicsSystem(Scene& scene, PhysicsRegistry& physicsRegistry)
-        : mScene(scene)
-        , mPhysicsRegistry(physicsRegistry)
+    PhysicsSystem::PhysicsSystem(PhysicsRegistry& physicsRegistry)
+        : mPhysicsRegistry(physicsRegistry)
     {
     }
 
@@ -43,9 +42,9 @@ namespace kailux
         }
     }
 
-    void PhysicsSystem::AttachToScene() const
+    void PhysicsSystem::AttachToScene(Scene& scene) const
     {
-        auto& registry{mScene.get().GetEntityRegistry()};
+        auto& registry{scene.GetEntityRegistry()};
         registry.ctx().insert_or_assign<PhysicsRegistry*>(&mPhysicsRegistry.get());
 
         auto sink{registry.on_destroy<PhysicsComponent>()};
@@ -68,11 +67,11 @@ namespace kailux
         return mLastUpdateMs;
     }
 
-    void PhysicsSystem::SetSimulationState(SimulationState state)
+    void PhysicsSystem::SetSimulationState(Scene& scene, SimulationState state)
     {
         mSimulationState = state;
         if (mSimulationState == SimulationState::Running)
-            OnSimulationStart();
+            OnSimulationStart(scene);
     }
 
     namespace details
@@ -92,20 +91,20 @@ namespace kailux
         }
     }
 
-    void PhysicsSystem::Update(float deltaTime)
+    void PhysicsSystem::Update(Scene& scene, float deltaTime)
     {
         const auto start{Clock::now()};
 
         mAccumulator = std::min(mAccumulator + deltaTime, kMaxFrameTime);
 
-        ApplyImpulses();
+        ApplyImpulses(scene);
 
         while (mAccumulator >= mFixedStep)
         {
-            ApplyForces();
-            MoveKinematicBodies(mFixedStep);
+            ApplyForces(scene);
+            MoveKinematicBodies(scene, mFixedStep);
             const auto updateErr{mPhysicsRegistry.get().Update(mFixedStep, mCollisionSteps)};
-            StoreStepResults();
+            StoreStepResults(scene);
             mAccumulator -= mFixedStep;
 
             if (updateErr != JPH::EPhysicsUpdateError::None && updateErr != mLastUpdateError)
@@ -113,8 +112,8 @@ namespace kailux
             mLastUpdateError = updateErr;
         }
 
-        UpdateTransforms(mAccumulator / mFixedStep);
-        ReadVelocities();
+        UpdateTransforms(scene, mAccumulator / mFixedStep);
+        ReadVelocities(scene);
 
         mLastUpdateMs = Clock::get_elapsed<float, TimeType::Milliseconds>(start);
     }
@@ -150,17 +149,17 @@ namespace kailux
         return result;
     }
 
-    void PhysicsSystem::OnSimulationStart()
+    void PhysicsSystem::OnSimulationStart(Scene& scene)
     {
         mAccumulator = 0.f;
         mPhysicsRegistry.get().OptimizeBroadPhaseIfNeeded();
-        auto& registry{mScene.get().GetEntityRegistry()};
+        auto& registry{scene.GetEntityRegistry()};
         const auto view{registry.view<WorldTransform, PhysicsComponent>()};
 
         for (const auto entity : view)
         {
             const auto world{Transform::from_matrix(view.get<WorldTransform>(entity).model)};
-            const auto& physicsComp = view.get<PhysicsComponent>(entity);
+            const auto& physicsComp{view.get<PhysicsComponent>(entity)};
 
             mPhysicsRegistry.get().SetBodyTransform(
                 physicsComp.handle,
@@ -182,9 +181,9 @@ namespace kailux
         }
     }
 
-    void PhysicsSystem::ApplyImpulses()
+    void PhysicsSystem::ApplyImpulses(Scene& scene)
     {
-        const auto view{mScene.get().GetEntityRegistry().view<PhysicsComponent, PhysicsControlComponent>()};
+        const auto view{scene.GetEntityRegistry().view<PhysicsComponent, PhysicsControlComponent>()};
         view.each([this](const auto& phys, auto& control)
         {
             if (control.applyImpulse && phys.IsDynamic())
@@ -193,9 +192,9 @@ namespace kailux
         });
     }
 
-    void PhysicsSystem::ApplyForces()
+    void PhysicsSystem::ApplyForces(Scene& scene)
     {
-        const auto view{mScene.get().GetEntityRegistry().view<PhysicsComponent, PhysicsControlComponent>()};
+        const auto view{scene.GetEntityRegistry().view<PhysicsComponent, PhysicsControlComponent>()};
         view.each([this](const auto& phys, auto& control)
         {
             if (control.applyForce && phys.IsDynamic())
@@ -203,9 +202,9 @@ namespace kailux
         });
     }
 
-    void PhysicsSystem::MoveKinematicBodies(float step)
+    void PhysicsSystem::MoveKinematicBodies(Scene& scene, float step)
     {
-        const auto view{mScene.get().GetEntityRegistry().view<WorldTransform, PhysicsComponent>()};
+        const auto view{scene.GetEntityRegistry().view<WorldTransform, PhysicsComponent>()};
         view.each([this, step](const auto& transform, const auto& phys)
         {
             if (phys.type != PhysicsBodyType::Kinematic)
@@ -216,9 +215,9 @@ namespace kailux
         });
     }
 
-    void PhysicsSystem::StoreStepResults() const
+    void PhysicsSystem::StoreStepResults(Scene& scene) const
     {
-        const auto view{mScene.get().GetEntityRegistry().view<PhysicsComponent, PhysicsInterpolation>()};
+        const auto view{scene.GetEntityRegistry().view<PhysicsComponent, PhysicsInterpolation>()};
         view.each([this](const auto& phys, auto& state)
         {
             if (!phys.IsDynamic())
@@ -230,18 +229,17 @@ namespace kailux
         });
     }
 
-    void PhysicsSystem::ReadVelocities()
+    void PhysicsSystem::ReadVelocities(Scene& scene)
     {
-        const auto view{mScene.get().GetEntityRegistry().view<PhysicsComponent, PhysicsControlComponent>()};
+        const auto view{scene.GetEntityRegistry().view<PhysicsComponent, PhysicsControlComponent>()};
         view.each([this](const auto& phys, auto& control)
         {
             control.velocity = mPhysicsRegistry.get().GetLinearVelocity(phys.handle);
         });
     }
 
-    void PhysicsSystem::UpdateTransforms(float alpha) const
+    void PhysicsSystem::UpdateTransforms(Scene& scene, float alpha) const
     {
-        Scene& scene    = mScene;
         auto& registry{scene.GetEntityRegistry()};
         const auto view{registry.view<LocalTransform, PhysicsComponent>()};
 
@@ -290,9 +288,9 @@ namespace kailux
         }
     }
 
-    std::optional<BodyHandle> PhysicsSystem::AddPhysicsToEntity(entt::entity entity, PhysicsCreationOptions options)
+    std::optional<BodyHandle> PhysicsSystem::AddPhysicsToEntity(Scene& scene, entt::entity entity, PhysicsCreationOptions options)
     {
-        auto& reg{mScene.get().GetEntityRegistry()};
+        auto& reg{scene.GetEntityRegistry()};
 
         const auto transform{Transform::from_matrix(reg.get<WorldTransform>(entity).model)};
 
