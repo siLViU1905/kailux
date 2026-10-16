@@ -3,6 +3,7 @@
 #include <fstream>
 #include <magic_enum/magic_enum.hpp>
 
+#include "Clock.h"
 #include "EngineSpecification.h"
 #include "FileDialog.h"
 #include "Geometry.h"
@@ -23,16 +24,13 @@
 #include "components/entt/WorldTransform.h"
 #include "components/gpu/CameraData.h"
 #include "components/gpu/MeshData.h"
-#include "scene/SceneInstantiator.h"
-#include "scene/SceneSerializer.h"
 #include "shadow/ShadowCascades.h"
 #include "texture/TextureAllocator.h"
 
 namespace kailux
 {
-    Engine::Engine() : mAssetPipeline(mContext, mMeshRegistry, mTextureRegistry, mTransferManager, mScene, mFrames),
-                       mPhysicsSystem(mScene, mPhysicsRegistry),
-                       mScriptSystem(mScene),
+    Engine::Engine() : mAssetPipeline(mContext, mMeshRegistry, mTextureRegistry, mTransferManager, mFrames),
+                       mPhysicsSystem(mPhysicsRegistry),
                        mCurrentFrame(0),
                        mOutlineInfo(),
                        mPickedEntity(~0u),
@@ -57,10 +55,10 @@ namespace kailux
                                               mDeferredResourceEraser(std::move(other.mDeferredResourceEraser)),
                                               mFrames(std::move(other.mFrames)),
                                               mCurrentFrame(other.mCurrentFrame),
-                                              mScene(std::move(other.mScene)),
                                               mControlledCamera(other.mControlledCamera),
                                               mInputSource(other.mInputSource),
                                               mMouseLookActive(other.mMouseLookActive),
+                                              mResumeSimulationOnAttach(other.mResumeSimulationOnAttach),
                                               mSceneViews(std::move(other.mSceneViews)),
                                               mSimulationViews(std::move(other.mSimulationViews)),
                                               mRetiredViews(std::move(other.mRetiredViews)),
@@ -110,10 +108,10 @@ namespace kailux
             mDeferredResourceEraser = std::move(other.mDeferredResourceEraser);
             mFrames = std::move(other.mFrames);
             mCurrentFrame = other.mCurrentFrame;
-            mScene = std::move(other.mScene);
             mControlledCamera = other.mControlledCamera;
             mInputSource = other.mInputSource;
             mMouseLookActive = other.mMouseLookActive;
+            mResumeSimulationOnAttach = other.mResumeSimulationOnAttach;
             mSceneViews = std::move(other.mSceneViews);
             mSimulationViews = std::move(other.mSimulationViews);
             mRetiredViews = std::move(other.mRetiredViews);
@@ -197,7 +195,6 @@ namespace kailux
         if (engine.IsEditor())
             engine.AcquireViewTextureIds();
 
-        engine.CreateScene(window);
         engine.CreateAssetPipeline();
         engine.CreatePhysicsSystem();
         engine.CreateScriptSystem();
@@ -210,10 +207,10 @@ namespace kailux
         mOnImGuiRender = std::move(callback);
     }
 
-    CameraData Engine::GetCameraData() const
+    CameraData Engine::GetCameraData(Scene& scene) const
     {
         const auto &sceneView{mSceneViews[mCurrentFrame]};
-        return BuildCameraData(mScene.GetSceneCamera(), sceneView.GetExtent());
+        return build_camera_data(scene, scene.GetSceneCamera(), sceneView.GetExtent());
     }
 
     void Engine::SetSceneViewExtent(glm::ivec2 extent)
@@ -245,7 +242,7 @@ namespace kailux
          mMouseLookActive  = false;
     }
 
-    void Engine::ToggleMouseLook()
+    void Engine::ToggleMouseLook(Scene &scene)
     {
         if (!mInputSource.Valid())
             return;
@@ -254,7 +251,7 @@ namespace kailux
         mInputSource.SetCursorMode(mMouseLookActive ? CursorMode::Disabled : CursorMode::Normal);
 
         if (mMouseLookActive)
-            if (auto* camera = mScene.GetEntityRegistry().try_get<CameraComponent>(mControlledCamera))
+            if (auto* camera = scene.GetEntityRegistry().try_get<CameraComponent>(mControlledCamera))
             {
                 const auto mousePos{mInputSource.GetMousePos()};
                 camera->lastMousePosX = mousePos.x;
@@ -317,9 +314,9 @@ namespace kailux
             });
     }
 
-    void Engine::UnregisterMesh(entt::entity entity)
+    void Engine::UnregisterMesh(Scene &scene, entt::entity entity)
     {
-        auto &registry{mScene.GetEntityRegistry()};
+        auto &registry{scene.GetEntityRegistry()};
 
         auto root{entity};
         while (const auto *hierarchy{registry.try_get<HierarchyComponent>(root)})
@@ -381,15 +378,15 @@ namespace kailux
         return GetCurrentSimulationView().GetTextureId();
     }
 
-    void Engine::OnEvent(const Event &event, Window &window)
+    void Engine::OnEvent(Scene &scene, const Event &event, Window &window)
     {
         if (const auto* keyReleased{std::get_if<KeyReleased>(&event)})
         {
             const auto key{keyReleased->key};
             if (key == Key::Escape && mMouseLookActive)
-                ToggleMouseLook();
+                ToggleMouseLook(scene);
             else if (key == Key::Tab)
-                mScene.SetPrimaryCamera(mScene.GetNextCamera(mScene.GetPrimaryCamera()));
+                scene.SetPrimaryCamera(scene.GetNextCamera(scene.GetPrimaryCamera()));
         }
     }
 
@@ -499,7 +496,7 @@ namespace kailux
 
     void Engine::CreateAssetPipeline()
     {
-        mAssetPipeline = {mContext, mMeshRegistry, mTextureRegistry, mTransferManager, mScene, mFrames};
+        mAssetPipeline = {mContext, mMeshRegistry, mTextureRegistry, mTransferManager, mFrames};
         mAssetPipeline.SetOnInfoLog([this](auto msg)
         {
             mOnInfoLog(msg);
@@ -508,9 +505,10 @@ namespace kailux
         {
             mOnWarningLog(msg);
         });
-        mAssetPipeline.SetOnAttachPhysics([this](auto entity, auto physicsRecord)
+        mAssetPipeline.SetOnAttachPhysics([this](auto& scene, auto entity, auto physicsRecord)
         {
             AddPhysicsToEntity(
+                scene,
                 entity,
                 {
                     physicsRecord.type,
@@ -523,8 +521,7 @@ namespace kailux
 
     void Engine::CreatePhysicsSystem()
     {
-        mPhysicsSystem = {mScene, mPhysicsRegistry};
-        mPhysicsSystem.AttachToScene();
+        mPhysicsSystem = PhysicsSystem{mPhysicsRegistry};
         mPhysicsSystem.SetOnInfoLog([this](auto msg)
         {
             mOnInfoLog(msg);
@@ -537,8 +534,7 @@ namespace kailux
 
     void Engine::CreateScriptSystem()
     {
-        mScriptSystem = {mScene};
-        mScriptSystem.SetConnections();
+        mScriptSystem = {};
     }
 
     void Engine::CreateImGui(Window &window)
@@ -579,11 +575,6 @@ namespace kailux
     void Engine::CreateComputeCuller()
     {
         mComputeCuller = ComputeCuller::create(mContext, details::kFramesInFlight);
-    }
-
-    void Engine::CreateScene(const Window &window)
-    {
-        mScene = Scene::create("MainScene");
     }
 
     void Engine::CreateDirectionalShadowMap()
@@ -708,7 +699,7 @@ namespace kailux
         mContext.GetGraphicsQueue().submit2(submitInfo, frame.GetFenceInFlight());
     }
 
-    void Engine::Render(const Window &window)
+    void Engine::Render(Scene &scene, const Window &window)
     {
         auto &frame{mFrames[mCurrentFrame]};
         const auto &sceneView{mSceneViews[mCurrentFrame]};
@@ -741,30 +732,31 @@ namespace kailux
                 ResizeSimulationView(*extent);
 
         const auto sceneExtent{sceneView.GetVkExtent()};
-        const auto sceneCamera{IsEditor() ? mScene.GetSceneCamera() : entt::null};
+        const auto sceneCamera{IsEditor() ? scene.GetSceneCamera() : entt::null};
 
         const auto renderFinishedSemaphore = mSwapchain.GetPresentSemaphore(acquired->imageIndex); {
             CommandRecorder recorder(frame.GetCommandBuffer());
 
             mDirectionalShadowSets[details::kSceneViewCameraIndex].Update(
-               mScene,
+               scene,
                sceneCamera,
                mSceneViews[mCurrentFrame].GetExtent()
                );
             mDirectionalShadowSets[details::kSimulationViewCameraIndex].Update(
-                mScene,
-                mSimulationViewActive ? mScene.GetPrimaryCamera() : entt::null,
+                scene,
+                mSimulationViewActive ? scene.GetPrimaryCamera() : entt::null,
                 GetCurrentSimulationView().GetExtent()
             );
-            mPointShadowSets[details::kSceneViewCameraIndex].Update(mScene, sceneCamera);
+            mPointShadowSets[details::kSceneViewCameraIndex].Update(scene, sceneCamera);
             mPointShadowSets[details::kSimulationViewCameraIndex].Update(
-                mScene,
-                mSimulationViewActive ? mScene.GetPrimaryCamera() : entt::null
+                scene,
+                mSimulationViewActive ? scene.GetPrimaryCamera() : entt::null
             );
 
-            UpdateFrameBuffers(frame, sceneView, recorder);
+            UpdateFrameBuffers(scene, frame, sceneView, recorder);
             if (IsEditor())
                 ExecuteCulling(
+                    scene,
                     frame,
                     recorder,
                     sceneCamera,
@@ -774,21 +766,21 @@ namespace kailux
 
             TransitionForShadowPass(frame, recorder);
             for (uint32_t view{}; view < details::kMaxCameraViews; ++view)
-                RecordDirectionalShadows(frame, recorder, view);
+                RecordDirectionalShadows(scene, frame, recorder, view);
             TransitionShadowMapForSampling(frame, recorder);
 
             TransitionForPointShadowPass(frame, recorder);
             for (uint32_t view{}; view < details::kMaxCameraViews; ++view)
-                RecordPointShadows(frame, recorder, view);
+                RecordPointShadows(scene, frame, recorder, view);
             TransitionPointShadowMapForSampling(frame, recorder);
 
             if (IsEditor())
             {
                 RenderScenePass(frame, recorder, sceneView);
-                RecordEditorPasses(frame, recorder, sceneView, acquired->imageIndex);
+                RecordEditorPasses(scene, frame, recorder, sceneView, acquired->imageIndex);
             }
             else
-                RecordRuntimePresent(frame, recorder, acquired->imageIndex);
+                RecordRuntimePresent(scene, frame, recorder, acquired->imageIndex);
         }
 
         Submit(mFrames[mCurrentFrame], acquired->imageAvailableSemaphore, renderFinishedSemaphore);
@@ -854,55 +846,12 @@ namespace kailux
         return extension;
     }
 
-    const Scene & Engine::GetScene() const
+    void Engine::AttachScene(Scene &scene, std::span<const MeshRequest> meshRequests)
     {
-        return mScene;
-    }
+        mPhysicsSystem.AttachToScene(scene);
+        ScriptSystem::connect(scene);
 
-    void Engine::SaveScene(const std::filesystem::path &path)
-    {
-        auto t{Clock::now()};
-        mScene.SetSavePath(path);
-        if (const auto result = SceneSerializer::save(mScene, path); !result)
-        {
-            mOnErrorLog(std::format("Scene '{}' not saved: {}",
-                                    path.generic_string(), result.error()));
-            return;
-        }
-
-        mOnInfoLog(std::format("Scene '{}' saved to '{}'",
-                               mScene.GetName(), path.generic_string()));
-    }
-
-    void Engine::LoadScene(const std::filesystem::path &path, const Window &window)
-    {
-        auto t{Clock::now()};
-        const auto document = SceneSerializer::read_file(path);
-        if (!document)
-        {
-            mOnErrorLog(std::format("Scene '{}' not loaded: {}",
-                                    path.generic_string(), document.error()));
-            return;
-        }
-
-        Scene scene = Scene::create(document->meta.name);
-
-        const auto fbSize{window.GetInputSource().GetFramebufferSize()};
-        auto requests = SceneInstantiator::apply(scene, *document, {mGizmoRegistry, fbSize.x, fbSize.y});
-
-        if (!requests)
-        {
-            mOnErrorLog(std::format("Scene '{}' not loaded: {}",
-                                    path.generic_string(), requests.error()));
-            return;
-        }
-
-        mPhysicsSystem.DestroyAllBodies();
-        mScene = std::move(scene);
-        mPhysicsSystem.AttachToScene();
-        mScene.SetSavePath(path);
-
-        for (const auto &request : *requests)
+        for (const auto &request : meshRequests)
         {
             AssetPipeline::PendingMeshData pending;
             pending.target    = request.target;
@@ -912,6 +861,7 @@ namespace kailux
             pending.transform = request.transform;
             pending.material  = request.material;
             pending.physics   = request.physics;
+            pending.scene     = scene.GetId();
 
             if (!mAssetPipeline.IsCached(pending.path))
                 if (auto data = MeshLoader::load(pending.path))
@@ -919,9 +869,20 @@ namespace kailux
 
             mAssetPipeline.GetPendingQueue().Push(std::move(pending));
         }
+    }
 
-        mOnInfoLog(std::format("Scene '{}' loaded in {}ms", mScene.GetName(),
-                               Clock::get_elapsed<float, TimeType::Milliseconds>(t)));
+    void Engine::DetachScene(Scene &scene)
+    {
+        mPhysicsSystem.SetSimulationState(scene, SimulationState::Paused);
+        mScriptSystem.SetSimulationState(scene, SimulationState::Paused);
+        mPhysicsSystem.DestroyAllBodies();
+        SetControlledCamera(entt::null, {});
+    }
+
+    SceneLoadContext Engine::GetSceneLoadContext(const Window &window)
+    {
+        const auto fbSize{window.GetInputSource().GetFramebufferSize()};
+        return {mGizmoRegistry, fbSize.x, fbSize.y};
     }
 
     void Engine::SetOnInfoLog(OnLog &&callback)
@@ -973,27 +934,34 @@ namespace kailux
         mPhysicsRegistry.SetBodyMass(handle, mass);
     }
 
-    bool Engine::RequestSimulationState(SimulationState state)
+    bool Engine::RequestSimulationState(Scene &scene, SimulationState state)
     {
         if (state == SimulationState::Paused)
         {
-            mPhysicsSystem.SetSimulationState(state);
-            mScriptSystem.SetSimulationState(state);
+            mPhysicsSystem.SetSimulationState(scene, state);
+            mScriptSystem.SetSimulationState(scene, state);
             return true;
         }
 
-        if (mScene.GetPrimaryCamera() == entt::null)
+        if (scene.GetPrimaryCamera() == entt::null)
         {
             mOnWarningLog("Cannot start simulation: the scene has no camera");
             return false;
         }
-        mScene.UpdateCameras();
-        mPhysicsSystem.SetSimulationState(state);
-        mScriptSystem.SetSimulationState(state);
+        scene.UpdateCameras();
+        mPhysicsSystem.SetSimulationState(scene, state);
+        mScriptSystem.SetSimulationState(scene, state);
         return true;
     }
 
-    void Engine::ExecuteCulling(const FrameData &frame, const CommandRecorder &recorder, entt::entity camera, vk::Extent2D extent, CullingPreset preset)
+    void Engine::ExecuteCulling(
+        const Scene &scene,
+        const FrameData &frame,
+        const CommandRecorder &recorder,
+        entt::entity camera,
+        vk::Extent2D extent,
+        CullingPreset preset
+    ) const
     {
         const auto cmd = recorder.GetCommandBuffer();
 
@@ -1007,14 +975,14 @@ namespace kailux
         std::array countBufferBarrier = {frame.GetCullerCountBufferFillMemoryBarrier()};
         recorder.BufferMemoryBarriers(countBufferBarrier);
 
-        const auto totalObjects{mScene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)};
+        const auto totalObjects{scene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)};
         if (totalObjects == 0)
             return;
 
         mComputeCuller.Bind(cmd);
         frame.GetCullerDescriptorSet().Bind(mComputeCuller.GetPipeline(), cmd);
 
-        const auto cameraData{BuildCameraData(camera, {extent.width, extent.height})};
+        const auto cameraData{build_camera_data(scene, camera, {extent.width, extent.height})};
 
         const auto planes{Camera::get_frustum_planes(cameraData.projection, cameraData.view)};
 
@@ -1023,7 +991,7 @@ namespace kailux
         };
         const glm::vec4 cameraPosition{glm::vec3(cameraData.positionAndExposure), projFactor};
 
-        const auto& settings{mScene.GetEntityRegistry().get<SceneSettings>(mScene.GetSettingsEntity())};
+        const auto& settings{scene.GetEntityRegistry().get<SceneSettings>(scene.GetSettingsEntity())};
 
         mComputeCuller.Push<ComputePassesPushConstants::CullParams>(
             cmd,
@@ -1450,12 +1418,12 @@ namespace kailux
         );
     }
 
-    void Engine::RecordDirectionalShadows(const FrameData &frame, CommandRecorder &recorder, uint32_t viewIndex) const
+    void Engine::RecordDirectionalShadows(const Scene &scene, const FrameData &frame, CommandRecorder &recorder, uint32_t viewIndex) const
     {
         const auto cmd{recorder.GetCommandBuffer()};
         const auto extent{mDirectionalShadowMap.GetExtent()};
 
-        const auto objectCount{mScene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)};
+        const auto objectCount{scene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)};
         const auto& shadowSet{mDirectionalShadowSets[viewIndex]};
         const bool castShadows{objectCount > 0 && shadowSet.Enabled()};
 
@@ -1493,13 +1461,13 @@ namespace kailux
         }
     }
 
-    void Engine::RecordPointShadows(const FrameData &frame, CommandRecorder &recorder, uint32_t viewIndex) const
+    void Engine::RecordPointShadows(const Scene &scene, const FrameData &frame, CommandRecorder &recorder, uint32_t viewIndex) const
     {
         const auto cmd{recorder.GetCommandBuffer()};
         const auto extent{mPointShadowMap.GetExtent()};
         const auto &shadowSet{mPointShadowSets[viewIndex]};
 
-        const auto objectCount{mScene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)};
+        const auto objectCount{scene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)};
 
         for (uint32_t slot{}; slot < details::kMaxPointShadows; ++slot)
         {
@@ -1541,14 +1509,14 @@ namespace kailux
         }
     }
 
-    void Engine::RecordGizmos(const FrameData &frame, const CommandRecorder &recorder) const
+    void Engine::RecordGizmos(const Scene &scene, const FrameData &frame, const CommandRecorder &recorder) const
     {
         const auto cmd = recorder.GetCommandBuffer();
         mGizmoPass.Bind(cmd);
         mGizmoRegistry.Bind(cmd);
         frame.GetGizmoDescriptorSet().Bind(mGizmoPass.GetPipeline(), cmd);
 
-        const auto view{mScene.GetEntityRegistry().view<GizmoComponent, WorldTransform>()};
+        const auto view{scene.GetEntityRegistry().view<GizmoComponent, WorldTransform>()};
         view.each([&](const auto& component, const auto& world)
         {
             auto gizmoView = mGizmoRegistry.View(component.handle);
@@ -1571,7 +1539,7 @@ namespace kailux
         });
     }
 
-    void Engine::RecordImGuiData(const FrameData &frame)
+    void Engine::RecordImGuiData(Scene &scene, const FrameData &frame)
     {
         auto format = mSwapchain.GetFormat();
         auto inheritanceInfo = vk::CommandBufferInheritanceRenderingInfo(
@@ -1586,7 +1554,7 @@ namespace kailux
 
         mImGuiBackend.BeginFrame();
         if (mOnImGuiRender)
-            mOnImGuiRender(mScene);
+            mOnImGuiRender(scene);
         mImGuiBackend.EndFrame();
 
         CommandRecorder recorder(frame.GetImGuiCommandBuffer(), inheritanceInfo);
@@ -1605,19 +1573,19 @@ namespace kailux
         );
     }
 
-    void Engine::RecordOutline(const FrameData &frame, const CommandRecorder &recorder)
+    void Engine::RecordOutline(const Scene &scene, const FrameData &frame, const CommandRecorder &recorder)
     {
         const auto cmd = recorder.GetCommandBuffer();
         mOutlinePass.Bind(cmd);
         frame.GetOutlineDescriptorSet().Bind(mOutlinePass.GetPipeline(), cmd);
-        mOutlineInfo.color = {mScene.GetEntityRegistry().get<SceneSettings>(mScene.GetSettingsEntity()).outlineColor, 0.f};
+        mOutlineInfo.color = {scene.GetEntityRegistry().get<SceneSettings>(scene.GetSettingsEntity()).outlineColor, 0.f};
         mOutlinePass.Push(cmd, mOutlineInfo);
         cmd.draw(3, 1, 0, 0);
     }
 
-    void Engine::RenderSimulationView(const FrameData &frame, CommandRecorder &recorder)
+    void Engine::RenderSimulationView(const Scene &scene, const FrameData &frame, CommandRecorder &recorder)
     {
-        const auto primaryCamera{mScene.GetPrimaryCamera()};
+        const auto primaryCamera{scene.GetPrimaryCamera()};
         if (primaryCamera == entt::null)
             return;
 
@@ -1629,7 +1597,7 @@ namespace kailux
         };
 
         recorder.BufferMemoryBarriers(frame.GetIndirectReadToWriteBarriers());
-        ExecuteCulling(frame, recorder, primaryCamera, extent, CullingPreset::SimulationView);
+        ExecuteCulling(scene, frame, recorder, primaryCamera, extent, CullingPreset::SimulationView);
 
         TransitionForSimulationPass(recorder);
 
@@ -1674,8 +1642,8 @@ namespace kailux
         });
     }
 
-    void Engine::RecordEditorPasses(FrameData &frame, CommandRecorder &recorder, const RenderTarget &sceneView,
-        uint32_t imageIndex)
+    void Engine::RecordEditorPasses(Scene &scene, FrameData &frame, CommandRecorder &recorder, const RenderTarget &sceneView,
+                                    uint32_t imageIndex)
     {
         const auto sceneExtent{sceneView.GetVkExtent()};
         TransitionForGizmoPass(sceneView, recorder);
@@ -1708,8 +1676,10 @@ namespace kailux
             vk::AttachmentLoadOp::eLoad,
             {}
         });
-        RecordGizmos(frame, recorder);
+
+        RecordGizmos(scene, frame, recorder);
         recorder.EndRendering();
+
         TransitionForOutlinePass(sceneView, recorder, imageIndex);
         const std::array outlineAttachment{
             ColorAttachmentInfo(
@@ -1728,31 +1698,35 @@ namespace kailux
             vk::ImageLayout::eUndefined,
             {}
         });
-        RecordOutline(frame, recorder);
+
+        RecordOutline(scene, frame, recorder);
         recorder.EndRendering();
+
         TransitionForPickerAndPostProcess(frame, sceneView, recorder);
         RecordPicker(frame, recorder);
+
         const std::array pickerMemBarrier{frame.GetPickerBufferMemoryBarrier()};
         recorder.BufferMemoryBarriers(pickerMemBarrier);
         if (mSimulationViewActive &&
             GetCurrentSimulationView().GetExtent().x > 0 &&
             GetCurrentSimulationView().GetExtent().y > 0
         )
-            RenderSimulationView(frame, recorder);
-        RecordImGuiPass(frame, recorder, imageIndex);
+            RenderSimulationView(scene, frame, recorder);
+
+        RecordImGuiPass(scene, frame, recorder, imageIndex);
         TransitionForPresent(recorder, imageIndex);
     }
 
-    void Engine::RecordRuntimePresent(const FrameData &frame, CommandRecorder &recorder, uint32_t imageIndex)
+    void Engine::RecordRuntimePresent(Scene &scene, const FrameData &frame, CommandRecorder &recorder, uint32_t imageIndex)
     {
         const bool hasView{
-            mScene.GetPrimaryCamera() != entt::null &&
+            scene.GetPrimaryCamera() != entt::null &&
             GetCurrentSimulationView().GetExtent().x > 0 &&
             GetCurrentSimulationView().GetExtent().y > 0
         };
 
         if (hasView)
-            RenderSimulationView(frame, recorder);
+            RenderSimulationView(scene, frame, recorder);
 
         TransitionForBlit(recorder, imageIndex, hasView);
         const auto swapchainImage{mSwapchain.GetImage(imageIndex)};
@@ -1803,7 +1777,7 @@ namespace kailux
         TransitionAfterBlit(recorder, imageIndex);
         if (UsesImGui())
         {
-            RecordImGuiPass(frame, recorder, imageIndex);
+            RecordImGuiPass(scene, frame, recorder, imageIndex);
             TransitionForPresent(recorder, imageIndex);
         }
     }
@@ -1863,7 +1837,7 @@ namespace kailux
         recorder.EndRendering();
     }
 
-    void Engine::RecordImGuiPass(const FrameData &frame, CommandRecorder &recorder, uint32_t imageIndex)
+    void Engine::RecordImGuiPass(Scene &scene, const FrameData &frame, CommandRecorder &recorder, uint32_t imageIndex)
     {
         const std::array imguiOverlay{
             ColorAttachmentInfo
@@ -1883,14 +1857,14 @@ namespace kailux
             vk::AttachmentLoadOp::eClear,
             vk::RenderingFlagBits::eContentsSecondaryCommandBuffers
         });
-        RecordImGuiData(frame);
+        RecordImGuiData(scene, frame);
         recorder.GetCommandBuffer().executeCommands(frame.GetImGuiCommandBuffer());
         recorder.EndRendering();
     }
 
-    CameraData Engine::BuildCameraData(entt::entity entity, glm::ivec2 extent) const
+    CameraData Engine::build_camera_data(const Scene &scene, entt::entity entity, glm::ivec2 extent)
     {
-        const auto& camera{mScene.GetEntityRegistry().get<CameraComponent>(entity)};
+        const auto& camera{scene.GetEntityRegistry().get<CameraComponent>(entity)};
         return {
             Camera::get_projection(camera, extent.x, extent.y),
             Camera::get_view(camera),
@@ -1901,56 +1875,57 @@ namespace kailux
         };
     }
 
-    void Engine::Update(float deltaTime)
+    void Engine::Update(Scene &scene, float deltaTime)
     {
-        mAssetPipeline.Poll();
+        mAssetPipeline.Poll(scene);
         mTransferManager.Poll(mContext);
+        mAssetPipeline.FlushCompletedUploads(scene);
         mDeferredResourceEraser.Tick();
 
         if (mPhysicsSystem.GetSimulationState() == SimulationState::Running)
-            mPhysicsSystem.Update(deltaTime);
+            mPhysicsSystem.Update(scene, deltaTime);
 
-        mScriptSystem.Update(deltaTime);
+        mScriptSystem.Update(scene, deltaTime);
 
-        mScene.Update();
+        scene.Update();
 
         if (!mInputSource.Valid())
         {
-            mScene.UpdateCameras();
+            scene.UpdateCameras();
             return;
         }
 
         const auto controlled{
             mControlledCamera == entt::null ?
-            mScene.GetSceneCamera() :
+            scene.GetSceneCamera() :
             mControlledCamera
         };
 
-        auto& registry{mScene.GetEntityRegistry()};
+        auto& registry{scene.GetEntityRegistry()};
         if (registry.valid(controlled))
             if (auto* camera{registry.try_get<CameraComponent>(controlled)})
             {
                 camera->focused = mMouseLookActive;
                 Camera::update_movement(*camera, mInputSource, deltaTime);
                 Camera::update_look_at(*camera, mInputSource, deltaTime);
-                mScene.SyncCameraTransform(controlled);
+                scene.SyncCameraTransform(controlled);
             }
 
-        mScene.UpdateCameras(controlled);
+        scene.UpdateCameras(controlled);
     }
 
-    void Engine::UpdateFrameBuffers(FrameData &frame, const RenderTarget &sceneView, const CommandRecorder &recorder)
+    void Engine::UpdateFrameBuffers(const Scene &scene, FrameData &frame, const RenderTarget &sceneView, const CommandRecorder &recorder)
     {
-        UpdateCameraBuffer(frame, sceneView);
-        UpdateMeshDataBuffer(frame);
+        UpdateCameraBuffer(scene, frame, sceneView);
+        UpdateMeshDataBuffer(scene, frame);
         UpdateMaterialBuffer(frame);
-        UpdateSceneBuffer(frame);
-        UpdateCullerBuffers(frame, recorder);
+        UpdateSceneBuffer(scene, frame);
+        UpdateCullerBuffers(scene, frame, recorder);
 
         recorder.BufferMemoryBarriers(frame.GetBufferMemoryBarriers());
     }
 
-    void Engine::UpdateCameraBuffer(FrameData &frame, const RenderTarget &sceneView) const
+    void Engine::UpdateCameraBuffer(const Scene &scene, FrameData &frame, const RenderTarget &sceneView) const
     {
         const auto sceneExtent{sceneView.GetExtent()};
         const auto& simulationView{GetCurrentSimulationView()};
@@ -1963,19 +1938,19 @@ namespace kailux
 
         std::array<CameraData, details::kMaxCameras + details::kMaxCameraViews> cameras{};
         cameras[details::kSceneViewCameraIndex] =
-            BuildCameraData(mScene.GetSceneCamera(), sceneExtent);
+            build_camera_data(scene, scene.GetSceneCamera(), sceneExtent);
 
-        if (const auto primary{mScene.GetPrimaryCamera()}; primary != entt::null)
+        if (const auto primary{scene.GetPrimaryCamera()}; primary != entt::null)
             cameras[details::kSimulationViewCameraIndex] =
-                BuildCameraData(primary, simulationExtent);
+                build_camera_data(scene, primary, simulationExtent);
 
         frame.GetCameraBuffer().Upload(cameras.data(), sizeof(CameraData) * cameras.size());
     }
 
-    void Engine::UpdateMeshDataBuffer(FrameData &frame) const
+    void Engine::UpdateMeshDataBuffer(const Scene &scene, FrameData &frame) const
     {
         std::vector<MeshData> data;
-        auto view = mScene.GetEntityRegistry().view<
+        auto view = scene.GetEntityRegistry().view<
             WorldTransform,
             MeshMaterialData,
             MeshComponent,
@@ -2016,9 +1991,9 @@ namespace kailux
         frame.GetMaterialBuffer().Upload(materials);
     }
 
-    void Engine::UpdateSceneBuffer(FrameData &frame) const
+    void Engine::UpdateSceneBuffer(const Scene &scene, FrameData &frame) const
     {
-        auto data = mScene.GetData();
+        auto data = scene.GetData();
         for (uint32_t view{}; view < details::kMaxCameraViews; ++view)
         {
             data.directionalShadows.views[view] = mDirectionalShadowSets[view].GetData();
@@ -2027,17 +2002,17 @@ namespace kailux
         frame.GetSceneBuffer().Upload(&data, sizeof(SceneData));
     }
 
-    void Engine::UpdateCullerBuffers(const FrameData &frame, const CommandRecorder &recorder)
+    void Engine::UpdateCullerBuffers(const Scene &scene, const FrameData &frame, const CommandRecorder &recorder)
     {
         std::vector<vk::DrawIndexedIndirectCommand> indirectCommands;
-        auto view = mScene.GetEntityRegistry().view<
+        auto view = scene.GetEntityRegistry().view<
             WorldTransform,
             MeshMaterialData,
             MeshComponent,
             MaterialComponent>
         (entt::exclude<PendingUploadComponent>);
         indirectCommands.reserve(
-            mScene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)
+            scene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)
             * details::kMaxGeometryLods
         );
         uint32_t objectIndex{};
@@ -2074,10 +2049,10 @@ namespace kailux
         mSwapchain.Recreate(window, mContext, kSceneSamples);
     }
 
-    void Engine::AddPhysicsToEntity(entt::entity entity, PhysicsCreationOptions options)
+    void Engine::AddPhysicsToEntity(Scene& scene, entt::entity entity, PhysicsCreationOptions options)
     {
-        if (const auto handle{mPhysicsSystem.AddPhysicsToEntity(entity, options)})
-            mScene.AttachPhysics(
+        if (const auto handle{mPhysicsSystem.AddPhysicsToEntity(scene, entity, options)})
+            scene.AttachPhysics(
                 entity,
                 {
                     *handle,
@@ -2088,14 +2063,14 @@ namespace kailux
             );
     }
 
-    void Engine::AddLightEntity(LightType type)
+    void Engine::AddLightEntity(Scene& scene, LightType type)
     {
         switch (type)
         {
             case LightType::Point:
                 if (const auto pointLight{
-                    mScene.CreatePointLightEntity(
-                        mScene.GetLightEntityName(),
+                    scene.CreatePointLightEntity(
+                        scene.GetLightEntityName(),
                         {mGizmoRegistry.GetBuiltins().pointLight, 0.5f, {1.f, 1.f, 1.f, 1.f}},
                         {})
                 }; !pointLight)
@@ -2106,11 +2081,11 @@ namespace kailux
         }
     }
 
-    void Engine::AddCameraEntity(int width, int height)
+    void Engine::AddCameraEntity(Scene& scene, int width, int height)
     {
         const auto camera{
-            mScene.CreateCameraEntity(
-                mScene.GetCameraEntityName(),
+            scene.CreateCameraEntity(
+                scene.GetCameraEntityName(),
                 {mGizmoRegistry.GetBuiltins().camera, 0.5f, {1.f, 1.f, 1.f, 1.f}},
                 {},
                 false
