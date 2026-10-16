@@ -242,7 +242,8 @@ namespace kailux
     {
         if (mLoadSceneDialog.Poll())
             if (const auto path{mLoadSceneDialog.TryPopPath()})
-                (void)mApplication.LoadScene(*path);
+                if (mApplication.LoadScene(*path))
+                    GetPanel<ViewportPanel>().RequestSimulationState(SimulationState::Paused);
         if (mSaveSceneDialog.Poll())
             if (const auto path{mSaveSceneDialog.TryPopPath()})
                 SaveScene(*path);

@@ -58,7 +58,6 @@ namespace kailux
                                               mControlledCamera(other.mControlledCamera),
                                               mInputSource(other.mInputSource),
                                               mMouseLookActive(other.mMouseLookActive),
-                                              mResumeSimulationOnAttach(other.mResumeSimulationOnAttach),
                                               mSceneViews(std::move(other.mSceneViews)),
                                               mSimulationViews(std::move(other.mSimulationViews)),
                                               mRetiredViews(std::move(other.mRetiredViews)),
@@ -111,7 +110,6 @@ namespace kailux
             mControlledCamera = other.mControlledCamera;
             mInputSource = other.mInputSource;
             mMouseLookActive = other.mMouseLookActive;
-            mResumeSimulationOnAttach = other.mResumeSimulationOnAttach;
             mSceneViews = std::move(other.mSceneViews);
             mSimulationViews = std::move(other.mSimulationViews);
             mRetiredViews = std::move(other.mRetiredViews);

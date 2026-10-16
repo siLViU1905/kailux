@@ -239,7 +239,6 @@ namespace kailux
         entt::entity                               mControlledCamera{entt::null};
         InputSource                                mInputSource;
         bool                                       mMouseLookActive{};
-        bool                                       mResumeSimulationOnAttach{};
         OnImGuiRender                              mOnImGuiRender;
 
         std::array<RenderTarget, details::kFramesInFlight> mSceneViews;
