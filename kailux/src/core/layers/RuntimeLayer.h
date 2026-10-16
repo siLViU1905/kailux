@@ -24,5 +24,6 @@ namespace kailux
         Window&               mWindow;
         std::filesystem::path mScenePath;
         bool                  mRunning{};
+        bool                  mStartPending{};
     };
 }

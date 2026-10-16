@@ -70,6 +70,7 @@ add_library(kailux STATIC
         src/core/layers/LayerStack.cpp
         src/core/Application.cpp
         src/core/layers/RuntimeLayer.cpp
+        src/core/scene/SceneManager.cpp
 )
 
 target_compile_definitions(kailux PUBLIC

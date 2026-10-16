@@ -6,22 +6,21 @@ namespace kailux
     class ScriptSystem
     {
     public:
-        ScriptSystem(Scene& scene);
+        ScriptSystem();
 
-        void            SetSimulationState(SimulationState state);
+        void            SetSimulationState(Scene& scene, SimulationState state);
         SimulationState GetSimulationState() const;
 
-        void Update(float deltaTime) const;
+        void Update(Scene& scene, float deltaTime) const;
 
-        void SetConnections() const;
+        static void connect(Scene& scene);
 
     private:
-        void OnSimulationStart() const;
-        void OnSimulationStop() const;
+        static void on_simulation_start(Scene& scene);
+        static void on_simulation_stop(Scene& scene);
 
         static void on_component_destroyed(entt::registry& registry, entt::entity entity);
 
-        std::reference_wrapper<Scene> mScene;
-        SimulationState               mSimulationState{SimulationState::Paused};
+        SimulationState mSimulationState{SimulationState::Paused};
     };
 }

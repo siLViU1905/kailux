@@ -14,6 +14,9 @@ namespace kailux
 
         mThreadDispatcher = ThreadDispatcher::create(specification.workerThreads);
 
+        mSceneManager = SceneManager::create();
+        mEngine.AttachScene(mSceneManager.GetActiveScene(), {});
+
         mEngine.SetOnImGuiRender([this](Scene& scene)
         {
             RenderImGui(scene);
@@ -25,6 +28,9 @@ namespace kailux
         while (mWindow.GetInputSource().IsOpen())
         {
             mClock.Tick();
+            CommitPendingScene();
+            auto& scene{mSceneManager.GetActiveScene()};
+
             mWindow.PollEvents();
             if (mWindow.GetInputSource().IsMinimized())
             {
@@ -34,15 +40,15 @@ namespace kailux
             }
 
             while (auto event = mWindow.GetEvent())
-                DispatchEvent(*event);
+                DispatchEvent(scene, *event);
 
             const auto deltaTime{mClock.GetDeltaTime<float, TimeType::Seconds>()};
 
             for (auto& layer : mLayerStack)
                 layer->OnUpdate(deltaTime);
 
-            mEngine.Update(deltaTime);
-            mEngine.Render(mWindow);
+            mEngine.Update(scene, deltaTime);
+            mEngine.Render(scene, mWindow);
         }
         mEngine.WaitIdle();
     }
@@ -62,14 +68,19 @@ namespace kailux
         return mLayerStack.PopOverlay(layer);
     }
 
+    SceneManager::Result Application::LoadScene(const std::filesystem::path &path)
+    {
+        return mSceneManager.StageFromFile(path, mEngine.GetSceneLoadContext(mWindow));
+    }
+
     Application::~Application()
     {
         mLayerStack.Clear();
     }
 
-    void Application::DispatchEvent(const Event &event)
+    void Application::DispatchEvent(Scene& scene, const Event &event)
     {
-        mEngine.OnEvent(event, mWindow);
+        mEngine.OnEvent(scene, event, mWindow);
 
         for (auto it{mLayerStack.rbegin()}; it != mLayerStack.rend(); ++it)
             if ((*it)->OnEvent(event))
@@ -80,5 +91,15 @@ namespace kailux
     {
         for (auto& layer : mLayerStack)
             layer->OnImGuiRender(scene);
+    }
+
+    void Application::CommitPendingScene()
+    {
+        if (!mSceneManager.HasPending())
+            return;
+
+        mEngine.DetachScene(mSceneManager.GetActiveScene());
+        const auto meshRequests{mSceneManager.CommitPending()};
+        mEngine.AttachScene(mSceneManager.GetActiveScene(), *meshRequests);
     }
 }

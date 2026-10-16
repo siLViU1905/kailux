@@ -13,22 +13,25 @@ namespace kailux
 
     void RuntimeLayer::OnAttach()
     {
-        mEngine.LoadScene(mScenePath, mWindow);
-
-        if (mEngine.GetScene().GetSavePath() != mScenePath)
+        if (!mApplication.LoadScene(mScenePath))
         {
             log::console.Error("Could not load scene '{}', see the log file", mScenePath.generic_string());
             mApplication.Close();
             return;
         }
 
-        ControlPrimaryCamera();
-        mRunning = mEngine.RequestSimulationState(SimulationState::Running);
+        mStartPending = true;
     }
 
     void RuntimeLayer::OnUpdate(float deltaTime)
     {
         ControlPrimaryCamera();
+
+        if (mStartPending)
+        {
+            mStartPending = false;
+            mRunning = mEngine.RequestSimulationState(mApplication.GetSceneManager().GetActiveScene(), SimulationState::Running);
+        }
     }
 
     bool RuntimeLayer::OnEvent(const Event &event)
@@ -36,7 +39,7 @@ namespace kailux
         if (const auto* pressed{std::get_if<ButtonPressed>(&event)};
            pressed && pressed->button == MouseButton::Middle)
         {
-            mEngine.ToggleMouseLook();
+            mEngine.ToggleMouseLook(mApplication.GetSceneManager().GetActiveScene());
             return true;
         }
 
@@ -52,7 +55,7 @@ namespace kailux
 
     void RuntimeLayer::ControlPrimaryCamera()
     {
-        if (const auto primary{mEngine.GetScene().GetPrimaryCamera()}; primary != entt::null)
+        if (const auto primary{mApplication.GetSceneManager().GetActiveScene().GetPrimaryCamera()}; primary != entt::null)
             mEngine.SetControlledCamera(primary, mWindow.GetInputSource());
     }
 
@@ -60,10 +63,10 @@ namespace kailux
     {
         if (mRunning)
         {
-            mEngine.RequestSimulationState(SimulationState::Paused);
+            mEngine.RequestSimulationState(mApplication.GetSceneManager().GetActiveScene(), SimulationState::Paused);
             mRunning = false;
         }
         else
-            mRunning = mEngine.RequestSimulationState(SimulationState::Running);
+            mRunning = mEngine.RequestSimulationState(mApplication.GetSceneManager().GetActiveScene(), SimulationState::Running);
     }
 }

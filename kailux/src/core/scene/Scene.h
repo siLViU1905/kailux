@@ -16,12 +16,15 @@
 
 namespace kailux
 {
+    using SceneId = uint32_t;
+    inline constexpr SceneId kInvalidSceneId{};
+
     class Scene
     {
     public:
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(Scene)
 
-        static Scene create(std::string_view name);
+        static Scene create(SceneId id, std::string_view name);
 
         void Update();
 
@@ -79,6 +82,7 @@ namespace kailux
         LightsData            GetLightData() const;
 
         std::string_view      GetName() const;
+        SceneId               GetId() const;
 
         std::string           GetMeshEntityName();
         std::string           GetLightEntityName();
@@ -124,6 +128,7 @@ namespace kailux
 
         void UpdateTransforms();
 
+        SceneId        mId{kInvalidSceneId};
         std::string    mName{"Scene"};
 
         std::filesystem::path mSavePath{};

@@ -5,6 +5,7 @@
 #include "core/Clock.h"
 #include "core/Engine.h"
 #include "core/layers/LayerStack.h"
+#include "core/scene/SceneManager.h"
 #include "core/utilities/ThreadDispatcher.h"
 #include "core/window/Window.h"
 
@@ -64,15 +65,23 @@ namespace kailux
         {
             return (self.mThreadDispatcher);
         }
+        decltype(auto) GetSceneManager(this auto&& self)
+        {
+            return (self.mSceneManager);
+        }
+
+        SceneManager::Result LoadScene(const std::filesystem::path& path);
 
         ~Application();
 
     private:
-        void DispatchEvent(const Event& event);
+        void DispatchEvent(Scene& scene, const Event& event);
         void RenderImGui(Scene& scene);
+        void CommitPendingScene();
 
         Window           mWindow;
         Engine           mEngine;
+        SceneManager     mSceneManager;
         Clock            mClock;
         ThreadDispatcher mThreadDispatcher;
         LayerStack       mLayerStack;
