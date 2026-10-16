@@ -44,9 +44,14 @@ namespace kailux
         ~SceneManager();
 
     private:
+        Scoped<Scene> CreateScene(std::string_view name);
+
         Scoped<Scene>            mActive;
         Scoped<Scene>            mPending;
         std::vector<MeshRequest> mPendingRequests;
+
+        SceneId mNextSceneId{kInvalidSceneId + 1};
+
         OnLog mOnInfoLog;
         OnLog mOnErrorLog;
     };

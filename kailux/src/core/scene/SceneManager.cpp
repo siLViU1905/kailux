@@ -19,13 +19,13 @@ namespace kailux
     SceneManager SceneManager::create(std::string_view defaultSceneName)
     {
         SceneManager manager;
-        manager.mActive = create_scoped<Scene>(Scene::create(defaultSceneName));
+        manager.mActive = manager.CreateScene(defaultSceneName);
         return manager;
     }
 
     void SceneManager::StageNew(std::string_view name)
     {
-        mPending = create_scoped<Scene>(Scene::create(name));
+        mPending = CreateScene(name);
         mPendingRequests.clear();
     }
 
@@ -41,7 +41,7 @@ namespace kailux
             return std::unexpected{std::move(error)};
         }
 
-        auto scene{create_scoped<Scene>(Scene::create(document->meta.name))};
+        auto scene{CreateScene(document->meta.name)};
         auto requests{SceneInstantiator::apply(*scene, *document, context)};
         if (!requests)
         {
@@ -98,4 +98,9 @@ namespace kailux
     }
 
     SceneManager::~SceneManager() = default;
+
+    Scoped<Scene> SceneManager::CreateScene(std::string_view name)
+    {
+        return create_scoped<Scene>(Scene::create(mNextSceneId++, name));
+    }
 }

@@ -24,7 +24,7 @@ namespace kailux
     public:
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(Scene)
 
-        static Scene create(std::string_view name);
+        static Scene create(SceneId id, std::string_view name);
 
         void Update();
 
@@ -128,8 +128,8 @@ namespace kailux
 
         void UpdateTransforms();
 
-        std::string    mName{"Scene"};
         SceneId        mId{kInvalidSceneId};
+        std::string    mName{"Scene"};
 
         std::filesystem::path mSavePath{};
 
