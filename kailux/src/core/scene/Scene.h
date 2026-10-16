@@ -16,6 +16,9 @@
 
 namespace kailux
 {
+    using SceneId = uint32_t;
+    inline constexpr SceneId kInvalidSceneId{};
+
     class Scene
     {
     public:
@@ -79,6 +82,7 @@ namespace kailux
         LightsData            GetLightData() const;
 
         std::string_view      GetName() const;
+        SceneId               GetId() const;
 
         std::string           GetMeshEntityName();
         std::string           GetLightEntityName();
@@ -125,6 +129,7 @@ namespace kailux
         void UpdateTransforms();
 
         std::string    mName{"Scene"};
+        SceneId        mId{kInvalidSceneId};
 
         std::filesystem::path mSavePath{};
 

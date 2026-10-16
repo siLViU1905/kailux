@@ -1,5 +1,8 @@
 #include "Scene.h"
 
+#include <atomic>
+#include <utility>
+
 #include "../components/entt/CameraComponent.h"
 #include "../components/entt/MeshComponent.h"
 #include "../components/entt/MaterialComponent.h"
@@ -20,6 +23,7 @@ namespace kailux
     Scene::Scene() = default;
 
     Scene::Scene(Scene &&other) noexcept : mName(std::move(other.mName)),
+                                           mId(std::exchange(other.mId, kInvalidSceneId)),
                                            mSavePath(std::move(other.mSavePath)),
                                            mEntityRegistry(std::move(other.mEntityRegistry)),
                                            mSceneCameraEntity(other.mSceneCameraEntity),
@@ -38,6 +42,7 @@ namespace kailux
         if (this != &other)
         {
             mName = std::move(other.mName);
+            mId = std::exchange(other.mId, kInvalidSceneId);
             mSavePath = std::move(other.mSavePath);
             mEntityRegistry = std::move(other.mEntityRegistry);
             mSceneCameraEntity = other.mSceneCameraEntity;
@@ -55,8 +60,11 @@ namespace kailux
 
     Scene Scene::create(std::string_view name)
     {
+        static std::atomic<SceneId> nextId{kInvalidSceneId + 1};
+
         Scene scene;
         scene.mName = name;
+        scene.mId = nextId.fetch_add(1, std::memory_order_relaxed);
         scene.mSun = scene.CreateSunEntity({});
         scene.CreateSceneCamera();
         scene.CreateSceneSettings();
@@ -252,6 +260,11 @@ namespace kailux
     std::string_view Scene::GetName() const
     {
         return mName;
+    }
+
+    SceneId Scene::GetId() const
+    {
+        return mId;
     }
 
     std::string Scene::GetMeshEntityName()
