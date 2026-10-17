@@ -53,7 +53,7 @@ namespace kailux
 
         GizmoHandle Upload(const Context &context,
                            vk::CommandBuffer cmd,
-                           const GizmoGeometry::GizmoData &data,
+                           const gizmo_geometry::GizmoData &data,
                            std::vector<Buffer> &stagingBuffers);
 
         static void upload_buffer_region(const void *data,

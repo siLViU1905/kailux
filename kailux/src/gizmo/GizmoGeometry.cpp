@@ -1,9 +1,9 @@
 #include "GizmoGeometry.h"
 #include <numbers>
 
-namespace kailux
+namespace kailux::gizmo_geometry
 {
-    GizmoGeometry::GizmoData GizmoGeometry::generate_point_light_gizmo(glm::vec3 color)
+    GizmoData generate_point_light_gizmo(glm::vec3 color)
     {
         GizmoData data;
 
@@ -40,7 +40,7 @@ namespace kailux
         auto polyline = [&](auto const &points)
         {
             for (size_t i{}; i + 1 < points.size(); ++i)
-                append_segment(data, points[i], points[i + 1], halfThickness, color);
+                details::append_segment(data, points[i], points[i + 1], halfThickness, color);
         };
 
         {
@@ -55,7 +55,7 @@ namespace kailux
                 const glm::vec2 p0{std::cos(a0) * globeRadius, std::sin(a0) * globeRadius};
                 const glm::vec2 p1{std::cos(a1) * globeRadius, std::sin(a1) * globeRadius};
 
-                append_segment(data, p0, p1, halfThickness, color);
+                details::append_segment(data, p0, p1, halfThickness, color);
             }
         }
 
@@ -74,7 +74,7 @@ namespace kailux
         {
             const float t{static_cast<float>(i) / static_cast<float>(baseBands - 1)};
             const float y{baseTopY + (baseBottomY - baseTopY) * t};
-            append_segment(data, {-baseHalfWidth, y}, {baseHalfWidth, y}, halfThickness, color);
+            details::append_segment(data, {-baseHalfWidth, y}, {baseHalfWidth, y}, halfThickness, color);
         }
 
         polyline(std::array{
@@ -84,8 +84,8 @@ namespace kailux
             glm::vec2{ baseHalfWidth, baseBottomY},
         });
 
-        append_segment(data, {-filamentPostX, baseTopY}, {-filamentPostX, filamentLowY}, halfThickness, color);
-        append_segment(data, { filamentPostX, baseTopY}, { filamentPostX, filamentLowY}, halfThickness, color);
+        details::append_segment(data, {-filamentPostX, baseTopY}, {-filamentPostX, filamentLowY}, halfThickness, color);
+        details::append_segment(data, { filamentPostX, baseTopY}, { filamentPostX, filamentLowY}, halfThickness, color);
         polyline(std::array{
             glm::vec2{-filamentPostX,        filamentLowY},
             glm::vec2{-filamentPostX * 0.5f, filamentHighY},
@@ -102,13 +102,13 @@ namespace kailux
             if (dir.y < -0.9f)
                 continue;
 
-            append_segment(data, dir * rayInner, dir * rayOuter, halfThickness, color);
+            details::append_segment(data, dir * rayInner, dir * rayOuter, halfThickness, color);
         }
 
         return data;
     }
 
-    GizmoGeometry::GizmoData GizmoGeometry::generate_camera_gizmo(glm::vec3 color)
+    GizmoData generate_camera_gizmo(glm::vec3 color)
     {
         GizmoData data;
 
@@ -145,15 +145,15 @@ namespace kailux
         data.indices.reserve(quadCount * 6);
 
         for (uint32_t i{}; i < bodyPoints; ++i)
-            append_segment(data, body[i], body[(i + 1) % bodyPoints], halfThickness, color);
+            details::append_segment(data, body[i], body[(i + 1) % bodyPoints], halfThickness, color);
 
         for (uint32_t i{}; i + 1 < lensPoints; ++i)
-            append_segment(data, lens[i], lens[i + 1], halfThickness, color);
+            details::append_segment(data, lens[i], lens[i + 1], halfThickness, color);
 
         return data;
     }
 
-    void GizmoGeometry::append_segment(GizmoData &data, glm::vec2 a, glm::vec2 b, float halfThickness, glm::vec3 color)
+    void details::append_segment(GizmoData &data, glm::vec2 a, glm::vec2 b, float halfThickness, glm::vec3 color)
     {
         auto dir{b - a};
         const float len{glm::length(dir)};

@@ -45,8 +45,8 @@ namespace kailux
             out = registry.Upload(context, cmd, data, stagingBuffers);
         };
 
-        uploadShape([]() { return GizmoGeometry::generate_point_light_gizmo(); }, registry.mBuiltins.pointLight);
-        uploadShape([]() { return GizmoGeometry::generate_camera_gizmo(); }, registry.mBuiltins.camera);
+        uploadShape([]() { return gizmo_geometry::generate_point_light_gizmo(); }, registry.mBuiltins.pointLight);
+        uploadShape([]() { return gizmo_geometry::generate_camera_gizmo(); }, registry.mBuiltins.camera);
 
         return registry;
     }
@@ -56,7 +56,7 @@ namespace kailux
         assert(handle.Valid());
         const auto &alloc = mAllocs[handle.index];
         return {
-            static_cast<uint32_t>(alloc.indexOffset / sizeof(GizmoGeometry::IndexType)),
+            static_cast<uint32_t>(alloc.indexOffset / sizeof(gizmo_geometry::IndexType)),
             alloc.indexCount,
             static_cast<int32_t>(alloc.vertexOffset / sizeof(GizmoVertex))
         };
@@ -80,15 +80,15 @@ namespace kailux
     }
 
     GizmoHandle GizmoRegistry::Upload(const Context &context, vk::CommandBuffer cmd,
-                                                     const GizmoGeometry::GizmoData &data, std::vector<Buffer> &stagingBuffers)
+                                                     const gizmo_geometry::GizmoData &data, std::vector<Buffer> &stagingBuffers)
     {
         const auto& vertices = data.vertices;
         const auto& indices = data.indices;
         vk::DeviceSize vsize = vertices.size() * sizeof(GizmoVertex);
-        vk::DeviceSize isize = indices.size() * sizeof(GizmoGeometry::IndexType);
+        vk::DeviceSize isize = indices.size() * sizeof(gizmo_geometry::IndexType);
 
         auto vOffset = mBuiltinVertexZone.Alloc(vsize, sizeof(GizmoVertex));
-        auto iOffset = mBuiltinIndexZone.Alloc(isize, sizeof(GizmoGeometry::IndexType));
+        auto iOffset = mBuiltinIndexZone.Alloc(isize, sizeof(gizmo_geometry::IndexType));
 
         upload_buffer_region(vertices.data(), vsize, mVertexBuffer, vOffset, context, cmd, stagingBuffers);
         upload_buffer_region(indices.data(), isize, mIndexBuffer, iOffset, context, cmd, stagingBuffers);
