@@ -1,6 +1,6 @@
-#include "core/Application.h"
-#include "core/Log.h"
-#include "core/layers/EditorLayer.h"
+#include "Application.h"
+#include "Log.h"
+#include "layers/EditorLayer.h"
 
 int main()
 {

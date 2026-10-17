@@ -39,10 +39,10 @@ class kailux(ConanFile):
         backends = self.dependencies["imgui_backends"].package_folder
 
         bindings_dir = os.path.join(backends, "res", "bindings")
-        bindings_dest_dir = os.path.join(self.source_folder, "kailux", "src", "core", "imgui_backend", "bindings")
+        bindings_dest_dir = os.path.join(self.source_folder, "kailux", "src", "imgui_backend", "bindings")
         copy(self, "*", bindings_dir, bindings_dest_dir)
 
         misc_dir = os.path.join(backends, "res", "misc", "cpp")
-        misc_dest_dir = os.path.join(self.source_folder, "kailux", "src", "core", "imgui_backend", "misc")
+        misc_dest_dir = os.path.join(self.source_folder, "kailux", "src", "imgui_backend", "misc")
 
         copy(self, "*", misc_dir, misc_dest_dir)
