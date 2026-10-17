@@ -106,7 +106,6 @@ namespace kailux
     ImTextureID ImGuiBackend::get_texture_id_from_texture(const Texture &texture)
     {
         auto descriptorSet = ImGui_ImplVulkan_AddTexture(
-            texture.GetSampler(),
             texture.GetImageView(),
             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         );
