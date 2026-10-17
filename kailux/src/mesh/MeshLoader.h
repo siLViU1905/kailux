@@ -6,33 +6,31 @@
 
 #include "texture/TextureRegistry.h"
 
-namespace kailux
+namespace kailux::mesh_loader
 {
-    class MeshLoader
+    struct SubMeshData
     {
-    public:
-        struct SubMeshData
-        {
-            std::string                   name;
-            mesh_geometry::MeshData        meshData;
-            glm::vec4                     boundingSphere{};
-            uint32_t                      materialIndex{};
-            glm::mat4                     localTransform{1.0f};
-        };
+        std::string                   name;
+        mesh_geometry::MeshData       meshData;
+        glm::vec4                     boundingSphere{};
+        uint32_t                      materialIndex{};
+        glm::mat4                     localTransform{1.0f};
+    };
 
-        struct LoadData
-        {
-            std::vector<SubMeshData> submeshes;
-            std::vector<TextureRegistry::MaterialData> materials;
-        };
-        using LoadResult = std::expected<LoadData, std::string>;
-        static LoadResult load(const std::filesystem::path &path);
+    struct LoadData
+    {
+        std::vector<SubMeshData> submeshes;
+        std::vector<TextureRegistry::MaterialData> materials;
+    };
+    using LoadResult = std::expected<LoadData, std::string>;
+    LoadResult load(const std::filesystem::path &path);
 
-    private:
-        static constexpr float        kScaleFactor = 0.1f;
-        inline static const glm::mat4 kParentMatrix = glm::scale(glm::mat4(1.f), glm::vec3(kScaleFactor));
+    namespace details
+    {
+        constexpr float        kScaleFactor = 0.1f;
+        inline const glm::mat4 kParentMatrix = glm::scale(glm::mat4(1.f), glm::vec3(kScaleFactor));
 
-        static glm::mat4 ai_matrix4x4_to_glm(const aiMatrix4x4 &m);
+        glm::mat4 ai_matrix4x4_to_glm(const aiMatrix4x4 &m);
 
         struct MaterialPaths
         {
@@ -43,22 +41,22 @@ namespace kailux
             std::string aoPath;
         };
 
-        static void process_materials(
+        void process_materials(
             const aiScene *scene,
             LoadData &outLoadData,
             const std::filesystem::path &directoryPath
         );
-        static void process_node(const aiNode *node,
+        void process_node(const aiNode *node,
                                  const aiScene *scene,
                                  const glm::mat4 &parentMatrix,
                                  LoadData &outLoadData
         );
-        static void process_mesh(const aiMesh *mesh,
+        void process_mesh(const aiMesh *mesh,
                                  mesh_geometry::MeshData &outMeshData
         );
-        static void extract_material_paths(const aiMaterial *material,
+        void extract_material_paths(const aiMaterial *material,
                                            MaterialPaths &outPaths,
                                            const std::filesystem::path &directoryPath);
-        static TextureRegistry::MaterialData process_material_paths(const MaterialPaths& paths);
-    };
+        TextureRegistry::MaterialData process_material_paths(const MaterialPaths& paths);
+    }
 }

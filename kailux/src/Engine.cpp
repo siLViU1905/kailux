@@ -288,7 +288,7 @@ namespace kailux
             mAssetPipeline.GetPendingQueue().Emplace(
                 entt::null,
                 std::move(*pathStr),
-                MeshLoader::LoadData{},
+                mesh_loader::LoadData{},
                 "",
                 Transform{},
                 MeshMaterialData{},
@@ -297,7 +297,7 @@ namespace kailux
         else
             threadDispatcher.get().Enqueue([this, p = *pathStr]()
             {
-                if (auto data = MeshLoader::load(p))
+                if (auto data = mesh_loader::load(p))
                     mAssetPipeline.GetPendingQueue().Emplace(
                         entt::null,
                         std::move(p),
@@ -862,7 +862,7 @@ namespace kailux
             pending.scene     = scene.GetId();
 
             if (!mAssetPipeline.IsCached(pending.path))
-                if (auto data = MeshLoader::load(pending.path))
+                if (auto data = mesh_loader::load(pending.path))
                     pending.data = std::move(*data);
 
             mAssetPipeline.GetPendingQueue().Push(std::move(pending));

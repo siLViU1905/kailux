@@ -19,7 +19,7 @@ namespace kailux
         {
             entt::entity                 target{entt::null};
             std::string                  path;
-            MeshLoader::LoadData         data;
+            mesh_loader::LoadData         data;
             std::string                  name;
             Transform                    transform;
             MeshMaterialData             material;
