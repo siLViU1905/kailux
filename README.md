@@ -49,17 +49,29 @@ scripts/linux_build.sh debug clean
 
 In the build folder you will find the executables: `build/[debug|release]/prism/prism` and `build/[debug|release]/spectrum/spectrum`.
 Each executable gets its own copy of `shaders/` and `assets/` next to it, so run it from its own folder.
+
+
+## Prism viewport controls
+
+The scene viewport uses a Blender-style orbit camera that rotates around a pivot in front of it.
+
+| Input | Action |
+|---|---|
+| Middle mouse drag | Orbit around the pivot |
+| Shift + middle mouse drag | Pan |
+| Mouse wheel | Zoom in / out |
+| Click an axis on the view gizmo (top right) | View the scene along that axis |
+| Drag the view gizmo | Orbit around the pivot |
+| Left click | Select an entity |
+| Right mouse button | Toggle mouse look (fly mode) |
+| WASD, Space, Ctrl | Move the scene camera (while mouse look is on) |
+
+The simulation view keeps the runtime controls: middle mouse button toggles mouse look for the primary camera.
+
 ## Running a scene with Spectrum
 Save a scene from Prism (`.klx`), then pass it to Spectrum:
 ```bash
 cd build/debug/spectrum
 ./spectrum path/to/scene.klx
-```
-| Input | Action |
-|---|---|
-| Middle mouse button | Toggle mouse look |
-| Escape | Release the mouse |
-| WASD, Space, Ctrl | Move the primary camera (while mouse look is on) |
-| Tab | Switch to the next camera |
-| P | Pause / resume the simulation |
+
 Spectrum renders the scene from the primary camera with the highest MSAA level the GPU supports(can be changed in `Context::GetMaxUsableSampleCount()`), the same way as the simulation view in Prism. The scene needs a camera; without one, Spectrum shows a black screen and the simulation does not start.

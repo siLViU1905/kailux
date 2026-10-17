@@ -1,5 +1,6 @@
 #include "ViewportPanel.h"
 #include <ImGuizmo.h>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace kailux
 {
@@ -38,19 +39,31 @@ namespace kailux
 
             ImGui::Image(mSceneTextureId, viewportSize);
 
-            if (ImGui::IsItemHovered())
+            const bool hovered{ImGui::IsItemHovered()};
+
+            const auto mousePos{ImGui::GetMousePos()};
+            const bool overViewGizmo{
+                    mousePos.x >= minBound.x + viewportSize.x - kViewGizmoSize &&
+                    mousePos.y <= minBound.y + kViewGizmoSize
+                };
+            if (hovered)
             {
                 mMousePos = compute_relative_mouse_pos(minBound, viewportSize, mSceneTextureExtent);
-                if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+                if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)
+                    && !overViewGizmo)
                     mOnClick();
-                else if (ImGui::IsMouseClicked(ImGuiMouseButton_Middle))
+                else if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
                     mToggleMouseLook = true;
             }
+
+            UpdateEditorCamera(scene, hovered);
 
             RenderSimulationIndicator(minBound, viewportSize);
 
             ImGuizmo::SetDrawlist();
             ImGuizmo::SetRect(minBound.x, minBound.y, viewportSize.x, viewportSize.y);
+
+            RenderViewGizmo(scene, minBound, viewportSize);
         }
         ImGui::End();
         ImGui::PopStyleVar();
@@ -191,5 +204,102 @@ namespace kailux
             );
             ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
         }
+    }
+
+    void ViewportPanel::UpdateEditorCamera(Scene &scene, bool hovered)
+    {
+        const auto entity{scene.GetSceneCamera()};
+        auto* camera{scene.GetEntityRegistry().try_get<CameraComponent>(entity)};
+        if (!camera)
+            return;
+
+        auto target{camera->position + camera->forward * mOrbitDistance};
+
+        const auto& io{ImGui::GetIO()};
+        bool changed{};
+
+        if (hovered && io.MouseWheel != 0.f)
+        {
+            mOrbitDistance = std::clamp(
+                mOrbitDistance * std::pow(0.88f, io.MouseWheel),
+                kMinOrbitDistance,
+                kMaxOrbitDistance
+            );
+            changed = true;
+        }
+
+        if ((hovered || mFocused) && ImGui::IsMouseDragging(ImGuiMouseButton_Middle, 0.f))
+        {
+            const auto delta{io.MouseDelta};
+            if (io.KeyShift)
+            {
+                const auto up{glm::cross(camera->right, camera->forward)};
+                const float k{mOrbitDistance * 0.0015f};
+                target += (-camera->right * delta.x + up * delta.y) * k;
+            }
+            else
+            {
+                camera->yaw += delta.x * 0.3f;
+                camera->pitch = std::clamp(
+                    camera->pitch - delta.y * 0.3f,
+                    -89.9f,
+                    89.9f
+                );
+            }
+            changed = true;
+        }
+
+        if (!changed)
+            return;
+
+        apply_orbit(*camera, target, mOrbitDistance);
+        scene.SyncCameraTransform(entity);
+    }
+
+    void ViewportPanel::RenderViewGizmo(Scene &scene, ImVec2 minBound, ImVec2 viewportSize) const
+    {
+        const auto entity{scene.GetSceneCamera()};
+        auto *camera{scene.GetEntityRegistry().try_get<CameraComponent>(entity)};
+        if (!camera)
+            return;
+
+        auto view{glm::lookAt(camera->position, camera->position + camera->forward, camera->up)};
+        ImGuizmo::ViewManipulate(
+            glm::value_ptr(view),
+            mOrbitDistance,
+            {minBound.x + viewportSize.x - kViewGizmoSize, minBound.y},
+            {kViewGizmoSize, kViewGizmoSize},
+            0x10101010
+        );
+
+        const auto inverse{glm::inverse(view)};
+        const glm::vec3 position{inverse[3]};
+        const auto forward{-glm::normalize(glm::vec3{inverse[2]})};
+
+        camera->pitch = std::clamp(
+            glm::degrees(
+                std::asin(forward.y)
+            ),
+            -89.9f,
+            89.9f
+        );
+        camera->yaw = glm::degrees(std::atan2(forward.z, forward.x));
+
+        apply_orbit(*camera, position + forward * mOrbitDistance, mOrbitDistance);
+        scene.SyncCameraTransform(entity);
+    }
+
+    void ViewportPanel::apply_orbit(CameraComponent &camera, glm::vec3 target, float distance)
+    {
+        const float yaw{glm::radians(camera.yaw)};
+        const float pitch{glm::radians(camera.pitch)};
+
+        camera.forward = glm::normalize(glm::vec3{
+            std::cos(yaw) * std::cos(pitch),
+            std::sin(pitch),
+            std::sin(yaw) * std::cos(pitch)
+        });
+        camera.right = glm::normalize(glm::cross(camera.forward, camera.up));
+        camera.position = target - camera.forward * distance;
     }
 }
