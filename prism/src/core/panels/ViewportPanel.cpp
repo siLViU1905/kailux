@@ -199,7 +199,6 @@ namespace kailux
                 ImVec2(pos.x + size.x, pos.y + size.y),
                 IM_COL32(255, 255, 255, 120),
                 4.f,
-                0,
                 1.f
             );
             ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
