@@ -53,7 +53,7 @@ namespace kailux
         static constexpr std::array kPushConstantRanges = {
             PushConstantRangeInfo(
                 vk::ShaderStageFlagBits::eCompute,
-                sizeof(ComputePassesPushConstants::MouseCords)
+                sizeof(compute_pass_push_constants::MouseCords)
             )
         };
     };

@@ -1,26 +1,23 @@
 #pragma once
 
-namespace kailux
+namespace kailux::graphics_pass_push_constants
 {
-    struct GraphicsPassesPushConstants
+    struct Outline
     {
-        struct Outline
-        {
-            glm::vec4               color{};
-            uint32_t                id = ~0u;
-            std::array<uint32_t, 3> _padding;
-        };
+        glm::vec4               color{};
+        uint32_t                id = ~0u;
+        std::array<uint32_t, 3> _padding;
+    };
 
-        struct Gizmo
-        {
-            glm::vec4 positionAndScale{};
-            glm::vec4 color{};
-            uint32_t  cameraIdx{};
-        };
+    struct Gizmo
+    {
+        glm::vec4 positionAndScale{};
+        glm::vec4 color{};
+        uint32_t  cameraIdx{};
+    };
 
-        struct ShadowCascade
-        {
-            glm::mat4 viewProjection{1.f};
-        };
+    struct ShadowCascade
+    {
+        glm::mat4 viewProjection{1.f};
     };
 }
