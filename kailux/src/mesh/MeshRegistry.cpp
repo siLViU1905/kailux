@@ -57,8 +57,8 @@ namespace kailux
             out = registry.UploadInternal(data.vertices, data.indices, context, cmd, stagingBuffers, true, {});
         };
 
-        uploadShape([]() { return MeshGeometry::generate_cube(); }, registry.mBuiltins.cube);
-        uploadShape([]() { return MeshGeometry::generate_sphere(); }, registry.mBuiltins.sphere);
+        uploadShape([]() { return mesh_geometry::generate_cube(); }, registry.mBuiltins.cube);
+        uploadShape([]() { return mesh_geometry::generate_sphere(); }, registry.mBuiltins.sphere);
 
         return registry;
     }
@@ -220,7 +220,7 @@ namespace kailux
         vk::CommandBuffer cmd,
         std::vector<Buffer> &stagingBuffers,
         bool isBuiltin,
-        std::span<const MeshGeometry::LodLevel> extraLods)
+        std::span<const mesh_geometry::LodLevel> extraLods)
     {
         auto totalIndices{indices.size()};
         for (const auto &lod : extraLods)
@@ -293,7 +293,7 @@ namespace kailux
 
     MeshHandle MeshRegistry::Upload(const Context &context,
                                     vk::CommandBuffer cmd,
-                                    const MeshGeometry::MeshData &data,
+                                    const mesh_geometry::MeshData &data,
                                     std::vector<Buffer> &stagingBuffer
     )
     {

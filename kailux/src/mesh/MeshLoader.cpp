@@ -35,8 +35,8 @@ namespace kailux
                       loadData.submeshes.begin(), loadData.submeshes.end(),
                       [](auto &submesh)
                       {
-                          MeshGeometry::optimize_mesh(submesh.meshData);
-                          MeshGeometry::generate_lods(submesh.meshData);
+                          mesh_geometry::optimize_mesh(submesh.meshData);
+                          mesh_geometry::generate_lods(submesh.meshData);
                       });
 
         return loadData;
@@ -90,7 +90,7 @@ namespace kailux
     }
 
     void MeshLoader::process_mesh(const aiMesh *mesh,
-                                  MeshGeometry::MeshData &outMeshData)
+                                  mesh_geometry::MeshData &outMeshData)
     {
         outMeshData.vertices.reserve(mesh->mNumVertices);
 

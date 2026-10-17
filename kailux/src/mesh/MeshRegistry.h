@@ -114,7 +114,7 @@ namespace kailux
                                   vk::CommandBuffer cmd,
                                   std::vector<Buffer> &stagingBuffers,
                                   bool isBuiltin,
-                                  std::span<const MeshGeometry::LodLevel> extraLods);
+                                  std::span<const mesh_geometry::LodLevel> extraLods);
 
         static void upload_buffer_region(const void *data,
                                          vk::DeviceSize size,
@@ -140,7 +140,7 @@ namespace kailux
     public:
         MeshHandle Upload(const Context &context,
                                vk::CommandBuffer cmd,
-                               const MeshGeometry::MeshData &data,
+                               const mesh_geometry::MeshData &data,
                                std::vector<Buffer> &stagingBuffer);
     };
 }

@@ -8,15 +8,13 @@
 
 namespace kailux
 {
-
-
     class MeshLoader
     {
     public:
         struct SubMeshData
         {
             std::string                   name;
-            MeshGeometry::MeshData        meshData;
+            mesh_geometry::MeshData        meshData;
             glm::vec4                     boundingSphere{};
             uint32_t                      materialIndex{};
             glm::mat4                     localTransform{1.0f};
@@ -56,7 +54,7 @@ namespace kailux
                                  LoadData &outLoadData
         );
         static void process_mesh(const aiMesh *mesh,
-                                 MeshGeometry::MeshData &outMeshData
+                                 mesh_geometry::MeshData &outMeshData
         );
         static void extract_material_paths(const aiMaterial *material,
                                            MaterialPaths &outPaths,

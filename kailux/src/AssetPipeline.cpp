@@ -233,13 +233,13 @@ namespace kailux
             case MeshType::Cube:
                 createMeshEntity(
                     meshRegistry.GetBuiltins().cube,
-                    MeshGeometry::generate_cube().vertices
+                    mesh_geometry::generate_cube().vertices
                 );
                 break;
             case MeshType::Sphere:
                 createMeshEntity(
                     meshRegistry.GetBuiltins().sphere,
-                    MeshGeometry::generate_sphere().vertices
+                    mesh_geometry::generate_sphere().vertices
                 );
                 break;
             default:
