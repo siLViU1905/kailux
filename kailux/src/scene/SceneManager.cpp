@@ -33,7 +33,7 @@ namespace kailux
     {
         const auto t{Clock::now()};
 
-        const auto document{SceneSerializer::read_file(path)};
+        const auto document{scene_serializer::read_file(path)};
         if (!document)
         {
             auto error{std::format("Scene '{}' not loaded: {}", path.generic_string(), document.error())};
@@ -76,7 +76,7 @@ namespace kailux
     {
         auto &scene{GetActiveScene()};
         scene.SetSavePath(path);
-        if (const auto result{SceneSerializer::save(scene, path)}; !result)
+        if (const auto result{scene_serializer::save(scene, path)}; !result)
         {
             auto error{std::format("Scene '{}' not saved: {}", path.generic_string(), result.error())};
             mOnErrorLog(error);

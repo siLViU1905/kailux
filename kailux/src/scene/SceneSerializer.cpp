@@ -9,7 +9,7 @@
 #include "components/entt/TagComponent.h"
 #include "components/math/Transform.h"
 
-namespace kailux
+namespace kailux::scene_serializer
 {
     namespace details
     {
@@ -20,7 +20,7 @@ namespace kailux
     }
 
 
-    SceneDocument SceneSerializer::to_document(const Scene &scene)
+    SceneDocument to_document(const Scene &scene)
     {
         SceneDocument document;
         document.version = kSceneVersion;
@@ -87,12 +87,12 @@ namespace kailux
         return document;
     }
 
-    std::string SceneSerializer::write(const SceneDocument &document, int indent)
+    std::string write(const SceneDocument &document, int indent)
     {
         return nlohmann::json(document).dump(indent);
     }
 
-    std::expected<void, SceneSerializer::Error> SceneSerializer::write_file(const SceneDocument &document,
+    std::expected<void, Error> write_file(const SceneDocument &document,
         const std::filesystem::path &path, int indent)
     {
         std::ofstream file(path, std::ios::binary | std::ios::trunc);
@@ -108,7 +108,7 @@ namespace kailux
 
     }
 
-    std::expected<SceneDocument, SceneSerializer::Error> SceneSerializer::read(std::string_view content)
+    std::expected<SceneDocument, Error> read(std::string_view content)
     {
         nlohmann::json js;
         try
@@ -142,7 +142,7 @@ namespace kailux
         }
     }
 
-    std::expected<SceneDocument, SceneSerializer::Error> SceneSerializer::read_file(const std::filesystem::path &path)
+    std::expected<SceneDocument, Error> read_file(const std::filesystem::path &path)
     {
         std::ifstream file(path, std::ios::binary | std::ios::ate);
         if (!file.is_open())
@@ -160,7 +160,7 @@ namespace kailux
 
     }
 
-    std::expected<void, SceneSerializer::Error> SceneSerializer::save(const Scene &scene,
+    std::expected<void, Error> save(const Scene &scene,
         const std::filesystem::path &path)
     {
         return write_file(to_document(scene), path);
