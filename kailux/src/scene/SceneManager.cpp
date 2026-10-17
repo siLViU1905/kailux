@@ -42,7 +42,7 @@ namespace kailux
         }
 
         auto scene{CreateScene(document->meta.name)};
-        auto requests{SceneInstantiator::apply(*scene, *document, context)};
+        auto requests{scene_instantiator::apply(*scene, *document, context)};
         if (!requests)
         {
             auto error{std::format("Scene '{}' not loaded: {}", path.generic_string(), requests.error())};
