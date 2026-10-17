@@ -1,16 +1,16 @@
 add_executable(prism
-        src/core/panels/HierarchyPanel.cpp
-        src/core/panels/Panel.cpp
-        src/core/layers/EditorLayer.cpp
-        src/core/panels/EntityEditorPanel.cpp
-        src/core/panels/MenuPanel.cpp
-        src/core/panels/project_panel/ProjectPanel.cpp
-        src/core/panels/project_panel/AssetBrowser.cpp
-        src/core/panels/project_panel/Console.cpp
-        src/core/panels/ViewportPanel.cpp
-        src/core/panels/SimulationPanel.cpp
-        src/core/UIWidgets.cpp
-        src/core/panels/PanelStack.cpp
+        src/panels/HierarchyPanel.cpp
+        src/panels/Panel.cpp
+        src/layers/EditorLayer.cpp
+        src/panels/EntityEditorPanel.cpp
+        src/panels/MenuPanel.cpp
+        src/panels/project_panel/ProjectPanel.cpp
+        src/panels/project_panel/AssetBrowser.cpp
+        src/panels/project_panel/Console.cpp
+        src/panels/ViewportPanel.cpp
+        src/panels/SimulationPanel.cpp
+        src/UIWidgets.cpp
+        src/panels/PanelStack.cpp
         main.cpp
 )
 

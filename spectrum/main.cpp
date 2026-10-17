@@ -1,9 +1,9 @@
 #include <filesystem>
 #include <format>
 
-#include "core/Application.h"
-#include "core/Log.h"
-#include "core/layers/RuntimeLayer.h"
+#include "Application.h"
+#include "Log.h"
+#include "layers/RuntimeLayer.h"
 
 int main(int argc, char* argv[])
 {

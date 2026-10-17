@@ -87,7 +87,7 @@ find_package(shaderc REQUIRED)
 find_package(TBB REQUIRED)
 find_package(meshoptimizer REQUIRED)
 
-set(KAILUX_SHADERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/kailux/src/core/shaders")
+set(KAILUX_SHADERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/kailux/src/shaders")
 set(KAILUX_ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
 
 function(kailux_copy_resources target)
