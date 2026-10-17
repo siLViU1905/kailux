@@ -53,7 +53,6 @@ namespace kailux
         OnClick       mOnClick;
 
         float      mOrbitDistance{5.f};
-        bool       mShowGrid{true};
 
         SimulationState mSimulationState;
         OnSimulationStart mOnSimulationStart;
