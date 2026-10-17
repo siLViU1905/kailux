@@ -13,12 +13,12 @@ class kailux(ConanFile):
 
     def requirements(self):
         self.requires("glfw/3.4")
-        self.requires("imgui/1.92.6-docking", force=True)
-        self.requires("imgui_backends/1.92.6")
+        self.requires("imgui/1.92.9b-docking", force=True)
+        self.requires("imgui_backends/1.92.9b")
         self.requires("glm/1.0.1")
         self.requires("entt/3.16.0")
         self.requires("magic_enum/0.9.7")
-        self.requires("imguizmo/1.83")
+        self.requires("imguizmo/cci.20261010")
         self.requires("stb/cci.20230920")
         self.requires("assimp/6.0.2")
         self.requires("portable-file-dialogs/0.1.0")

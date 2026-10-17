@@ -5,7 +5,7 @@ import os
 
 class ImGuiBackendsConan(ConanFile):
     name = "imgui_backends"
-    version = "1.92.6"
+    version = "1.92.9b"
     description = "Dear ImGui GLFW/Vulkan backends + imgui_stdlib, with local patches"
     license = "MIT"
     package_type = "header-library"

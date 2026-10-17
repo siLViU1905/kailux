@@ -41,29 +41,29 @@ namespace kailux
 
             const bool hovered{ImGui::IsItemHovered()};
 
-            const auto mousePos{ImGui::GetMousePos()};
-            const bool overViewGizmo{
-                    mousePos.x >= minBound.x + viewportSize.x - kViewGizmoSize &&
-                    mousePos.y <= minBound.y + kViewGizmoSize
-                };
-            if (hovered)
+            ImGuizmo::SetDrawlist();
+            ImGuizmo::SetRect(minBound.x, minBound.y, viewportSize.x, viewportSize.y);
+
+            RenderViewGizmo(scene, minBound, viewportSize);
+
+            const bool viewGizmoActive{
+                ImGuizmo::IsViewManipulateHovered()
+                || ImGuizmo::IsUsingViewManipulate()
+            };
+
+            if (hovered && !viewGizmoActive)
             {
                 mMousePos = compute_relative_mouse_pos(minBound, viewportSize, mSceneTextureExtent);
-                if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)
-                    && !overViewGizmo)
+                if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
                     mOnClick();
                 else if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
                     mToggleMouseLook = true;
             }
 
-            UpdateEditorCamera(scene, hovered);
+            if (!ImGuizmo::IsUsingViewManipulate())
+                UpdateEditorCamera(scene, hovered);
 
             RenderSimulationIndicator(minBound, viewportSize);
-
-            ImGuizmo::SetDrawlist();
-            ImGuizmo::SetRect(minBound.x, minBound.y, viewportSize.x, viewportSize.y);
-
-            RenderViewGizmo(scene, minBound, viewportSize);
         }
         ImGui::End();
         ImGui::PopStyleVar();
@@ -199,7 +199,6 @@ namespace kailux
                 ImVec2(pos.x + size.x, pos.y + size.y),
                 IM_COL32(255, 255, 255, 120),
                 4.f,
-                0,
                 1.f
             );
             ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
@@ -264,13 +263,28 @@ namespace kailux
             return;
 
         auto view{glm::lookAt(camera->position, camera->position + camera->forward, camera->up)};
+        auto projection{Camera::get_projection(
+            *camera,
+            static_cast<int>(std::max(viewportSize.x, 1.f)),
+            static_cast<int>(std::max(viewportSize.y, 1.f))
+            )};
+
+        glm::mat4 identity{1.f};
+
         ImGuizmo::ViewManipulate(
             glm::value_ptr(view),
+            glm::value_ptr(projection),
+            ImGuizmo::TRANSLATE,
+            ImGuizmo::WORLD,
+            glm::value_ptr(identity),
             mOrbitDistance,
             {minBound.x + viewportSize.x - kViewGizmoSize, minBound.y},
             {kViewGizmoSize, kViewGizmoSize},
             0x10101010
         );
+
+        if (!ImGuizmo::IsUsingViewManipulate())
+            return;
 
         const auto inverse{glm::inverse(view)};
         const glm::vec3 position{inverse[3]};
