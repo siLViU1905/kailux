@@ -27,29 +27,30 @@ namespace kailux
         glm::vec4                                           splitDepths{};
     };
 
-    class ShadowCascades
+    namespace shadow_cascades
     {
-    public:
-        static CascadeSetup build(const CascadeBuildInfo &info);
+        CascadeSetup build(const CascadeBuildInfo &info);
 
-        static CascadeBuildInfo make_build_info(
+        CascadeBuildInfo make_build_info(
             const CameraComponent &camera,
             glm::ivec2 extent,
             const glm::vec3 &lightDirection
         );
 
-    private:
-        static std::array<float, details::kShadowCascadeCount> compute_splits(
-            float zNear,
-            float zFar,
-            float lambda
-        );
+        namespace details
+        {
+            std::array<float, kailux::details::kShadowCascadeCount> compute_splits(
+                float zNear,
+                float zFar,
+                float lambda
+            );
 
-        static glm::mat4 build_cascade(
-            const CascadeBuildInfo &info,
-            const glm::mat4 &inverseView,
-            float splitNear,
-            float splitFar
-        );
-    };
+            glm::mat4 build_cascade(
+                const CascadeBuildInfo &info,
+                const glm::mat4 &inverseView,
+                float splitNear,
+                float splitFar
+            );
+        }
+    }
 }

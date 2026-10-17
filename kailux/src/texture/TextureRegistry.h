@@ -69,11 +69,11 @@ namespace kailux
 
         struct MaterialData
         {
-            ImageLoader::ImageData albedoData;
-            ImageLoader::ImageData normalData;
-            ImageLoader::ImageData roughnessData;
-            ImageLoader::ImageData metallicData;
-            ImageLoader::ImageData aoData;
+            image_loader::ImageData albedoData;
+            image_loader::ImageData normalData;
+            image_loader::ImageData roughnessData;
+            image_loader::ImageData metallicData;
+            image_loader::ImageData aoData;
         };
 
         AsyncMaterialResult CreateMaterialFromData(const Context &context, const MaterialData& data);

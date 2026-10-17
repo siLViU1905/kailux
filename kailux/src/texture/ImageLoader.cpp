@@ -6,9 +6,9 @@
 
 #include "Shader.h"
 
-namespace kailux
+namespace kailux::image_loader
 {
-    ImageLoader::Result ImageLoader::load_image(const std::filesystem::path &path, ColorSpace space)
+    Result load_image(const std::filesystem::path &path, ColorSpace space)
     {
         int width, height, channels;
         ImageData::Pixel* data = stbi_load(
@@ -30,8 +30,8 @@ namespace kailux
         stbi_image_free(data);
 
         const auto largest{std::max(image.width, image.height)};
-        if (largest > details::kMaxTextureDimension)
-            if (auto result{cap_image(image, space)}; !result)
+        if (largest > kailux::details::kMaxTextureDimension)
+            if (auto result{details::cap_image(image, space)}; !result)
                 return std::unexpected(result.error());
 
         image.mipLevels = static_cast<uint32_t>(
@@ -47,10 +47,10 @@ namespace kailux
         return image;
     }
 
-    ImageLoader::Result ImageLoader::cap_image(ImageData &image, ColorSpace space)
+    Result details::cap_image(ImageData &image, ColorSpace space)
     {
         const auto largest{std::max(image.width, image.height)};
-        const auto ratio{static_cast<float>(details::kMaxTextureDimension) / static_cast<float>(largest)};
+        const auto ratio{static_cast<float>(kailux::details::kMaxTextureDimension) / static_cast<float>(largest)};
 
         const auto newWidth{std::max(1u, static_cast<uint32_t>(static_cast<float>(image.width) * ratio))};
         const auto newHeight{std::max(1u, static_cast<uint32_t>(static_cast<float>(image.height) * ratio))};

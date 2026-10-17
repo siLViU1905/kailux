@@ -198,7 +198,7 @@ namespace kailux
             if (!checkSize(imgData))
                 return;
 
-            auto asyncTex = TextureAllocator::create_from_image_data_async(context, imgData);
+            auto asyncTex = texture_allocator::create_from_image_data_async(context, imgData);
 
             result.uploads.emplace_back(
                 asyncTex.texture.GetImage(),
@@ -242,14 +242,14 @@ namespace kailux
 
     void TextureRegistry::CreateDefaultTextures(const Context &context)
     {
-        ImageLoader::ImageData data{};
+        image_loader::ImageData data{};
         data = {
             1,
             1,
             1,
             {191, 191, 191, 255}
         };
-        mDefaultAlbedoIdx = RegisterTexture(TextureAllocator::create_from_image_data(context, data))->index;
+        mDefaultAlbedoIdx = RegisterTexture(texture_allocator::create_from_image_data(context, data))->index;
 
         data = {
             1,
@@ -257,7 +257,7 @@ namespace kailux
             1,
             {128, 128, 255, 255}
         };
-       mDefaultNormalIdx = RegisterTexture(TextureAllocator::create_from_image_data(context, data))->index;
+       mDefaultNormalIdx = RegisterTexture(texture_allocator::create_from_image_data(context, data))->index;
 
         data = {
             1,
@@ -265,18 +265,18 @@ namespace kailux
             1,
             {255, 255, 255, 255}
         };
-        mDefaultWhiteIdx = RegisterTexture(TextureAllocator::create_from_image_data(context, data))->index;
+        mDefaultWhiteIdx = RegisterTexture(texture_allocator::create_from_image_data(context, data))->index;
     }
 
     void TextureRegistry::CreateAssetBrowserTextures(const Context &context, std::string_view directoryIconPath,
                                                      std::string_view fileIconPath)
     {
-        auto imgData = ImageLoader::load_image(directoryIconPath, ImageLoader::ColorSpace::Srgb);
+        auto imgData = image_loader::load_image(directoryIconPath, image_loader::ColorSpace::Srgb);
         if (imgData)
-            mAssetBrowserDirectoryTexture = TextureAllocator::create_from_image_data(context, *imgData);
+            mAssetBrowserDirectoryTexture = texture_allocator::create_from_image_data(context, *imgData);
 
-        imgData = ImageLoader::load_image(fileIconPath, ImageLoader::ColorSpace::Srgb);
+        imgData = image_loader::load_image(fileIconPath, image_loader::ColorSpace::Srgb);
         if (imgData)
-            mAssetBrowserFileTexture = TextureAllocator::create_from_image_data(context, *imgData);
+            mAssetBrowserFileTexture = texture_allocator::create_from_image_data(context, *imgData);
     }
 }

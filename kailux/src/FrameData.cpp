@@ -490,44 +490,44 @@ namespace kailux
 
     void FrameData::CreateCameraBuffer(const Context &context)
     {
-        mCameraBuffer = BufferAllocator::alloc_uniform(context, sizeof(CameraData) * (details::kMaxCameras * details::kMaxCameraViews));
+        mCameraBuffer = buffer_allocator::alloc_uniform(context, sizeof(CameraData) * (details::kMaxCameras * details::kMaxCameraViews));
     }
 
     void FrameData::CreateMeshDataBuffer(const Context &context)
     {
-        mMeshDataBuffer = BufferAllocator::alloc_storage(context, details::kMaxMeshes * sizeof(MeshData));
+        mMeshDataBuffer = buffer_allocator::alloc_storage(context, details::kMaxMeshes * sizeof(MeshData));
     }
 
     void FrameData::CreateMaterialsBuffer(const Context &context)
     {
-        mMaterialsBuffer = BufferAllocator::alloc_storage(context, details::kMaxMaterials * sizeof(MaterialSlot));
+        mMaterialsBuffer = buffer_allocator::alloc_storage(context, details::kMaxMaterials * sizeof(MaterialSlot));
     }
 
     void FrameData::CreateIndirectBuffer(const Context &context)
     {
-        mIndirectBuffer = BufferAllocator::alloc_host(context, details::kMaxMeshes * sizeof(vk::DrawIndexedIndirectCommand),
+        mIndirectBuffer = buffer_allocator::alloc_host(context, details::kMaxMeshes * sizeof(vk::DrawIndexedIndirectCommand),
                                                        vk::BufferUsageFlagBits::eIndirectBuffer |
                                                        vk::BufferUsageFlagBits::eStorageBuffer);
     }
 
     void FrameData::CreateSceneBuffer(const Context &context)
     {
-        mSceneBuffer = BufferAllocator::alloc_storage(context, sizeof(SceneData));
+        mSceneBuffer = buffer_allocator::alloc_storage(context, sizeof(SceneData));
     }
 
     void FrameData::CreatePickerBuffer(const Context &context)
     {
-        mPickerBuffer = BufferAllocator::alloc_storage(context, sizeof(uint32_t));
+        mPickerBuffer = buffer_allocator::alloc_storage(context, sizeof(uint32_t));
     }
 
     void FrameData::CreateCullerBuffers(const Context &context)
     {
-        mCullerInputCommandsBuffer = BufferAllocator::alloc_host(
+        mCullerInputCommandsBuffer = buffer_allocator::alloc_host(
             context,
             details::kMaxMeshes * details::kMaxGeometryLods * sizeof(vk::DrawIndexedIndirectCommand),
             vk::BufferUsageFlagBits::eStorageBuffer |
             vk::BufferUsageFlagBits::eIndirectBuffer);
-        mCullerCountBuffer = BufferAllocator::alloc_local(
+        mCullerCountBuffer = buffer_allocator::alloc_local(
             context,
             sizeof(uint32_t),
             vk::BufferUsageFlagBits::eStorageBuffer |

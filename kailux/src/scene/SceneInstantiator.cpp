@@ -3,10 +3,10 @@
 #include "Scene.h"
 #include "Log.h"
 
-namespace kailux
+namespace kailux::scene_instantiator
 {
-    std::expected<std::vector<MeshRequest>, SceneInstantiator::Error> SceneInstantiator::apply(Scene &scene,
-        const SceneDocument &document, const SceneLoadContext &context)
+    std::expected<std::vector<MeshRequest>,Error>apply(Scene &scene,
+                                                       const SceneDocument &document, const SceneLoadContext &context)
     {
         size_t meshCount{}, lightCount{}, cameraCount{};
         for (const auto &record : document.entities)

@@ -48,6 +48,8 @@ namespace kailux
             }
         }
 
+        entt::entity CreateEntity(std::string_view name);
+
         using CreateResult = std::expected<entt::entity, std::string>;
 
         CreateResult CreateCameraEntity(std::string_view name, const GizmoComponent &component, const glm::vec3 &position, bool isPrimary);
@@ -120,7 +122,6 @@ namespace kailux
     private:
         static constexpr std::string_view kSunName = "Sun";
 
-        entt::entity CreateEntity(std::string_view name);
         using        SunData = DirectionalLightData;
         entt::entity CreateSunEntity(const SunData& data);
         void         CreateSceneCamera();

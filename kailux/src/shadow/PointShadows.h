@@ -20,20 +20,21 @@ namespace kailux
         }
     };
 
-    class PointShadows
+    namespace point_shadow
     {
-    public:
-        static constexpr float kStickiness{1.25f};
+        constexpr float kStickiness{1.25f};
 
-        static float score(const PointLightData& light, const glm::vec3& cameraPos);
+        float score(const PointLightData &light, const glm::vec3 &cameraPos);
 
-        static PointShadowSetup build(const PointLightData &light, uint32_t lightIndex, float nearPlane = 0.05f);
+        PointShadowSetup build(const PointLightData &light, uint32_t lightIndex, float nearPlane = 0.05f);
 
-    private:
-        static std::array<glm::mat4, details::kPointShadowFaceCount> build_faces(
-            const glm::vec3 &position,
-            float nearPlane,
-            float farPlane
-        );
-    };
+        namespace details
+        {
+            std::array<glm::mat4, kailux::details::kPointShadowFaceCount> build_faces(
+                const glm::vec3 &position,
+                float nearPlane,
+                float farPlane
+            );
+        }
+    }
 }

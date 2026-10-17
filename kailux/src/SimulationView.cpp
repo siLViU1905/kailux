@@ -33,21 +33,21 @@ namespace kailux
         SimulationView view;
         view.mExtent = extent;
 
-        view.mColor = TextureAllocator::create_empty(
+        view.mColor = texture_allocator::create_empty(
             context, extent.x, extent.y, colorFormat,
             vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransientAttachment,
             vk::ImageAspectFlagBits::eColor,
             samples
         );
 
-        view.mDepth = TextureAllocator::create_empty(
+        view.mDepth = texture_allocator::create_empty(
             context, extent.x, extent.y, depthFormat,
             vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransientAttachment,
             vk::ImageAspectFlagBits::eDepth,
             samples
         );
 
-        view.mResolved = TextureAllocator::create_empty(
+        view.mResolved = texture_allocator::create_empty(
             context, extent.x, extent.y, colorFormat,
             vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
             vk::ImageAspectFlagBits::eColor,

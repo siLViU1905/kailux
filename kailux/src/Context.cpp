@@ -85,6 +85,11 @@ namespace kailux
         return *mDevice;
     }
 
+    const vk::raii::Device & Context::GetRAIIDevice() const
+    {
+        return mDevice;
+    }
+
     vk::SurfaceKHR Context::GetSurface() const
     {
         return *mSurface;

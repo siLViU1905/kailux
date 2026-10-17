@@ -254,8 +254,8 @@ namespace kailux
         static constexpr auto   kSceneSamples{vk::SampleCountFlagBits::e1};
         vk::SampleCountFlagBits mSimulationSamples{vk::SampleCountFlagBits::e1};
 
-        ComputePassesPushConstants::MouseCords     mSceneViewportMousePos;
-        GraphicsPassesPushConstants::Outline       mOutlineInfo;
+        compute_pass_push_constants::MouseCords     mSceneViewportMousePos;
+        graphics_pass_push_constants::Outline       mOutlineInfo;
 
         MainPass                                   mMainPass;
         SkyboxPass                                 mSkyboxPass;

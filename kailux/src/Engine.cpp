@@ -288,7 +288,7 @@ namespace kailux
             mAssetPipeline.GetPendingQueue().Emplace(
                 entt::null,
                 std::move(*pathStr),
-                MeshLoader::LoadData{},
+                mesh_loader::LoadData{},
                 "",
                 Transform{},
                 MeshMaterialData{},
@@ -297,7 +297,7 @@ namespace kailux
         else
             threadDispatcher.get().Enqueue([this, p = *pathStr]()
             {
-                if (auto data = MeshLoader::load(p))
+                if (auto data = mesh_loader::load(p))
                     mAssetPipeline.GetPendingQueue().Emplace(
                         entt::null,
                         std::move(p),
@@ -862,7 +862,7 @@ namespace kailux
             pending.scene     = scene.GetId();
 
             if (!mAssetPipeline.IsCached(pending.path))
-                if (auto data = MeshLoader::load(pending.path))
+                if (auto data = mesh_loader::load(pending.path))
                     pending.data = std::move(*data);
 
             mAssetPipeline.GetPendingQueue().Push(std::move(pending));
@@ -991,7 +991,7 @@ namespace kailux
 
         const auto& settings{scene.GetEntityRegistry().get<SceneSettings>(scene.GetSettingsEntity())};
 
-        mComputeCuller.Push<ComputePassesPushConstants::CullParams>(
+        mComputeCuller.Push<compute_pass_push_constants::CullParams>(
             cmd,
             {
                 planes,
@@ -1443,7 +1443,7 @@ namespace kailux
                 mShadowPass.Bind(cmd);
                 mMeshRegistry.Bind(cmd);
                 frame.GetShadowDescriptorSet().Bind(mShadowPass.GetPipeline(), cmd);
-                mShadowPass.Push(cmd, GraphicsPassesPushConstants::ShadowCascade{
+                mShadowPass.Push(cmd, graphics_pass_push_constants::ShadowCascade{
                     shadowSet.GetCascade(cascade)
                 });
 
@@ -1491,7 +1491,7 @@ namespace kailux
                 mShadowPass.Bind(cmd);
                 mMeshRegistry.Bind(cmd);
                 frame.GetShadowDescriptorSet().Bind(mShadowPass.GetPipeline(), cmd);
-                mShadowPass.Push(cmd, GraphicsPassesPushConstants::ShadowCascade{
+                mShadowPass.Push(cmd, graphics_pass_push_constants::ShadowCascade{
                                      shadowSet.GetFace(slot, face)
                                  });
 
@@ -1519,7 +1519,7 @@ namespace kailux
         {
             auto gizmoView = mGizmoRegistry.View(component.handle);
 
-            const GraphicsPassesPushConstants::Gizmo pc{
+            const graphics_pass_push_constants::Gizmo pc{
                 glm::vec4(world.GetPosition(), component.scale),
                 component.color,
                 0

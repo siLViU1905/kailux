@@ -40,8 +40,8 @@ namespace kailux
                                       std::vector<Buffer> &stagingBuffers)
     {
         MeshRegistry registry;
-        registry.mVertexBuffer = BufferAllocator::alloc_vertex(context, kTotalSize);
-        registry.mIndexBuffer = BufferAllocator::alloc_index(context, kTotalSize / 2);
+        registry.mVertexBuffer = buffer_allocator::alloc_vertex(context, kTotalSize);
+        registry.mIndexBuffer = buffer_allocator::alloc_index(context, kTotalSize / 2);
 
         registry.mBuiltinVertexZone = {0, kBuiltinZoneSize, 0};
         registry.mBuiltinIndexZone = {0, kBuiltinZoneSize / 2, 0};
@@ -57,8 +57,8 @@ namespace kailux
             out = registry.UploadInternal(data.vertices, data.indices, context, cmd, stagingBuffers, true, {});
         };
 
-        uploadShape([]() { return MeshGeometry::generate_cube(); }, registry.mBuiltins.cube);
-        uploadShape([]() { return MeshGeometry::generate_sphere(); }, registry.mBuiltins.sphere);
+        uploadShape([]() { return mesh_geometry::generate_cube(); }, registry.mBuiltins.cube);
+        uploadShape([]() { return mesh_geometry::generate_sphere(); }, registry.mBuiltins.sphere);
 
         return registry;
     }
@@ -220,7 +220,7 @@ namespace kailux
         vk::CommandBuffer cmd,
         std::vector<Buffer> &stagingBuffers,
         bool isBuiltin,
-        std::span<const MeshGeometry::LodLevel> extraLods)
+        std::span<const mesh_geometry::LodLevel> extraLods)
     {
         auto totalIndices{indices.size()};
         for (const auto &lod : extraLods)
@@ -284,7 +284,7 @@ namespace kailux
                                             vk::DeviceSize dstOffset, const Context &context, vk::CommandBuffer cmd,
                                             std::vector<Buffer> &stagingBuffers)
     {
-        auto &staging = stagingBuffers.emplace_back(BufferAllocator::alloc_staging(context, size));
+        auto &staging = stagingBuffers.emplace_back(buffer_allocator::alloc_staging(context, size));
         staging.Upload(data, size);
 
         vk::BufferCopy region(0, dstOffset, size);
@@ -293,7 +293,7 @@ namespace kailux
 
     MeshHandle MeshRegistry::Upload(const Context &context,
                                     vk::CommandBuffer cmd,
-                                    const MeshGeometry::MeshData &data,
+                                    const mesh_geometry::MeshData &data,
                                     std::vector<Buffer> &stagingBuffer
     )
     {

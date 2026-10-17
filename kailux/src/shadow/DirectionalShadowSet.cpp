@@ -27,8 +27,8 @@ namespace kailux
         if (glm::length(direction) < 0.0001f)
             return;
 
-        mSetup = ShadowCascades::build(
-            ShadowCascades::make_build_info(*cameraComponent, extent, direction)
+        mSetup = shadow_cascades::build(
+            shadow_cascades::make_build_info(*cameraComponent, extent, direction)
         );
 
         for (uint32_t i{}; i < details::kShadowCascadeCount; ++i)

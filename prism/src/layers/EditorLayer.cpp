@@ -130,7 +130,7 @@ namespace kailux
             mEngine.GetPendingMeshDataQueue().Emplace(
                 entt::null,
                 "",
-                MeshLoader::LoadData{},
+                mesh_loader::LoadData{},
                 "",
                 Transform{},
                 MeshMaterialData{},

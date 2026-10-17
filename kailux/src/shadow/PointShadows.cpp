@@ -1,8 +1,8 @@
 #include "PointShadows.h"
 
-namespace kailux
+namespace kailux::point_shadow
 {
-    float PointShadows::score(const PointLightData &light, const glm::vec3 &cameraPos)
+    float score(const PointLightData &light, const glm::vec3 &cameraPos)
     {
         if (light.colorAndEnabled.w < 0.5f)
             return 0.f;
@@ -25,19 +25,19 @@ namespace kailux
         return intensity * attenuation * rangeFade * range;
     }
 
-    PointShadowSetup PointShadows::build(const PointLightData &light, uint32_t lightIndex, float nearPlane)
+    PointShadowSetup build(const PointLightData &light, uint32_t lightIndex, float nearPlane)
     {
         PointShadowSetup setup;
         setup.position = glm::vec3(light.positionAndIntensity);
         setup.nearPlane = nearPlane;
         setup.farPlane = std::max(light.range.x, nearPlane + 0.01f);
         setup.lightIndex = lightIndex;
-        setup.faceViewProjections = build_faces(setup.position, setup.nearPlane, setup.farPlane);
+        setup.faceViewProjections = details::build_faces(setup.position, setup.nearPlane, setup.farPlane);
         return setup;
 
     }
 
-    std::array<glm::mat4, details::kPointShadowFaceCount> PointShadows::build_faces(
+    std::array<glm::mat4, kailux::details::kPointShadowFaceCount> details::build_faces(
         const glm::vec3 &position,
         float nearPlane,
         float farPlane
@@ -63,8 +63,8 @@ namespace kailux
             glm::vec3{0.f, -1.f, 0.f}
         };
 
-        std::array<glm::mat4, details::kPointShadowFaceCount> faces{};
-        for (uint32_t face{}; face < details::kPointShadowFaceCount; ++face)
+        std::array<glm::mat4, kailux::details::kPointShadowFaceCount> faces{};
+        for (uint32_t face{}; face < kailux::details::kPointShadowFaceCount; ++face)
             faces[face] = projection * glm::lookAt(position, position + targets[face], ups[face]);
 
         return faces;

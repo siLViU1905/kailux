@@ -26,13 +26,11 @@ namespace kailux
         std::optional<PhysicsRecord>   physics;
     };
 
-    class SceneInstantiator
+    namespace scene_instantiator
     {
-    public:
         using Error = std::string;
-
-        static std::expected<std::vector<MeshRequest>, Error> apply(
-            Scene &scene, const SceneDocument &document, const SceneLoadContext &context);
-    };
-
+        std::expected<std::vector<MeshRequest>, Error> apply(
+            Scene &scene, const SceneDocument &document, const SceneLoadContext &context
+        );
+    }
 }

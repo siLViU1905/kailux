@@ -30,7 +30,7 @@ namespace kailux
             const auto lightIndex{static_cast<uint32_t>(std::distance(entities.begin(), found))};
 
             auto &current{mSlots[slot]};
-            current.setup = PointShadows::build(lights.pointLights[lightIndex], lightIndex);
+            current.setup = point_shadow::build(lights.pointLights[lightIndex], lightIndex);
             current.light = entity;
             current.signature = signature(scene, current.setup);
 
@@ -157,7 +157,7 @@ namespace kailux
             if (entity == entt::null)
                 continue;
 
-            float score{PointShadows::score(lights.pointLights[i], cameraComponent->position)};
+            float score{point_shadow::score(lights.pointLights[i], cameraComponent->position)};
             if (score <= 0.f)
                 continue;
 
@@ -169,7 +169,7 @@ namespace kailux
                 )
             };
             if (owned)
-                score *= PointShadows::kStickiness;
+                score *= point_shadow::kStickiness;
 
             candidates.emplace_back(entity, score);
         }

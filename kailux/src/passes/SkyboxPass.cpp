@@ -146,32 +146,32 @@ namespace kailux
 
     void SkyboxPass::CreateTexture(const Context &context)
     {
-        std::array<ImageLoader::ImageData, 6> faces;
+        std::array<image_loader::ImageData, 6> faces;
         int i = 0;
         for (auto path: kSkyboxTexturePaths)
         {
-            auto result = ImageLoader::load_image(path, ImageLoader::ColorSpace::Srgb);
+            auto result = image_loader::load_image(path, image_loader::ColorSpace::Srgb);
             if (!result)
                 return;
             faces[i++] = *result;
         }
 
-        mTexture = TextureAllocator::create_cubemap(context, faces);
+        mTexture = texture_allocator::create_cubemap(context, faces);
     }
 
     void SkyboxPass::CreateIrradianceTexture(const Context &context)
     {
-        std::array<ImageLoader::ImageData, 6> faces;
+        std::array<image_loader::ImageData, 6> faces;
         int i = 0;
         for (auto path: kIrradianceTexturePaths)
         {
-            auto result = ImageLoader::load_image(path, ImageLoader::ColorSpace::Srgb);
+            auto result = image_loader::load_image(path, image_loader::ColorSpace::Srgb);
             if (!result)
                 return;
             faces[i++] = *result;
         }
 
-        mIrradianceMapTexture = TextureAllocator::create_cubemap(context, faces);
+        mIrradianceMapTexture = texture_allocator::create_cubemap(context, faces);
     }
 
     void SkyboxPass::CreatePrefilteredEnvTexture(const Context &context)
@@ -180,7 +180,7 @@ namespace kailux
             "px", "nx", "py", "ny", "pz", "nz"
         };
 
-        std::vector<std::array<ImageLoader::ImageData, 6>> mips(kPrefilteredMipLevels);
+        std::vector<std::array<image_loader::ImageData, 6>> mips(kPrefilteredMipLevels);
 
         for (uint32_t mip = 0; mip < kPrefilteredMipLevels; mip++)
             for (uint32_t face = 0; face < 6; face++)
@@ -191,20 +191,20 @@ namespace kailux
                                  + std::string(faceNames[face])
                                  + ".png";
 
-                auto result = ImageLoader::load_image(path, ImageLoader::ColorSpace::Srgb);
+                auto result = image_loader::load_image(path, image_loader::ColorSpace::Srgb);
                 if (!result)
                     return;
 
                 mips[mip][face] = std::move(*result);
             }
 
-        mPrefilteredEnvTexture = TextureAllocator::create_cubemap_with_mips(context, mips);
+        mPrefilteredEnvTexture = texture_allocator::create_cubemap_with_mips(context, mips);
     }
 
     void SkyboxPass::CreateBrdfLutTexture(const Context &context)
     {
-        if (auto data = ImageLoader::load_image(kBRDFLutPath, ImageLoader::ColorSpace::Srgb))
-            mBRDFLutTexture = TextureAllocator::create_from_image_data(context, *data);
+        if (auto data = image_loader::load_image(kBRDFLutPath, image_loader::ColorSpace::Srgb))
+            mBRDFLutTexture = texture_allocator::create_from_image_data(context, *data);
     }
 
     void SkyboxPass::CreateMultisampledPipeline(const Context &context, const Swapchain &swapchain,

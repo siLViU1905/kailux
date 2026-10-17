@@ -130,7 +130,7 @@ namespace kailux
             vk::ImageUsageFlagBits::eTransferSrc
         };
 
-        mColor = TextureAllocator::create_empty(
+        mColor = texture_allocator::create_empty(
             context, width, height, info.colorFormat,
             multisampled
                 ? vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransientAttachment
@@ -140,14 +140,14 @@ namespace kailux
         );
 
         if (multisampled)
-            mResolved = TextureAllocator::create_empty(
+            mResolved = texture_allocator::create_empty(
                 context, width, height, info.colorFormat,
                 kPresentedUsage,
                 vk::ImageAspectFlagBits::eColor,
                 vk::SampleCountFlagBits::e1
             );
 
-        mDepth = TextureAllocator::create_empty(
+        mDepth = texture_allocator::create_empty(
             context, width, height, info.depthFormat,
             vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransientAttachment,
             vk::ImageAspectFlagBits::eDepth,
@@ -169,7 +169,7 @@ namespace kailux
             | vk::ImageUsageFlagBits::eSampled
         };
 
-        mId = TextureAllocator::create_empty(
+        mId = texture_allocator::create_empty(
             context, width, height, kIdFormat,
             multisampled
                 ? vk::ImageUsageFlagBits::eColorAttachment
@@ -179,7 +179,7 @@ namespace kailux
         );
 
         if (multisampled)
-            mResolvedId = TextureAllocator::create_empty(
+            mResolvedId = texture_allocator::create_empty(
                 context, width, height, kIdFormat,
                 kReadableUsage,
                 vk::ImageAspectFlagBits::eColor,

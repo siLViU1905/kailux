@@ -111,7 +111,7 @@ namespace kailux
         auto tCmd = transferOtc.GetCommandBuffer();
 
         for (const auto &img : images)
-            TextureAllocator::record_texture_copy(
+            texture_allocator::record_texture_copy(
                 tCmd, img.image, img.staging, img.width, img.height, img.mipLevels);
 
         if (needsOwnershipTransfer)
@@ -174,7 +174,7 @@ namespace kailux
         }
 
         for (const auto &img : images)
-            TextureAllocator::record_texture_mipmaps(gCmd, img.image, img.width, img.height, img.mipLevels);
+            texture_allocator::record_texture_mipmaps(gCmd, img.image, img.width, img.height, img.mipLevels);
 
         SubmitTransfer(
             context,

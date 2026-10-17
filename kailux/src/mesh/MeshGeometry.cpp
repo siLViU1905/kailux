@@ -3,9 +3,9 @@
 #include <meshoptimizer.h>
 #include "../Core.h"
 
-namespace kailux
+namespace kailux::mesh_geometry
 {
-    MeshGeometry::MeshData MeshGeometry::generate_cube()
+    MeshData generate_cube()
     {
         constexpr std::array<std::array<glm::vec3, 4>, 6> positions = {
             {
@@ -53,7 +53,7 @@ namespace kailux
         return data;
     }
 
-    MeshGeometry::MeshData MeshGeometry::generate_sphere(uint32_t sectors, uint32_t stacks)
+    MeshData generate_sphere(uint32_t sectors, uint32_t stacks)
     {
         MeshData data;
         data.vertices.reserve((stacks + 1) * (sectors + 1));
@@ -116,7 +116,7 @@ namespace kailux
         return data;
     }
 
-    void MeshGeometry::optimize_mesh(MeshData &meshData)
+    void optimize_mesh(MeshData &meshData)
     {
         auto& vertices{meshData.vertices};
         auto& indices{meshData.indices};
@@ -184,7 +184,7 @@ namespace kailux
         );
     }
 
-    void MeshGeometry::generate_lods(MeshData &meshData)
+    void generate_lods(MeshData &meshData)
     {
         meshData.lods.clear();
 
