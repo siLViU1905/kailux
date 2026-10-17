@@ -1,5 +1,5 @@
 add_executable(spectrum
-        main.cpp
+        src/main.cpp
 )
 
 kailux_copy_resources(spectrum)
