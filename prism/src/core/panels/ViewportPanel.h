@@ -1,5 +1,6 @@
 #pragma once
 #include "Panel.h"
+#include "core/components/gpu/CameraData.h"
 
 namespace kailux
 {
@@ -37,10 +38,22 @@ namespace kailux
 
         void RenderSimulationIndicator(ImVec2 minBound, ImVec2 viewportSize);
 
+        void UpdateEditorCamera(Scene& scene, bool hovered);
+        void RenderViewGizmo(Scene& scene, ImVec2 minBound, ImVec2 viewportSize) const;
+
+        static void apply_orbit(CameraComponent& camera, glm::vec3 target, float distance);
+
+        static constexpr float kViewGizmoSize{128.f};
+        static constexpr float kMinOrbitDistance{0.05f};
+        static constexpr float kMaxOrbitDistance{500.f};
+
         ImTextureID   mSceneTextureId;
         glm::ivec2    mSceneTextureExtent;
         MousePosition mMousePos;
         OnClick       mOnClick;
+
+        float      mOrbitDistance{5.f};
+        bool       mShowGrid{true};
 
         SimulationState mSimulationState;
         OnSimulationStart mOnSimulationStart;
