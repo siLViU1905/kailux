@@ -20,17 +20,17 @@ namespace kailux
     {
             Texture create_from_image_data(
                 const Context &context,
-                const ImageLoader::ImageData &data
+                const image_loader::ImageData &data
             );
 
             AsyncTextureResult create_from_image_data_async(
                 const Context &context,
-                const ImageLoader::ImageData &data
+                const image_loader::ImageData &data
             );
 
             Texture create_cubemap(
                 const Context &context,
-                const std::array<ImageLoader::ImageData, 6> &faces
+                const std::array<image_loader::ImageData, 6> &faces
             );
 
             Texture create_empty(
@@ -45,7 +45,7 @@ namespace kailux
 
             Texture create_cubemap_with_mips(
                 const Context& context,
-                std::span<const std::array<ImageLoader::ImageData, 6>> mips
+                std::span<const std::array<image_loader::ImageData, 6>> mips
                 );
 
             void record_texture_copy(

@@ -242,7 +242,7 @@ namespace kailux
 
     void TextureRegistry::CreateDefaultTextures(const Context &context)
     {
-        ImageLoader::ImageData data{};
+        image_loader::ImageData data{};
         data = {
             1,
             1,
@@ -271,11 +271,11 @@ namespace kailux
     void TextureRegistry::CreateAssetBrowserTextures(const Context &context, std::string_view directoryIconPath,
                                                      std::string_view fileIconPath)
     {
-        auto imgData = ImageLoader::load_image(directoryIconPath, ImageLoader::ColorSpace::Srgb);
+        auto imgData = image_loader::load_image(directoryIconPath, image_loader::ColorSpace::Srgb);
         if (imgData)
             mAssetBrowserDirectoryTexture = texture_allocator::create_from_image_data(context, *imgData);
 
-        imgData = ImageLoader::load_image(fileIconPath, ImageLoader::ColorSpace::Srgb);
+        imgData = image_loader::load_image(fileIconPath, image_loader::ColorSpace::Srgb);
         if (imgData)
             mAssetBrowserFileTexture = texture_allocator::create_from_image_data(context, *imgData);
     }

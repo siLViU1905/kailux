@@ -6,9 +6,9 @@
 
 namespace kailux::texture_allocator
 {
-    Texture create_from_image_data(const Context &context, const ImageLoader::ImageData &data)
+    Texture create_from_image_data(const Context &context, const image_loader::ImageData &data)
     {
-        vk::DeviceSize imageSize = data.pixels.size() * sizeof(ImageLoader::ImageData::Pixel);
+        vk::DeviceSize imageSize = data.pixels.size() * sizeof(image_loader::ImageData::Pixel);
         auto stagingBuffer = buffer_allocator::alloc_staging(context, imageSize);
         stagingBuffer.Upload(data.pixels.data(), imageSize);
 
@@ -59,9 +59,9 @@ namespace kailux::texture_allocator
     }
 
     AsyncTextureResult create_from_image_data_async(const Context &context,
-                                                                      const ImageLoader::ImageData &data)
+                                                                      const image_loader::ImageData &data)
     {
-        vk::DeviceSize imageSize = data.pixels.size() * sizeof(ImageLoader::ImageData::Pixel);
+        vk::DeviceSize imageSize = data.pixels.size() * sizeof(image_loader::ImageData::Pixel);
         auto stagingBuffer = buffer_allocator::alloc_staging(context, imageSize);
         stagingBuffer.Upload(data.pixels.data(), imageSize);
 
@@ -88,13 +88,13 @@ namespace kailux::texture_allocator
 
     Texture create_cubemap(
         const Context &context,
-        const std::array<ImageLoader::ImageData, 6> &faces
+        const std::array<image_loader::ImageData, 6> &faces
     )
     {
         uint32_t width = faces[0].width;
         uint32_t height = faces[0].height;
         uint32_t mipLevels = faces[0].mipLevels;
-        vk::DeviceSize layerSize = faces[0].pixels.size() * sizeof(ImageLoader::ImageData::Pixel);
+        vk::DeviceSize layerSize = faces[0].pixels.size() * sizeof(image_loader::ImageData::Pixel);
         vk::DeviceSize totalSize = layerSize * 6;
 
         auto stagingBuffer = buffer_allocator::alloc_staging(context, totalSize);
@@ -197,7 +197,7 @@ namespace kailux::texture_allocator
     }
 
     Texture create_cubemap_with_mips(const Context &context,
-                                                       std::span<const std::array<ImageLoader::ImageData, 6>> mips)
+                                                       std::span<const std::array<image_loader::ImageData, 6>> mips)
     {
         auto mipLevels = static_cast<uint32_t>(mips.size());
         auto width = mips[0][0].width;
@@ -211,7 +211,7 @@ namespace kailux::texture_allocator
             for (const auto &face: mipFaces)
             {
                 offsets.push_back(totalSize);
-                totalSize += face.pixels.size() * sizeof(ImageLoader::ImageData::Pixel);
+                totalSize += face.pixels.size() * sizeof(image_loader::ImageData::Pixel);
             }
 
         auto stagingBuffer = buffer_allocator::alloc_staging(context, totalSize);
@@ -220,7 +220,7 @@ namespace kailux::texture_allocator
             for (uint32_t face = 0; face < 6; face++)
             {
                 const auto &faceData = mips[mip][face];
-                vk::DeviceSize faceSize = faceData.pixels.size() * sizeof(ImageLoader::ImageData::Pixel);
+                vk::DeviceSize faceSize = faceData.pixels.size() * sizeof(image_loader::ImageData::Pixel);
                 stagingBuffer.Upload(faceData.pixels.data(), faceSize, offsets[mip * 6 + face]);
             }
 

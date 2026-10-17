@@ -146,11 +146,11 @@ namespace kailux
 
     void SkyboxPass::CreateTexture(const Context &context)
     {
-        std::array<ImageLoader::ImageData, 6> faces;
+        std::array<image_loader::ImageData, 6> faces;
         int i = 0;
         for (auto path: kSkyboxTexturePaths)
         {
-            auto result = ImageLoader::load_image(path, ImageLoader::ColorSpace::Srgb);
+            auto result = image_loader::load_image(path, image_loader::ColorSpace::Srgb);
             if (!result)
                 return;
             faces[i++] = *result;
@@ -161,11 +161,11 @@ namespace kailux
 
     void SkyboxPass::CreateIrradianceTexture(const Context &context)
     {
-        std::array<ImageLoader::ImageData, 6> faces;
+        std::array<image_loader::ImageData, 6> faces;
         int i = 0;
         for (auto path: kIrradianceTexturePaths)
         {
-            auto result = ImageLoader::load_image(path, ImageLoader::ColorSpace::Srgb);
+            auto result = image_loader::load_image(path, image_loader::ColorSpace::Srgb);
             if (!result)
                 return;
             faces[i++] = *result;
@@ -180,7 +180,7 @@ namespace kailux
             "px", "nx", "py", "ny", "pz", "nz"
         };
 
-        std::vector<std::array<ImageLoader::ImageData, 6>> mips(kPrefilteredMipLevels);
+        std::vector<std::array<image_loader::ImageData, 6>> mips(kPrefilteredMipLevels);
 
         for (uint32_t mip = 0; mip < kPrefilteredMipLevels; mip++)
             for (uint32_t face = 0; face < 6; face++)
@@ -191,7 +191,7 @@ namespace kailux
                                  + std::string(faceNames[face])
                                  + ".png";
 
-                auto result = ImageLoader::load_image(path, ImageLoader::ColorSpace::Srgb);
+                auto result = image_loader::load_image(path, image_loader::ColorSpace::Srgb);
                 if (!result)
                     return;
 
@@ -203,7 +203,7 @@ namespace kailux
 
     void SkyboxPass::CreateBrdfLutTexture(const Context &context)
     {
-        if (auto data = ImageLoader::load_image(kBRDFLutPath, ImageLoader::ColorSpace::Srgb))
+        if (auto data = image_loader::load_image(kBRDFLutPath, image_loader::ColorSpace::Srgb))
             mBRDFLutTexture = texture_allocator::create_from_image_data(context, *data);
     }
 
