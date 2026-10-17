@@ -40,8 +40,8 @@ namespace kailux
                                       std::vector<Buffer> &stagingBuffers)
     {
         MeshRegistry registry;
-        registry.mVertexBuffer = BufferAllocator::alloc_vertex(context, kTotalSize);
-        registry.mIndexBuffer = BufferAllocator::alloc_index(context, kTotalSize / 2);
+        registry.mVertexBuffer = buffer_allocator::alloc_vertex(context, kTotalSize);
+        registry.mIndexBuffer = buffer_allocator::alloc_index(context, kTotalSize / 2);
 
         registry.mBuiltinVertexZone = {0, kBuiltinZoneSize, 0};
         registry.mBuiltinIndexZone = {0, kBuiltinZoneSize / 2, 0};
@@ -284,7 +284,7 @@ namespace kailux
                                             vk::DeviceSize dstOffset, const Context &context, vk::CommandBuffer cmd,
                                             std::vector<Buffer> &stagingBuffers)
     {
-        auto &staging = stagingBuffers.emplace_back(BufferAllocator::alloc_staging(context, size));
+        auto &staging = stagingBuffers.emplace_back(buffer_allocator::alloc_staging(context, size));
         staging.Upload(data, size);
 
         vk::BufferCopy region(0, dstOffset, size);

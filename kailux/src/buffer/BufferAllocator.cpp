@@ -1,56 +1,57 @@
 #include "BufferAllocator.h"
+#include "Context.h"
 
-namespace kailux
+namespace kailux::buffer_allocator
 {
-    Buffer BufferAllocator::alloc_local(const Context &context, vk::DeviceSize size, vk::BufferUsageFlags usage)
+    Buffer alloc_local(const Context &context, vk::DeviceSize size, vk::BufferUsageFlags usage)
     {
-        return alloc(context,
-                     size,
-                     usage | vk::BufferUsageFlagBits::eTransferDst,
-                     vk::MemoryPropertyFlagBits::eDeviceLocal,
-                     false
+        return details::alloc(context,
+                              size,
+                              usage | vk::BufferUsageFlagBits::eTransferDst,
+                              vk::MemoryPropertyFlagBits::eDeviceLocal,
+                              false
         );
     }
 
-    Buffer BufferAllocator::alloc_host(const Context &context, vk::DeviceSize size, vk::BufferUsageFlags usage)
+    Buffer alloc_host(const Context &context, vk::DeviceSize size, vk::BufferUsageFlags usage)
     {
-        return alloc(context,
-                     size,
-                     usage,
-                     vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-                     true
+        return details::alloc(context,
+                              size,
+                              usage,
+                              vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+                              true
         );
     }
 
-    Buffer BufferAllocator::alloc_vertex(const Context &context, vk::DeviceSize size)
+    Buffer alloc_vertex(const Context &context, vk::DeviceSize size)
     {
         return alloc_local(context, size, vk::BufferUsageFlagBits::eVertexBuffer);
     }
 
-    Buffer BufferAllocator::alloc_index(const Context &context, vk::DeviceSize size)
+    Buffer alloc_index(const Context &context, vk::DeviceSize size)
     {
         return alloc_local(context, size, vk::BufferUsageFlagBits::eIndexBuffer);
     }
 
-    Buffer BufferAllocator::alloc_staging(const Context &context, vk::DeviceSize size)
+    Buffer alloc_staging(const Context &context, vk::DeviceSize size)
     {
         return alloc_host(context, size, vk::BufferUsageFlagBits::eTransferSrc);
     }
 
-    Buffer BufferAllocator::alloc_uniform(const Context &context, vk::DeviceSize size)
+    Buffer alloc_uniform(const Context &context, vk::DeviceSize size)
     {
         return alloc_host(context, size, vk::BufferUsageFlagBits::eUniformBuffer);
     }
 
-    Buffer BufferAllocator::alloc_storage(const Context &context, vk::DeviceSize size)
+    Buffer alloc_storage(const Context &context, vk::DeviceSize size)
     {
         return alloc_host(context, size, vk::BufferUsageFlagBits::eStorageBuffer);
     }
 
-    Buffer BufferAllocator::alloc(const Context &context, vk::DeviceSize size, vk::BufferUsageFlags usage,
+    Buffer details::alloc(const Context &context, vk::DeviceSize size, vk::BufferUsageFlags usage,
                                   vk::MemoryPropertyFlags props, bool map)
     {
-        auto buffer = vk::raii::Buffer(context.mDevice,
+        auto buffer = vk::raii::Buffer(context.GetRAIIDevice(),
                                        vk::BufferCreateInfo{
                                            {},
                                            size,
@@ -59,7 +60,7 @@ namespace kailux
                                        });
 
         auto reqs = buffer.getMemoryRequirements();
-        auto memory = vk::raii::DeviceMemory(context.mDevice,
+        auto memory = vk::raii::DeviceMemory(context.GetRAIIDevice(),
                                              vk::MemoryAllocateInfo(
                                                  reqs.size,
                                                  context.FindMemoryType(reqs.memoryTypeBits, props)

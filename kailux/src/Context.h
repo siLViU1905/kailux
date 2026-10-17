@@ -13,13 +13,14 @@ namespace kailux
 
         static Context create(Window& window);
 
-        vk::PhysicalDevice GetPhysicalDevice() const;
-        vk::Device         GetDevice() const;
-        vk::SurfaceKHR     GetSurface() const;
-        vk::Queue          GetGraphicsQueue() const;
-        vk::Queue          GetTransferQueue() const;
-        uint32_t           GetGraphicsQueueFamilyIndex() const;
-        uint32_t           GetTransferQueueFamilyIndex() const;
+        vk::PhysicalDevice              GetPhysicalDevice() const;
+        vk::Device                      GetDevice() const;
+        const vk::raii::Device&         GetRAIIDevice() const;
+        vk::SurfaceKHR                  GetSurface() const;
+        vk::Queue                       GetGraphicsQueue() const;
+        vk::Queue                       GetTransferQueue() const;
+        uint32_t                        GetGraphicsQueueFamilyIndex() const;
+        uint32_t                        GetTransferQueueFamilyIndex() const;
 
         uint32_t                FindMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const;
         vk::SampleCountFlagBits GetMaxUsableSampleCount() const;
@@ -30,7 +31,6 @@ namespace kailux
         friend class Swapchain;
         friend class FrameData;
         friend class ImGuiBackend;
-        friend class BufferAllocator;
         friend class TextureAllocator;
         friend class Shader;
         template <class Derived>

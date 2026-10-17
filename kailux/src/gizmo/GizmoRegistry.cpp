@@ -33,8 +33,8 @@ namespace kailux
         std::vector<Buffer> &stagingBuffers)
     {
         GizmoRegistry registry;
-        registry.mVertexBuffer = BufferAllocator::alloc_vertex(context, kBuiltinZoneSize);
-        registry.mIndexBuffer = BufferAllocator::alloc_index(context, kBuiltinZoneSize / 2);
+        registry.mVertexBuffer = buffer_allocator::alloc_vertex(context, kBuiltinZoneSize);
+        registry.mIndexBuffer = buffer_allocator::alloc_index(context, kBuiltinZoneSize / 2);
 
         registry.mBuiltinVertexZone = {0, kBuiltinZoneSize, 0};
         registry.mBuiltinIndexZone = {0, kBuiltinZoneSize / 2, 0};
@@ -106,7 +106,7 @@ namespace kailux
     void GizmoRegistry::upload_buffer_region(const void *data, vk::DeviceSize size, Buffer &dst,
         vk::DeviceSize dstOffset, const Context &context, vk::CommandBuffer cmd, std::vector<Buffer> &stagingBuffers)
     {
-        auto &staging = stagingBuffers.emplace_back(BufferAllocator::alloc_staging(context, size));
+        auto &staging = stagingBuffers.emplace_back(buffer_allocator::alloc_staging(context, size));
         staging.Upload(data, size);
 
         vk::BufferCopy region(0, dstOffset, size);

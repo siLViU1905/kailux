@@ -8,7 +8,7 @@ namespace kailux
     Texture TextureAllocator::create_from_image_data(const Context &context, const ImageLoader::ImageData &data)
     {
         vk::DeviceSize imageSize = data.pixels.size() * sizeof(ImageLoader::ImageData::Pixel);
-        auto stagingBuffer = BufferAllocator::alloc_staging(context, imageSize);
+        auto stagingBuffer = buffer_allocator::alloc_staging(context, imageSize);
         stagingBuffer.Upload(data.pixels.data(), imageSize);
 
         auto texture = alloc(
@@ -61,7 +61,7 @@ namespace kailux
                                                                       const ImageLoader::ImageData &data)
     {
         vk::DeviceSize imageSize = data.pixels.size() * sizeof(ImageLoader::ImageData::Pixel);
-        auto stagingBuffer = BufferAllocator::alloc_staging(context, imageSize);
+        auto stagingBuffer = buffer_allocator::alloc_staging(context, imageSize);
         stagingBuffer.Upload(data.pixels.data(), imageSize);
 
         auto texture = alloc(
@@ -96,7 +96,7 @@ namespace kailux
         vk::DeviceSize layerSize = faces[0].pixels.size() * sizeof(ImageLoader::ImageData::Pixel);
         vk::DeviceSize totalSize = layerSize * 6;
 
-        auto stagingBuffer = BufferAllocator::alloc_staging(context, totalSize);
+        auto stagingBuffer = buffer_allocator::alloc_staging(context, totalSize);
 
         for (uint32_t i = 0; i < 6; ++i)
             stagingBuffer.Upload(faces[i].pixels.data(), layerSize, i * layerSize);
@@ -213,7 +213,7 @@ namespace kailux
                 totalSize += face.pixels.size() * sizeof(ImageLoader::ImageData::Pixel);
             }
 
-        auto stagingBuffer = BufferAllocator::alloc_staging(context, totalSize);
+        auto stagingBuffer = buffer_allocator::alloc_staging(context, totalSize);
 
         for (uint32_t mip = 0; mip < mipLevels; mip++)
             for (uint32_t face = 0; face < 6; face++)
