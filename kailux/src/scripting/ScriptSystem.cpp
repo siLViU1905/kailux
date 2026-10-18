@@ -4,7 +4,9 @@
 
 namespace kailux
 {
-    ScriptSystem::ScriptSystem() = default;
+    ScriptSystem::ScriptSystem() : mContext(create_scoped<ScriptContext>())
+    {
+    }
 
     void ScriptSystem::SetSimulationState(Scene& scene, SimulationState state)
     {
@@ -13,9 +15,9 @@ namespace kailux
 
         mSimulationState = state;
         if (state == SimulationState::Running)
-            on_simulation_start(scene);
+            OnSimulationStart(scene);
         else
-            on_simulation_stop(scene);
+            OnSimulationStop(scene);
     }
 
     SimulationState ScriptSystem::GetSimulationState() const
@@ -23,17 +25,35 @@ namespace kailux
         return mSimulationState;
     }
 
-    void ScriptSystem::Update(Scene& scene, float deltaTime) const
+    void ScriptSystem::SetFixedStep(float step)
+    {
+        mContext->time.mFixedStep = step;
+    }
+
+    void ScriptSystem::Update(Scene& scene, float deltaTime, const InputSource& input)
     {
         if (mSimulationState != SimulationState::Running)
             return;
 
-        const auto view{scene.GetEntityRegistry().view<NativeScriptComponent>()};
-        view.each([deltaTime](auto& script)
+        mContext->time.Advance(deltaTime);
+        mContext->input.BeginFrame(input);
+
+        auto& registry{scene.GetEntityRegistry()};
+        const auto view{registry.view<NativeScriptComponent>()};
+        mUpdateQueue.assign(view.begin(), view.end());
+
+        for (const auto entity: mUpdateQueue)
         {
-            if (script.instance)
-                script.instance->OnUpdate(deltaTime);
-        });
+            auto *script{registry.try_get<NativeScriptComponent>(entity)};
+            if (!script)
+                continue;
+            if (!script->instance)
+                Instantiate(scene, entity, *script);
+            if (script->instance)
+                script->instance->OnUpdate(deltaTime);
+        }
+
+        mContext->world.FlushDestroyed();
     }
 
     void ScriptSystem::connect(Scene& scene)
@@ -43,21 +63,22 @@ namespace kailux
         sink.connect<&ScriptSystem::on_component_destroyed>();
     }
 
-    void ScriptSystem::on_simulation_start(Scene& scene)
+    void ScriptSystem::OnSimulationStart(Scene& scene)
     {
+        mContext->world.Bind(scene);
+        mContext->time.Reset();
+        mContext->input.Reset();
+
         auto& registry{scene.GetEntityRegistry()};
         for (const auto entity : registry.view<NativeScriptComponent>())
         {
             auto& script{registry.get<NativeScriptComponent>(entity)};
-            if (script.instance)
-                continue;
-
-            script.instance = script.Instantiate(scene, entity);
-            script.instance->OnCreate();
+            if (!script.instance)
+                Instantiate(scene, entity, script);
         }
     }
 
-    void ScriptSystem::on_simulation_stop(Scene& scene)
+    void ScriptSystem::OnSimulationStop(Scene& scene)
     {
         auto& registry{scene.GetEntityRegistry()};
         for (const auto entity : registry.view<NativeScriptComponent>())
@@ -69,6 +90,19 @@ namespace kailux
             script.instance->OnDestroy();
             script.instance.reset();
         }
+
+        mContext->world.Clear();
+        mContext->input.Reset();
+    }
+
+    void ScriptSystem::Instantiate(Scene &scene, entt::entity entity, NativeScriptComponent &script)
+    {
+        if (!script.Instantiate)
+            return;
+
+        script.instance = script.Instantiate();
+        script.instance->Attach(*mContext, {scene, entity});
+        script.instance->OnCreate();
     }
 
     void ScriptSystem::on_component_destroyed(entt::registry &registry, entt::entity entity)

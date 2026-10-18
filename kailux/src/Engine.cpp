@@ -395,6 +395,7 @@ namespace kailux
         mSimulationStartPending = false;
         scene.UpdateCameras();
         mPhysicsSystem.SetSimulationState(scene, SimulationState::Running);
+        mScriptSystem.SetFixedStep(1.f / mPhysicsSystem.GetTickRate());
         mScriptSystem.SetSimulationState(scene, SimulationState::Running);
     }
 
@@ -1913,7 +1914,16 @@ namespace kailux
         if (mPhysicsSystem.GetSimulationState() == SimulationState::Running)
             mPhysicsSystem.Update(scene, deltaTime);
 
-        mScriptSystem.Update(scene, deltaTime);
+        const bool scriptsHaveInput{
+            mControlledCamera != entt::null
+            && mControlledCamera != scene.GetSceneCamera()
+            && !mMouseLookActive
+        };
+        mScriptSystem.Update(
+            scene,
+            deltaTime,
+            scriptsHaveInput ? mInputSource : InputSource{}
+        );
 
         scene.Update();
 
