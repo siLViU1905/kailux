@@ -9,7 +9,7 @@ namespace kailux
         template<std::derived_from<Script> Type>
         void Bind()
         {
-            Instantiate = []()
+            Instantiate = []() -> Scoped<Script>
             {
                 return create_scoped<Type>();
             };
