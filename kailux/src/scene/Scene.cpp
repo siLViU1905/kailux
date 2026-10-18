@@ -14,6 +14,7 @@
 #include "../components/entt/PhysicsComponent.h"
 #include "components/entt/LocalTransform.h"
 #include "components/entt/PhysicsControlComponent.h"
+#include "components/entt/PhysicsInterpolation.h"
 #include "components/entt/SceneSettings.h"
 #include "components/entt/WorldTransform.h"
 
@@ -358,6 +359,15 @@ namespace kailux
         {
             mEntityRegistry.emplace_or_replace<PhysicsComponent>(entity, component);
             mEntityRegistry.emplace_or_replace<PhysicsControlComponent>(entity);
+
+            const auto world{Transform::from_matrix(mEntityRegistry.get<WorldTransform>(entity).model)};
+            mEntityRegistry.emplace_or_replace<PhysicsInterpolation>(
+                entity,
+                world.position,
+                world.position,
+                world.rotation,
+                world.rotation
+            );
         }
     }
 

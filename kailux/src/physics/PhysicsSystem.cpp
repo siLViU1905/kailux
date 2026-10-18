@@ -170,13 +170,12 @@ namespace kailux
             if (physicsComp.IsDynamic())
             {
                 mPhysicsRegistry.get().ResetVelocities(physicsComp.handle);
-                registry.emplace_or_replace<PhysicsInterpolation>(
-                    entity,
+                registry.get<PhysicsInterpolation>(entity) = {
                     world.position,
                     world.position,
                     world.rotation,
                     world.rotation
-                );
+                };
             }
         }
     }
@@ -241,7 +240,7 @@ namespace kailux
     void PhysicsSystem::UpdateTransforms(Scene& scene, float alpha) const
     {
         auto& registry{scene.GetEntityRegistry()};
-        const auto view{registry.view<LocalTransform, PhysicsComponent>()};
+        const auto view{registry.view<LocalTransform, PhysicsComponent, PhysicsInterpolation>()};
 
         for (const auto entity : view)
         {
@@ -249,15 +248,9 @@ namespace kailux
             if (!physics.IsDynamic())
                 continue;
 
-            glm::vec3 worldPos;
-            glm::quat worldRot;
-            if (const auto* state{registry.try_get<PhysicsInterpolation>(entity)})
-            {
-                worldPos = glm::mix(state->prevPosition, state->currPosition, alpha);
-                worldRot = glm::slerp(state->prevRotation, state->currRotation, alpha);
-            }
-            else
-                mPhysicsRegistry.get().GetBodyTransform(physics.handle, worldPos, worldRot);
+            const auto& state{view.get<PhysicsInterpolation>(entity)};
+            const auto worldPos{glm::mix(state.prevPosition, state.currPosition, alpha)};
+            const auto worldRot{glm::slerp(state.prevRotation, state.currRotation, alpha)};
 
             Transform updated{view.get<LocalTransform>(entity)};
 
@@ -317,10 +310,7 @@ namespace kailux
         }
 
         if (const auto* old{reg.try_get<PhysicsComponent>(entity)}; old && old->handle.Valid())
-        {
             mPhysicsRegistry.get().DestroyBody(old->handle);
-            reg.remove<PhysicsInterpolation>(entity);
-        }
 
         return *result;
     }
