@@ -5,6 +5,9 @@
 
 #include "Script.h"
 
+#define KAILUX_REGISTER_SCRIPT(Type) \
+    [[maybe_unused]] static const bool kailux_script_registered_##Type{::kailux::script_registry::add<Type>(#Type)}
+
 namespace kailux
 {
     using ScriptFactory = Scoped<Script>(*)();
@@ -25,6 +28,3 @@ namespace kailux
         }
     }
 }
-
-#define KAILUX_REGISTER_SCRIPT(Type) \
-    [[maybe_unused]] static const bool kailux_script_registered_##Type{::kailux::script_registry::add<Type>(#Type)}
