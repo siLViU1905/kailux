@@ -104,6 +104,8 @@ namespace kailux
 
         bool RequestSimulationState(Scene &scene, SimulationState state);
 
+        bool IsSceneReady(const Scene& scene) const;
+
         void AddPhysicsToEntity(Scene &scene, entt::entity entity, PhysicsCreationOptions options);
 
         void AddLightEntity(Scene& scene, LightType type);
@@ -116,6 +118,8 @@ namespace kailux
     private:
         static constexpr std::string_view kDirectoryIconPath = "assets/icons/directory_icon.png";
         static constexpr std::string_view kFileIconPath = "assets/icons/file_icon.png";
+
+        void StartSimulation(Scene& scene);
 
         void CreateRenderingContext(Window& window);
         void CreateMainPass();
@@ -239,6 +243,7 @@ namespace kailux
         entt::entity                               mControlledCamera{entt::null};
         InputSource                                mInputSource;
         bool                                       mMouseLookActive{};
+        bool                                       mSimulationStartPending{};
         OnImGuiRender                              mOnImGuiRender;
 
         std::array<RenderTarget, details::kFramesInFlight> mSceneViews;

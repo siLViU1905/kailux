@@ -63,6 +63,11 @@ namespace kailux
             return val;
         }
 
+        bool Empty() const
+        {
+            return mHead.load(std::memory_order_acquire) == mTail.load(std::memory_order_acquire);
+        }
+
     private:
         static constexpr size_t kMask = Capacity - 1;
 

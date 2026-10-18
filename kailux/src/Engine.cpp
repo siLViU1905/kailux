@@ -58,6 +58,7 @@ namespace kailux
                                               mControlledCamera(other.mControlledCamera),
                                               mInputSource(other.mInputSource),
                                               mMouseLookActive(other.mMouseLookActive),
+                                              mSimulationStartPending(other.mSimulationStartPending),
                                               mSceneViews(std::move(other.mSceneViews)),
                                               mSimulationViews(std::move(other.mSimulationViews)),
                                               mRetiredViews(std::move(other.mRetiredViews)),
@@ -110,6 +111,7 @@ namespace kailux
             mControlledCamera = other.mControlledCamera;
             mInputSource = other.mInputSource;
             mMouseLookActive = other.mMouseLookActive;
+            mSimulationStartPending = other.mSimulationStartPending;
             mSceneViews = std::move(other.mSceneViews);
             mSimulationViews = std::move(other.mSimulationViews);
             mRetiredViews = std::move(other.mRetiredViews);
@@ -386,6 +388,14 @@ namespace kailux
             else if (key == Key::Tab)
                 scene.SetPrimaryCamera(scene.GetNextCamera(scene.GetPrimaryCamera()));
         }
+    }
+
+    void Engine::StartSimulation(Scene &scene)
+    {
+        mSimulationStartPending = false;
+        scene.UpdateCameras();
+        mPhysicsSystem.SetSimulationState(scene, SimulationState::Running);
+        mScriptSystem.SetSimulationState(scene, SimulationState::Running);
     }
 
     void Engine::CreateRenderingContext(Window &window)
@@ -871,6 +881,7 @@ namespace kailux
 
     void Engine::DetachScene(Scene &scene)
     {
+        mSimulationStartPending = false;
         mPhysicsSystem.SetSimulationState(scene, SimulationState::Paused);
         mScriptSystem.SetSimulationState(scene, SimulationState::Paused);
         mPhysicsSystem.DestroyAllBodies();
@@ -936,6 +947,7 @@ namespace kailux
     {
         if (state == SimulationState::Paused)
         {
+            mSimulationStartPending = false;
             mPhysicsSystem.SetSimulationState(scene, state);
             mScriptSystem.SetSimulationState(scene, state);
             return true;
@@ -946,10 +958,22 @@ namespace kailux
             mOnWarningLog("Cannot start simulation: the scene has no camera");
             return false;
         }
-        scene.UpdateCameras();
-        mPhysicsSystem.SetSimulationState(scene, state);
-        mScriptSystem.SetSimulationState(scene, state);
+        if (!IsSceneReady(scene))
+        {
+            mSimulationStartPending = true;
+            mOnInfoLog("Simulation start deferred until all scene assets are loaded");
+            return true;
+        }
+
+        StartSimulation(scene);
         return true;
+    }
+
+    bool Engine::IsSceneReady(const Scene &scene) const
+    {
+        return mAssetPipeline.IsIdle()
+               && !mTransferManager.HasPending()
+               && scene.GetEntityCount<PendingUploadComponent>() == 0u;
     }
 
     void Engine::ExecuteCulling(
@@ -1879,6 +1903,12 @@ namespace kailux
         mTransferManager.Poll(mContext);
         mAssetPipeline.FlushCompletedUploads(scene);
         mDeferredResourceEraser.Tick();
+
+        if (mSimulationStartPending && IsSceneReady(scene))
+        {
+            StartSimulation(scene);
+            mOnInfoLog("All scene assets loaded, simulation started");
+        }
 
         if (mPhysicsSystem.GetSimulationState() == SimulationState::Running)
             mPhysicsSystem.Update(scene, deltaTime);

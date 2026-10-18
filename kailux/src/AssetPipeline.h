@@ -19,7 +19,7 @@ namespace kailux
         {
             entt::entity                 target{entt::null};
             std::string                  path;
-            mesh_loader::LoadData         data;
+            mesh_loader::LoadData        data;
             std::string                  name;
             Transform                    transform;
             MeshMaterialData             material;
@@ -53,6 +53,8 @@ namespace kailux
         void Poll(Scene &scene);
 
         void FlushCompletedUploads(Scene &scene);
+
+        bool IsIdle() const;
 
         Queue<PendingMeshData> &GetPendingQueue();
 
