@@ -401,4 +401,9 @@ namespace kailux
         }
         mCompletedUploads.clear();
     }
+
+    bool AssetPipeline::IsIdle() const
+    {
+        return mPendingMeshData.Empty() && mCompletedUploads.empty();
+    }
 }
