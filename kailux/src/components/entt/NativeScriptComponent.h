@@ -1,25 +1,33 @@
 #pragma once
 #include "Core.h"
-#include "scripting/ScriptableEntity.h"
+#include "scripting/ScriptRegistry.h"
 
 namespace kailux
 {
-    class Scene;
-
     struct NativeScriptComponent
     {
-        Scoped<ScriptableEntity> instance;
-
-        using OnInstantiate = Scoped<ScriptableEntity>(*)(Scene&, entt::entity);
-        OnInstantiate Instantiate{};
-
-        template<typename Script>
+        template<std::derived_from<Script> Type>
         void Bind()
         {
-            Instantiate = [](Scene& scene, entt::entity handle) -> Scoped<ScriptableEntity>
+            Instantiate = []()
             {
-                return create_scoped<Script>(scene, handle);
+                return create_scoped<Type>();
             };
         }
+
+        bool Bind(std::string_view scriptName)
+        {
+            const auto factory{script_registry::find(scriptName)};
+            if (!factory)
+                return false;
+
+            name = scriptName;
+            Instantiate = factory;
+            return true;
+        }
+
+        std::string    name;
+        Scoped<Script> instance;
+        ScriptFactory  Instantiate{};
     };
 }
