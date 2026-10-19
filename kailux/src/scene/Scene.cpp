@@ -465,6 +465,14 @@ namespace kailux
         return entity;
     }
 
+    entt::entity Scene::FindEntity(std::string_view name)
+    {
+        for (const auto entity : mEntityRegistry.view<TagComponent>())
+            if (mEntityRegistry.get<TagComponent>(entity).name == name)
+                return entity;
+        return entt::null;
+    }
+
     entt::entity Scene::CreateSunEntity(const SunData &data)
     {
         auto entity = CreateEntity(kSunName);

@@ -49,6 +49,7 @@ namespace kailux
         }
 
         entt::entity CreateEntity(std::string_view name);
+        entt::entity FindEntity(std::string_view name);
 
         using CreateResult = std::expected<entt::entity, std::string>;
 
