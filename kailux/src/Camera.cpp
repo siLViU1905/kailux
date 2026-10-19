@@ -46,6 +46,13 @@ namespace kailux
         update_vectors(component);
     }
 
+    void Camera::set_orientation(CameraComponent &component, float yaw, float pitch)
+    {
+        component.yaw = yaw;
+        component.pitch = clamp_pitch(pitch);
+        update_vectors(component);
+    }
+
     glm::mat4 Camera::get_projection(const CameraComponent& component, int width, int height)
     {
         return glm::perspective(glm::radians(component.fov),
@@ -96,10 +103,6 @@ namespace kailux
 
     float Camera::clamp_pitch(float pitch)
     {
-        if (pitch > 89.0f)
-            pitch = 89.0f;
-        if (pitch < -89.0f)
-            pitch = -89.0f;
-        return pitch;
+       return std::clamp(pitch, -89.9f, 89.9f);
     }
 }

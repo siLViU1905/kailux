@@ -10,6 +10,8 @@ namespace kailux
         static void update_movement(CameraComponent& component, InputSource source, float deltaTime);
         static void update_look_at(CameraComponent& component, InputSource source, float deltaTime);
 
+        static void set_orientation(CameraComponent& component, float yaw, float pitch);
+
         static glm::mat4 get_projection(const CameraComponent& component, int width, int height);
         static glm::mat4 get_view(const CameraComponent& component);
 
