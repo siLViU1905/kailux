@@ -30,6 +30,11 @@ namespace kailux
         void SetOnInfoLog(OnLog&& callback);
         void SetOnWarningLog(OnLog&& callback);
 
+        using OnFixedStep = std::move_only_function<void(Scene&, float)>;
+        void SetOnFixedStep(OnFixedStep&& callback);
+
+        std::vector<ContactEvent> DrainContactEvents();
+
         void AttachToScene(Scene& scene) const;
         void DestroyAllBodies() const;
 
@@ -62,5 +67,7 @@ namespace kailux
 
         OnLog mOnInfoLog;
         OnLog mOnWarningLog;
+
+        OnFixedStep mOnFixedStep;
     };
 }

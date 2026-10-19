@@ -555,6 +555,10 @@ namespace kailux
         {
             mOnWarningLog(msg);
         });
+        mPhysicsSystem.SetOnFixedStep([this](auto& scene, float step)
+        {
+           //TO DO
+        });
     }
 
     void Engine::CreateScriptSystem()
@@ -1052,7 +1056,12 @@ namespace kailux
         pending.scene     = scene.GetId();
 
         if (physics)
-            pending.physics = PhysicsRecord{physics->bodyType, physics->canBecomeDynamic, physics->mass, physics->isSensor};
+            pending.physics = {
+                physics->bodyType,
+                physics->canBecomeDynamic,
+                physics->mass,
+                physics->isSensor
+            };
 
         if (mAssetPipeline.IsCached(pending.path) || !pThreadDispatcher)
         {

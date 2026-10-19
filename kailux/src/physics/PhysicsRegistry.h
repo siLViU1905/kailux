@@ -1,10 +1,13 @@
 #pragma once
 
 #include <expected>
+#include <map>
+#include <optional>
 
 #include "impl/BroadPhaseLayer.h"
 #include "impl/ObjectVsBroadPhaseLayerFilter.h"
 #include "impl/ObjectLayerPairFilter.h"
+#include "impl/ContactCollector.h"
 #include <Jolt/Core/TempAllocator.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
 
@@ -42,6 +45,23 @@ namespace kailux
         PhysicsBodyType bodyType{PhysicsBodyType::Static};
         bool            canBecomeDynamic{true};
         float           mass{};
+        bool            isSensor{};
+    };
+
+    struct ContactEvent
+    {
+        uint64_t first{};
+        uint64_t second{};
+        bool     sensor{};
+        bool     began{};
+    };
+
+    struct RaycastResult
+    {
+        uint64_t  userData{};
+        glm::vec3 point{0.f};
+        glm::vec3 normal{0.f};
+        float     distance{};
     };
 
     struct PhysicsBodyInfo
@@ -71,8 +91,24 @@ namespace kailux
         void      AddImpulse(BodyHandle handle, const glm::vec3& impulse);
         void      SetLinearVelocity(BodyHandle handle, const glm::vec3& velocity);
         glm::vec3 GetLinearVelocity(BodyHandle handle) const;
+        void      SetAngularVelocity(BodyHandle handle, const glm::vec3& velocity);
+        glm::vec3 GetAngularVelocity(BodyHandle handle) const;
 
         void ResetVelocities(BodyHandle handle);
+
+        void     SetBodyUserData(BodyHandle handle, uint64_t userData);
+        uint64_t GetBodyUserData(BodyHandle handle) const;
+
+        float GetBodyMass(BodyHandle handle) const;
+
+        std::optional<RaycastResult> CastRay(
+            const glm::vec3 &origin,
+            const glm::vec3 &direction,
+            float maxDistance,
+            BodyHandle ignore = {}
+        ) const;
+
+        std::vector<ContactEvent> DrainContactEvents();
 
         void SetBodyTransform(BodyHandle handle, const glm::vec3& position, const glm::quat& rotation);
         void GetBodyTransform(BodyHandle handle, glm::vec3& outPosition, glm::quat& outRotation) const;
@@ -145,6 +181,7 @@ namespace kailux
         Scoped<impl::BroadPhaseLayer>                    mBroadPhaseLayer;
         Scoped<impl::ObjectVsBroadPhaseLayerFilter>      mObjectVsBroadPhaseLayer;
         Scoped<impl::ObjectLayerPairFilter>              mObjectPairFilter;
+        Scoped<impl::ContactCollector>                   mContactCollector;
         Scoped<JPH::PhysicsSystem>                       mPhysicsSystem;
 
         std::vector<JPH::BodyID>                        mBodyIds;
@@ -152,6 +189,14 @@ namespace kailux
         std::vector<float>                              mMassOverrides;
         std::unordered_map<std::string, JPH::ShapeRefC> mShapeCache;
         std::deque<uint32_t>                            mFreeSlots;
+
+        struct ActiveContact
+        {
+            uint32_t count{};
+            bool     sensor{};
+        };
+
+        std::map<std::pair<uint32_t, uint32_t>, ActiveContact> mActiveContacts;
 
         bool mBroadPhaseDirty{};
 
