@@ -2,24 +2,24 @@
 #include "components/entt/CameraComponent.h"
 #include "window/InputSource.h"
 
-namespace kailux
+namespace kailux::camera
 {
-    class Camera
+    void update_movement(CameraComponent &component, InputSource source, float deltaTime);
+
+    void update_look_at(CameraComponent &component, InputSource source, float deltaTime);
+
+    void set_orientation(CameraComponent &component, float yaw, float pitch);
+
+    glm::mat4 get_projection(const CameraComponent &component, int width, int height);
+
+    glm::mat4 get_view(const CameraComponent &component);
+
+    std::array<glm::vec4, 6> get_frustum_planes(const glm::mat4 &proj, const glm::mat4 &view);
+
+    namespace details
     {
-    public:
-        static void update_movement(CameraComponent& component, InputSource source, float deltaTime);
-        static void update_look_at(CameraComponent& component, InputSource source, float deltaTime);
+        void update_vectors(CameraComponent &component);
 
-        static void set_orientation(CameraComponent& component, float yaw, float pitch);
-
-        static glm::mat4 get_projection(const CameraComponent& component, int width, int height);
-        static glm::mat4 get_view(const CameraComponent& component);
-
-        static std::array<glm::vec4, 6> get_frustum_planes(const glm::mat4& proj, const glm::mat4& view);
-
-    private:
-        static void update_vectors(CameraComponent& component);
-
-        static float clamp_pitch(float pitch);
-    };
+        float clamp_pitch(float pitch);
+    }
 }

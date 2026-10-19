@@ -1007,7 +1007,7 @@ namespace kailux
 
         const auto cameraData{build_camera_data(scene, camera, {extent.width, extent.height})};
 
-        const auto planes{Camera::get_frustum_planes(cameraData.projection, cameraData.view)};
+        const auto planes{camera::get_frustum_planes(cameraData.projection, cameraData.view)};
 
         const float projFactor{
             0.5f * static_cast<float>(extent.height) * std::abs(cameraData.projection[1][1])
@@ -1889,8 +1889,8 @@ namespace kailux
     {
         const auto& camera{scene.GetEntityRegistry().get<CameraComponent>(entity)};
         return {
-            Camera::get_projection(camera, extent.x, extent.y),
-            Camera::get_view(camera),
+            camera::get_projection(camera, extent.x, extent.y),
+            camera::get_view(camera),
             {
                 camera.position,
                 camera.exposure
@@ -1944,8 +1944,8 @@ namespace kailux
             if (auto* camera{registry.try_get<CameraComponent>(controlled)})
             {
                 camera->focused = mMouseLookActive;
-                Camera::update_movement(*camera, mInputSource, deltaTime);
-                Camera::update_look_at(*camera, mInputSource, deltaTime);
+                camera::update_movement(*camera, mInputSource, deltaTime);
+                camera::update_look_at(*camera, mInputSource, deltaTime);
                 scene.SyncCameraTransform(controlled);
             }
 

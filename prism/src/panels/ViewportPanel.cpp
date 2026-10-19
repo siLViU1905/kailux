@@ -263,7 +263,7 @@ namespace kailux
             return;
 
         auto view{glm::lookAt(camera->position, camera->position + camera->forward, camera->up)};
-        auto projection{Camera::get_projection(
+        auto projection{camera::get_projection(
             *camera,
             static_cast<int>(std::max(viewportSize.x, 1.f)),
             static_cast<int>(std::max(viewportSize.y, 1.f))

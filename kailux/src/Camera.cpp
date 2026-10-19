@@ -1,9 +1,9 @@
 #include "Camera.h"
 #include <glm/gtc/matrix_transform.hpp>
 
-namespace kailux
+namespace kailux::camera
 {
-    void Camera::update_movement(CameraComponent& component, InputSource source, float deltaTime)
+    void update_movement(CameraComponent& component, InputSource source, float deltaTime)
     {
         if (!component.focused)
             return;
@@ -26,7 +26,7 @@ namespace kailux
             component.position -= glm::vec3(0.f, 1.f, 0.f) * velocity;
     }
 
-    void Camera::update_look_at(CameraComponent& component, InputSource source, float deltaTime)
+    void update_look_at(CameraComponent& component, InputSource source, float deltaTime)
     {
         if (!component.focused)
             return;
@@ -41,19 +41,19 @@ namespace kailux
 
         component.yaw += xOffset * component.sensitivity * deltaTime;
         component.pitch += yOffset * component.sensitivity * deltaTime;
-        component.pitch = clamp_pitch(component.pitch);
+        component.pitch = details::clamp_pitch(component.pitch);
 
-        update_vectors(component);
+        details::update_vectors(component);
     }
 
-    void Camera::set_orientation(CameraComponent &component, float yaw, float pitch)
+    void set_orientation(CameraComponent &component, float yaw, float pitch)
     {
         component.yaw = yaw;
-        component.pitch = clamp_pitch(pitch);
-        update_vectors(component);
+        component.pitch = details::clamp_pitch(pitch);
+        details::update_vectors(component);
     }
 
-    glm::mat4 Camera::get_projection(const CameraComponent& component, int width, int height)
+    glm::mat4 get_projection(const CameraComponent& component, int width, int height)
     {
         return glm::perspective(glm::radians(component.fov),
                                 static_cast<float>(width) / static_cast<float>(height),
@@ -61,7 +61,7 @@ namespace kailux
                                 component.zFar);
     }
 
-    glm::mat4 Camera::get_view(const CameraComponent &component)
+    glm::mat4 get_view(const CameraComponent &component)
     {
         return glm::lookAt(component.position,
                            component.position + component.forward,
@@ -69,7 +69,7 @@ namespace kailux
         );
     }
 
-    std::array<glm::vec4, 6> Camera::get_frustum_planes(const glm::mat4 &proj, const glm::mat4 &view)
+    std::array<glm::vec4, 6> get_frustum_planes(const glm::mat4 &proj, const glm::mat4 &view)
     {
         std::array<glm::vec4, 6> planes;
         auto m = glm::transpose(proj * view);
@@ -90,19 +90,22 @@ namespace kailux
         return planes;
     }
 
-    void Camera::update_vectors(CameraComponent &component)
+    namespace details
     {
-        glm::vec3 front;
-        front.x = std::cos(glm::radians(component.yaw)) * std::cos(glm::radians(component.pitch));
-        front.y = std::sin(glm::radians(component.pitch));
-        front.z = std::sin(glm::radians(component.yaw)) * std::cos(glm::radians(component.pitch));
-    
-        component.forward = glm::normalize(front);
-        component.right = glm::normalize(glm::cross(component.forward, component.up));
-    }
+        void update_vectors(CameraComponent &component)
+        {
+            glm::vec3 front;
+            front.x = std::cos(glm::radians(component.yaw)) * std::cos(glm::radians(component.pitch));
+            front.y = std::sin(glm::radians(component.pitch));
+            front.z = std::sin(glm::radians(component.yaw)) * std::cos(glm::radians(component.pitch));
 
-    float Camera::clamp_pitch(float pitch)
-    {
-       return std::clamp(pitch, -89.9f, 89.9f);
+            component.forward = glm::normalize(front);
+            component.right = glm::normalize(glm::cross(component.forward, component.up));
+        }
+
+        float clamp_pitch(float pitch)
+        {
+            return std::clamp(pitch, -89.9f, 89.9f);
+        }
     }
 }
