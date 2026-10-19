@@ -106,7 +106,21 @@ namespace kailux
 
         bool IsSceneReady(const Scene& scene) const;
 
-        void AddPhysicsToEntity(Scene &scene, entt::entity entity, PhysicsCreationOptions options);
+        entt::entity SpawnPrimitive(
+            Scene &scene,
+            std::string_view name,
+            MeshType type,
+            const Transform &transform
+        );
+        entt::entity SpawnMesh(
+            Scene &scene,
+            const std::filesystem::path &path,
+            std::string_view name,
+            const Transform &transform,
+            std::optional<PhysicsCreationOptions> physics
+        );
+
+        bool AddPhysicsToEntity(Scene &scene, entt::entity entity, PhysicsCreationOptions options);
 
         void AddLightEntity(Scene& scene, LightType type);
         void AddCameraEntity(Scene& scene, int width, int height);
@@ -114,6 +128,14 @@ namespace kailux
         DeviceInfo GetDeviceInfo() const;
 
         void SetRenderScale(float scale);
+
+        void SetThreadDispatcher(ThreadDispatcher& dispatcher);
+
+        using OnLoadSceneRequest = std::move_only_function<bool(const std::filesystem::path&)>;
+        void SetOnLoadSceneRequest(OnLoadSceneRequest&& callback);
+
+        void SetBuiltinCameraControl(bool enabled);
+        bool GetBuiltinCameraControl() const;
 
     private:
         static constexpr std::string_view kDirectoryIconPath = "assets/icons/directory_icon.png";
@@ -244,6 +266,11 @@ namespace kailux
         InputSource                                mInputSource;
         bool                                       mMouseLookActive{};
         bool                                       mSimulationStartPending{};
+        bool                                       mBuiltinCameraControl{true};
+        bool                                       mStartSimulationOnAttach{};
+        glm::vec2                                  mScrollDelta{0.f};
+        ThreadDispatcher*                          pThreadDispatcher{};
+        OnLoadSceneRequest                         mOnLoadSceneRequest;
         OnImGuiRender                              mOnImGuiRender;
 
         std::array<RenderTarget, details::kFramesInFlight> mSceneViews;
