@@ -36,6 +36,25 @@ namespace kailux
     {
         return Enabled() && mSource.IsButtonClicked(button);
     }
+
+    bool Input::IsMousePressed(MouseButton button) const
+    {
+        if (!Enabled() || !valid_button(button))
+            return false;
+
+        const auto index{static_cast<size_t>(button)};
+        return mCurrButtons[index] && !mPrevButtons[index];
+    }
+
+    bool Input::IsMouseReleased(MouseButton button) const
+    {
+        if (!Enabled() || !valid_button(button))
+            return false;
+
+        const auto index{static_cast<size_t>(button)};
+        return !mCurrButtons[index] && mPrevButtons[index];
+    }
+
     glm::vec2 Input::MousePosition() const
     {
         return mMousePosition;
@@ -44,13 +63,39 @@ namespace kailux
     {
         return mMouseDelta;
     }
+
+    glm::vec2 Input::ScrollDelta() const
+    {
+        return mScrollDelta;
+    }
+
+    void Input::SetCursorMode(CursorMode mode)
+    {
+        if (!Enabled())
+            return;
+
+        mSource.SetCursorMode(mode);
+        mCursorChanged = mode != CursorMode::Normal;
+    }
+
+    CursorMode Input::GetCursorMode() const
+    {
+        return Enabled() ? mSource.GetCursorMode() : CursorMode::Normal;
+    }
+
     bool Input::valid_key(Key key)
     {
         const auto index{static_cast<int>(key)};
         return index >= 0 && static_cast<size_t>(index) < kKeyCount;
     }
 
-    void Input::BeginFrame(const InputSource &source)
+    bool Input::valid_button(MouseButton button)
+    {
+        const auto index{static_cast<int>(button)};
+        return index >= 0 && static_cast<size_t>(index) < kButtonCount;
+    }
+
+    void Input::BeginFrame(const InputSource &source, glm::vec2 scrollDelta)
     {
         if (source != mSource)
             Reset();
@@ -58,6 +103,17 @@ namespace kailux
         mSource = source;
         if (!mSource.Valid())
             return;
+
+        mScrollDelta = scrollDelta;
+
+        mPrevButtons = mCurrButtons;
+        for (size_t index{}; index < kButtonCount; ++index)
+            mCurrButtons[index] = mSource.IsButtonClicked(static_cast<MouseButton>(index));
+        if (!mHasButtons)
+        {
+            mPrevButtons = mCurrButtons;
+            mHasButtons  = true;
+        }
 
         for (size_t index{}; index < kKeyCount; ++index)
         {
@@ -76,7 +132,15 @@ namespace kailux
 
     void Input::Reset()
     {
+        if (mCursorChanged && mSource.Valid())
+            mSource.SetCursorMode(CursorMode::Normal);
+        mCursorChanged = false;
+
         mSource = {};
+        mPrevButtons.reset();
+        mCurrButtons.reset();
+        mHasButtons  = false;
+        mScrollDelta = glm::vec2{0.f};
         mTracked.reset();
         mPrevDown.reset();
         mCurrDown.reset();
