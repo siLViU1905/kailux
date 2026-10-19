@@ -79,6 +79,7 @@ namespace kailux
         glfwSetFramebufferSizeCallback(mWindowHandle, glfw_framebuffer_callback);
         glfwSetKeyCallback(mWindowHandle, glfw_key_callback);
         glfwSetMouseButtonCallback(mWindowHandle, glfw_button_callback);
+        glfwSetScrollCallback(mWindowHandle, glfw_scroll_callback);
     }
 
     Window Window::create(int width, int height, std::string_view title)
@@ -200,5 +201,11 @@ namespace kailux
                 break;
             default: ;
         }
+    }
+
+    void Window::glfw_scroll_callback(GLFWwindow *window, double xOffset, double yOffset)
+    {
+        auto* self{static_cast<Window*>(glfwGetWindowUserPointer(window))};
+        self->mEventQueue.push(MouseScrolled{xOffset, yOffset});
     }
 }
