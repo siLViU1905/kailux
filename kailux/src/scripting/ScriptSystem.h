@@ -16,8 +16,12 @@ namespace kailux
         SimulationState GetSimulationState() const;
 
         void SetFixedStep(float step);
+        void SetServices(ScriptServices&& services);
 
-        void Update(Scene& scene, float deltaTime, const InputSource& input);
+        void BeginFrame(float deltaTime, const InputSource& input, glm::vec2 scrollDelta);
+        void FixedUpdate(Scene& scene, float fixedStep);
+        void DispatchContacts(Scene& scene, std::span<const ContactEvent> events);
+        void Update(Scene& scene, float deltaTime);
 
         static void connect(Scene& scene);
 
@@ -26,6 +30,7 @@ namespace kailux
         void OnSimulationStop(Scene& scene);
 
         void Instantiate(Scene& scene, entt::entity entity, NativeScriptComponent& script);
+        void InstantiatePending(Scene& scene);
 
         static void on_component_destroyed(entt::registry& registry, entt::entity entity);
 
