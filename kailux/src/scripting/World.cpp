@@ -43,9 +43,50 @@ namespace kailux
 
     Entity World::Spawn(std::string_view name, const Transform &transform)
     {
+        if (!pScene)
+            return {};
+
         const auto entity{pScene->CreateEntity(name)};
         pScene->SetLocalTransform(entity, transform);
         return {*pScene, entity};
+    }
+
+    Entity World::SpawnPrimitive(std::string_view name, Primitive shape, const Transform &transform,
+        std::optional<BodySettings> body)
+    {
+        if (!pScene || !pServices || !pServices->spawnPrimitive)
+            return {};
+
+        const auto type{shape == Primitive::Cube ? MeshType::Cube : MeshType::Sphere};
+        const auto entity{pServices->spawnPrimitive(*pScene, name, type, transform)};
+        if (entity == entt::null)
+            return {};
+
+        Entity spawned{*pScene, entity};
+        if (body)
+            AddBody(spawned, *body);
+        return spawned;
+    }
+
+    Entity World::SpawnMesh(const std::filesystem::path &path, std::string_view name, const Transform &transform,
+        std::optional<BodySettings> body)
+    {
+        if (!pScene || !pServices || !pServices->spawnMesh)
+            return {};
+
+        std::optional<PhysicsCreationOptions> options;
+        if (body)
+            options = details::to_creation_options(*body);
+        const auto entity{pServices->spawnMesh(*pScene, path, name, transform, options)};
+        return entity == entt::null ? Entity{} : Entity{*pScene, entity};
+    }
+
+    bool World::AddBody(Entity entity, const BodySettings &settings)
+    {
+        if (!pScene || !pServices || !pServices->addBody || !entity.Valid())
+            return false;
+
+        return pServices->addBody(*pScene, entity.GetHandle(), details::to_creation_options(settings));
     }
 
     void World::Destroy(Entity entity)
