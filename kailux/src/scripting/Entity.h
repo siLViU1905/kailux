@@ -7,6 +7,27 @@ namespace kailux
 {
     class Scene;
     class Entity;
+    class Script;
+
+    enum class BodyType : uint8_t
+    {
+        Static,
+        Kinematic,
+        Dynamic
+    };
+
+    struct BodySettings
+    {
+        BodyType type{BodyType::Dynamic};
+        float    mass{};
+        bool     sensor{false};
+    };
+
+    enum class Primitive : uint8_t
+    {
+        Cube,
+        Sphere
+    };
 
     class TransformRef
     {
@@ -41,11 +62,26 @@ namespace kailux
     {
     public:
         bool Valid() const;
+
         bool IsDynamic() const;
+        bool IsSensor() const;
+
+        bool     SetType(BodyType type);
+        BodyType GetType() const;
+
         void SetForce(const glm::vec3& force);
         void ClearForce();
         void AddImpulse(const glm::vec3& impulse);
+
+        void      SetVelocity(const glm::vec3& velocity);
         glm::vec3 GetVelocity() const;
+        void      SetAngularVelocity(const glm::vec3& velocity);
+        glm::vec3 GetAngularVelocity() const;
+
+        float GetMass() const;
+        void  SetMass(float mass);
+
+        void Teleport(const glm::vec3& position, const glm::quat& rotation);
 
     private:
         explicit RigidBody(Scene& scene, entt::entity handle);
@@ -99,12 +135,32 @@ namespace kailux
         TransformRef GetTransform() const;
         RigidBody    GetBody() const;
 
+        template<typename T>
+        T* GetScript() const
+        {
+            return dynamic_cast<T*>(GetScriptInstance());
+        }
+
+        bool AddScript(std::string_view name) const;
+
+        template<typename T>
+        void AddScript() const
+        {
+            AddScriptFactory([]() -> Scoped<Script>
+            {
+                return create_scoped<T>();
+            });
+        }
+
         entt::entity GetHandle() const;
 
         bool operator==(const Entity &) const;
 
     private:
         entt::registry& GetRegistry() const;
+
+        Script* GetScriptInstance() const;
+        void    AddScriptFactory(Scoped<Script>(*factory)()) const;
 
         Scene*       pScene{};
         entt::entity mHandle{entt::null};

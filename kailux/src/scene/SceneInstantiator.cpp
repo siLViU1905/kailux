@@ -2,6 +2,7 @@
 
 #include "Scene.h"
 #include "Log.h"
+#include "components/entt/NativeScriptComponent.h"
 
 namespace kailux::scene_instantiator
 {
@@ -89,6 +90,15 @@ namespace kailux::scene_instantiator
                     {1.f, 1.f, 1.f, 1.f}
                 };
                 scene.AttachCamera(entity, gizmo, *record.camera);
+            }
+
+            if (record.script)
+            {
+                auto& script{registry.emplace_or_replace<NativeScriptComponent>(entity)};
+                script.params = ScriptParams{record.script->params};
+                if (!script.Bind(record.script->name))
+                    log::console.Warning("Script '{}' on '{}' is not registered, it will not run",
+                                         record.script->name, record.name);
             }
         }
 

@@ -11,6 +11,9 @@ namespace kailux
     public:
         explicit RuntimeLayer(Application& application, const std::filesystem::path &scenePath);
 
+        using OnSceneReady = std::move_only_function<void(Scene&)>;
+        void SetOnSceneReady(OnSceneReady&& callback);
+
         void OnAttach() override;
         void OnUpdate(float deltaTime) override;
         bool OnEvent(const Event& event) override;
@@ -25,5 +28,6 @@ namespace kailux
         std::filesystem::path mScenePath;
         bool                  mRunning{};
         bool                  mStartPending{};
+        OnSceneReady          mOnSceneReady;
     };
 }

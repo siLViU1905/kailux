@@ -116,6 +116,8 @@ namespace kailux
                 return;
             if (data->scene != kInvalidSceneId && data->scene != scene.GetId())
                 return;
+            if (data->target != entt::null && !scene.GetEntityRegistry().valid(data->target))
+                return;
             if (data->type != MeshType::Loaded)
                 ProcessBuiltinMesh(scene, *data);
             else

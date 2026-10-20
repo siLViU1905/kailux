@@ -14,7 +14,7 @@ namespace kailux
         uint8_t major{};
         uint8_t minor{};
     };
-    constexpr Version kSceneVersion{2, 2};
+    constexpr Version kSceneVersion{3, 0};
 
     constexpr uint32_t kNoEntity{~0u};
 
@@ -31,6 +31,7 @@ namespace kailux
         PhysicsBodyType type{PhysicsBodyType::Static};
         bool            canBecomeDynamic{false};
         float           mass{};
+        bool            isSensor{};
     };
 
     struct PointLightRecord
@@ -38,6 +39,12 @@ namespace kailux
         float     intensity{1.f};
         float     range{10.f};
         glm::vec4 colorAndEnabled{1.f, 1.f, 1.f, 1.f};
+    };
+
+    struct ScriptRecord
+    {
+        std::string name;
+        nlohmann::json params{nlohmann::json::object()};
     };
 
     struct EntityRecord
@@ -51,6 +58,7 @@ namespace kailux
         std::optional<PointLightRecord>  light;
         std::optional<PhysicsRecord>     physics;
         std::optional<CameraComponent>   camera;
+        std::optional<ScriptRecord>      script;
     };
 
     struct SceneMeta
@@ -73,7 +81,7 @@ namespace kailux
     };
 
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(MeshRecord, path, type)
-    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(PhysicsRecord, type, canBecomeDynamic, mass)
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(PhysicsRecord, type, canBecomeDynamic, mass, isSensor)
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Transform, position, rotation, scale)
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(MeshMaterialData, albedoAndRoughness, pbrParams)
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(PointLightRecord, intensity, range, colorAndEnabled)
@@ -158,6 +166,28 @@ namespace kailux
         }
     }
 
+    inline void to_json(nlohmann::json &js, const ScriptRecord &record)
+    {
+        js = {{"name", record.name}};
+        if (record.params.is_object() && !record.params.empty())
+            js["params"] = record.params;
+    }
+    inline void from_json(const nlohmann::json &js, ScriptRecord &record)
+    {
+        if (js.is_string())
+        {
+            record.name = js.get<std::string>();
+            record.params = nlohmann::json::object();
+            return;
+        }
+
+        record.name = js.value("name", std::string{});
+        if (const auto it{js.find("params")}; it != js.end() && it->is_object())
+            record.params = *it;
+        else
+            record.params = nlohmann::json::object();
+    }
+
     inline void to_json(nlohmann::json &js, const SceneMeta &meta)
     {
         js = {
@@ -194,6 +224,7 @@ namespace kailux
         details::writeOptional(js, "light", record.light);
         details::writeOptional(js, "physics", record.physics);
         details::writeOptional(js, "camera", record.camera);
+        details::writeOptional(js, "script", record.script);
     }
     inline void from_json(const nlohmann::json &js, EntityRecord &record)
     {
@@ -207,6 +238,7 @@ namespace kailux
         details::readOptional(js, "light", record.light);
         details::readOptional(js, "physics", record.physics);
         details::readOptional(js, "camera", record.camera);
+        details::readOptional(js, "script", record.script);
     }
 
     inline void to_json(nlohmann::json &js, const SceneDocument &document)

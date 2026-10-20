@@ -9,6 +9,7 @@ namespace kailux
     class Input;
     class Time;
     struct ScriptContext;
+    class ScriptParams;
 
     class Script
     {
@@ -20,13 +21,20 @@ namespace kailux
     protected:
         virtual void OnCreate();
         virtual void OnUpdate(float deltaTime);
+        virtual void OnFixedUpdate(float fixedStep);
         virtual void OnDestroy();
 
-        Entity       GetSelf() const;
-        World&       GetWorld() const;
-        const Input& GetInput() const;
-        const Time&  GetTime() const;
+        Entity              GetSelf() const;
+        World&              GetWorld() const;
+        Input&              GetInput() const;
+        const Time&         GetTime() const;
+        const ScriptParams& GetParams() const;
 
+        virtual void OnCollisionEnter(Entity other);
+        virtual void OnCollisionExit(Entity other);
+
+        virtual void OnTriggerEnter(Entity other);
+        virtual void OnTriggerExit(Entity other);
 
         template<typename Component>
         Component& Get() const

@@ -40,6 +40,7 @@ add_library(kailux STATIC
         src/physics/impl/BroadPhaseLayer.cpp
         src/physics/impl/ObjectVsBroadPhaseLayerFilter.cpp
         src/physics/impl/ObjectLayerPairFilter.cpp
+        src/physics/impl/ContactCollector.cpp
         src/physics/PhysicsRegistry.cpp
         src/TransferManager.cpp
         src/AssetPipeline.cpp
@@ -71,6 +72,7 @@ add_library(kailux STATIC
         src/scripting/World.cpp
         src/scripting/Time.cpp
         src/scripting/ScriptRegistry.cpp
+        src/scripting/CameraRef.cpp
         src/layers/Layer.cpp
         src/layers/LayerStack.cpp
         src/Application.cpp

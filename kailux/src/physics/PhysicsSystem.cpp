@@ -28,6 +28,16 @@ namespace kailux
         mOnWarningLog = std::move(callback);
     }
 
+    void PhysicsSystem::SetOnFixedStep(OnFixedStep &&callback)
+    {
+        mOnFixedStep = std::move(callback);
+    }
+
+    std::vector<ContactEvent> PhysicsSystem::DrainContactEvents()
+    {
+        return mPhysicsRegistry.get().DrainContactEvents();
+    }
+
     namespace details
     {
         static void on_physics_component_destroyed(entt::registry& registry, entt::entity entity)
@@ -97,10 +107,12 @@ namespace kailux
 
         mAccumulator = std::min(mAccumulator + deltaTime, kMaxFrameTime);
 
-        ApplyImpulses(scene);
-
         while (mAccumulator >= mFixedStep)
         {
+            if (mOnFixedStep)
+                mOnFixedStep(scene, mFixedStep);
+
+            ApplyImpulses(scene);
             ApplyForces(scene);
             MoveKinematicBodies(scene, mFixedStep);
             const auto updateErr{mPhysicsRegistry.get().Update(mFixedStep, mCollisionSteps)};
@@ -188,6 +200,7 @@ namespace kailux
             if (control.applyImpulse && phys.IsDynamic())
                 mPhysicsRegistry.get().AddImpulse(phys.handle, control.impulse);
             control.applyImpulse = false;
+            control.impulse = glm::vec3{0.f};
         });
     }
 
@@ -311,6 +324,8 @@ namespace kailux
 
         if (const auto* old{reg.try_get<PhysicsComponent>(entity)}; old && old->handle.Valid())
             mPhysicsRegistry.get().DestroyBody(old->handle);
+
+        mPhysicsRegistry.get().SetBodyUserData(*result, to_body_user_data(entity));
 
         return *result;
     }

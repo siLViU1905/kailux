@@ -25,6 +25,7 @@ namespace kailux
         CursorMode GetCursorMode() const;
 
         glm::ivec2 GetFramebufferSize() const;
+        glm::ivec2 GetWindowSize() const;
 
         float GetRefreshRate() const;
 

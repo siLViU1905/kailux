@@ -1,6 +1,8 @@
 #include "Script.h"
 
 #include "ScriptContext.h"
+#include "ScriptParams.h"
+#include "components/entt/NativeScriptComponent.h"
 
 namespace kailux
 {
@@ -32,6 +34,10 @@ namespace kailux
     {
     }
 
+    void Script::OnFixedUpdate(float fixedStep)
+    {
+    }
+
     void Script::OnDestroy()
     {
     }
@@ -46,7 +52,7 @@ namespace kailux
         return pContext->world;
     }
 
-    const Input & Script::GetInput() const
+    Input & Script::GetInput() const
     {
         return pContext->input;
     }
@@ -54,6 +60,29 @@ namespace kailux
     const Time & Script::GetTime() const
     {
         return pContext->time;
+    }
+
+    const ScriptParams & Script::GetParams() const
+    {
+        static const ScriptParams kEmpty;
+        const auto* script{mSelf.TryGet<NativeScriptComponent>()};
+        return script ? script->params : kEmpty;
+    }
+
+    void Script::OnCollisionEnter(Entity other)
+    {
+    }
+
+    void Script::OnCollisionExit(Entity other)
+    {
+    }
+
+    void Script::OnTriggerEnter(Entity other)
+    {
+    }
+
+    void Script::OnTriggerExit(Entity other)
+    {
     }
 
     void Script::Attach(ScriptContext &context, Entity self)

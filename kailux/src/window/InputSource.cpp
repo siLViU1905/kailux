@@ -63,6 +63,13 @@ namespace kailux
         return {width, height};
     }
 
+    glm::ivec2 InputSource::GetWindowSize() const
+    {
+        int width, height;
+        glfwGetWindowSize(mHandle, &width, &height);
+        return {width, height};
+    }
+
     float InputSource::GetRefreshRate() const
     {
         return static_cast<float>(glfwGetVideoMode(GetWindowMonitor())->refreshRate);

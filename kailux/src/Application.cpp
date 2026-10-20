@@ -13,6 +13,11 @@ namespace kailux
         mEngine.GetPhysicsSystem().SetTickRate(engineInfo.physicsTickRate);
 
         mThreadDispatcher = ThreadDispatcher::create(specification.workerThreads);
+        mEngine.SetThreadDispatcher(mThreadDispatcher);
+        mEngine.SetOnLoadSceneRequest([this](const auto& path)
+        {
+            return LoadScene(path).has_value();
+        });
 
         mSceneManager = SceneManager::create();
         mEngine.AttachScene(mSceneManager.GetActiveScene(), {});

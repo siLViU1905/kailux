@@ -192,8 +192,16 @@ namespace kailux
     struct KeyRepeated;
     struct ButtonPressed;
     struct ButtonReleased;
+    struct MouseScrolled;
 
-    using Event = std::variant<KeyPressed, KeyReleased, KeyRepeated, ButtonPressed, ButtonReleased>;
+    using Event = std::variant<
+        KeyPressed,
+        KeyReleased,
+        KeyRepeated,
+        ButtonPressed,
+        ButtonReleased,
+        MouseScrolled
+    >;
 
     struct KeyPressed
     {
@@ -234,6 +242,14 @@ namespace kailux
     {
         MouseButton button;
         MouseMods   mods;
+
+        std::string ToString() const;
+    };
+
+    struct MouseScrolled
+    {
+        double xOffset;
+        double yOffset;
 
         std::string ToString() const;
     };

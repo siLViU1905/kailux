@@ -1,7 +1,10 @@
 #pragma once
+#include "CameraRef.h"
 #include "Entity.h"
 #include "Input.h"
+#include "Log.h"
 #include "Script.h"
+#include "ScriptParams.h"
 #include "ScriptRegistry.h"
 #include "Time.h"
 #include "World.h"

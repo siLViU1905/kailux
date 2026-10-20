@@ -59,6 +59,11 @@ namespace kailux
                                               mInputSource(other.mInputSource),
                                               mMouseLookActive(other.mMouseLookActive),
                                               mSimulationStartPending(other.mSimulationStartPending),
+                                              mBuiltinCameraControl(other.mBuiltinCameraControl),
+                                              mStartSimulationOnAttach(other.mStartSimulationOnAttach),
+                                              mScrollDelta(other.mScrollDelta),
+                                              pThreadDispatcher(other.pThreadDispatcher),
+                                              mOnLoadSceneRequest(std::move(other.mOnLoadSceneRequest)),
                                               mSceneViews(std::move(other.mSceneViews)),
                                               mSimulationViews(std::move(other.mSimulationViews)),
                                               mRetiredViews(std::move(other.mRetiredViews)),
@@ -112,6 +117,11 @@ namespace kailux
             mInputSource = other.mInputSource;
             mMouseLookActive = other.mMouseLookActive;
             mSimulationStartPending = other.mSimulationStartPending;
+            mBuiltinCameraControl = other.mBuiltinCameraControl;
+            mStartSimulationOnAttach = other.mStartSimulationOnAttach;
+            mScrollDelta = other.mScrollDelta;
+            pThreadDispatcher = other.pThreadDispatcher;
+            mOnLoadSceneRequest = std::move(other.mOnLoadSceneRequest);
             mSceneViews = std::move(other.mSceneViews);
             mSimulationViews = std::move(other.mSimulationViews);
             mRetiredViews = std::move(other.mRetiredViews);
@@ -244,7 +254,7 @@ namespace kailux
 
     void Engine::ToggleMouseLook(Scene &scene)
     {
-        if (!mInputSource.Valid())
+        if (!mInputSource.Valid() || !mBuiltinCameraControl)
             return;
 
         mMouseLookActive = !mMouseLookActive;
@@ -380,6 +390,12 @@ namespace kailux
 
     void Engine::OnEvent(Scene &scene, const Event &event, Window &window)
     {
+        if (const auto *scrolled{std::get_if<MouseScrolled>(&event)})
+            mScrollDelta += glm::vec2{
+                static_cast<float>(scrolled->xOffset),
+                static_cast<float>(scrolled->yOffset)
+            };
+
         if (const auto* keyReleased{std::get_if<KeyReleased>(&event)})
         {
             const auto key{keyReleased->key};
@@ -522,7 +538,8 @@ namespace kailux
                 {
                     physicsRecord.type,
                     physicsRecord.canBecomeDynamic,
-                    physicsRecord.mass
+                    physicsRecord.mass,
+                    physicsRecord.isSensor
                 }
             );
         });
@@ -539,11 +556,41 @@ namespace kailux
         {
             mOnWarningLog(msg);
         });
+        mPhysicsSystem.SetOnFixedStep([this](auto& scene, float step)
+        {
+           mScriptSystem.FixedUpdate(scene, step);
+        });
     }
 
     void Engine::CreateScriptSystem()
     {
         mScriptSystem = {};
+        mScriptSystem.SetServices({
+            [this](Scene& scene, std::string_view name, MeshType type, const Transform& transform)
+            {
+                return SpawnPrimitive(scene, name, type, transform);
+            },
+            [this](Scene& scene, const std::filesystem::path& path, std::string_view name, const Transform& transform,
+                   std::optional<PhysicsCreationOptions> physics)
+            {
+                return SpawnMesh(scene, path, name, transform, physics);
+            },
+            [this](Scene& scene, entt::entity entity, PhysicsCreationOptions options)
+            {
+                return AddPhysicsToEntity(scene, entity, options);
+            },
+            [this](const std::filesystem::path& path)
+            {
+                if (!mOnLoadSceneRequest || !mOnLoadSceneRequest(path))
+                    return false;
+                mStartSimulationOnAttach = true;
+                return true;
+            },
+            [this](bool enabled)
+            {
+                SetBuiltinCameraControl(enabled);
+            }
+        });
     }
 
     void Engine::CreateImGui(Window &window)
@@ -857,6 +904,8 @@ namespace kailux
 
     void Engine::AttachScene(Scene &scene, std::span<const MeshRequest> meshRequests)
     {
+        const bool startSimulation{std::exchange(mStartSimulationOnAttach, false)};
+
         mPhysicsSystem.AttachToScene(scene);
         ScriptSystem::connect(scene);
 
@@ -878,11 +927,15 @@ namespace kailux
 
             mAssetPipeline.GetPendingQueue().Push(std::move(pending));
         }
+
+        if (startSimulation)
+            RequestSimulationState(scene, SimulationState::Running);
     }
 
     void Engine::DetachScene(Scene &scene)
     {
         mSimulationStartPending = false;
+        mBuiltinCameraControl = true;
         mPhysicsSystem.SetSimulationState(scene, SimulationState::Paused);
         mScriptSystem.SetSimulationState(scene, SimulationState::Paused);
         mPhysicsSystem.DestroyAllBodies();
@@ -977,6 +1030,96 @@ namespace kailux
                && scene.GetEntityCount<PendingUploadComponent>() == 0u;
     }
 
+    entt::entity Engine::SpawnPrimitive(Scene &scene, std::string_view name, MeshType type, const Transform &transform)
+    {
+        static const auto kCubeBounds{Geometry::compute_bounding_sphere(mesh_geometry::generate_cube().vertices)};
+        static const auto kSphereBounds{Geometry::compute_bounding_sphere(mesh_geometry::generate_sphere().vertices)};
+
+        if (type != MeshType::Cube && type != MeshType::Sphere)
+        {
+            mOnWarningLog("SpawnPrimitive only supports cubes and spheres");
+            return entt::null;
+        }
+
+        const auto& builtins{mMeshRegistry.GetBuiltins()};
+        const MeshComponent component{
+            type == MeshType::Cube ? builtins.cube : builtins.sphere,
+            type == MeshType::Cube ? kCubeBounds : kSphereBounds
+        };
+        const auto created{scene.CreateMeshEntity(
+            name.empty() ? scene.GetMeshEntityName() : std::string{name},
+            component,
+            mTextureRegistry.GetDefaultMaterialHandle(),
+            transform,
+            MeshMaterialData{}
+        )};
+        if (!created)
+        {
+            mOnWarningLog(created.error());
+            return entt::null;
+        }
+        scene.AttachMeshSource(*created, {"", type});
+        return *created;
+    }
+
+    entt::entity Engine::SpawnMesh(Scene &scene, const std::filesystem::path &path, std::string_view name,
+        const Transform &transform, std::optional<PhysicsCreationOptions> physics)
+    {
+        if (!is_mesh_type_supported(path))
+        {
+            mOnWarningLog(std::format("SpawnMesh: '{}' is not a supported mesh file", path.string()));
+            return entt::null;
+        }
+
+        const auto entity{scene.CreateEntity(name.empty() ? scene.GetMeshEntityName() : std::string{name})};
+        scene.SetLocalTransform(entity, transform);
+
+        AssetPipeline::PendingMeshData pending;
+        pending.target    = entity;
+        pending.name      = std::string{name};
+        pending.path      = path.string();
+        pending.type      = MeshType::Loaded;
+        pending.transform = transform;
+        pending.scene     = scene.GetId();
+
+        if (physics)
+            pending.physics = {
+                physics->bodyType,
+                physics->canBecomeDynamic,
+                physics->mass,
+                physics->isSensor
+            };
+
+        if (mAssetPipeline.IsCached(pending.path) || !pThreadDispatcher)
+        {
+            if (!mAssetPipeline.IsCached(pending.path))
+            {
+                auto data{mesh_loader::load(pending.path)};
+                if (!data)
+                {
+                    mOnWarningLog(data.error());
+                    return entity;
+                }
+                pending.data = std::move(*data);
+            }
+            mAssetPipeline.GetPendingQueue().Push(std::move(pending));
+            return entity;
+        }
+
+        pThreadDispatcher->Enqueue([this, pending = std::move(pending)]() mutable
+        {
+            auto data{mesh_loader::load(pending.path)};
+            if (!data)
+            {
+                mOnWarningLog(data.error());
+                return;
+            }
+            pending.data = std::move(*data);
+            mAssetPipeline.GetPendingQueue().Push(std::move(pending));
+        });
+        return entity;
+    }
+
     void Engine::ExecuteCulling(
         const Scene &scene,
         const FrameData &frame,
@@ -1007,7 +1150,7 @@ namespace kailux
 
         const auto cameraData{build_camera_data(scene, camera, {extent.width, extent.height})};
 
-        const auto planes{Camera::get_frustum_planes(cameraData.projection, cameraData.view)};
+        const auto planes{camera::get_frustum_planes(cameraData.projection, cameraData.view)};
 
         const float projFactor{
             0.5f * static_cast<float>(extent.height) * std::abs(cameraData.projection[1][1])
@@ -1889,8 +2032,8 @@ namespace kailux
     {
         const auto& camera{scene.GetEntityRegistry().get<CameraComponent>(entity)};
         return {
-            Camera::get_projection(camera, extent.x, extent.y),
-            Camera::get_view(camera),
+            camera::get_projection(camera, extent.x, extent.y),
+            camera::get_view(camera),
             {
                 camera.position,
                 camera.exposure
@@ -1911,23 +2054,28 @@ namespace kailux
             mOnInfoLog("All scene assets loaded, simulation started");
         }
 
-        if (mPhysicsSystem.GetSimulationState() == SimulationState::Running)
-            mPhysicsSystem.Update(scene, deltaTime);
-
         const bool scriptsHaveInput{
             mControlledCamera != entt::null
             && mControlledCamera != scene.GetSceneCamera()
             && !mMouseLookActive
         };
-        mScriptSystem.Update(
-            scene,
+        mScriptSystem.BeginFrame(
             deltaTime,
-            scriptsHaveInput ? mInputSource : InputSource{}
+            scriptsHaveInput ? mInputSource : InputSource{},
+            std::exchange(mScrollDelta, glm::vec2{0.f})
         );
+        
+        if (mPhysicsSystem.GetSimulationState() == SimulationState::Running)
+        {
+            mPhysicsSystem.Update(scene, deltaTime);
+            mScriptSystem.DispatchContacts(scene, mPhysicsSystem.DrainContactEvents());
+        }
+
+        mScriptSystem.Update(scene, deltaTime);
 
         scene.Update();
 
-        if (!mInputSource.Valid())
+        if (!mInputSource.Valid() || !mBuiltinCameraControl)
         {
             scene.UpdateCameras();
             return;
@@ -1944,8 +2092,8 @@ namespace kailux
             if (auto* camera{registry.try_get<CameraComponent>(controlled)})
             {
                 camera->focused = mMouseLookActive;
-                Camera::update_movement(*camera, mInputSource, deltaTime);
-                Camera::update_look_at(*camera, mInputSource, deltaTime);
+                camera::update_movement(*camera, mInputSource, deltaTime);
+                camera::update_look_at(*camera, mInputSource, deltaTime);
                 scene.SyncCameraTransform(controlled);
             }
 
@@ -2087,18 +2235,23 @@ namespace kailux
         mSwapchain.Recreate(window, mContext, kSceneSamples);
     }
 
-    void Engine::AddPhysicsToEntity(Scene& scene, entt::entity entity, PhysicsCreationOptions options)
+    bool Engine::AddPhysicsToEntity(Scene& scene, entt::entity entity, PhysicsCreationOptions options)
     {
-        if (const auto handle{mPhysicsSystem.AddPhysicsToEntity(scene, entity, options)})
-            scene.AttachPhysics(
-                entity,
-                {
-                    *handle,
-                    options.bodyType,
-                    options.canBecomeDynamic,
-                    options.mass
-                }
-            );
+        const auto handle{mPhysicsSystem.AddPhysicsToEntity(scene, entity, options)};
+        if (!handle)
+            return false;
+
+        scene.AttachPhysics(
+            entity,
+            {
+                *handle,
+                options.bodyType,
+                options.canBecomeDynamic,
+                options.mass,
+                options.isSensor
+            }
+        );
+        return true;
     }
 
     void Engine::AddLightEntity(Scene& scene, LightType type)
@@ -2147,5 +2300,31 @@ namespace kailux
         mRenderScale = scale;
 
         mSceneResize.Request(apply_scale(mSceneViewExtent, mRenderScale));
+    }
+
+    void Engine::SetThreadDispatcher(ThreadDispatcher &dispatcher)
+    {
+        pThreadDispatcher = std::addressof(dispatcher);
+    }
+
+    void Engine::SetOnLoadSceneRequest(OnLoadSceneRequest &&callback)
+    {
+        mOnLoadSceneRequest = std::move(callback);
+    }
+
+    void Engine::SetBuiltinCameraControl(bool enabled)
+    {
+        if (!enabled && mMouseLookActive)
+        {
+            if (mInputSource.Valid())
+                mInputSource.SetCursorMode(CursorMode::Normal);
+            mMouseLookActive = false;
+        }
+        mBuiltinCameraControl = enabled;
+    }
+
+    bool Engine::GetBuiltinCameraControl() const
+    {
+        return mBuiltinCameraControl;
     }
 }

@@ -29,4 +29,9 @@ namespace kailux
     {
         return std::format("ButtonReleased(button:{}, mods:{})", magic_enum::enum_name(button), magic_enum::enum_name(mods));
     }
+
+    std::string MouseScrolled::ToString() const
+    {
+        return std::format("MouseScrolled(x:{}, y:{})", xOffset, yOffset);
+    }
 }

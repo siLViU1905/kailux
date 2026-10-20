@@ -10,6 +10,11 @@
 #include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
 #include <Jolt/Physics/Collision/Shape/ScaledShape.h>
 #include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
+#include <Jolt/Physics/Collision/RayCast.h>
+#include <Jolt/Physics/Collision/CastResult.h>
+#include <Jolt/Physics/Collision/NarrowPhaseQuery.h>
+#include <Jolt/Physics/Body/BodyFilter.h>
+#include <Jolt/Physics/Body/BodyLock.h>
 #include <execution>
 
 namespace kailux
@@ -21,11 +26,14 @@ namespace kailux
                                                                          mBroadPhaseLayer(std::move(other.mBroadPhaseLayer)),
                                                                          mObjectVsBroadPhaseLayer(std::move(other.mObjectVsBroadPhaseLayer)),
                                                                          mObjectPairFilter(std::move(other.mObjectPairFilter)),
+                                                                         mContactCollector(std::move(other.mContactCollector)),
                                                                          mPhysicsSystem(std::move(other.mPhysicsSystem)),
                                                                          mBodyIds(std::move(other.mBodyIds)),
                                                                          mBaseShapes(std::move(other.mBaseShapes)),
+                                                                         mMassOverrides(std::move(other.mMassOverrides)),
                                                                          mShapeCache(std::move(other.mShapeCache)),
                                                                          mFreeSlots(std::move(other.mFreeSlots)),
+                                                                         mActiveContacts(std::move(other.mActiveContacts)),
                                                                          mBroadPhaseDirty(other.mBroadPhaseDirty)
 #ifndef NDEBUG
                                                                          ,mOwnerThreadId(other.mOwnerThreadId)
@@ -42,12 +50,14 @@ namespace kailux
             mBroadPhaseLayer = std::move(other.mBroadPhaseLayer);
             mObjectVsBroadPhaseLayer = std::move(other.mObjectVsBroadPhaseLayer);
             mObjectPairFilter = std::move(other.mObjectPairFilter);
+            mContactCollector = std::move(other.mContactCollector);
             mPhysicsSystem = std::move(other.mPhysicsSystem);
             mBodyIds = std::move(other.mBodyIds);
             mBaseShapes = std::move(other.mBaseShapes);
             mMassOverrides = std::move(other.mMassOverrides);
             mShapeCache = std::move(other.mShapeCache);
             mFreeSlots = std::move(other.mFreeSlots);
+            mActiveContacts = std::move(other.mActiveContacts);
             mBroadPhaseDirty = other.mBroadPhaseDirty;
 #ifndef NDEBUG
             mOwnerThreadId = other.mOwnerThreadId;
@@ -82,6 +92,7 @@ namespace kailux
         registry.mBroadPhaseLayer = create_scoped<impl::BroadPhaseLayer>();
         registry.mObjectVsBroadPhaseLayer = create_scoped<impl::ObjectVsBroadPhaseLayerFilter>();
         registry.mObjectPairFilter = create_scoped<impl::ObjectLayerPairFilter>();
+        registry.mContactCollector = create_scoped<impl::ContactCollector>();
 
         registry.mPhysicsSystem = create_scoped<JPH::PhysicsSystem>();
         registry.mPhysicsSystem->Init(
@@ -97,6 +108,7 @@ namespace kailux
         settings.mNumVelocitySteps = 20;
         settings.mNumPositionSteps = 4;
         registry.mPhysicsSystem->SetPhysicsSettings(settings);
+        registry.mPhysicsSystem->SetContactListener(registry.mContactCollector.get());
 
         log::console.Debug("physics registry: physics system initialized");
 
@@ -152,6 +164,8 @@ namespace kailux
         if (info.options.bodyType == PhysicsBodyType::Static && info.options.canBecomeDynamic)
             settings.mAllowDynamicOrKinematic = true;
 
+        settings.mIsSensor = info.options.isSensor;
+
         if (info.options.mass > 0.f)
         {
             settings.mOverrideMassProperties = JPH::EOverrideMassProperties::CalculateInertia;
@@ -180,6 +194,12 @@ namespace kailux
             bodyInterface.RemoveBody(id);
 
         bodyInterface.DestroyBody(id);
+
+        const auto value{id.GetIndexAndSequenceNumber()};
+        std::erase_if(mActiveContacts, [value](const auto& entry)
+        {
+            return entry.first.first == value || entry.first.second == value;
+        });
 
         mBodyIds[handle.index] = JPH::BodyID{};
         mBaseShapes[handle.index] = nullptr;
@@ -261,6 +281,21 @@ namespace kailux
         return {velocity.GetX(), velocity.GetY(), velocity.GetZ()};
     }
 
+    void PhysicsRegistry::SetAngularVelocity(BodyHandle handle, const glm::vec3 &velocity)
+    {
+        assert(handle.Valid());
+        const auto id{mBodyIds[handle.index]};
+        GetBodies().SetAngularVelocity(id, {velocity.x, velocity.y, velocity.z});
+    }
+
+    glm::vec3 PhysicsRegistry::GetAngularVelocity(BodyHandle handle) const
+    {
+        assert(handle.Valid());
+        const auto id{mBodyIds[handle.index]};
+        const auto velocity{GetBodies().GetAngularVelocity(id)};
+        return {velocity.GetX(), velocity.GetY(), velocity.GetZ()};
+    }
+
     void PhysicsRegistry::ResetVelocities(BodyHandle handle)
     {
         assert(handle.Valid());
@@ -269,6 +304,129 @@ namespace kailux
             JPH::Vec3::sZero(),
             JPH::Vec3::sZero()
         );
+    }
+
+    void PhysicsRegistry::SetBodyUserData(BodyHandle handle, uint64_t userData)
+    {
+        assert(handle.Valid());
+        GetBodies().SetUserData(mBodyIds[handle.index], userData);
+    }
+
+    uint64_t PhysicsRegistry::GetBodyUserData(BodyHandle handle) const
+    {
+        assert(handle.Valid());
+        return GetBodies().GetUserData(mBodyIds[handle.index]);
+    }
+
+    float PhysicsRegistry::GetBodyMass(BodyHandle handle) const
+    {
+        assert(handle.Valid());
+        const JPH::BodyLockRead lock{GetLocks(), mBodyIds[handle.index]};
+        if (!lock.Succeeded())
+            return 0.f;
+
+        const auto* motion{lock.GetBody().GetMotionPropertiesUnchecked()};
+        if (motion == nullptr || motion->GetInverseMassUnchecked() <= 0.f)
+            return 0.f;
+
+        return 1.f / motion->GetInverseMassUnchecked();
+    }
+
+    namespace details
+    {
+        class RaycastBodyFilter final : public JPH::BodyFilter
+        {
+        public:
+            explicit RaycastBodyFilter(JPH::BodyID ignored) : mIgnored(ignored)
+            {
+            }
+
+            bool ShouldCollide(const JPH::BodyID &inBodyID) const override
+            {
+                return inBodyID != mIgnored;
+            }
+            bool ShouldCollideLocked(const JPH::Body &inBody) const override
+            {
+                return !inBody.IsSensor();
+            }
+
+        private:
+            JPH::BodyID mIgnored;
+        };
+    }
+
+    std::optional<RaycastResult> PhysicsRegistry::CastRay(const glm::vec3 &origin, const glm::vec3 &direction,
+        float maxDistance, BodyHandle ignore) const
+    {
+        const auto length{glm::length(direction)};
+        if (length < 1e-6f || maxDistance <= 0.f)
+            return std::nullopt;
+
+        const auto step{direction / length * maxDistance};
+        const JPH::RRayCast ray{{origin.x, origin.y, origin.z}, {step.x, step.y, step.z}};
+
+        const details::RaycastBodyFilter filter{ignore.Valid() ? mBodyIds[ignore.index] : JPH::BodyID{}};
+
+        JPH::RayCastResult hit;
+        if (!mPhysicsSystem->GetNarrowPhaseQueryNoLock().CastRay(ray, hit, {}, {}, filter))
+            return std::nullopt;
+
+        const auto point{ray.GetPointOnRay(hit.mFraction)};
+
+        RaycastResult result{
+            0,
+            {point.GetX(), point.GetY(), point.GetZ()},
+            {0.f, 0.f, 0.f},
+            hit.mFraction * maxDistance
+        };
+
+        const JPH::BodyLockRead lock{GetLocks(), hit.mBodyID};
+        if (lock.Succeeded())
+        {
+            const auto& body{lock.GetBody()};
+            const auto normal{body.GetWorldSpaceSurfaceNormal(hit.mSubShapeID2, point)};
+            result.normal   = {normal.GetX(), normal.GetY(), normal.GetZ()};
+            result.userData = body.GetUserData();
+        }
+        return result;
+    }
+
+    std::vector<ContactEvent> PhysicsRegistry::DrainContactEvents()
+    {
+        std::vector<ContactEvent> events;
+        const auto& bodies{GetBodies()};
+
+        for (const auto& record : mContactCollector->Drain())
+        {
+            auto first{record.first};
+            auto second{record.second};
+            if (second.GetIndexAndSequenceNumber() < first.GetIndexAndSequenceNumber())
+                std::swap(first, second);
+
+            const std::pair key{first.GetIndexAndSequenceNumber(), second.GetIndexAndSequenceNumber()};
+
+            if (record.began)
+            {
+                if (!bodies.IsAdded(first) || !bodies.IsAdded(second))
+                    continue;
+
+                auto& contact{mActiveContacts[key]};
+                contact.sensor = contact.sensor || record.sensor;
+                if (++contact.count == 1)
+                    events.emplace_back(bodies.GetUserData(first), bodies.GetUserData(second), contact.sensor, true);
+                continue;
+            }
+            const auto it{mActiveContacts.find(key)};
+            if (it == mActiveContacts.end())
+                continue;
+
+            if (--it->second.count == 0)
+            {
+                events.emplace_back(bodies.GetUserData(first), bodies.GetUserData(second), it->second.sensor, false);
+                mActiveContacts.erase(it);
+            }
+        }
+        return events;
     }
 
     void PhysicsRegistry::SetBodyTransform(BodyHandle handle, const glm::vec3 &position, const glm::quat &rotation)

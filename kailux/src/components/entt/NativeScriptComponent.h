@@ -1,6 +1,7 @@
 #pragma once
 #include "Core.h"
 #include "scripting/ScriptRegistry.h"
+#include "scripting/ScriptParams.h"
 
 namespace kailux
 {
@@ -17,16 +18,18 @@ namespace kailux
 
         bool Bind(std::string_view scriptName)
         {
+            name = scriptName;
+
             const auto factory{script_registry::find(scriptName)};
             if (!factory)
                 return false;
 
-            name = scriptName;
             Instantiate = factory;
             return true;
         }
 
         std::string    name;
+        ScriptParams   params;
         Scoped<Script> instance;
         ScriptFactory  Instantiate{};
     };

@@ -11,6 +11,11 @@ namespace kailux
     {
     }
 
+    void RuntimeLayer::SetOnSceneReady(OnSceneReady &&callback)
+    {
+        mOnSceneReady = std::move(callback);
+    }
+
     void RuntimeLayer::OnAttach()
     {
         if (!mApplication.LoadScene(mScenePath))
@@ -30,6 +35,11 @@ namespace kailux
         if (mStartPending)
         {
             mStartPending = false;
+            
+            auto& scene{mApplication.GetSceneManager().GetActiveScene()};
+            if (mOnSceneReady)
+                mOnSceneReady(scene);
+
             mRunning = mEngine.RequestSimulationState(mApplication.GetSceneManager().GetActiveScene(), SimulationState::Running);
         }
     }

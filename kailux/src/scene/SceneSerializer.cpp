@@ -5,6 +5,7 @@
 #include "components/entt/BuiltinCamera.h"
 #include "components/entt/HierarchyComponent.h"
 #include "components/entt/LocalTransform.h"
+#include "components/entt/NativeScriptComponent.h"
 #include "components/entt/PhysicsComponent.h"
 #include "components/entt/TagComponent.h"
 #include "components/math/Transform.h"
@@ -79,7 +80,15 @@ namespace kailux::scene_serializer
             }
 
             if (const auto *physics = registry.try_get<PhysicsComponent>(entity))
-                record.physics = {physics->type, physics->canBecomeDynamic, physics->mass};
+                record.physics = {
+                    physics->type,
+                    physics->canBecomeDynamic,
+                    physics->mass,
+                    physics->isSensor
+                };
+            
+            if (const auto *script = registry.try_get<NativeScriptComponent>(entity); script && !script->name.empty())
+                record.script = {script->name, script->params.Raw()};
 
             document.entities.push_back(std::move(record));
         }
