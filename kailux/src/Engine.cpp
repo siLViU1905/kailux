@@ -2059,13 +2059,19 @@ namespace kailux
             && mControlledCamera != scene.GetSceneCamera()
             && !mMouseLookActive
         };
+        mScriptSystem.BeginFrame(
+            deltaTime,
+            scriptsHaveInput ? mInputSource : InputSource{},
+            std::exchange(mScrollDelta, glm::vec2{0.f})
+        );
+        
+        if (mPhysicsSystem.GetSimulationState() == SimulationState::Running)
+        {
+            mPhysicsSystem.Update(scene, deltaTime);
+            mScriptSystem.DispatchContacts(scene, mPhysicsSystem.DrainContactEvents());
+        }
 
-        // if (mPhysicsSystem.GetSimulationState() == SimulationState::Running)
-        // {
-        //     mPhysicsSystem.Update(scene, deltaTime);
-        //     mScriptSystem.DispatchContacts(scene, mPhysicsSystem.DrainContactEvents());
-        // }
-        // mScriptSystem.Update(scene, deltaTime);
+        mScriptSystem.Update(scene, deltaTime);
 
         scene.Update();
 
