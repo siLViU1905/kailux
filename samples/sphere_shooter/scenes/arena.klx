@@ -1,0 +1,8942 @@
+{
+   "editor_camera": {
+      "input": {
+         "focused": false,
+         "pitch": -31.88084602355957,
+         "sensitivity": 1.0,
+         "speed": 2.0,
+         "yaw": -352.8290710449219
+      },
+      "isPrimary": false,
+      "settings": {
+         "exposure": 0.0001500000071246177,
+         "fov": 45.0,
+         "zFar": 100.0,
+         "zNear": 0.10000000149011612
+      },
+      "transform": {
+         "forward": [
+            0.8425064086914062,
+            -0.5281544923782349,
+            0.10599895566701889
+         ],
+         "position": [
+            3.2315821647644043,
+            2.735154390335083,
+            6.432567596435547
+         ],
+         "right": [
+            -0.1248297467827797,
+            0.0,
+            0.9921782612800598
+         ],
+         "up": [
+            0.0,
+            1.0,
+            0.0
+         ]
+      }
+   },
+   "entities": [
+      {
+         "id": 91,
+         "light": {
+            "colorAndEnabled": [
+               0.35,
+               0.55,
+               1.0,
+               1.0
+            ],
+            "intensity": 200000.0,
+            "range": 20.0
+         },
+         "name": "PointLight_Blue",
+         "transform": {
+            "position": [
+               -4.5,
+               2.5,
+               -12.5
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               1.0,
+               1.0,
+               1.0
+            ]
+         }
+      },
+      {
+         "id": 92,
+         "material": {
+            "albedoAndRoughness": [
+               0.95,
+               0.62,
+               0.3,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Zig_L1",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -14,
+               0.4,
+               14
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               10,
+               0.8,
+               10
+            ]
+         }
+      },
+      {
+         "id": 93,
+         "material": {
+            "albedoAndRoughness": [
+               0.88,
+               0.48,
+               0.19,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Zig_L2",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -14,
+               1.2,
+               14
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               7,
+               0.8,
+               7
+            ]
+         }
+      },
+      {
+         "id": 94,
+         "material": {
+            "albedoAndRoughness": [
+               0.8,
+               0.38,
+               0.12,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Zig_L3",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -14,
+               2.0,
+               14
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               4,
+               0.8,
+               4
+            ]
+         }
+      },
+      {
+         "id": 95,
+         "material": {
+            "albedoAndRoughness": [
+               0.68,
+               0.26,
+               0.05,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Tower_A",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               15,
+               2.5,
+               -15
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               3,
+               5,
+               3
+            ]
+         }
+      },
+      {
+         "id": 96,
+         "material": {
+            "albedoAndRoughness": [
+               0.68,
+               0.26,
+               0.05,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Tower_B",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               15,
+               2.5,
+               -7
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               3,
+               5,
+               3
+            ]
+         }
+      },
+      {
+         "id": 97,
+         "material": {
+            "albedoAndRoughness": [
+               0.95,
+               0.62,
+               0.3,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Skybridge",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               15,
+               5.15,
+               -11
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               1.6,
+               0.3,
+               7
+            ]
+         }
+      },
+      {
+         "id": 98,
+         "material": {
+            "albedoAndRoughness": [
+               0.8,
+               0.38,
+               0.12,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Ramp_E_Tower",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               15.0,
+               2.36584,
+               -0.56708
+            ],
+            "rotation": [
+               -0.0,
+               0.97325,
+               0.22975,
+               0.0
+            ],
+            "scale": [
+               3.0,
+               0.3,
+               11.180339887498949
+            ]
+         }
+      },
+      {
+         "id": 99,
+         "material": {
+            "albedoAndRoughness": [
+               0.95,
+               0.62,
+               0.3,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Plateau_East",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               15,
+               0.75,
+               12
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               8,
+               1.5,
+               8
+            ]
+         }
+      },
+      {
+         "id": 100,
+         "material": {
+            "albedoAndRoughness": [
+               0.88,
+               0.48,
+               0.19,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Ramp_D_Long",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               6.52466,
+               0.60204,
+               12.0
+            ],
+            "rotation": [
+               -0.05832,
+               0.7047,
+               0.05832,
+               0.7047
+            ],
+            "scale": [
+               3.5,
+               0.3,
+               9.12414379544733
+            ]
+         }
+      },
+      {
+         "id": 101,
+         "material": {
+            "albedoAndRoughness": [
+               0.86,
+               0.43,
+               0.14,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Barrier_1",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -12.0,
+               0.4,
+               -16
+            ],
+            "rotation": [
+               0,
+               0.0,
+               0,
+               1.0
+            ],
+            "scale": [
+               1.8,
+               0.8,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 102,
+         "material": {
+            "albedoAndRoughness": [
+               0.88,
+               0.48,
+               0.19,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Barrier_2",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -9.8,
+               0.4,
+               -16
+            ],
+            "rotation": [
+               0,
+               0.05234,
+               0,
+               0.99863
+            ],
+            "scale": [
+               1.8,
+               0.8,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 103,
+         "material": {
+            "albedoAndRoughness": [
+               0.86,
+               0.43,
+               0.14,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Barrier_3",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -7.6,
+               0.4,
+               -16
+            ],
+            "rotation": [
+               0,
+               -0.04362,
+               0,
+               0.99905
+            ],
+            "scale": [
+               1.8,
+               0.8,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 104,
+         "material": {
+            "albedoAndRoughness": [
+               0.88,
+               0.48,
+               0.19,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Barrier_4",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -5.4,
+               0.4,
+               -16
+            ],
+            "rotation": [
+               0,
+               0.0349,
+               0,
+               0.99939
+            ],
+            "scale": [
+               1.8,
+               0.8,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 105,
+         "material": {
+            "albedoAndRoughness": [
+               0.86,
+               0.43,
+               0.14,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Barrier_5",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -3.2,
+               0.4,
+               -16
+            ],
+            "rotation": [
+               0,
+               -0.06105,
+               0,
+               0.99813
+            ],
+            "scale": [
+               1.8,
+               0.8,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 106,
+         "material": {
+            "albedoAndRoughness": [
+               0.88,
+               0.48,
+               0.19,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Barrier_6",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -1.0,
+               0.4,
+               -16
+            ],
+            "rotation": [
+               0,
+               0.02618,
+               0,
+               0.99966
+            ],
+            "scale": [
+               1.8,
+               0.8,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 107,
+         "material": {
+            "albedoAndRoughness": [
+               0.68,
+               0.26,
+               0.05,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Pillar_5",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -16,
+               1.5,
+               -17
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.8,
+               3,
+               0.8
+            ]
+         }
+      },
+      {
+         "id": 108,
+         "material": {
+            "albedoAndRoughness": [
+               0.68,
+               0.26,
+               0.05,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Pillar_6",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -16,
+               1.5,
+               -14
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.8,
+               3,
+               0.8
+            ]
+         }
+      },
+      {
+         "id": 109,
+         "material": {
+            "albedoAndRoughness": [
+               0.68,
+               0.26,
+               0.05,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Pillar_7",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -16,
+               1.5,
+               -11
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.8,
+               3,
+               0.8
+            ]
+         }
+      },
+      {
+         "id": 110,
+         "material": {
+            "albedoAndRoughness": [
+               0.68,
+               0.26,
+               0.05,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Pillar_8",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -16,
+               1.5,
+               -8
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.8,
+               3,
+               0.8
+            ]
+         }
+      },
+      {
+         "id": 111,
+         "material": {
+            "albedoAndRoughness": [
+               0.86,
+               0.43,
+               0.14,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Divider_West",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -12,
+               1.5,
+               -6
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.4,
+               3,
+               12
+            ]
+         }
+      },
+      {
+         "id": 112,
+         "material": {
+            "albedoAndRoughness": [
+               0.86,
+               0.43,
+               0.14,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Divider_East",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               12,
+               1.5,
+               3
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.4,
+               3,
+               8
+            ]
+         }
+      },
+      {
+         "id": 113,
+         "material": {
+            "albedoAndRoughness": [
+               0.88,
+               0.48,
+               0.19,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Crate_W1",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -16,
+               1.0,
+               3.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               2,
+               2,
+               2
+            ]
+         }
+      },
+      {
+         "id": 114,
+         "material": {
+            "albedoAndRoughness": [
+               0.8,
+               0.38,
+               0.12,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Crate_W2",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -16,
+               1.0,
+               5.6
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               2,
+               2,
+               2
+            ]
+         }
+      },
+      {
+         "id": 115,
+         "material": {
+            "albedoAndRoughness": [
+               0.95,
+               0.62,
+               0.3,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Crate_W3",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -16,
+               3.0,
+               4.55
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               2,
+               2,
+               2
+            ]
+         }
+      },
+      {
+         "id": 116,
+         "material": {
+            "albedoAndRoughness": [
+               0.68,
+               0.26,
+               0.05,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Fulcrum",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               10,
+               0.2,
+               -12
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.4,
+               0.4,
+               1.2
+            ]
+         }
+      },
+      {
+         "id": 117,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Domino_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -7.95,
+               0.51286,
+               -12.5
+            ],
+            "rotation": [
+               0,
+               0,
+               -0.10453,
+               0.99452
+            ],
+            "scale": [
+               0.2,
+               1.0,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 118,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Domino_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -7.45,
+               0.502,
+               -12.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.2,
+               1.0,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 119,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Domino_3",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -6.9,
+               0.502,
+               -12.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.2,
+               1.0,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 120,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Domino_4",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -6.35,
+               0.502,
+               -12.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.2,
+               1.0,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 121,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Domino_5",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -5.8,
+               0.502,
+               -12.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.2,
+               1.0,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 122,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Domino_6",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -5.25,
+               0.502,
+               -12.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.2,
+               1.0,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 123,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Domino_7",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -4.7,
+               0.502,
+               -12.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.2,
+               1.0,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 124,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Domino_8",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -4.15,
+               0.502,
+               -12.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.2,
+               1.0,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 125,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Domino_9",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -3.6,
+               0.502,
+               -12.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.2,
+               1.0,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 126,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Domino_10",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -3.05,
+               0.502,
+               -12.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.2,
+               1.0,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 127,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Domino_11",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -2.5,
+               0.502,
+               -12.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.2,
+               1.0,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 128,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Domino_12",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -1.95,
+               0.502,
+               -12.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.2,
+               1.0,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 129,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Domino_13",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -1.4,
+               0.502,
+               -12.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.2,
+               1.0,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 130,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Domino_14",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -0.85,
+               0.502,
+               -12.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.2,
+               1.0,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 131,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Seesaw_Plank",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               10,
+               0.478,
+               -12
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               4,
+               0.15,
+               1.0
+            ]
+         }
+      },
+      {
+         "id": 132,
+         "material": {
+            "albedoAndRoughness": [
+               0.88,
+               0.45,
+               0.15,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Seesaw_Cube",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               11.5,
+               0.855,
+               -12
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 133,
+         "material": {
+            "albedoAndRoughness": [
+               0.2,
+               0.21,
+               0.23,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Seesaw_Sphere",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               8.6,
+               0.805,
+               -12
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 134,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_PyrB_R1_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -17.21,
+               0.302,
+               -1.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 135,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_PyrB_R1_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -16.605,
+               0.302,
+               -1.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 136,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_PyrB_R1_3",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -16.0,
+               0.302,
+               -1.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 137,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_PyrB_R1_4",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -15.395,
+               0.302,
+               -1.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 138,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_PyrB_R1_5",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -14.79,
+               0.302,
+               -1.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 139,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_PyrB_R2_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -16.9075,
+               0.907,
+               -1.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 140,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_PyrB_R2_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -16.3025,
+               0.907,
+               -1.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 141,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_PyrB_R2_3",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -15.6975,
+               0.907,
+               -1.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 142,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_PyrB_R2_4",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -15.0925,
+               0.907,
+               -1.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 143,
+         "material": {
+            "albedoAndRoughness": [
+               0.97,
+               0.72,
+               0.45,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_PyrB_R3_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -16.605,
+               1.512,
+               -1.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 144,
+         "material": {
+            "albedoAndRoughness": [
+               0.97,
+               0.72,
+               0.45,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_PyrB_R3_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -16.0,
+               1.512,
+               -1.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 145,
+         "material": {
+            "albedoAndRoughness": [
+               0.97,
+               0.72,
+               0.45,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_PyrB_R3_3",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -15.395,
+               1.512,
+               -1.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 146,
+         "material": {
+            "albedoAndRoughness": [
+               0.88,
+               0.45,
+               0.15,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_PyrB_R4_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -16.3025,
+               2.117,
+               -1.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 147,
+         "material": {
+            "albedoAndRoughness": [
+               0.88,
+               0.45,
+               0.15,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_PyrB_R4_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -15.6975,
+               2.117,
+               -1.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 148,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_PyrB_R5_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -16.0,
+               2.722,
+               -1.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 149,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Plateau_R1_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               14.395,
+               1.802,
+               12
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 150,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Plateau_R1_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               15.0,
+               1.802,
+               12
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 151,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Plateau_R1_3",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               15.605,
+               1.802,
+               12
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 152,
+         "material": {
+            "albedoAndRoughness": [
+               0.97,
+               0.72,
+               0.45,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Plateau_R2_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               14.6975,
+               2.407,
+               12
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 153,
+         "material": {
+            "albedoAndRoughness": [
+               0.97,
+               0.72,
+               0.45,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Plateau_R2_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               15.3025,
+               2.407,
+               12
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 154,
+         "material": {
+            "albedoAndRoughness": [
+               0.88,
+               0.45,
+               0.15,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Plateau_R3_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               15.0,
+               3.012,
+               12
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 155,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_ZigTower_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -14,
+               2.652,
+               14
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 156,
+         "material": {
+            "albedoAndRoughness": [
+               0.97,
+               0.72,
+               0.45,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_ZigTower_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -14,
+               3.157,
+               14
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 157,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_ZigTower_3",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -14,
+               3.662,
+               14
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 158,
+         "material": {
+            "albedoAndRoughness": [
+               0.97,
+               0.72,
+               0.45,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_ZigTower_4",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -14,
+               4.167,
+               14
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 159,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Brick_R1_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               4.79,
+               0.302,
+               -15
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 160,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Brick_R1_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               5.395,
+               0.302,
+               -15
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 161,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Brick_R1_3",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               6.0,
+               0.302,
+               -15
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 162,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Brick_R1_4",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               6.605,
+               0.302,
+               -15
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 163,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Brick_R1_5",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               7.21,
+               0.302,
+               -15
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 164,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Brick_R2_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               5.0925,
+               0.907,
+               -15
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 165,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Brick_R2_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               5.6975,
+               0.907,
+               -15
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 166,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Brick_R2_3",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               6.3025,
+               0.907,
+               -15
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 167,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Brick_R2_4",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               6.9075,
+               0.907,
+               -15
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 168,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Brick_R3_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               4.79,
+               1.512,
+               -15
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 169,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Brick_R3_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               5.395,
+               1.512,
+               -15
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 170,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Brick_R3_3",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               6.0,
+               1.512,
+               -15
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 171,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Brick_R3_4",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               6.605,
+               1.512,
+               -15
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 172,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Brick_R3_5",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               7.21,
+               1.512,
+               -15
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 173,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Brick_R4_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               5.0925,
+               2.117,
+               -15
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 174,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Brick_R4_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               5.6975,
+               2.117,
+               -15
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 175,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Brick_R4_3",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               6.3025,
+               2.117,
+               -15
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 176,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Brick_R4_4",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               6.9075,
+               2.117,
+               -15
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 177,
+         "material": {
+            "albedoAndRoughness": [
+               0.2,
+               0.21,
+               0.23,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_TowerA",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               15,
+               5.402,
+               -15
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.8,
+               0.8,
+               0.8
+            ]
+         }
+      },
+      {
+         "id": 178,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.93,
+               0.92,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_TowerB",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               15,
+               5.402,
+               -7
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.8,
+               0.8,
+               0.8
+            ]
+         }
+      },
+      {
+         "id": 179,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.93,
+               0.92,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Bridge",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               15,
+               5.602,
+               -11
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 180,
+         "material": {
+            "albedoAndRoughness": [
+               0.2,
+               0.21,
+               0.23,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Plateau_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               13,
+               1.802,
+               10
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 181,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.93,
+               0.92,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Plateau_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               17,
+               1.802,
+               14
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 182,
+         "material": {
+            "albedoAndRoughness": [
+               0.2,
+               0.21,
+               0.23,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Plateau_3",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               13.5,
+               1.802,
+               14.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 183,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.93,
+               0.92,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Zig_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -18.3,
+               1.102,
+               10
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 184,
+         "material": {
+            "albedoAndRoughness": [
+               0.2,
+               0.21,
+               0.23,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Zig_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -9.7,
+               1.102,
+               10
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 185,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.93,
+               0.92,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Zig_3",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -18.3,
+               1.102,
+               18
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 186,
+         "material": {
+            "albedoAndRoughness": [
+               0.2,
+               0.21,
+               0.23,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Zig_4",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -9.7,
+               1.102,
+               18
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 187,
+         "material": {
+            "albedoAndRoughness": [
+               0.2,
+               0.21,
+               0.23,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Drop_6",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -10,
+               3.0,
+               -14.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.8,
+               0.8,
+               0.8
+            ]
+         }
+      },
+      {
+         "id": 188,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.93,
+               0.92,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Drop_7",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               4,
+               3.5,
+               -15.0
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               1.0,
+               1.0,
+               1.0
+            ]
+         }
+      },
+      {
+         "id": 189,
+         "material": {
+            "albedoAndRoughness": [
+               0.2,
+               0.21,
+               0.23,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Drop_8",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               18,
+               4.0,
+               -2.0
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.7,
+               0.7,
+               0.7
+            ]
+         }
+      },
+      {
+         "id": 190,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.93,
+               0.92,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Drop_9",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -18,
+               3.0,
+               -17.0
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 191,
+         "material": {
+            "albedoAndRoughness": [
+               0.2,
+               0.21,
+               0.23,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Drop_10",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               17,
+               3.0,
+               18.0
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.7,
+               0.7,
+               0.7
+            ]
+         }
+      },
+      {
+         "id": 192,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.93,
+               0.92,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Drop_11",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               0,
+               3.0,
+               14.0
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               1.2,
+               1.2,
+               1.2
+            ]
+         }
+      },
+      {
+         "id": 193,
+         "material": {
+            "albedoAndRoughness": [
+               0.2,
+               0.21,
+               0.23,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Drop_12",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               6,
+               3.0,
+               15.0
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.8,
+               0.8,
+               0.8
+            ]
+         }
+      },
+      {
+         "id": 194,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.93,
+               0.92,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Drop_13",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               10,
+               3.0,
+               17.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.9,
+               0.9,
+               0.9
+            ]
+         }
+      },
+      {
+         "id": 195,
+         "material": {
+            "albedoAndRoughness": [
+               0.2,
+               0.21,
+               0.23,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Drop_14",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -17,
+               5.0,
+               0.5
+            ],
+            "rotation": [
+               0,
+               0,
+               0,
+               1
+            ],
+            "scale": [
+               0.8,
+               0.8,
+               0.8
+            ]
+         }
+      },
+      {
+         "id": 29,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyramid_R1_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -8.0575,
+               0.352,
+               -6.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.7,
+               0.7,
+               0.7
+            ]
+         }
+      },
+      {
+         "id": 30,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyramid_R1_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -7.3525,
+               0.352,
+               -6.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.7,
+               0.7,
+               0.7
+            ]
+         }
+      },
+      {
+         "id": 31,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyramid_R1_3",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -6.6475,
+               0.352,
+               -6.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.7,
+               0.7,
+               0.7
+            ]
+         }
+      },
+      {
+         "id": 32,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyramid_R1_4",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -5.9425,
+               0.352,
+               -6.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.7,
+               0.7,
+               0.7
+            ]
+         }
+      },
+      {
+         "id": 33,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyramid_R2_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -7.705,
+               1.057,
+               -6.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.7,
+               0.7,
+               0.7
+            ]
+         }
+      },
+      {
+         "id": 34,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyramid_R2_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -7.0,
+               1.057,
+               -6.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.7,
+               0.7,
+               0.7
+            ]
+         }
+      },
+      {
+         "id": 35,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyramid_R2_3",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -6.295,
+               1.057,
+               -6.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.7,
+               0.7,
+               0.7
+            ]
+         }
+      },
+      {
+         "id": 36,
+         "material": {
+            "albedoAndRoughness": [
+               0.97,
+               0.72,
+               0.45,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyramid_R3_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -7.3525,
+               1.762,
+               -6.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.7,
+               0.7,
+               0.7
+            ]
+         }
+      },
+      {
+         "id": 37,
+         "material": {
+            "albedoAndRoughness": [
+               0.97,
+               0.72,
+               0.45,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyramid_R3_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -6.6475,
+               1.762,
+               -6.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.7,
+               0.7,
+               0.7
+            ]
+         }
+      },
+      {
+         "id": 38,
+         "material": {
+            "albedoAndRoughness": [
+               0.88,
+               0.45,
+               0.15,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyramid_R4_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -7.0,
+               2.467,
+               -6.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.7,
+               0.7,
+               0.7
+            ]
+         }
+      },
+      {
+         "id": 39,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Tower_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               0.0,
+               0.302,
+               -7.5
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 40,
+         "material": {
+            "albedoAndRoughness": [
+               0.97,
+               0.72,
+               0.45,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Tower_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               0.0,
+               0.907,
+               -7.5
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 41,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Tower_3",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               0.0,
+               1.512,
+               -7.5
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 42,
+         "material": {
+            "albedoAndRoughness": [
+               0.97,
+               0.72,
+               0.45,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Tower_4",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               0.0,
+               2.117,
+               -7.5
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 43,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Tower_5",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               0.0,
+               2.722,
+               -7.5
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 44,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Wall_R1_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               5.2375,
+               0.252,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 45,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Wall_R1_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               5.7425,
+               0.252,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 46,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Wall_R1_3",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               6.2475,
+               0.252,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 47,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Wall_R1_4",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               6.7525,
+               0.252,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 48,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Wall_R1_5",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               7.2575,
+               0.252,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 49,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Wall_R1_6",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               7.7625,
+               0.252,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 50,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Wall_R2_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               5.49,
+               0.757,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 51,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Wall_R2_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               5.995,
+               0.757,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 52,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Wall_R2_3",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               6.5,
+               0.757,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 53,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Wall_R2_4",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               7.005,
+               0.757,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 54,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Wall_R2_5",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               7.51,
+               0.757,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 55,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Wall_R3_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               5.2375,
+               1.262,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 56,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Wall_R3_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               5.7425,
+               1.262,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 57,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Wall_R3_3",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               6.2475,
+               1.262,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 58,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Wall_R3_4",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               6.7525,
+               1.262,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 59,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Wall_R3_5",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               7.2575,
+               1.262,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 60,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Wall_R3_6",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               7.7625,
+               1.262,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 61,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Wall_R4_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               5.49,
+               1.767,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 62,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Wall_R4_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               5.995,
+               1.767,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 63,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Wall_R4_3",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               6.5,
+               1.767,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 64,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Wall_R4_4",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               7.005,
+               1.767,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 65,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Wall_R4_5",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               7.51,
+               1.767,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 66,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyr3D_L1_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               0.995,
+               0.252,
+               3.695
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 67,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyr3D_L1_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               0.995,
+               0.252,
+               4.2
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 68,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyr3D_L1_3",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               0.995,
+               0.252,
+               4.705
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 69,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyr3D_L1_4",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               1.5,
+               0.252,
+               3.695
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 70,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyr3D_L1_5",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               1.5,
+               0.252,
+               4.2
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 71,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyr3D_L1_6",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               1.5,
+               0.252,
+               4.705
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 72,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyr3D_L1_7",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               2.005,
+               0.252,
+               3.695
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 73,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyr3D_L1_8",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               2.005,
+               0.252,
+               4.2
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 74,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.82,
+               0.66,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyr3D_L1_9",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               2.005,
+               0.252,
+               4.705
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 75,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyr3D_L2_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               1.2475,
+               0.757,
+               3.9475
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 76,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyr3D_L2_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               1.2475,
+               0.757,
+               4.4525
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 77,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyr3D_L2_3",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               1.7525,
+               0.757,
+               3.9475
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 78,
+         "material": {
+            "albedoAndRoughness": [
+               0.96,
+               0.89,
+               0.78,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyr3D_L2_4",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               1.7525,
+               0.757,
+               4.4525
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 79,
+         "material": {
+            "albedoAndRoughness": [
+               0.88,
+               0.45,
+               0.15,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Cube_Pyr3D_L3_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               1.5,
+               1.262,
+               4.2
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               0.5
+            ]
+         }
+      },
+      {
+         "id": 80,
+         "material": {
+            "albedoAndRoughness": [
+               0.2,
+               0.21,
+               0.23,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Drop_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -1.5,
+               4.0,
+               3.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.8,
+               0.8,
+               0.8
+            ]
+         }
+      },
+      {
+         "id": 81,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.93,
+               0.92,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Drop_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -0.5,
+               4.0,
+               -5.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               1.0,
+               1.0,
+               1.0
+            ]
+         }
+      },
+      {
+         "id": 82,
+         "material": {
+            "albedoAndRoughness": [
+               0.2,
+               0.21,
+               0.23,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Drop_3",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               7.0,
+               3.0,
+               -1.5
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 83,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.93,
+               0.92,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Drop_4",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               -8.6,
+               3.0,
+               -3.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.7,
+               0.7,
+               0.7
+            ]
+         }
+      },
+      {
+         "id": 84,
+         "material": {
+            "albedoAndRoughness": [
+               0.2,
+               0.21,
+               0.23,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Drop_5",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               4.2,
+               3.5,
+               4.5
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.9,
+               0.9,
+               0.9
+            ]
+         }
+      },
+      {
+         "id": 85,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.93,
+               0.92,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Platform_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               6.5,
+               2.42,
+               -6.5
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.8,
+               0.8,
+               0.8
+            ]
+         }
+      },
+      {
+         "id": 86,
+         "material": {
+            "albedoAndRoughness": [
+               0.2,
+               0.21,
+               0.23,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Platform_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               8.0,
+               2.32,
+               -8.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 87,
+         "material": {
+            "albedoAndRoughness": [
+               0.2,
+               0.21,
+               0.23,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Floor_1",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               0.5,
+               0.52,
+               8.5
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               1.0,
+               1.0,
+               1.0
+            ]
+         }
+      },
+      {
+         "id": 88,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.93,
+               0.92,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Floor_2",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               8.5,
+               0.37,
+               8.5
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.7,
+               0.7,
+               0.7
+            ]
+         }
+      },
+      {
+         "id": 89,
+         "material": {
+            "albedoAndRoughness": [
+               0.2,
+               0.21,
+               0.23,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Floor_3",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               3.3,
+               0.32,
+               -1.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.6,
+               0.6,
+               0.6
+            ]
+         }
+      },
+      {
+         "id": 90,
+         "material": {
+            "albedoAndRoughness": [
+               0.93,
+               0.93,
+               0.92,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Sphere_Large",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               4.5,
+               0.82,
+               -2.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               1.6,
+               1.6,
+               1.6
+            ]
+         }
+      },
+      {
+         "id": 28,
+         "material": {
+            "albedoAndRoughness": [
+               0.75,
+               0.75,
+               0.75,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 1
+         },
+         "name": "Ball",
+         "physics": {
+            "canBecomeDynamic": true,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 2
+         },
+         "transform": {
+            "position": [
+               6.837442874908447,
+               0.6085078716278076,
+               7.149268627166748
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               1.0,
+               1.0,
+               1.0
+            ]
+         }
+      },
+      {
+         "id": 27,
+         "light": {
+            "colorAndEnabled": [
+               0.48394620418548584,
+               1.0,
+               0.3907380700111389,
+               1.0
+            ],
+            "intensity": 200000.0,
+            "range": 20.0
+         },
+         "name": "PointLight",
+         "transform": {
+            "position": [
+               0.8224132657051086,
+               1.3087973594665527,
+               7.603416442871094
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               1.0,
+               1.0,
+               1.0
+            ]
+         }
+      },
+      {
+         "camera": {
+            "input": {
+               "focused": false,
+               "pitch": -16.227460861206055,
+               "sensitivity": 1.0,
+               "speed": 2.0,
+               "yaw": -68.94298553466797
+            },
+            "isPrimary": true,
+            "settings": {
+               "exposure": 0.0001500000071246177,
+               "fov": 45.0,
+               "zFar": 100.0,
+               "zNear": 0.10000000149011612
+            },
+            "transform": {
+               "forward": [
+                  0.3449823260307312,
+                  -0.2794513404369354,
+                  -0.8960437178611755
+               ],
+               "position": [
+                  4.425082683563232,
+                  2.3243229389190674,
+                  9.682401657104492
+               ],
+               "right": [
+                  0.9332234263420105,
+                  -0.0,
+                  0.3592967391014099
+               ],
+               "up": [
+                  0.0,
+                  1.0,
+                  0.0
+               ]
+            }
+         },
+         "id": 26,
+         "name": "SimulationCamera",
+         "transform": {
+            "position": [
+               4.425082683563232,
+               2.3243229389190674,
+               9.682401657104492
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               1.0,
+               1.0,
+               1.0
+            ]
+         }
+      },
+      {
+         "id": 25,
+         "material": {
+            "albedoAndRoughness": [
+               0.8799999952316284,
+               0.44999998807907104,
+               0.15000000596046448,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Step_Wide",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               3.5,
+               0.20000000298023224,
+               7.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               3.0,
+               0.4000000059604645,
+               1.5
+            ]
+         }
+      },
+      {
+         "id": 24,
+         "material": {
+            "albedoAndRoughness": [
+               0.949999988079071,
+               0.6000000238418579,
+               0.2800000011920929,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Bridge_Beam",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -3.0,
+               3.1500000953674316,
+               -3.5
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.6000000238418579,
+               0.30000001192092896,
+               7.0
+            ]
+         }
+      },
+      {
+         "id": 23,
+         "material": {
+            "albedoAndRoughness": [
+               0.75,
+               0.3100000023841858,
+               0.07999999821186066,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Bench_Low",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -6.0,
+               0.25,
+               5.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               3.0,
+               0.5,
+               0.800000011920929
+            ]
+         }
+      },
+      {
+         "id": 22,
+         "material": {
+            "albedoAndRoughness": [
+               0.9700000286102295,
+               0.7200000286102295,
+               0.44999998807907104,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Crate_Small",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               0.5,
+               1.75,
+               -2.5
+            ],
+            "rotation": [
+               0.0,
+               0.3420201539993286,
+               0.0,
+               0.9396926164627075
+            ],
+            "scale": [
+               0.800000011920929,
+               0.5,
+               0.800000011920929
+            ]
+         }
+      },
+      {
+         "id": 21,
+         "material": {
+            "albedoAndRoughness": [
+               0.8199999928474426,
+               0.3799999952316284,
+               0.10000000149011612,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Crate_Medium",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               1.600000023841858,
+               0.5,
+               -1.399999976158142
+            ],
+            "rotation": [
+               0.0,
+               -0.13052618503570557,
+               0.0,
+               0.9914448857307434
+            ],
+            "scale": [
+               1.0,
+               1.0,
+               1.0
+            ]
+         }
+      },
+      {
+         "id": 20,
+         "material": {
+            "albedoAndRoughness": [
+               0.9300000071525574,
+               0.550000011920929,
+               0.2199999988079071,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Crate_Large",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               0.5,
+               0.75,
+               -2.5
+            ],
+            "rotation": [
+               0.0,
+               0.2164396196603775,
+               0.0,
+               0.9762960076332092
+            ],
+            "scale": [
+               1.5,
+               1.5,
+               1.5
+            ]
+         }
+      },
+      {
+         "id": 19,
+         "material": {
+            "albedoAndRoughness": [
+               0.6800000071525574,
+               0.25999999046325684,
+               0.05000000074505806,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Pillar_4",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -1.0,
+               1.5,
+               6.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.800000011920929,
+               3.0,
+               0.800000011920929
+            ]
+         }
+      },
+      {
+         "id": 18,
+         "material": {
+            "albedoAndRoughness": [
+               0.6800000071525574,
+               0.25999999046325684,
+               0.05000000074505806,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Pillar_3",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               3.0,
+               1.5,
+               2.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.800000011920929,
+               3.0,
+               0.800000011920929
+            ]
+         }
+      },
+      {
+         "id": 17,
+         "material": {
+            "albedoAndRoughness": [
+               0.6800000071525574,
+               0.25999999046325684,
+               0.05000000074505806,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Pillar_2",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -3.0,
+               1.5,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.800000011920929,
+               3.0,
+               0.800000011920929
+            ]
+         }
+      },
+      {
+         "id": 16,
+         "material": {
+            "albedoAndRoughness": [
+               0.6800000071525574,
+               0.25999999046325684,
+               0.05000000074505806,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Pillar_1",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -3.0,
+               1.5,
+               -7.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.800000011920929,
+               3.0,
+               0.800000011920929
+            ]
+         }
+      },
+      {
+         "id": 15,
+         "material": {
+            "albedoAndRoughness": [
+               0.8199999928474426,
+               0.4000000059604645,
+               0.12999999523162842,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Stair_4",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               3.75,
+               1.0,
+               -6.5
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               2.0,
+               3.0
+            ]
+         }
+      },
+      {
+         "id": 14,
+         "material": {
+            "albedoAndRoughness": [
+               0.8799999952316284,
+               0.47999998927116394,
+               0.1899999976158142,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Stair_3",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               3.25,
+               0.75,
+               -6.5
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               1.5,
+               3.0
+            ]
+         }
+      },
+      {
+         "id": 13,
+         "material": {
+            "albedoAndRoughness": [
+               0.9300000071525574,
+               0.5799999833106995,
+               0.27000001072883606,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Stair_2",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               2.75,
+               0.5,
+               -6.5
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               1.0,
+               3.0
+            ]
+         }
+      },
+      {
+         "id": 12,
+         "material": {
+            "albedoAndRoughness": [
+               0.9700000286102295,
+               0.6800000071525574,
+               0.3799999952316284,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Stair_1",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               2.25,
+               0.25,
+               -6.5
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.5,
+               0.5,
+               3.0
+            ]
+         }
+      },
+      {
+         "id": 11,
+         "material": {
+            "albedoAndRoughness": [
+               0.949999988079071,
+               0.6200000047683716,
+               0.30000001192092896,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Platform_High",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               6.5,
+               1.0,
+               -6.5
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               5.0,
+               2.0,
+               5.0
+            ]
+         }
+      },
+      {
+         "id": 10,
+         "material": {
+            "albedoAndRoughness": [
+               0.8399999737739563,
+               0.3799999952316284,
+               0.10000000149011612,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Ramp_C_Side",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -6.456897735595703,
+               0.6063260436058044,
+               7.0
+            ],
+            "rotation": [
+               -0.10268119722604752,
+               0.6996117234230042,
+               0.10268119722604752,
+               0.6996117234230042
+            ],
+            "scale": [
+               3.0,
+               0.30000001192092896,
+               5.220153331756592
+            ]
+         }
+      },
+      {
+         "id": 9,
+         "material": {
+            "albedoAndRoughness": [
+               0.7400000095367432,
+               0.28999999165534973,
+               0.05999999865889549,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Ramp_B_Steep",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               7.0,
+               0.8658359050750732,
+               3.932918071746826
+            ],
+            "rotation": [
+               -1.4068309009581345e-17,
+               0.9732490181922913,
+               0.22975291311740875,
+               5.959431325816658e-17
+            ],
+            "scale": [
+               3.0,
+               0.30000001192092896,
+               4.4721360206604
+            ]
+         }
+      },
+      {
+         "id": 8,
+         "material": {
+            "albedoAndRoughness": [
+               0.800000011920929,
+               0.33000001311302185,
+               0.07000000029802322,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Ramp_A_Gentle",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -6.0,
+               0.6044785976409912,
+               1.0363802909851074
+            ],
+            "rotation": [
+               -0.12218326330184937,
+               0.0,
+               0.0,
+               0.9925075769424438
+            ],
+            "scale": [
+               4.0,
+               0.30000001192092896,
+               6.184658527374268
+            ]
+         }
+      },
+      {
+         "id": 7,
+         "material": {
+            "albedoAndRoughness": [
+               0.8600000143051147,
+               0.4300000071525574,
+               0.14000000059604645,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Wall_West",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               -19.8,
+               3.0,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.4,
+               6.0,
+               40.0
+            ]
+         }
+      },
+      {
+         "id": 6,
+         "material": {
+            "albedoAndRoughness": [
+               0.8600000143051147,
+               0.4300000071525574,
+               0.14000000059604645,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Wall_East",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               19.8,
+               3.0,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               0.4,
+               6.0,
+               40.0
+            ]
+         }
+      },
+      {
+         "id": 5,
+         "material": {
+            "albedoAndRoughness": [
+               0.8999999761581421,
+               0.47999998927116394,
+               0.18000000715255737,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Wall_South",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               0.0,
+               3.0,
+               19.8
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               40.0,
+               6.0,
+               0.4
+            ]
+         }
+      },
+      {
+         "id": 4,
+         "material": {
+            "albedoAndRoughness": [
+               0.8999999761581421,
+               0.47999998927116394,
+               0.18000000715255737,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Wall_North",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               0.0,
+               3.0,
+               -19.8
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               40.0,
+               6.0,
+               0.4
+            ]
+         }
+      },
+      {
+         "id": 3,
+         "material": {
+            "albedoAndRoughness": [
+               0.8999999761581421,
+               0.8899999856948853,
+               0.8700000047683716,
+               1.0
+            ],
+            "pbrParams": [
+               1.0,
+               0.019999999552965164,
+               0.0,
+               0.0
+            ]
+         },
+         "mesh": {
+            "path": "",
+            "type": 0
+         },
+         "name": "Floor",
+         "physics": {
+            "canBecomeDynamic": false,
+            "isSensor": false,
+            "mass": 0.0,
+            "type": 0
+         },
+         "transform": {
+            "position": [
+               0.0,
+               -0.10000000149011612,
+               0.0
+            ],
+            "rotation": [
+               0.0,
+               0.0,
+               0.0,
+               1.0
+            ],
+            "scale": [
+               40.0,
+               0.2,
+               40.0
+            ]
+         }
+      },
+      {
+         "id": 196,
+         "name": "Shooter",
+         "script": {
+            "name": "SphereShooter",
+            "params": {
+               "force": 20,
+               "maxBullets": 50,
+               "sensitivity": 0.1
+            }
+         }
+      }
+   ],
+   "main_camera": 26,
+   "meta": {
+      "camera_name_count": 1,
+      "light_name_count": 2,
+      "mesh_name_count": 190,
+      "name": "MainScene",
+      "save_path": "/home/silviu/Documents/arena.klx"
+   },
+   "sun": {
+      "colorAndEnabled": [
+         1.0,
+         1.0,
+         1.0,
+         1.0
+      ],
+      "directionAndIntensity": [
+         -0.18000000715255737,
+         -0.41999998688697815,
+         -0.6499999761581421,
+         100000.0
+      ]
+   },
+   "version_major": 3,
+   "version_minor": 0
+}
