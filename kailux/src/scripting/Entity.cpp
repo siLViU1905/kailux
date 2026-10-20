@@ -1,12 +1,69 @@
 #include "Entity.h"
 
+#include "Log.h"
 #include "components/entt/LocalTransform.h"
+#include "components/entt/NativeScriptComponent.h"
 #include "components/entt/PhysicsControlComponent.h"
+#include "components/entt/PhysicsInterpolation.h"
 #include "components/entt/TagComponent.h"
+#include "components/entt/WorldTransform.h"
 #include "scene/Scene.h"
 
 namespace kailux
 {
+     namespace details
+    {
+        static PhysicsRegistry* physics_registry(Scene &scene)
+        {
+            auto* const* registry{scene.GetEntityRegistry().ctx().find<PhysicsRegistry*>()};
+            return registry ? *registry : nullptr;
+        }
+
+        static PhysicsBodyType to_physics_type(BodyType type)
+        {
+            switch (type)
+            {
+                case BodyType::Kinematic:
+                    return PhysicsBodyType::Kinematic;
+                case BodyType::Dynamic:
+                    return PhysicsBodyType::Dynamic;
+                default:
+                    return PhysicsBodyType::Static;
+            }
+        }
+
+        static BodyType from_physics_type(PhysicsBodyType type)
+        {
+            switch (type)
+            {
+                case PhysicsBodyType::Kinematic:
+                    return BodyType::Kinematic;
+                case PhysicsBodyType::Dynamic:
+                    return BodyType::Dynamic;
+                default:
+                    return BodyType::Static;
+            }
+        }
+
+         static void sync_body(Scene &scene, entt::entity entity, bool includeKinematic)
+        {
+            auto& registry{scene.GetEntityRegistry()};
+            const auto* physics{registry.try_get<PhysicsComponent>(entity)};
+            if (!physics || !physics->handle.Valid())
+                return;
+            if (physics->type == PhysicsBodyType::Kinematic && !includeKinematic)
+                return;
+            auto* bodies{physics_registry(scene)};
+            if (!bodies)
+                return;
+
+            const auto world{Transform::from_matrix(registry.get<WorldTransform>(entity).model)};
+            bodies->SetBodyTransform(physics->handle, world.position, world.rotation);
+            if (auto* interpolation{registry.try_get<PhysicsInterpolation>(entity)})
+                *interpolation = {world.position, world.position, world.rotation, world.rotation};
+        }
+    }
+
     TransformRef::TransformRef(Scene &scene, entt::entity handle) : pScene(&scene), mHandle(handle)
     {
     }
@@ -73,10 +130,28 @@ namespace kailux
     void TransformRef::Set(const Transform &transform) const
     {
         pScene->SetLocalTransform(mHandle, transform);
+         details::sync_body(*pScene, mHandle, false);
     }
 
     RigidBody::RigidBody(Scene &scene, entt::entity handle) : pScene(&scene), mHandle(handle)
     {
+    }
+
+    Script * Entity::GetScriptInstance() const
+    {
+         const auto* script{TryGet<NativeScriptComponent>()};
+         return script ? script->instance.get() : nullptr;
+    }
+
+    void Entity::AddScriptFactory(Scoped<Script>(*factory)()) const
+    {
+         if (!Valid() || Has<NativeScriptComponent>())
+         {
+             log::console.Warning("Cannot add script to '{}': invalid entity or it already has a script", GetName());
+             return;
+         }
+
+         GetRegistry().emplace<NativeScriptComponent>(mHandle).Instantiate = factory;
     }
 
     bool RigidBody::Valid() const
@@ -88,6 +163,38 @@ namespace kailux
         const auto* physics{pScene->GetEntityRegistry().try_get<PhysicsComponent>(mHandle)};
         return physics && physics->IsDynamic();
     }
+
+    bool RigidBody::IsSensor() const
+    {
+         const auto* physics{pScene->GetEntityRegistry().try_get<PhysicsComponent>(mHandle)};
+         return physics && physics->isSensor;
+    }
+
+    bool RigidBody::SetType(BodyType type)
+    {
+         auto* physics{pScene->GetEntityRegistry().try_get<PhysicsComponent>(mHandle)};
+         auto* bodies{details::physics_registry(*pScene)};
+         if (!physics || !physics->handle.Valid() || !bodies)
+             return false;
+
+         const auto physicsType{details::to_physics_type(type)};
+         if (!bodies->SetBodyType(physics->handle, physicsType))
+         {
+             log::console.Warning("'{}' cannot change body type, it was not created with canBecomeDynamic",
+                                  Entity{*pScene, mHandle}.GetName());
+             return false;
+         }
+         physics->type = physicsType;
+         details::sync_body(*pScene, mHandle, true);
+         return true;
+    }
+
+    BodyType RigidBody::GetType() const
+    {
+         const auto* physics{pScene->GetEntityRegistry().try_get<PhysicsComponent>(mHandle)};
+         return physics ? details::from_physics_type(physics->type) : BodyType::Static;
+    }
+
     void RigidBody::SetForce(const glm::vec3 &force)
     {
         auto& control{pScene->GetEntityRegistry().get_or_emplace<PhysicsControlComponent>(mHandle)};
@@ -108,11 +215,77 @@ namespace kailux
         control.impulse      = control.applyImpulse ? control.impulse + impulse : impulse;
         control.applyImpulse = true;
     }
+
+    void RigidBody::SetVelocity(const glm::vec3 &velocity)
+    {
+         auto& registry{pScene->GetEntityRegistry()};
+         const auto* physics{registry.try_get<PhysicsComponent>(mHandle)};
+         auto* bodies{details::physics_registry(*pScene)};
+         if (!physics || !physics->handle.Valid() || !bodies)
+             return;
+
+         bodies->SetLinearVelocity(physics->handle, velocity);
+         registry.get_or_emplace<PhysicsControlComponent>(mHandle).velocity = velocity;
+    }
+
     glm::vec3 RigidBody::GetVelocity() const
     {
         if (const auto* control{pScene->GetEntityRegistry().try_get<PhysicsControlComponent>(mHandle)})
             return control->velocity;
         return glm::vec3{0.f};
+    }
+
+    void RigidBody::SetAngularVelocity(const glm::vec3 &velocity)
+    {
+         const auto* physics{pScene->GetEntityRegistry().try_get<PhysicsComponent>(mHandle)};
+         auto* bodies{details::physics_registry(*pScene)};
+         if (!physics || !physics->handle.Valid() || !bodies)
+             return;
+
+         bodies->SetAngularVelocity(physics->handle, velocity);
+    }
+
+    glm::vec3 RigidBody::GetAngularVelocity() const
+    {
+         const auto* physics{pScene->GetEntityRegistry().try_get<PhysicsComponent>(mHandle)};
+         const auto* bodies{details::physics_registry(*pScene)};
+         if (!physics || !physics->handle.Valid() || !bodies)
+             return glm::vec3{0.f};
+
+         return bodies->GetAngularVelocity(physics->handle);
+    }
+
+    float RigidBody::GetMass() const
+    {
+         const auto* physics{pScene->GetEntityRegistry().try_get<PhysicsComponent>(mHandle)};
+         const auto* bodies{details::physics_registry(*pScene)};
+         if (!physics || !physics->handle.Valid() || !bodies)
+             return 0.f;
+
+         return bodies->GetBodyMass(physics->handle);
+    }
+
+    void RigidBody::SetMass(float mass)
+    {
+         auto* physics{pScene->GetEntityRegistry().try_get<PhysicsComponent>(mHandle)};
+         auto* bodies{details::physics_registry(*pScene)};
+         if (!physics || !physics->handle.Valid() || !bodies)
+             return;
+
+         bodies->SetBodyMass(physics->handle, mass);
+         physics->mass = std::max(mass, 0.f);
+    }
+
+    void RigidBody::Teleport(const glm::vec3 &position, const glm::quat &rotation)
+    {
+         auto& registry{pScene->GetEntityRegistry()};
+         if (!registry.all_of<WorldTransform>(mHandle))
+             return;
+
+         const auto world{Transform::from_matrix(registry.get<WorldTransform>(mHandle).model)};
+         const Transform target{position, glm::normalize(rotation), world.scale};
+         pScene->SetWorldTransform(mHandle, target.GetModelMatrix());
+         details::sync_body(*pScene, mHandle, true);
     }
 
     Entity::Entity() = default;
@@ -146,6 +319,24 @@ namespace kailux
     RigidBody Entity::GetBody() const
     {
         return RigidBody{*pScene, mHandle};
+    }
+
+    bool Entity::AddScript(std::string_view name) const
+    {
+        if (!Valid() || Has<NativeScriptComponent>())
+        {
+            log::console.Warning("Cannot add script '{}' to '{}':"
+                                 "invalid entity or it already has a script",
+                                 name, GetName());
+            return false;
+        }
+
+        if (!GetRegistry().emplace<NativeScriptComponent>(mHandle).Bind(name))
+        {
+            log::console.Warning("Script '{}' is not registered", name);
+            return false;
+        }
+        return true;
     }
 
     entt::entity Entity::GetHandle() const
