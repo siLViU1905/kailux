@@ -112,3 +112,8 @@ endfunction()
 add_subdirectory(kailux)
 add_subdirectory(prism)
 add_subdirectory(spectrum)
+
+option(KAILUX_BUILD_SAMPLES "Build the sample games" OFF)
+if (KAILUX_BUILD_SAMPLES)
+    add_subdirectory(samples)
+endif ()
