@@ -8908,8 +8908,10 @@
          "script": {
             "name": "SphereShooter",
             "params": {
+               "fireRate": 10,
                "force": 20,
                "maxBullets": 50,
+               "moveSpeed": 5,
                "sensitivity": 0.1
             }
          }
