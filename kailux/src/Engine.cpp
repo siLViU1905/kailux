@@ -538,7 +538,8 @@ namespace kailux
                 {
                     physicsRecord.type,
                     physicsRecord.canBecomeDynamic,
-                    physicsRecord.mass
+                    physicsRecord.mass,
+                    physicsRecord.isSensor
                 }
             );
         });
@@ -2214,7 +2215,8 @@ namespace kailux
                 *handle,
                 options.bodyType,
                 options.canBecomeDynamic,
-                options.mass
+                options.mass,
+                options.isSensor
             }
         );
         return true;
