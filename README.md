@@ -14,6 +14,7 @@ The project is split in three parts:
 kailux - the engine library
 prism  - the editor executable
 spectrum  - the runtime executable
+samples   - small games made with the scripting API
 ```
 
 ## Requirements
@@ -33,6 +34,7 @@ Run the provided batch file with a build type:
 scripts\windows_build.bat debug
 scripts\windows_build.bat release
 scripts\windows_build.bat debug clean
+scripts\windows_build.bat debug samples
 ```
 
 In the build folder you will find the sln file — open it with Visual Studio and build.
@@ -45,6 +47,7 @@ Run the provided shell script with a build type:
 scripts/linux_build.sh debug
 scripts/linux_build.sh release
 scripts/linux_build.sh debug clean
+scripts/linux_build.sh debug samples
 ```
 
 In the build folder you will find the executables: `build/[debug|release]/prism/prism` and `build/[debug|release]/spectrum/spectrum`.
@@ -75,3 +78,30 @@ cd build/debug/spectrum
 ./spectrum path/to/scene.klx
 
 Spectrum renders the scene from the primary camera with the highest MSAA level the GPU supports(can be changed in `Context::GetMaxUsableSampleCount()`), the same way as the simulation view in Prism. The scene needs a camera; without one, Spectrum shows a black screen and the simulation does not start.
+## Samples
+`samples/` holds small games built on Kailux with the scripting API. They are not built by default; turn them on with the `KAILUX_BUILD_SAMPLES` CMake option.
+With the build scripts, add `samples` to the arguments (it can be combined with `clean`):
+```bash
+scripts/linux_build.sh debug samples
+```
+```bat
+scripts\windows_build.bat debug samples
+```
+The option is passed on every run, so running a script without `samples` turns them off again. With CMake directly (or in your IDE's CMake options), pass `-DKAILUX_BUILD_SAMPLES=ON`. To build a single sample, use its target, e.g. `cmake --build . --target sphere_shooter`.
+Each sample gets `shaders/`, `assets/` and its own `scenes/` copied next to the executable, so run it from its own folder.
+### Sphere Shooter
+Loads `scenes/arena.klx` (or the scene passed as the first argument) and shoots dynamic spheres from the camera.
+
+```bash
+cd build/debug/samples/sphere_shooter
+./sphere_shooter
+```
+| Input | Action |
+|---|---|
+| Mouse | Look around |
+| WASD | Move on the ground plane |
+| Space, Left Ctrl | Move up / down |
+| Left Shift | Move twice as fast |
+| Left mouse button (hold) | Shoot |
+| P | Pause / resume |
+`force`, `fireRate`, `moveSpeed`, `sensitivity` and `maxBullets` are script parameters on the `Shooter` entity in the scene file and can be changed without recompiling.

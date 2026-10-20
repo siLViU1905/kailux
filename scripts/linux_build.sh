@@ -7,12 +7,14 @@ PROJECT_ROOT="$(pwd)"
 BUILD_TYPE=""
 BUILD_DIR=""
 DO_CLEAN=0
+BUILD_SAMPLES="OFF"
 
 for arg in "$@"; do
     case "$arg" in
         debug|Debug)     BUILD_TYPE="Debug";   BUILD_DIR="debug" ;;
         release|Release) BUILD_TYPE="Release"; BUILD_DIR="release" ;;
         clean)           DO_CLEAN=1 ;;
+        samples)         BUILD_SAMPLES="ON" ;;
         *) echo "[WARN] unknown arg: $arg" ;;
     esac
 done
@@ -25,11 +27,12 @@ if [ -z "${BUILD_TYPE}" ]; then
     echo "          ./linux_build.sh debug"
     echo "          ./linux_build.sh release"
     echo "          ./linux_build.sh debug clean     (wipe build/ first)"
+    echo "          ./linux_build.sh debug samples   (also build the sample games)"
     exit 1
 fi
 
 JOBS=$(nproc)
-echo "[INFO] Build type: ${BUILD_TYPE}, jobs: ${JOBS}"
+echo "[INFO] Build type: ${BUILD_TYPE}, samples: ${BUILD_SAMPLES}, jobs: ${JOBS}"
 
 conan export scripts/imguizmo
 conan export scripts/imgui
@@ -71,7 +74,8 @@ cmake "${PROJECT_ROOT}" -G "Ninja" \
     -DCMAKE_TOOLCHAIN_FILE="${TOOLCHAIN}" \
     -DCMAKE_CXX_STANDARD=23 \
     -DCMAKE_CXX_STANDARD_REQUIRED=ON \
-    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+    -DKAILUX_BUILD_SAMPLES=${BUILD_SAMPLES}
 
 echo "[INFO] Building with Ninja..."
 cmake --build . -j "${JOBS}"
