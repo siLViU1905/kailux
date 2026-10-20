@@ -25,7 +25,7 @@ namespace sphere_shooter
             const auto look{input.MouseDelta() * params.Get<float>("sensitivity", 0.1f)};
             camera.Rotate(look.x, -look.y);
 
-            if (input.IsMousePressed(kailux::MouseButton::Left))
+            if (input.IsMouseDown(kailux::MouseButton::Left))
                 Shoot(camera, params.Get<float>("force", 20.f));
 
             const auto maxBullets{static_cast<size_t>(params.Get<int>("maxBullets", 50))};

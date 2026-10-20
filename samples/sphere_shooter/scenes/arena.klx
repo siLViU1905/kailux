@@ -1244,7 +1244,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.2,
             "type": 2
          },
          "transform": {
@@ -1290,7 +1290,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.2,
             "type": 2
          },
          "transform": {
@@ -1336,7 +1336,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.2,
             "type": 2
          },
          "transform": {
@@ -1382,7 +1382,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.2,
             "type": 2
          },
          "transform": {
@@ -1428,7 +1428,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.2,
             "type": 2
          },
          "transform": {
@@ -1474,7 +1474,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.2,
             "type": 2
          },
          "transform": {
@@ -1520,7 +1520,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.2,
             "type": 2
          },
          "transform": {
@@ -1566,7 +1566,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.2,
             "type": 2
          },
          "transform": {
@@ -1612,7 +1612,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.2,
             "type": 2
          },
          "transform": {
@@ -1658,7 +1658,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.2,
             "type": 2
          },
          "transform": {
@@ -1704,7 +1704,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.2,
             "type": 2
          },
          "transform": {
@@ -1750,7 +1750,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.2,
             "type": 2
          },
          "transform": {
@@ -1796,7 +1796,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.2,
             "type": 2
          },
          "transform": {
@@ -1842,7 +1842,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.2,
             "type": 2
          },
          "transform": {
@@ -1888,7 +1888,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 6.0,
             "type": 2
          },
          "transform": {
@@ -1934,7 +1934,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -1980,7 +1980,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 0.65,
             "type": 2
          },
          "transform": {
@@ -2026,7 +2026,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -2072,7 +2072,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -2118,7 +2118,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -2164,7 +2164,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -2210,7 +2210,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -2256,7 +2256,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -2302,7 +2302,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -2348,7 +2348,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -2394,7 +2394,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -2440,7 +2440,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -2486,7 +2486,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -2532,7 +2532,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -2578,7 +2578,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -2624,7 +2624,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -2670,7 +2670,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -2716,7 +2716,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -2762,7 +2762,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -2808,7 +2808,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -2854,7 +2854,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -2900,7 +2900,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -2946,7 +2946,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -2992,7 +2992,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -3038,7 +3038,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -3084,7 +3084,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -3130,7 +3130,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -3176,7 +3176,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -3222,7 +3222,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -3268,7 +3268,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -3314,7 +3314,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -3360,7 +3360,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -3406,7 +3406,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -3452,7 +3452,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -3498,7 +3498,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -3544,7 +3544,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -3590,7 +3590,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -3636,7 +3636,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -3682,7 +3682,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -3728,7 +3728,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -3774,7 +3774,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -3820,7 +3820,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -3866,7 +3866,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -3912,7 +3912,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -3958,7 +3958,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -4004,7 +4004,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.68,
             "type": 2
          },
          "transform": {
@@ -4050,7 +4050,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.68,
             "type": 2
          },
          "transform": {
@@ -4096,7 +4096,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.13,
             "type": 2
          },
          "transform": {
@@ -4142,7 +4142,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.13,
             "type": 2
          },
          "transform": {
@@ -4188,7 +4188,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.13,
             "type": 2
          },
          "transform": {
@@ -4234,7 +4234,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.13,
             "type": 2
          },
          "transform": {
@@ -4280,7 +4280,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.13,
             "type": 2
          },
          "transform": {
@@ -4326,7 +4326,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.13,
             "type": 2
          },
          "transform": {
@@ -4372,7 +4372,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.13,
             "type": 2
          },
          "transform": {
@@ -4418,7 +4418,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.13,
             "type": 2
          },
          "transform": {
@@ -4464,7 +4464,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.68,
             "type": 2
          },
          "transform": {
@@ -4510,7 +4510,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 5.24,
             "type": 2
          },
          "transform": {
@@ -4556,7 +4556,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.8,
             "type": 2
          },
          "transform": {
@@ -4602,7 +4602,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.13,
             "type": 2
          },
          "transform": {
@@ -4648,7 +4648,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.8,
             "type": 2
          },
          "transform": {
@@ -4694,7 +4694,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 9.05,
             "type": 2
          },
          "transform": {
@@ -4740,7 +4740,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.68,
             "type": 2
          },
          "transform": {
@@ -4786,7 +4786,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 3.82,
             "type": 2
          },
          "transform": {
@@ -4832,7 +4832,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.68,
             "type": 2
          },
          "transform": {
@@ -4878,7 +4878,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 3.43,
             "type": 2
          },
          "transform": {
@@ -4924,7 +4924,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 3.43,
             "type": 2
          },
          "transform": {
@@ -4970,7 +4970,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 3.43,
             "type": 2
          },
          "transform": {
@@ -5016,7 +5016,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 3.43,
             "type": 2
          },
          "transform": {
@@ -5062,7 +5062,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 3.43,
             "type": 2
          },
          "transform": {
@@ -5108,7 +5108,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 3.43,
             "type": 2
          },
          "transform": {
@@ -5154,7 +5154,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 3.43,
             "type": 2
          },
          "transform": {
@@ -5200,7 +5200,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 3.43,
             "type": 2
          },
          "transform": {
@@ -5246,7 +5246,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 3.43,
             "type": 2
          },
          "transform": {
@@ -5292,7 +5292,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 3.43,
             "type": 2
          },
          "transform": {
@@ -5338,7 +5338,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -5384,7 +5384,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -5430,7 +5430,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -5476,7 +5476,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -5522,7 +5522,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.16,
             "type": 2
          },
          "transform": {
@@ -5568,7 +5568,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -5614,7 +5614,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -5660,7 +5660,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -5706,7 +5706,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -5752,7 +5752,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -5798,7 +5798,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -5844,7 +5844,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -5890,7 +5890,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -5936,7 +5936,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -5982,7 +5982,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -6028,7 +6028,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -6074,7 +6074,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -6120,7 +6120,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -6166,7 +6166,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -6212,7 +6212,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -6258,7 +6258,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -6304,7 +6304,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -6350,7 +6350,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -6396,7 +6396,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -6442,7 +6442,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -6488,7 +6488,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -6534,7 +6534,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -6580,7 +6580,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -6626,7 +6626,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -6672,7 +6672,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -6718,7 +6718,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -6764,7 +6764,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -6810,7 +6810,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -6856,7 +6856,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -6902,7 +6902,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -6948,7 +6948,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -6994,7 +6994,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -7040,7 +7040,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -7086,7 +7086,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -7132,7 +7132,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -7178,7 +7178,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.25,
             "type": 2
          },
          "transform": {
@@ -7224,7 +7224,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.68,
             "type": 2
          },
          "transform": {
@@ -7270,7 +7270,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 5.24,
             "type": 2
          },
          "transform": {
@@ -7316,7 +7316,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.13,
             "type": 2
          },
          "transform": {
@@ -7362,7 +7362,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.8,
             "type": 2
          },
          "transform": {
@@ -7408,7 +7408,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 3.82,
             "type": 2
          },
          "transform": {
@@ -7454,7 +7454,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 2.68,
             "type": 2
          },
          "transform": {
@@ -7500,7 +7500,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.13,
             "type": 2
          },
          "transform": {
@@ -7546,7 +7546,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 5.24,
             "type": 2
          },
          "transform": {
@@ -7592,7 +7592,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.8,
             "type": 2
          },
          "transform": {
@@ -7638,7 +7638,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 1.13,
             "type": 2
          },
          "transform": {
@@ -7684,7 +7684,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 21.45,
             "type": 2
          },
          "transform": {
@@ -7730,7 +7730,7 @@
          "physics": {
             "canBecomeDynamic": true,
             "isSensor": false,
-            "mass": 0.0,
+            "mass": 5.24,
             "type": 2
          },
          "transform": {
