@@ -558,13 +558,39 @@ namespace kailux
         });
         mPhysicsSystem.SetOnFixedStep([this](auto& scene, float step)
         {
-           //TO DO
+           mScriptSystem.FixedUpdate(scene, step);
         });
     }
 
     void Engine::CreateScriptSystem()
     {
         mScriptSystem = {};
+        mScriptSystem.SetServices({
+            [this](Scene& scene, std::string_view name, MeshType type, const Transform& transform)
+            {
+                return SpawnPrimitive(scene, name, type, transform);
+            },
+            [this](Scene& scene, const std::filesystem::path& path, std::string_view name, const Transform& transform,
+                   std::optional<PhysicsCreationOptions> physics)
+            {
+                return SpawnMesh(scene, path, name, transform, physics);
+            },
+            [this](Scene& scene, entt::entity entity, PhysicsCreationOptions options)
+            {
+                return AddPhysicsToEntity(scene, entity, options);
+            },
+            [this](const std::filesystem::path& path)
+            {
+                if (!mOnLoadSceneRequest || !mOnLoadSceneRequest(path))
+                    return false;
+                mStartSimulationOnAttach = true;
+                return true;
+            },
+            [this](bool enabled)
+            {
+                SetBuiltinCameraControl(enabled);
+            }
+        });
     }
 
     void Engine::CreateImGui(Window &window)
