@@ -98,6 +98,21 @@ namespace kailux
 
         auto& registry{scene.GetEntityRegistry()};
         const auto view{registry.view<NativeScriptComponent>()};
+        mUpdateQueue.assign(view.begin(), view.end());
+
+        for (const auto entity: mUpdateQueue)
+        {
+            auto *script{registry.try_get<NativeScriptComponent>(entity)};
+            if (!script)
+                continue;
+            if (!script->instance)
+                Instantiate(scene, entity, *script);
+            if (script->instance)
+                script->instance->OnUpdate(deltaTime);
+        }
+
+        mContext->world.FlushDestroyed();
+        InstantiatePending(scene);
     }
 
     void ScriptSystem::connect(Scene& scene)
@@ -113,13 +128,7 @@ namespace kailux
         mContext->time.Reset();
         mContext->input.Reset();
 
-        auto& registry{scene.GetEntityRegistry()};
-        for (const auto entity : registry.view<NativeScriptComponent>())
-        {
-            auto& script{registry.get<NativeScriptComponent>(entity)};
-            if (!script.instance)
-                Instantiate(scene, entity, script);
-        }
+        InstantiatePending(scene);
     }
 
     void ScriptSystem::OnSimulationStop(Scene& scene)
@@ -134,6 +143,9 @@ namespace kailux
             script.instance->OnDestroy();
             script.instance.reset();
         }
+
+        if (mContext->services.setBuiltinCameraControl)
+            mContext->services.setBuiltinCameraControl(true);
 
         mContext->world.Clear();
         mContext->input.Reset();
