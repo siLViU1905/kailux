@@ -1,6 +1,7 @@
 #include "Engine.h"
 
 #include <fstream>
+#include <unordered_set>
 #include <magic_enum/magic_enum.hpp>
 
 #include "Clock.h"
@@ -909,6 +910,7 @@ namespace kailux
         mPhysicsSystem.AttachToScene(scene);
         ScriptSystem::connect(scene);
 
+        std::unordered_set<std::string> loadedPaths;
         for (const auto &request : meshRequests)
         {
             AssetPipeline::PendingMeshData pending;
@@ -921,7 +923,10 @@ namespace kailux
             pending.physics   = request.physics;
             pending.scene     = scene.GetId();
 
-            if (!mAssetPipeline.IsCached(pending.path))
+            if (pending.type == MeshType::Loaded
+                && !mAssetPipeline.IsCached(pending.path)
+                && loadedPaths.insert(pending.path).second
+            )
                 if (auto data = mesh_loader::load(pending.path))
                     pending.data = std::move(*data);
 
