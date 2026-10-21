@@ -110,24 +110,29 @@ namespace kailux
 
     void AssetPipeline::Poll(Scene &scene)
     {
-        if (auto data = mPendingMeshData.TryPop())
+        const auto start{Clock::now()};
+        while (auto data{mPendingMeshData.TryPop()})
         {
             if (data->type == MeshType::Unknown)
-                return;
+                continue;
             if (data->scene != kInvalidSceneId && data->scene != scene.GetId())
-                return;
+                continue;
             if (data->target != entt::null && !scene.GetEntityRegistry().valid(data->target))
-                return;
+                continue;
             if (data->type != MeshType::Loaded)
                 ProcessBuiltinMesh(scene, *data);
             else
                 ProcessLoadedMesh(scene, *data);
+
+            if (Clock::get_elapsed<float, TimeType::Milliseconds>(start)
+                >= kPollBudgetMs)
+                break;
         }
     }
 
     entt::entity AssetPipeline::CreateParentMeshEntity(Scene &scene, const PendingMeshData &data)
     {
-        auto  &entityReg = scene.GetEntityRegistry();
+        auto& entityReg = scene.GetEntityRegistry();
 
         const MeshSourceComponent source{data.path, data.type};
 
@@ -146,7 +151,6 @@ namespace kailux
         entityReg.emplace_or_replace<MeshMaterialData>(parentEntity, data.material);
 
         return parentEntity;
-
     }
 
     std::vector<MaterialHandle> AssetPipeline::LoadAndRegisterMaterials(
@@ -189,14 +193,21 @@ namespace kailux
         auto &textureRegistry = mTextureRegistry.get();
         auto &meshRegistry = mMeshRegistry.get();
 
+        static const auto kCubeBounds{
+            Geometry::compute_bounding_sphere(mesh_geometry::generate_cube().vertices)
+        };
+        static const auto kSphereBounds{
+            Geometry::compute_bounding_sphere(mesh_geometry::generate_sphere().vertices)
+        };
+
         auto now = Clock::now();
         std::string meshName;
-        auto createMeshEntity = [&](auto meshHandle, const auto &vertices)
+        auto createMeshEntity = [&](auto meshHandle, const auto &boundingSphere)
         {
             const auto materialHandle = textureRegistry.GetDefaultMaterialHandle();
             const MeshComponent component{
                 meshHandle,
-                Geometry::compute_bounding_sphere(vertices)
+                boundingSphere
             };
             const MeshSourceComponent source{data.path, data.type};
 
@@ -235,13 +246,13 @@ namespace kailux
             case MeshType::Cube:
                 createMeshEntity(
                     meshRegistry.GetBuiltins().cube,
-                    mesh_geometry::generate_cube().vertices
+                    kCubeBounds
                 );
                 break;
             case MeshType::Sphere:
                 createMeshEntity(
                     meshRegistry.GetBuiltins().sphere,
-                    mesh_geometry::generate_sphere().vertices
+                    kSphereBounds
                 );
                 break;
             default:

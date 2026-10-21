@@ -50,6 +50,8 @@ namespace kailux
                       TransferManager &transferManager,
                       std::span<FrameData> frames);
 
+        static constexpr float kPollBudgetMs{4.f};
+
         void Poll(Scene &scene);
 
         void FlushCompletedUploads(Scene &scene);
