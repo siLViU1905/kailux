@@ -27,10 +27,14 @@ class kailux(ConanFile):
         self.requires("shaderc/2025.3")
         self.requires("onetbb/2023.1.0")
         self.requires("meshoptimizer/1.0")
+        self.requires("openal-soft/1.24.3")
+        self.requires("dr_libs/cci.20230529")
 
     def configure(self):
         self.options["imgui"].with_glfw = True
         self.options["imgui"].with_vulkan = True
+
+        self.options["openal-soft"].shared = True
 
     def layout(self):
         cmake_layout(self)
@@ -46,3 +50,10 @@ class kailux(ConanFile):
         misc_dest_dir = os.path.join(self.source_folder, "kailux", "src", "imgui_backend", "misc")
 
         copy(self, "*", misc_dir, misc_dest_dir)
+
+        openal = self.dependencies["openal-soft"].cpp_info
+        openal_runtime_dir = os.path.join(self.generators_folder, "runtime")
+        for bin_dir in openal.bindirs:
+            copy(self, "*.dll", bin_dir, openal_runtime_dir, keep_path=False)
+        for lib_dir in openal.libdirs:
+            copy(self, "*.so*", lib_dir, openal_runtime_dir, keep_path=False)
