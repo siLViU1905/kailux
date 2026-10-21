@@ -110,18 +110,23 @@ namespace kailux
 
     void AssetPipeline::Poll(Scene &scene)
     {
-        if (auto data = mPendingMeshData.TryPop())
+        const auto start{Clock::now()};
+        while (auto data{mPendingMeshData.TryPop()})
         {
             if (data->type == MeshType::Unknown)
-                return;
+                continue;
             if (data->scene != kInvalidSceneId && data->scene != scene.GetId())
-                return;
+                continue;
             if (data->target != entt::null && !scene.GetEntityRegistry().valid(data->target))
-                return;
+                continue;
             if (data->type != MeshType::Loaded)
                 ProcessBuiltinMesh(scene, *data);
             else
                 ProcessLoadedMesh(scene, *data);
+
+            if (Clock::get_elapsed<float, TimeType::Milliseconds>(start)
+                >= kPollBudgetMs)
+                break;
         }
     }
 
