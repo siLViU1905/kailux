@@ -47,7 +47,7 @@ namespace kailux
         void RenderDirectionalLightProperties(entt::registry &registry) const;
         void RenderPointLightProperties(entt::registry &registry) const;
         void RenderCameraProperties(Scene &scene) const;
-        void RenderAudioSourceProperties(entt::registry &registry) const;
+        void RenderAudioSourceProperties(Scene &scene) const;
 
         static void propagate_material_to_children(Scene &scene, entt::entity entity, const MeshMaterialData& material);
 

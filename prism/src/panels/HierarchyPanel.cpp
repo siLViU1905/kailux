@@ -87,6 +87,9 @@ namespace kailux
                     if (ImGui::MenuItem("Camera"))
                         mOnNewCamera();
 
+                    if (ImGui::MenuItem("Audio source"))
+                        mOnNewAudioSource();
+
                     ImGui::EndMenu();
                 }
 
@@ -156,6 +159,16 @@ namespace kailux
     void HierarchyPanel::SetOnAddPhysics(OnAddPhysics &&callback)
     {
         mOnAddPhysics = std::move(callback);
+    }
+
+    void HierarchyPanel::SetOnNewAudioSource(OnNewAudioSource &&callback)
+    {
+        mOnNewAudioSource = std::move(callback);
+    }
+
+    void HierarchyPanel::SetOnAddAudioSource(OnAddAudioSource &&callback)
+    {
+        mOnAddAudioSource = std::move(callback);
     }
 
     void HierarchyPanel::SelectEntity(entt::entity entity)
@@ -377,7 +390,7 @@ namespace kailux
 
             if (can_attach_audio(scene, entity)
                 && ImGui::MenuItem("Add audio source"))
-                registry.emplace<AudioSourceComponent>(entity);
+                mOnAddAudioSource(entity);
 
             ImGui::EndPopup();
         }

@@ -88,7 +88,7 @@ namespace kailux
                 RenderCameraProperties(scene);
 
             if (registry.all_of<AudioSourceComponent>(mSelectedEntity))
-                RenderAudioSourceProperties(registry);
+                RenderAudioSourceProperties(scene);
 
             ImGui::EndDisabled();
         }
@@ -430,12 +430,12 @@ namespace kailux
          widgets::end_properties();
     }
 
-    void EntityEditorPanel::RenderAudioSourceProperties(entt::registry &registry) const
+    void EntityEditorPanel::RenderAudioSourceProperties(Scene &scene) const
     {
         if (!widgets::section("Audio source"))
             return;
 
-        auto &audio = registry.get<AudioSourceComponent>(mSelectedEntity);
+        auto &audio = scene.GetEntityRegistry().get<AudioSourceComponent>(mSelectedEntity);
         auto &settings = audio.settings;
 
         if (!widgets::begin_properties("##audio_source"))
@@ -487,7 +487,7 @@ namespace kailux
         const bool remove{ImGui::Button("Remove audio source", ImVec2(-FLT_MIN, 0.f))};
          widgets::end_properties();
         if (remove)
-            registry.remove<AudioSourceComponent>(mSelectedEntity);
+            scene.DetachAudioSource(mSelectedEntity);
     }
 
     void EntityEditorPanel::propagate_material_to_children(Scene &scene, entt::entity entity,

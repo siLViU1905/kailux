@@ -155,6 +155,15 @@ namespace kailux
         {
             mEngine.AddPhysicsToEntity(GetActiveScene(), entity, {bodyType, canBecomeDynamic, mass});
         });
+        hierarchyPanel.SetOnNewAudioSource([this]()
+        {
+            mEngine.AddAudioSourceEntity(GetActiveScene());
+        });
+        hierarchyPanel.SetOnAddAudioSource([this](auto entity)
+        {
+            mEngine.AddAudioSourceToEntity(GetActiveScene(), entity);
+        });
+
         auto& menuPanel{GetPanel<MenuPanel>()};
         menuPanel.SetOnSceneSave([this](const auto& path)
         {

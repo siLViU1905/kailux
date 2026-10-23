@@ -2349,7 +2349,7 @@ namespace kailux
                 },
                 {}
             )
-        })
+        }; !audioSource)
             mOnWarningLog(audioSource.error());
     }
 

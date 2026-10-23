@@ -34,6 +34,12 @@ namespace kailux
         using OnAddPhysics = std::move_only_function<void(entt::entity, PhysicsBodyType, bool, float)>;
         void SetOnAddPhysics(OnAddPhysics&& callback);
 
+        using OnNewAudioSource = std::move_only_function<void()>;
+        void  SetOnNewAudioSource(OnNewAudioSource&& callback);
+
+        using OnAddAudioSource = std::move_only_function<void(entt::entity)>;
+        void  SetOnAddAudioSource(OnAddAudioSource&& callback);
+
         void         SelectEntity(entt::entity entity);
         entt::entity GetSelectedEntity() const;
 
@@ -72,6 +78,8 @@ namespace kailux
         OnNewLight       mOnNewLight;
         OnNewCamera      mOnNewCamera;
         OnAddPhysics     mOnAddPhysics;
+        OnNewAudioSource mOnNewAudioSource;
+        OnAddAudioSource mOnAddAudioSource;
         entt::entity     mSelectedEntity;
         entt::entity     mLastSelectedEntity{entt::null};
         entt::entity     mPendingDeleteEntity{entt::null};
