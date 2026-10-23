@@ -1717,26 +1717,34 @@ namespace kailux
         mGizmoRegistry.Bind(cmd);
         frame.GetGizmoDescriptorSet().Bind(mGizmoPass.GetPipeline(), cmd);
 
-        const auto view{scene.GetEntityRegistry().view<GizmoComponent, WorldTransform>()};
+        const auto draw{
+            [&](GizmoHandle handle, const glm::vec3 &position, float scale, const glm::vec4 &color)
+            {
+                auto gizmoView = mGizmoRegistry.View(handle);
+
+                const graphics_pass_push_constants::Gizmo pc{
+                    glm::vec4(position, scale),
+                    color,
+                    0
+                };
+
+                mGizmoPass.Push(cmd, pc);
+
+                cmd.drawIndexed(
+                    gizmoView.indexCount,
+                    1,
+                    gizmoView.firstIndex,
+                    gizmoView.vertexOffset,
+                    0
+                );
+            }
+        };
+
+        const auto& registry{scene.GetEntityRegistry()};
+        const auto view{registry.view<GizmoComponent, WorldTransform>()};
         view.each([&](const auto& component, const auto& world)
         {
-            auto gizmoView = mGizmoRegistry.View(component.handle);
-
-            const graphics_pass_push_constants::Gizmo pc{
-                glm::vec4(world.GetPosition(), component.scale),
-                component.color,
-                0
-            };
-
-            mGizmoPass.Push(cmd, pc);
-
-            cmd.drawIndexed(
-                gizmoView.indexCount,
-                1,
-                gizmoView.firstIndex,
-                gizmoView.vertexOffset,
-                0
-                );
+            draw(component.handle, world.GetPosition(), component.scale, component.color);
         });
     }
 

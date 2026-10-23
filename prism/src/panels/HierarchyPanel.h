@@ -52,6 +52,7 @@ namespace kailux
         static bool can_delete_entity(const Scene& scene, entt::entity entity);
 
         static bool can_attach_physics(const entt::registry &registry, entt::entity entity);
+        static bool can_attach_audio(const Scene& scene, entt::entity entity);
 
         void                       OnEntityDelete(Scene &scene, entt::entity entity);
         std::optional<std::string> OnEntityRename(entt::registry &registry, entt::entity entity);

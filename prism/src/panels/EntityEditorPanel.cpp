@@ -12,6 +12,10 @@
 #include "components/entt/WorldTransform.h"
 #include "components/gpu/CameraData.h"
 #include "../UIWidgets.h"
+#include "audio/AudioLoader.h"
+#include "imgui_backend/misc/imgui_stdlib.h"
+#include "components/entt/AudioSourceComponent.h"
+#include "project_panel/AssetBrowser.h"
 
 namespace kailux
 {
@@ -82,6 +86,9 @@ namespace kailux
 
             else if (registry.all_of<CameraComponent>(mSelectedEntity))
                 RenderCameraProperties(scene);
+
+            if (registry.all_of<AudioSourceComponent>(mSelectedEntity))
+                RenderAudioSourceProperties(registry);
 
             ImGui::EndDisabled();
         }
@@ -421,6 +428,66 @@ namespace kailux
         }
 
          widgets::end_properties();
+    }
+
+    void EntityEditorPanel::RenderAudioSourceProperties(entt::registry &registry) const
+    {
+        if (!widgets::section("Audio source"))
+            return;
+
+        auto &audio = registry.get<AudioSourceComponent>(mSelectedEntity);
+        auto &settings = audio.settings;
+
+        if (!widgets::begin_properties("##audio_source"))
+            return;
+
+        widgets::property("Clip");
+        ImGui::InputTextWithHint("##clip", "drop a .wav, .ogg, .mp3 or .flac", &audio.clip);
+        if (ImGui::BeginDragDropTarget())
+        {
+            if (const auto *payload = ImGui::AcceptDragDropPayload(AssetBrowser::s_DragDropPayloadType.data()))
+            {
+                const std::filesystem::path path{static_cast<const char *>(payload->Data)};
+                if (audio_loader::is_supported(path))
+                    audio.clip = path.generic_string();
+            }
+            ImGui::EndDragDropTarget();
+        }
+
+        widgets::property("Volume");
+        ImGui::SliderFloat("##gain", &settings.gain, 0.f, 2.f, "%.2f");
+
+        widgets::property("Pitch");
+        ImGui::SliderFloat("##pitch", &settings.pitch, 0.25f, 4.f, "%.2f");
+
+        widgets::property("Loop");
+        ImGui::Checkbox("##loop", &settings.loop);
+
+        widgets::property("Play on start");
+        ImGui::Checkbox("##play_on_start", &settings.playOnStart);
+
+        widgets::property("Spatial (3D)");
+        ImGui::Checkbox("##spatial", &settings.spatial);
+        ImGui::SetItemTooltip("Positioned at the entity and heard from the primary camera; the clip is mixed down to mono");
+        ImGui::BeginDisabled(!settings.spatial);
+
+        widgets::property("Ref. distance");
+        ImGui::DragFloat("##reference_distance", &settings.referenceDistance, 0.1f, 0.f, FLT_MAX, "%.1f m");
+        ImGui::SetItemTooltip("Distance at which the source plays at full volume");
+
+        widgets::property("Max distance");
+        ImGui::DragFloat("##max_distance", &settings.maxDistance, 0.5f, 0.f, FLT_MAX, "%.1f m");
+        ImGui::SetItemTooltip("Beyond this distance the volume stops dropping");
+
+        widgets::property("Rolloff");
+        ImGui::DragFloat("##rolloff", &settings.rolloff, 0.05f, 0.f, 10.f, "%.2f");
+        ImGui::EndDisabled();
+
+        widgets::property("");
+        const bool remove{ImGui::Button("Remove audio source", ImVec2(-FLT_MIN, 0.f))};
+         widgets::end_properties();
+        if (remove)
+            registry.remove<AudioSourceComponent>(mSelectedEntity);
     }
 
     void EntityEditorPanel::propagate_material_to_children(Scene &scene, entt::entity entity,

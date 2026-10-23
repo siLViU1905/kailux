@@ -22,6 +22,7 @@ namespace kailux
         {
             GizmoHandle pointLight;
             GizmoHandle camera;
+            GizmoHandle audioSource;
         };
 
         struct GizmoAlloc

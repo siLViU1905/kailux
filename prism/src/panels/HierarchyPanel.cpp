@@ -10,6 +10,9 @@
 #include "components/entt/TagComponent.h"
 #include "project_panel/ProjectPanel.h"
 #include "../UIWidgets.h"
+#include "components/entt/AudioSourceComponent.h"
+#include "components/entt/BuiltinCamera.h"
+#include "components/entt/WorldTransform.h"
 
 namespace kailux
 {
@@ -266,6 +269,14 @@ namespace kailux
         return !h || h->parent == entt::null;
     }
 
+    bool HierarchyPanel::can_attach_audio(const Scene &scene, entt::entity entity)
+    {
+        const auto& registry{scene.GetEntityRegistry()};
+        return entity != scene.GetSun()
+               && registry.all_of<WorldTransform>(entity)
+               && !registry.any_of<AudioSourceComponent, BuiltinCamera>(entity);
+    }
+
     void HierarchyPanel::NotifyAndDestroyHierarchy(entt::registry &registry, entt::entity entity)
     {
         if (const auto *source{registry.try_get<MeshSourceComponent>(entity)};
@@ -363,6 +374,10 @@ namespace kailux
                     mPhysicsCanBecomeDynamic = true;
                 }
             }
+
+            if (can_attach_audio(scene, entity)
+                && ImGui::MenuItem("Add audio source"))
+                registry.emplace<AudioSourceComponent>(entity);
 
             ImGui::EndPopup();
         }
