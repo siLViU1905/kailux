@@ -73,11 +73,15 @@ add_library(kailux STATIC
         src/scripting/Time.cpp
         src/scripting/ScriptRegistry.cpp
         src/scripting/CameraRef.cpp
+        src/scripting/AudioSource.cpp
         src/layers/Layer.cpp
         src/layers/LayerStack.cpp
         src/Application.cpp
         src/layers/RuntimeLayer.cpp
         src/scene/SceneManager.cpp
+        src/audio/AudioLoader.cpp
+        src/audio/AudioRegistry.cpp
+        src/audio/AudioSystem.cpp
 )
 
 target_compile_definitions(kailux PUBLIC
@@ -110,6 +114,8 @@ target_link_libraries(kailux PUBLIC
         shaderc::shaderc
         TBB::tbb
         meshoptimizer::meshoptimizer
+        OpenAL::OpenAL
+        dr_libs::dr_libs
 )
 
 target_precompile_headers(kailux PUBLIC

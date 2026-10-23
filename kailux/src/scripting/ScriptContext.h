@@ -37,6 +37,15 @@ namespace kailux
         std::move_only_function<bool(const std::filesystem::path &)> loadScene;
 
         std::move_only_function<void(bool)> setBuiltinCameraControl;
+
+        std::move_only_function<bool(
+            const std::filesystem::path&,
+            std::optional<glm::vec3>,
+            float
+            )> playOneShot;
+
+        std::move_only_function<void(float)> setMasterVolume;
+        std::move_only_function<float()>     getMasterVolume;
     };
 
     struct ScriptContext

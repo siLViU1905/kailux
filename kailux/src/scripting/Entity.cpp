@@ -321,6 +321,27 @@ namespace kailux
         return RigidBody{*pScene, mHandle};
     }
 
+    AudioSource Entity::GetAudio() const
+    {
+        return pScene ? AudioSource{*pScene, mHandle} : AudioSource{};
+    }
+
+    AudioSource Entity::AddAudioSource(const std::filesystem::path &clip, const AudioSourceSettings &settings) const
+    {
+        if (!Valid())
+            return {};
+
+        auto& component{GetRegistry().get_or_emplace<AudioSourceComponent>(mHandle)};
+        component.clip = clip.generic_string();
+        component.settings = settings;
+        component.loadFailed = false;
+
+        AudioSource source{*pScene, mHandle};
+        if (const auto* audio{source.GetRegistry()}; audio && audio->IsSourceValid(component.source))
+            source.Prepare();
+        return source;
+    }
+
     bool Entity::AddScript(std::string_view name) const
     {
         if (!Valid() || Has<NativeScriptComponent>())

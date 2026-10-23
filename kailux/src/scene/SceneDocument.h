@@ -6,6 +6,7 @@
 #include "components/gpu/MeshMaterialData.h"
 #include "components/math/Transform.h"
 #include "physics/PhysicsRegistry.h"
+#include "audio/AudioRegistry.h"
 
 namespace kailux
 {
@@ -14,7 +15,7 @@ namespace kailux
         uint8_t major{};
         uint8_t minor{};
     };
-    constexpr Version kSceneVersion{3, 0};
+    constexpr Version kSceneVersion{4, 1};
 
     constexpr uint32_t kNoEntity{~0u};
 
@@ -41,6 +42,39 @@ namespace kailux
         glm::vec4 colorAndEnabled{1.f, 1.f, 1.f, 1.f};
     };
 
+    struct AudioSourceRecord
+    {
+        std::string clip;
+        float       gain{1.f};
+        float       pitch{1.f};
+        bool        loop{false};
+        bool        playOnStart{true};
+        bool        spatial{true};
+        float       referenceDistance{1.f};
+        float       maxDistance{50.f};
+        float       rolloff{1.f};
+
+        AudioSourceSettings ToSettings() const
+        {
+            return {gain, pitch, loop, playOnStart, spatial, referenceDistance, maxDistance, rolloff};
+        }
+
+        static AudioSourceRecord from(std::string_view clip, const AudioSourceSettings &settings)
+        {
+            return {
+                std::string{clip},
+                settings.gain,
+                settings.pitch,
+                settings.loop,
+                settings.playOnStart,
+                settings.spatial,
+                settings.referenceDistance,
+                settings.maxDistance,
+                settings.rolloff
+            };
+        }
+    };
+
     struct ScriptRecord
     {
         std::string name;
@@ -59,6 +93,7 @@ namespace kailux
         std::optional<PhysicsRecord>     physics;
         std::optional<CameraComponent>   camera;
         std::optional<ScriptRecord>      script;
+        std::optional<AudioSourceRecord> audio;
     };
 
     struct SceneMeta
@@ -68,6 +103,7 @@ namespace kailux
         uint32_t              meshNameCount{};
         uint32_t              lightNameCount{};
         uint32_t              cameraNameCount{};
+        uint32_t              audioSourceNameCount{};
     };
 
     struct SceneDocument
@@ -86,6 +122,8 @@ namespace kailux
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(MeshMaterialData, albedoAndRoughness, pbrParams)
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(PointLightRecord, intensity, range, colorAndEnabled)
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(SunData, directionAndIntensity, colorAndEnabled)
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(AudioSourceRecord, clip, gain, pitch, loop, playOnStart, spatial,
+                                                    referenceDistance, maxDistance, rolloff)
 
     namespace details
     {
@@ -195,7 +233,8 @@ namespace kailux
             {"save_path", meta.savePath.generic_string()},
             {"mesh_name_count", meta.meshNameCount},
             {"light_name_count", meta.lightNameCount},
-            {"camera_name_count", meta.cameraNameCount}
+            {"camera_name_count", meta.cameraNameCount},
+            {"audio_source_name_count", meta.audioSourceNameCount}
         };
 
     }
@@ -206,6 +245,7 @@ namespace kailux
         meta.meshNameCount   = js.value("mesh_name_count", meta.meshNameCount);
         meta.lightNameCount  = js.value("light_name_count", meta.lightNameCount);
         meta.cameraNameCount = js.value("camera_name_count", meta.cameraNameCount);
+        meta.audioSourceNameCount = js.value("audio_source_name_count", meta.audioSourceNameCount);
     }
 
     inline void to_json(nlohmann::json &js, const EntityRecord &record)
@@ -225,6 +265,7 @@ namespace kailux
         details::writeOptional(js, "physics", record.physics);
         details::writeOptional(js, "camera", record.camera);
         details::writeOptional(js, "script", record.script);
+        details::writeOptional(js, "audio", record.audio);
     }
     inline void from_json(const nlohmann::json &js, EntityRecord &record)
     {
@@ -239,6 +280,7 @@ namespace kailux
         details::readOptional(js, "physics", record.physics);
         details::readOptional(js, "camera", record.camera);
         details::readOptional(js, "script", record.script);
+        details::readOptional(js, "audio", record.audio);
     }
 
     inline void to_json(nlohmann::json &js, const SceneDocument &document)

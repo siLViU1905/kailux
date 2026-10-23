@@ -39,6 +39,12 @@ namespace kailux
 
         void SetBuiltinCameraControl(bool enabled);
 
+        bool PlayOneShot(const std::filesystem::path& path, float gain = 1.f);
+        bool PlayOneShotAt(const std::filesystem::path& path, const glm::vec3& position, float gain = 1.f);
+
+        void  SetMasterVolume(float volume);
+        float GetMasterVolume() const;
+
     private:
         void Bind(Scene& scene, ScriptServices& services);
         void SetViewportSize(glm::ivec2 size);

@@ -15,6 +15,8 @@ namespace kailux::gizmo_geometry
 
     GizmoData generate_camera_gizmo(glm::vec3 color = {1.f, 0.9f, 0.3f});
 
+    GizmoData generate_audio_source_gizmo(glm::vec3 color = {1.f, 0.9f, 0.3f});
+
     namespace details
     {
         void append_segment(GizmoData &data,

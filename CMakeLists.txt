@@ -86,9 +86,15 @@ find_package(Jolt REQUIRED)
 find_package(shaderc REQUIRED)
 find_package(TBB REQUIRED)
 find_package(meshoptimizer REQUIRED)
+find_package(OpenAL REQUIRED)
+find_package(dr_libs REQUIRED)
 
 set(KAILUX_SHADERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/kailux/src/shaders")
 set(KAILUX_ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
+set(KAILUX_LICENSES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/licenses")
+
+get_filename_component(KAILUX_CONAN_GENERATORS_DIR "${CMAKE_TOOLCHAIN_FILE}" DIRECTORY)
+set(KAILUX_RUNTIME_LIBS_DIR "${KAILUX_CONAN_GENERATORS_DIR}/runtime")
 
 function(kailux_copy_resources target)
     add_custom_target(${target}_resources
@@ -98,13 +104,22 @@ function(kailux_copy_resources target)
             COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
             "${KAILUX_ASSETS_DIR}"
             "$<TARGET_FILE_DIR:${target}>/assets"
-            COMMENT "Copying shaders and assets next to ${target}"
+            COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+            "${KAILUX_LICENSES_DIR}"
+            "$<TARGET_FILE_DIR:${target}>/licenses"
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${KAILUX_RUNTIME_LIBS_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+            "${KAILUX_RUNTIME_LIBS_DIR}"
+            "$<TARGET_FILE_DIR:${target}>"
+            COMMENT "Copying shaders, assets, licenses and the OpenAL Soft library next to ${target}"
             VERBATIM
     )
     add_dependencies(${target} ${target}_resources)
 
     set_target_properties(${target} PROPERTIES
             VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:${target}>"
+            BUILD_RPATH "$ORIGIN"
+            INSTALL_RPATH "$ORIGIN"
     )
 endfunction()
 

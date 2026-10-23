@@ -153,6 +153,69 @@ namespace kailux::gizmo_geometry
         return data;
     }
 
+    GizmoData generate_audio_source_gizmo(glm::vec3 color)
+    {
+        GizmoData data;
+
+        constexpr float pi{std::numbers::pi_v<float>};
+
+        constexpr float thickness{0.02f};
+        constexpr float halfThickness{thickness / 2.f};
+
+        constexpr float boxMinX{-0.55f};
+        constexpr float boxMaxX{-0.30f};
+        constexpr float boxHalfY{0.16f};
+
+        constexpr float coneX{0.f};
+        constexpr float coneHalfY{0.40f};
+
+        constexpr uint32_t waveCount{2};
+        constexpr uint32_t waveSegments{8};
+        constexpr float    waveFirstRadius{0.22f};
+        constexpr float    waveSpacing{0.18f};
+        constexpr float    waveHalfAngle{pi / 4.f};
+
+        constexpr std::array box{
+            glm::vec2{boxMinX, -boxHalfY},
+            glm::vec2{boxMaxX, -boxHalfY},
+            glm::vec2{boxMaxX,  boxHalfY},
+            glm::vec2{boxMinX,  boxHalfY},
+        };
+
+        constexpr std::array cone{
+            glm::vec2{boxMaxX, -boxHalfY},
+            glm::vec2{coneX,   -coneHalfY},
+            glm::vec2{coneX,    coneHalfY},
+            glm::vec2{boxMaxX,  boxHalfY},
+        };
+        constexpr uint32_t quadCount{box.size() + (cone.size() - 1) + waveCount * waveSegments};
+        data.vertices.reserve(quadCount * 4);
+        data.indices.reserve(quadCount * 6);
+
+        for (size_t i{}; i < box.size(); ++i)
+            details::append_segment(data, box[i], box[(i + 1) % box.size()], halfThickness, color);
+
+        for (size_t i{}; i + 1 < cone.size(); ++i)
+            details::append_segment(data, cone[i], cone[i + 1], halfThickness, color);
+
+        for (uint32_t wave{}; wave < waveCount; ++wave)
+        {
+            const float radius{waveFirstRadius + static_cast<float>(wave) * waveSpacing};
+            for (uint32_t i{}; i < waveSegments; ++i)
+            {
+                const float a0{-waveHalfAngle + (static_cast<float>(i)     / waveSegments) * 2.f * waveHalfAngle};
+                const float a1{-waveHalfAngle + (static_cast<float>(i + 1) / waveSegments) * 2.f * waveHalfAngle};
+
+                const glm::vec2 p0{coneX + std::cos(a0) * radius, std::sin(a0) * radius};
+                const glm::vec2 p1{coneX + std::cos(a1) * radius, std::sin(a1) * radius};
+
+                details::append_segment(data, p0, p1, halfThickness, color);
+            }
+        }
+
+        return data;
+    }
+
     void details::append_segment(GizmoData &data, glm::vec2 a, glm::vec2 b, float halfThickness, glm::vec3 color)
     {
         auto dir{b - a};

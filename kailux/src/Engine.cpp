@@ -32,6 +32,7 @@ namespace kailux
 {
     Engine::Engine() : mAssetPipeline(mContext, mMeshRegistry, mTextureRegistry, mTransferManager, mFrames),
                        mPhysicsSystem(mPhysicsRegistry),
+                       mAudioSystem(mAudioRegistry),
                        mCurrentFrame(0),
                        mOutlineInfo(),
                        mPickedEntity(~0u),
@@ -49,9 +50,11 @@ namespace kailux
                                               mMeshRegistry(std::move(other.mMeshRegistry)),
                                               mTextureRegistry(std::move(other.mTextureRegistry)),
                                               mPhysicsRegistry(std::move(other.mPhysicsRegistry)),
+                                              mAudioRegistry(std::move(other.mAudioRegistry)),
                                               mGizmoRegistry(std::move(other.mGizmoRegistry)),
                                               mAssetPipeline(std::move(other.mAssetPipeline)),
                                               mPhysicsSystem(std::move(other.mPhysicsSystem)),
+                                              mAudioSystem(std::move(other.mAudioSystem)),
                                               mScriptSystem(std::move(other.mScriptSystem)),
                                               mDeferredResourceEraser(std::move(other.mDeferredResourceEraser)),
                                               mFrames(std::move(other.mFrames)),
@@ -92,6 +95,7 @@ namespace kailux
     {
         CreateAssetPipeline();
         CreatePhysicsSystem();
+        CreateAudioSystem();
         CreateScriptSystem();
     }
 
@@ -107,9 +111,11 @@ namespace kailux
             mMeshRegistry = std::move(other.mMeshRegistry);
             mTextureRegistry = std::move(other.mTextureRegistry);
             mPhysicsRegistry = std::move(other.mPhysicsRegistry);
+            mAudioRegistry = std::move(other.mAudioRegistry);
             mGizmoRegistry = std::move(other.mGizmoRegistry);
             mAssetPipeline = std::move(other.mAssetPipeline);
             mPhysicsSystem = std::move(other.mPhysicsSystem);
+            mAudioSystem = std::move(other.mAudioSystem);
             mScriptSystem = std::move(other.mScriptSystem);
             mDeferredResourceEraser = std::move(other.mDeferredResourceEraser);
             mFrames = std::move(other.mFrames);
@@ -150,6 +156,7 @@ namespace kailux
 
             CreateAssetPipeline();
             CreatePhysicsSystem();
+            CreateAudioSystem();
             CreateScriptSystem();
         }
         return *this;
@@ -190,6 +197,7 @@ namespace kailux
         engine.CreateMeshRegistry();
         engine.CreateTextureRegistry();
         engine.CreatePhysicsRegistry();
+        engine.CreateAudioRegistry();
         engine.CreateGizmoRegistry();
         engine.CreateComputePicker();
         engine.CreateComputeCuller();
@@ -208,6 +216,7 @@ namespace kailux
 
         engine.CreateAssetPipeline();
         engine.CreatePhysicsSystem();
+        engine.CreateAudioSystem();
         engine.CreateScriptSystem();
 
         return engine;
@@ -412,6 +421,7 @@ namespace kailux
         mSimulationStartPending = false;
         scene.UpdateCameras();
         mPhysicsSystem.SetSimulationState(scene, SimulationState::Running);
+        mAudioSystem.SetSimulationState(scene, SimulationState::Running);
         mScriptSystem.SetFixedStep(1.f / mPhysicsSystem.GetTickRate());
         mScriptSystem.SetSimulationState(scene, SimulationState::Running);
     }
@@ -512,6 +522,11 @@ namespace kailux
         mPhysicsRegistry = PhysicsRegistry::create();
     }
 
+    void Engine::CreateAudioRegistry()
+    {
+        mAudioRegistry = AudioRegistry::create(mSpecification.enableHrtf);
+    }
+
     void Engine::CreateGizmoRegistry()
     {
         std::vector<Buffer> stagingBuffers;
@@ -563,35 +578,72 @@ namespace kailux
         });
     }
 
+    void Engine::CreateAudioSystem()
+    {
+        mAudioSystem = AudioSystem{mAudioRegistry};
+        mAudioSystem.SetOnInfoLog([this](auto msg)
+        {
+            mOnInfoLog(msg);
+        });
+        mAudioSystem.SetOnWarningLog([this](auto msg)
+        {
+            mOnWarningLog(msg);
+        });
+    }
+
     void Engine::CreateScriptSystem()
     {
         mScriptSystem = {};
-        mScriptSystem.SetServices({
-            [this](Scene& scene, std::string_view name, MeshType type, const Transform& transform)
-            {
-                return SpawnPrimitive(scene, name, type, transform);
-            },
-            [this](Scene& scene, const std::filesystem::path& path, std::string_view name, const Transform& transform,
+        ScriptServices services;
+        services.spawnPrimitive = [this](Scene& scene, std::string_view name, MeshType type, const Transform& transform)
+        {
+            return SpawnPrimitive(scene, name, type, transform);
+        };
+
+        services.spawnMesh = [this](Scene& scene, const std::filesystem::path& path, std::string_view name, const Transform& transform,
                    std::optional<PhysicsCreationOptions> physics)
-            {
-                return SpawnMesh(scene, path, name, transform, physics);
-            },
-            [this](Scene& scene, entt::entity entity, PhysicsCreationOptions options)
-            {
-                return AddPhysicsToEntity(scene, entity, options);
-            },
-            [this](const std::filesystem::path& path)
-            {
-                if (!mOnLoadSceneRequest || !mOnLoadSceneRequest(path))
-                    return false;
-                mStartSimulationOnAttach = true;
-                return true;
-            },
-            [this](bool enabled)
-            {
-                SetBuiltinCameraControl(enabled);
-            }
-        });
+        {
+            return SpawnMesh(scene, path, name, transform, physics);
+        };
+
+        services.addBody = [this](Scene& scene, entt::entity entity, PhysicsCreationOptions options)
+        {
+            return AddPhysicsToEntity(scene, entity, options);
+        };
+
+        services.loadScene = [this](const std::filesystem::path& path)
+        {
+            if (!mOnLoadSceneRequest || !mOnLoadSceneRequest(path))
+                return false;
+            mStartSimulationOnAttach = true;
+            return true;
+        };
+
+        services.setBuiltinCameraControl = [this](bool enabled)
+        {
+            SetBuiltinCameraControl(enabled);
+        };
+
+        services.playOneShot = [this](
+            const std::filesystem::path& path,
+            std::optional<glm::vec3> position,
+            float gain
+            )
+        {
+            return mAudioSystem.PlayOneShot(path, position, gain);
+        };
+
+        services.setMasterVolume = [this](float volume)
+        {
+            mAudioSystem.SetMasterVolume(volume);
+        };
+
+        services.getMasterVolume = [this]()
+        {
+            return mAudioSystem.GetMasterVolume();
+        };
+
+        mScriptSystem.SetServices(std::move(services));
     }
 
     void Engine::CreateImGui(Window &window)
@@ -908,6 +960,7 @@ namespace kailux
         const bool startSimulation{std::exchange(mStartSimulationOnAttach, false)};
 
         mPhysicsSystem.AttachToScene(scene);
+        mAudioSystem.AttachToScene(scene);
         ScriptSystem::connect(scene);
 
         std::unordered_set<std::string> loadedPaths;
@@ -944,6 +997,8 @@ namespace kailux
         mPhysicsSystem.SetSimulationState(scene, SimulationState::Paused);
         mScriptSystem.SetSimulationState(scene, SimulationState::Paused);
         mPhysicsSystem.DestroyAllBodies();
+        mAudioSystem.SetSimulationState(scene, SimulationState::Paused);
+        mAudioSystem.DetachScene(scene);
         SetControlledCamera(entt::null, {});
     }
 
@@ -1008,6 +1063,7 @@ namespace kailux
         {
             mSimulationStartPending = false;
             mPhysicsSystem.SetSimulationState(scene, state);
+            mAudioSystem.SetSimulationState(scene, state);
             mScriptSystem.SetSimulationState(scene, state);
             return true;
         }
@@ -1687,26 +1743,34 @@ namespace kailux
         mGizmoRegistry.Bind(cmd);
         frame.GetGizmoDescriptorSet().Bind(mGizmoPass.GetPipeline(), cmd);
 
-        const auto view{scene.GetEntityRegistry().view<GizmoComponent, WorldTransform>()};
+        const auto draw{
+            [&](GizmoHandle handle, const glm::vec3 &position, float scale, const glm::vec4 &color)
+            {
+                auto gizmoView = mGizmoRegistry.View(handle);
+
+                const graphics_pass_push_constants::Gizmo pc{
+                    glm::vec4(position, scale),
+                    color,
+                    0
+                };
+
+                mGizmoPass.Push(cmd, pc);
+
+                cmd.drawIndexed(
+                    gizmoView.indexCount,
+                    1,
+                    gizmoView.firstIndex,
+                    gizmoView.vertexOffset,
+                    0
+                );
+            }
+        };
+
+        const auto& registry{scene.GetEntityRegistry()};
+        const auto view{registry.view<GizmoComponent, WorldTransform>()};
         view.each([&](const auto& component, const auto& world)
         {
-            auto gizmoView = mGizmoRegistry.View(component.handle);
-
-            const graphics_pass_push_constants::Gizmo pc{
-                glm::vec4(world.GetPosition(), component.scale),
-                component.color,
-                0
-            };
-
-            mGizmoPass.Push(cmd, pc);
-
-            cmd.drawIndexed(
-                gizmoView.indexCount,
-                1,
-                gizmoView.firstIndex,
-                gizmoView.vertexOffset,
-                0
-                );
+            draw(component.handle, world.GetPosition(), component.scale, component.color);
         });
     }
 
@@ -2046,6 +2110,33 @@ namespace kailux
         };
     }
 
+    void Engine::UpdateControlledCamera(Scene &scene, float deltaTime)
+    {
+        if (!mInputSource.Valid() || !mBuiltinCameraControl)
+        {
+            scene.UpdateCameras();
+            return;
+        }
+
+        const auto controlled{
+            mControlledCamera == entt::null ?
+            scene.GetSceneCamera() :
+            mControlledCamera
+        };
+
+        auto& registry{scene.GetEntityRegistry()};
+        if (registry.valid(controlled))
+            if (auto* camera{registry.try_get<CameraComponent>(controlled)})
+            {
+                camera->focused = mMouseLookActive;
+                camera::update_movement(*camera, mInputSource, deltaTime);
+                camera::update_look_at(*camera, mInputSource, deltaTime);
+                scene.SyncCameraTransform(controlled);
+            }
+
+        scene.UpdateCameras(controlled);
+    }
+
     void Engine::Update(Scene &scene, float deltaTime)
     {
         mAssetPipeline.Poll(scene);
@@ -2079,30 +2170,9 @@ namespace kailux
         mScriptSystem.Update(scene, deltaTime);
 
         scene.Update();
+        UpdateControlledCamera(scene, deltaTime);
 
-        if (!mInputSource.Valid() || !mBuiltinCameraControl)
-        {
-            scene.UpdateCameras();
-            return;
-        }
-
-        const auto controlled{
-            mControlledCamera == entt::null ?
-            scene.GetSceneCamera() :
-            mControlledCamera
-        };
-
-        auto& registry{scene.GetEntityRegistry()};
-        if (registry.valid(controlled))
-            if (auto* camera{registry.try_get<CameraComponent>(controlled)})
-            {
-                camera->focused = mMouseLookActive;
-                camera::update_movement(*camera, mInputSource, deltaTime);
-                camera::update_look_at(*camera, mInputSource, deltaTime);
-                scene.SyncCameraTransform(controlled);
-            }
-
-        scene.UpdateCameras(controlled);
+        mAudioSystem.Update(scene, deltaTime);
     }
 
     void Engine::UpdateFrameBuffers(const Scene &scene, FrameData &frame, const RenderTarget &sceneView, const CommandRecorder &recorder)
@@ -2289,6 +2359,35 @@ namespace kailux
         };
         if (!camera)
             mOnWarningLog(camera.error());
+    }
+
+    void Engine::AddAudioSourceEntity(Scene &scene)
+    {
+        if (const auto audioSource{
+            scene.CreateAudioSourceEntity(
+                scene.GetAudioSourceEntityName(),
+                {
+                    mGizmoRegistry.GetBuiltins().audioSource,
+                    0.5f,
+                    {1.f, 1.f, 1.f, 1.f}
+                },
+                {}
+            )
+        }; !audioSource)
+            mOnWarningLog(audioSource.error());
+    }
+
+    bool Engine::AddAudioSourceToEntity(Scene &scene, entt::entity entity)
+    {
+        return scene.AttachAudioSource(
+            entity,
+            {
+                mGizmoRegistry.GetBuiltins().audioSource,
+                0.5f,
+                {1.f, 1.f, 1.f, 1.f}
+            },
+            {}
+        );
     }
 
     DeviceInfo Engine::GetDeviceInfo() const

@@ -2,6 +2,7 @@
 
 #include "Scene.h"
 #include "Log.h"
+#include "components/entt/AudioSourceComponent.h"
 #include "components/entt/NativeScriptComponent.h"
 
 namespace kailux::scene_instantiator
@@ -99,6 +100,23 @@ namespace kailux::scene_instantiator
                 if (!script.Bind(record.script->name))
                     log::console.Warning("Script '{}' on '{}' is not registered, it will not run",
                                          record.script->name, record.name);
+            }
+
+            if (record.audio)
+            {
+                const GizmoComponent gizmo{
+                    gizmoRegistry.GetBuiltins().audioSource,
+                    0.5f,
+                    {1.f, 1.f, 1.f, 1.f}
+                };
+                scene.AttachAudioSource(
+                    entity,
+                    gizmo,
+                    {
+                        record.audio->clip,
+                        record.audio->ToSettings()
+                    }
+                );
             }
         }
 
