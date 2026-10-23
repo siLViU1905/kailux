@@ -1,6 +1,8 @@
 #pragma once
 
 #include <entt/entt.hpp>
+
+#include "AudioSource.h"
 #include "components/math/Transform.h"
 
 namespace kailux
@@ -134,6 +136,9 @@ namespace kailux
 
         TransformRef GetTransform() const;
         RigidBody    GetBody() const;
+        AudioSource  GetAudio() const;
+
+        AudioSource AddAudioSource(const std::filesystem::path& clip, const AudioSourceSettings& settings = {}) const;
 
         template<typename T>
         T* GetScript() const

@@ -148,6 +148,33 @@ namespace kailux
             pServices->setBuiltinCameraControl(enabled);
     }
 
+    bool World::PlayOneShot(const std::filesystem::path &path, float gain)
+    {
+        if (!pServices || !pServices->playOneShot)
+            return false;
+        return pServices->playOneShot(path, std::nullopt, gain);
+    }
+
+    bool World::PlayOneShotAt(const std::filesystem::path &path, const glm::vec3 &position, float gain)
+    {
+        if (!pServices || !pServices->playOneShot)
+            return false;
+        return pServices->playOneShot(path, position, gain);
+    }
+
+    void World::SetMasterVolume(float volume)
+    {
+        if (pServices && pServices->setMasterVolume)
+            pServices->setMasterVolume(volume);
+    }
+
+    float World::GetMasterVolume() const
+    {
+        if (!pServices || !pServices->getMasterVolume)
+           return 0.f;
+        return pServices->getMasterVolume();
+    }
+
     void World::Bind(Scene &scene, ScriptServices& services)
     {
         pScene = std::addressof(scene);

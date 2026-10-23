@@ -594,32 +594,56 @@ namespace kailux
     void Engine::CreateScriptSystem()
     {
         mScriptSystem = {};
-        mScriptSystem.SetServices({
-            [this](Scene& scene, std::string_view name, MeshType type, const Transform& transform)
-            {
-                return SpawnPrimitive(scene, name, type, transform);
-            },
-            [this](Scene& scene, const std::filesystem::path& path, std::string_view name, const Transform& transform,
+        ScriptServices services;
+        services.spawnPrimitive = [this](Scene& scene, std::string_view name, MeshType type, const Transform& transform)
+        {
+            return SpawnPrimitive(scene, name, type, transform);
+        };
+
+        services.spawnMesh = [this](Scene& scene, const std::filesystem::path& path, std::string_view name, const Transform& transform,
                    std::optional<PhysicsCreationOptions> physics)
-            {
-                return SpawnMesh(scene, path, name, transform, physics);
-            },
-            [this](Scene& scene, entt::entity entity, PhysicsCreationOptions options)
-            {
-                return AddPhysicsToEntity(scene, entity, options);
-            },
-            [this](const std::filesystem::path& path)
-            {
-                if (!mOnLoadSceneRequest || !mOnLoadSceneRequest(path))
-                    return false;
-                mStartSimulationOnAttach = true;
-                return true;
-            },
-            [this](bool enabled)
-            {
-                SetBuiltinCameraControl(enabled);
-            }
-        });
+        {
+            return SpawnMesh(scene, path, name, transform, physics);
+        };
+
+        services.addBody = [this](Scene& scene, entt::entity entity, PhysicsCreationOptions options)
+        {
+            return AddPhysicsToEntity(scene, entity, options);
+        };
+
+        services.loadScene = [this](const std::filesystem::path& path)
+        {
+            if (!mOnLoadSceneRequest || !mOnLoadSceneRequest(path))
+                return false;
+            mStartSimulationOnAttach = true;
+            return true;
+        };
+
+        services.setBuiltinCameraControl = [this](bool enabled)
+        {
+            SetBuiltinCameraControl(enabled);
+        };
+
+        services.playOneShot = [this](
+            const std::filesystem::path& path,
+            std::optional<glm::vec3> position,
+            float gain
+            )
+        {
+            return mAudioSystem.PlayOneShot(path, position, gain);
+        };
+
+        services.setMasterVolume = [this](float volume)
+        {
+            mAudioSystem.SetMasterVolume(volume);
+        };
+
+        services.getMasterVolume = [this]()
+        {
+            return mAudioSystem.GetMasterVolume();
+        };
+
+        mScriptSystem.SetServices(std::move(services));
     }
 
     void Engine::CreateImGui(Window &window)
