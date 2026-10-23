@@ -45,7 +45,7 @@ namespace kailux::audio_loader
             AudioData data;
             data.channels = channels;
             data.sampleRate = sampleRate;
-            data.samples.assign(frames, frames + frameCount);
+            data.samples.assign(frames, frames + frameCount * channels);
             free(frames);
 
             if (data.channels == 0 || data.channels > 2)

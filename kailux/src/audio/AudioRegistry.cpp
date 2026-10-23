@@ -388,7 +388,7 @@ namespace kailux
     void AudioRegistry::ContextDeleter::operator()(ALCcontext *context) const
     {
         if (alcGetCurrentContext() == context)
-            alcMakeContextCurrent(context);
+            alcMakeContextCurrent(nullptr);
         alcDestroyContext(context);
     }
 }
