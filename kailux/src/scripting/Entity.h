@@ -4,6 +4,7 @@
 
 #include "AudioSource.h"
 #include "components/math/Transform.h"
+#include "components/gpu/MeshMaterialData.h"
 
 namespace kailux
 {
@@ -53,6 +54,30 @@ namespace kailux
 
         Transform Get() const;
         void      Set(const Transform& transform) const;
+
+        Scene*       pScene{};
+        entt::entity mHandle{entt::null};
+
+        friend class Entity;
+    };
+
+    class MaterialRef
+    {
+    public:
+        glm::vec3 Albedo() const;
+        void      SetAlbedo(const glm::vec3& albedo);
+        float     Roughness() const;
+        void      SetRoughness(float roughness);
+        float     Metallic() const;
+        void      SetMetallic(float metallic);
+        float     AO() const;
+        void      SetAO(float ao);
+
+    private:
+        explicit MaterialRef(Scene& scene, entt::entity handle);
+
+        MeshMaterialData Get() const;
+        void             Set(const MeshMaterialData& material) const;
 
         Scene*       pScene{};
         entt::entity mHandle{entt::null};
@@ -135,6 +160,7 @@ namespace kailux
         explicit operator bool() const;
 
         TransformRef GetTransform() const;
+        MaterialRef  GetMaterial() const;
         RigidBody    GetBody() const;
         AudioSource  GetAudio() const;
 
