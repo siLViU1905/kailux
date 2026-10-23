@@ -79,6 +79,7 @@ add_library(kailux STATIC
         src/layers/RuntimeLayer.cpp
         src/scene/SceneManager.cpp
         src/audio/AudioLoader.cpp
+        src/audio/AudioRegistry.cpp
 )
 
 target_compile_definitions(kailux PUBLIC
