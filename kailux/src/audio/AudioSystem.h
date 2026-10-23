@@ -50,7 +50,7 @@ namespace kailux
 
         static glm::vec3 clamp_velocity(const glm::vec3& velocity);
 
-        AudioRegistry&  mAudioRegistryRef;
+        AudioRegistry*  pAudioRegistry{};
 
         SimulationState mSimulationState{SimulationState::Paused};
 

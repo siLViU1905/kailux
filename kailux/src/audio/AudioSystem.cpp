@@ -7,7 +7,7 @@
 
 namespace kailux
 {
-    AudioSystem::AudioSystem(AudioRegistry &audioRegistry) : mAudioRegistryRef(audioRegistry),
+    AudioSystem::AudioSystem(AudioRegistry &audioRegistry) : pAudioRegistry(&audioRegistry),
                                                              mOnInfoLog([](auto message)
                                                              {
                                                                  log::console.Info("{}", message);
@@ -22,7 +22,7 @@ namespace kailux
     void AudioSystem::Update(Scene &scene, float deltaTime)
     {
         if (mSimulationState != SimulationState::Running
-            || !mAudioRegistryRef.Available())
+            || !pAudioRegistry->Available())
             return;
 
         UpdateListener(scene, deltaTime);
@@ -67,7 +67,7 @@ namespace kailux
     void AudioSystem::AttachToScene(Scene &scene) const
     {
         auto &registry{scene.GetEntityRegistry()};
-        registry.ctx().insert_or_assign<AudioRegistry *>(&mAudioRegistryRef);
+        registry.ctx().insert_or_assign<AudioRegistry*>(auto{pAudioRegistry});
 
         auto sink{registry.on_destroy<AudioSourceComponent>()};
         sink.disconnect<&details::on_audio_source_destroyed>();
@@ -79,7 +79,7 @@ namespace kailux
         for (auto &&[entity, component]
              : scene.GetEntityRegistry().view<AudioSourceComponent>().each())
         {
-            mAudioRegistryRef.DestroySource(component.source);
+            pAudioRegistry->DestroySource(component.source);
             component.source = {};
             component.loadedClip.clear();
             component.resumeOnStart = false;
@@ -89,10 +89,10 @@ namespace kailux
 
     bool AudioSystem::PlayOneShot(const std::filesystem::path &path, std::optional<glm::vec3> position, float gain)
     {
-        if (!mAudioRegistryRef.Available())
+        if (!pAudioRegistry->Available())
             return false;
 
-        const auto clip{mAudioRegistryRef.LoadClip(path, position.has_value())};
+        const auto clip{pAudioRegistry->LoadClip(path, position.has_value())};
         if (!clip)
         {
             if (mFailedOneShots.insert(path.generic_string()).second)
@@ -108,21 +108,21 @@ namespace kailux
         settings.gain = gain;
         settings.spatial = position.has_value();
 
-        mAudioRegistryRef.SetSourceClip(source, *clip);
-        mAudioRegistryRef.SetSourceSettings(source, settings);
+        pAudioRegistry->SetSourceClip(source, *clip);
+        pAudioRegistry->SetSourceSettings(source, settings);
         if (position)
         {
-            mAudioRegistryRef.SetSourcePosition(source, *position);
-            mAudioRegistryRef.SetSourceVelocity(source, glm::vec3{0.f});
+            pAudioRegistry->SetSourcePosition(source, *position);
+            pAudioRegistry->SetSourceVelocity(source, glm::vec3{0.f});
         }
-        mAudioRegistryRef.Play(source);
+        pAudioRegistry->Play(source);
         return true;
     }
 
     void AudioSystem::SetMasterVolume(float volume)
     {
         mMasterVolume = std::max(volume, 0.f);
-        mAudioRegistryRef.SetListenerGain(mMasterVolume);
+        pAudioRegistry->SetListenerGain(mMasterVolume);
     }
 
     float AudioSystem::GetMasterVolume() const
@@ -174,7 +174,7 @@ namespace kailux
 
     void AudioSystem::OnSimulationStart(Scene &scene)
     {
-        mAudioRegistryRef.SetListenerGain(mMasterVolume);
+        pAudioRegistry->SetListenerGain(mMasterVolume);
         mHasListenerPosition = false;
         mFailedOneShots.clear();
 
@@ -185,10 +185,10 @@ namespace kailux
             component.loadFailed = false;
 
             const bool resume{std::exchange(component.resumeOnStart, false)};
-            if (!mAudioRegistryRef.IsSourceValid(component.source))
+            if (!pAudioRegistry->IsSourceValid(component.source))
                 continue;
 
-            if (const auto result{prepare_source(mAudioRegistryRef, component)}; !result)
+            if (const auto result{prepare_source(*pAudioRegistry, component)}; !result)
             {
                 mOnWarningLog(result.error());
                 component.loadFailed = true;
@@ -196,12 +196,12 @@ namespace kailux
             }
 
             if (resume)
-                mAudioRegistryRef.Play(component.source);
+                pAudioRegistry->Play(component.source);
             else
             {
-                mAudioRegistryRef.Stop(component.source);
+                pAudioRegistry->Stop(component.source);
                 if (component.settings.playOnStart && !component.clip.empty())
-                    mAudioRegistryRef.Play(component.source);
+                    pAudioRegistry->Play(component.source);
             }
         }
     }
@@ -211,9 +211,9 @@ namespace kailux
         for (auto &&[entity, component]
              : scene.GetEntityRegistry().view<AudioSourceComponent>().each())
         {
-            component.resumeOnStart = mAudioRegistryRef.GetState(component.source) == AudioSourceState::Playing;
+            component.resumeOnStart = pAudioRegistry->GetState(component.source) == AudioSourceState::Playing;
             if (component.resumeOnStart)
-                mAudioRegistryRef.Pause(component.source);
+                pAudioRegistry->Pause(component.source);
         }
         StopOneShots();
     }
@@ -239,7 +239,7 @@ namespace kailux
         mLastListenerPosition = pose.position;
         mHasListenerPosition  = true;
 
-        mAudioRegistryRef.SetListener(pose);
+        pAudioRegistry->SetListener(pose);
     }
 
     void AudioSystem::UpdateSources(Scene &scene, float deltaTime)
@@ -248,12 +248,12 @@ namespace kailux
         for (auto &&[entity, component]
              : registry.view<AudioSourceComponent>().each())
         {
-            if (!mAudioRegistryRef.IsSourceValid(component.source))
+            if (!pAudioRegistry->IsSourceValid(component.source))
             {
                 if (component.loadFailed)
                     continue;
 
-                if (const auto result{prepare_source(mAudioRegistryRef, component)}; !result)
+                if (const auto result{prepare_source(*pAudioRegistry, component)}; !result)
                 {
                     mOnWarningLog(result.error());
                     component.loadFailed = true;
@@ -261,7 +261,7 @@ namespace kailux
                 }
 
                 if (component.settings.playOnStart && !component.clip.empty())
-                    mAudioRegistryRef.Play(component.source);
+                    pAudioRegistry->Play(component.source);
             }
 
             if (!component.settings.spatial)
@@ -285,8 +285,8 @@ namespace kailux
             component.lastPosition    = position;
             component.hasLastPosition = true;
 
-            mAudioRegistryRef.SetSourcePosition(component.source, position);
-            mAudioRegistryRef.SetSourceVelocity(component.source, clamp_velocity(velocity));
+            pAudioRegistry->SetSourcePosition(component.source, position);
+            pAudioRegistry->SetSourceVelocity(component.source, clamp_velocity(velocity));
         }
     }
 
@@ -294,14 +294,14 @@ namespace kailux
     {
         for (const auto source : mOneShots)
         {
-            const auto state{mAudioRegistryRef.GetState(source)};
+            const auto state{pAudioRegistry->GetState(source)};
             if (state == AudioSourceState::Initial || state == AudioSourceState::Stopped)
                 return source;
         }
 
         if (mOneShots.size() < kMaxOneShots)
         {
-            const auto source{mAudioRegistryRef.CreateSource()};
+            const auto source{pAudioRegistry->CreateSource()};
             if (!source)
             {
                 mOnWarningLog(source.error());
@@ -313,14 +313,14 @@ namespace kailux
 
         const auto stolen{mOneShots[mNextOneShot]};
         mNextOneShot = (mNextOneShot + 1) % kMaxOneShots;
-        mAudioRegistryRef.Stop(stolen);
+        pAudioRegistry->Stop(stolen);
         return stolen;
     }
 
     void AudioSystem::StopOneShots()
     {
         for (const auto source : mOneShots)
-            mAudioRegistryRef.Stop(source);
+            pAudioRegistry->Stop(source);
     }
 
     glm::vec3 AudioSystem::clamp_velocity(const glm::vec3 &velocity)
