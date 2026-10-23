@@ -31,7 +31,8 @@ namespace kailux
                                            mSettingsEntity(other.mSettingsEntity),
                                            mMeshEntityNameCount(other.mMeshEntityNameCount),
                                            mLightEntityNameCount(other.mLightEntityNameCount),
-                                           mCameraEntityNameCount(other.mCameraEntityNameCount)
+                                           mCameraEntityNameCount(other.mCameraEntityNameCount),
+                                           mAudioSourceEntityNameCount(other.mAudioSourceEntityNameCount)
     {
         other.mSceneCameraEntity = entt::null;
         other.mSun               = entt::null;
@@ -51,6 +52,7 @@ namespace kailux
             mMeshEntityNameCount = other.mMeshEntityNameCount;
             mLightEntityNameCount = other.mLightEntityNameCount;
             mCameraEntityNameCount = other.mCameraEntityNameCount;
+            mAudioSourceEntityNameCount = other.mAudioSourceEntityNameCount;
 
             other.mSceneCameraEntity = entt::null;
             other.mSun               = entt::null;
@@ -159,6 +161,18 @@ namespace kailux
             entities[index++] = entity;
 
         return entities;
+    }
+
+    Scene::CreateResult Scene::CreateAudioSourceEntity(std::string_view name, const GizmoComponent &component,
+        const glm::vec3 &position)
+    {
+        const auto entity{CreateEntity(name)};
+
+        AttachAudioSource(entity, component, {});
+        SetLocalTransform(entity, {position});
+        mEntityRegistry.emplace<HierarchyComponent>(entity);
+
+        return entity;
     }
 
     entt::registry &Scene::GetEntityRegistry()
@@ -280,6 +294,11 @@ namespace kailux
         return std::format("Camera{}", mCameraEntityNameCount++);
     }
 
+    std::string Scene::GetAudioSourceEntityName()
+    {
+        return std::format("AudioSource{}", mAudioSourceEntityNameCount++);
+    }
+
     void Scene::SetSavePath(const std::filesystem::path &path)
     {
         mSavePath = path;
@@ -306,7 +325,8 @@ namespace kailux
             mSavePath,
             mMeshEntityNameCount,
             mLightEntityNameCount,
-            mCameraEntityNameCount
+            mCameraEntityNameCount,
+            mAudioSourceEntityNameCount
         };
     }
 
@@ -387,6 +407,30 @@ namespace kailux
 
         mEntityRegistry.emplace_or_replace<CameraComponent>(entity);
         mEntityRegistry.emplace_or_replace<BuiltinCamera>(entity);
+    }
+
+    bool Scene::AttachAudioSource(entt::entity entity, const GizmoComponent &component,
+        const AudioSourceComponent &audio)
+    {
+        if (!mEntityRegistry.valid(entity)
+            || mEntityRegistry.any_of<AudioSourceComponent, BuiltinCamera>(entity))
+            return false;
+
+        if (!mEntityRegistry.all_of<GizmoComponent>(entity))
+            mEntityRegistry.emplace<GizmoComponent>(entity, component);
+
+        mEntityRegistry.emplace<AudioSourceComponent>(entity, audio);
+        return true;
+    }
+
+    void Scene::DetachAudioSource(entt::entity entity)
+    {
+        if (!mEntityRegistry.valid(entity))
+            return;
+
+        mEntityRegistry.remove<AudioSourceComponent>(entity);
+        if (!mEntityRegistry.any_of<PointLightData, CameraComponent>(entity))
+            mEntityRegistry.remove<GizmoComponent>(entity);
     }
 
     glm::mat4 Scene::GetParentWorldMatrix(entt::entity entity) const

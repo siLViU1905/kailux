@@ -15,7 +15,7 @@ namespace kailux
         uint8_t major{};
         uint8_t minor{};
     };
-    constexpr Version kSceneVersion{4, 0};
+    constexpr Version kSceneVersion{4, 1};
 
     constexpr uint32_t kNoEntity{~0u};
 
@@ -103,6 +103,7 @@ namespace kailux
         uint32_t              meshNameCount{};
         uint32_t              lightNameCount{};
         uint32_t              cameraNameCount{};
+        uint32_t              audioSourceNameCount{};
     };
 
     struct SceneDocument
@@ -232,7 +233,8 @@ namespace kailux
             {"save_path", meta.savePath.generic_string()},
             {"mesh_name_count", meta.meshNameCount},
             {"light_name_count", meta.lightNameCount},
-            {"camera_name_count", meta.cameraNameCount}
+            {"camera_name_count", meta.cameraNameCount},
+            {"audio_source_name_count", meta.audioSourceNameCount}
         };
 
     }
@@ -243,6 +245,7 @@ namespace kailux
         meta.meshNameCount   = js.value("mesh_name_count", meta.meshNameCount);
         meta.lightNameCount  = js.value("light_name_count", meta.lightNameCount);
         meta.cameraNameCount = js.value("camera_name_count", meta.cameraNameCount);
+        meta.audioSourceNameCount = js.value("audio_source_name_count", meta.audioSourceNameCount);
     }
 
     inline void to_json(nlohmann::json &js, const EntityRecord &record)

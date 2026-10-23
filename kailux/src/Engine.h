@@ -131,6 +131,9 @@ namespace kailux
         void AddLightEntity(Scene& scene, LightType type);
         void AddCameraEntity(Scene& scene, int width, int height);
 
+        void AddAudioSourceEntity(Scene& scene);
+        bool AddAudioSourceToEntity(Scene& scene, entt::entity entity);
+
         DeviceInfo GetDeviceInfo() const;
 
         void SetRenderScale(float scale);

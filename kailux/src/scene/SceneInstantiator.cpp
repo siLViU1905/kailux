@@ -104,9 +104,19 @@ namespace kailux::scene_instantiator
 
             if (record.audio)
             {
-                auto& audio{registry.emplace_or_replace<AudioSourceComponent>(entity)};
-                audio.clip     = record.audio->clip;
-                audio.settings = record.audio->ToSettings();
+                const GizmoComponent gizmo{
+                    gizmoRegistry.GetBuiltins().audioSource,
+                    0.5f,
+                    {1.f, 1.f, 1.f, 1.f}
+                };
+                scene.AttachAudioSource(
+                    entity,
+                    gizmo,
+                    {
+                        record.audio->clip,
+                        record.audio->ToSettings()
+                    }
+                );
             }
         }
 

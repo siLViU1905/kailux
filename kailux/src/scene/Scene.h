@@ -10,6 +10,7 @@
 #include "../components/gpu/SceneData.h"
 #include "../mesh/MeshLoader.h"
 #include "../texture/TextureRegistry.h"
+#include "components/entt/AudioSourceComponent.h"
 #include "components/entt/MeshSourceComponent.h"
 #include "components/entt/PhysicsComponent.h"
 #include "components/math/Transform.h"
@@ -72,6 +73,11 @@ namespace kailux
             const glm::vec3 &position);
         std::array<entt::entity, details::kMaxPointLights> GetPointLightEntities() const;
 
+        CreateResult CreateAudioSourceEntity(
+            std::string_view name,
+            const GizmoComponent &component,
+            const glm::vec3 &position);
+
         entt::registry&       GetEntityRegistry();
         const entt::registry& GetEntityRegistry() const;
         entt::entity          GetSceneCamera() const;
@@ -90,6 +96,7 @@ namespace kailux
         std::string           GetMeshEntityName();
         std::string           GetLightEntityName();
         std::string           GetCameraEntityName();
+        std::string           GetAudioSourceEntityName();
 
         void                         SetSavePath(const std::filesystem::path& path);
         const std::filesystem::path& GetSavePath() const;
@@ -108,6 +115,8 @@ namespace kailux
         void AttachPhysics(entt::entity entity, PhysicsComponent component);
         void AttachCamera(entt::entity entity, const GizmoComponent &component, const CameraComponent &camera);
         void AttachBuiltinCamera(entt::entity entity);
+        bool AttachAudioSource(entt::entity entity, const GizmoComponent &component, const AudioSourceComponent &audio);
+        void DetachAudioSource(entt::entity entity);
 
         glm::mat4 GetParentWorldMatrix(entt::entity entity) const;
         void      SetLocalTransform(entt::entity entity, const Transform &transform);
@@ -143,5 +152,6 @@ namespace kailux
         uint32_t mMeshEntityNameCount{};
         uint32_t mLightEntityNameCount{};
         uint32_t mCameraEntityNameCount{};
+        uint32_t mAudioSourceEntityNameCount{};
     };
 }

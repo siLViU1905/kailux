@@ -973,6 +973,8 @@ namespace kailux
         mPhysicsSystem.SetSimulationState(scene, SimulationState::Paused);
         mScriptSystem.SetSimulationState(scene, SimulationState::Paused);
         mPhysicsSystem.DestroyAllBodies();
+        mAudioSystem.SetSimulationState(scene, SimulationState::Paused);
+        mAudioSystem.DetachScene(scene);
         SetControlledCamera(entt::null, {});
     }
 
@@ -2333,6 +2335,35 @@ namespace kailux
         };
         if (!camera)
             mOnWarningLog(camera.error());
+    }
+
+    void Engine::AddAudioSourceEntity(Scene &scene)
+    {
+        if (const auto audioSource{
+            scene.CreateAudioSourceEntity(
+                scene.GetAudioSourceEntityName(),
+                {
+                    mGizmoRegistry.GetBuiltins().audioSource,
+                    0.5f,
+                    {1.f, 1.f, 1.f, 1.f}
+                },
+                {}
+            )
+        })
+            mOnWarningLog(audioSource.error());
+    }
+
+    bool Engine::AddAudioSourceToEntity(Scene &scene, entt::entity entity)
+    {
+        return scene.AttachAudioSource(
+            entity,
+            {
+                mGizmoRegistry.GetBuiltins().audioSource,
+                0.5f,
+                {1.f, 1.f, 1.f, 1.f}
+            },
+            {}
+        );
     }
 
     DeviceInfo Engine::GetDeviceInfo() const
