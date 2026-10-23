@@ -2,6 +2,7 @@
 
 #include <fstream>
 
+#include "components/entt/AudioSourceComponent.h"
 #include "components/entt/BuiltinCamera.h"
 #include "components/entt/HierarchyComponent.h"
 #include "components/entt/LocalTransform.h"
@@ -89,6 +90,9 @@ namespace kailux::scene_serializer
             
             if (const auto *script = registry.try_get<NativeScriptComponent>(entity); script && !script->name.empty())
                 record.script = {script->name, script->params.Raw()};
+
+            if (const auto *audio = registry.try_get<AudioSourceComponent>(entity))
+                record.audio = AudioSourceRecord::from(audio->clip, audio->settings);
 
             document.entities.push_back(std::move(record));
         }

@@ -2,6 +2,7 @@
 
 #include "Scene.h"
 #include "Log.h"
+#include "components/entt/AudioSourceComponent.h"
 #include "components/entt/NativeScriptComponent.h"
 
 namespace kailux::scene_instantiator
@@ -99,6 +100,13 @@ namespace kailux::scene_instantiator
                 if (!script.Bind(record.script->name))
                     log::console.Warning("Script '{}' on '{}' is not registered, it will not run",
                                          record.script->name, record.name);
+            }
+
+            if (record.audio)
+            {
+                auto& audio{registry.emplace_or_replace<AudioSourceComponent>(entity)};
+                audio.clip     = record.audio->clip;
+                audio.settings = record.audio->ToSettings();
             }
         }
 
