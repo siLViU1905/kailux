@@ -16,5 +16,7 @@ namespace kailux
         bool useImgui{};
 
         float physicsTickRate{60.f};
+
+        bool enableHrtf{false};
     };
 }

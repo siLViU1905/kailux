@@ -32,6 +32,7 @@ namespace kailux
 {
     Engine::Engine() : mAssetPipeline(mContext, mMeshRegistry, mTextureRegistry, mTransferManager, mFrames),
                        mPhysicsSystem(mPhysicsRegistry),
+                       mAudioSystem(mAudioRegistry),
                        mCurrentFrame(0),
                        mOutlineInfo(),
                        mPickedEntity(~0u),
@@ -49,9 +50,11 @@ namespace kailux
                                               mMeshRegistry(std::move(other.mMeshRegistry)),
                                               mTextureRegistry(std::move(other.mTextureRegistry)),
                                               mPhysicsRegistry(std::move(other.mPhysicsRegistry)),
+                                              mAudioRegistry(std::move(other.mAudioRegistry)),
                                               mGizmoRegistry(std::move(other.mGizmoRegistry)),
                                               mAssetPipeline(std::move(other.mAssetPipeline)),
                                               mPhysicsSystem(std::move(other.mPhysicsSystem)),
+                                              mAudioSystem(std::move(other.mAudioSystem)),
                                               mScriptSystem(std::move(other.mScriptSystem)),
                                               mDeferredResourceEraser(std::move(other.mDeferredResourceEraser)),
                                               mFrames(std::move(other.mFrames)),
@@ -92,6 +95,7 @@ namespace kailux
     {
         CreateAssetPipeline();
         CreatePhysicsSystem();
+        CreateAudioSystem();
         CreateScriptSystem();
     }
 
@@ -107,9 +111,11 @@ namespace kailux
             mMeshRegistry = std::move(other.mMeshRegistry);
             mTextureRegistry = std::move(other.mTextureRegistry);
             mPhysicsRegistry = std::move(other.mPhysicsRegistry);
+            mAudioRegistry = std::move(other.mAudioRegistry);
             mGizmoRegistry = std::move(other.mGizmoRegistry);
             mAssetPipeline = std::move(other.mAssetPipeline);
             mPhysicsSystem = std::move(other.mPhysicsSystem);
+            mAudioSystem = std::move(other.mAudioSystem);
             mScriptSystem = std::move(other.mScriptSystem);
             mDeferredResourceEraser = std::move(other.mDeferredResourceEraser);
             mFrames = std::move(other.mFrames);
@@ -150,6 +156,7 @@ namespace kailux
 
             CreateAssetPipeline();
             CreatePhysicsSystem();
+            CreateAudioSystem();
             CreateScriptSystem();
         }
         return *this;
@@ -190,6 +197,7 @@ namespace kailux
         engine.CreateMeshRegistry();
         engine.CreateTextureRegistry();
         engine.CreatePhysicsRegistry();
+        engine.CreateAudioRegistry();
         engine.CreateGizmoRegistry();
         engine.CreateComputePicker();
         engine.CreateComputeCuller();
@@ -208,6 +216,7 @@ namespace kailux
 
         engine.CreateAssetPipeline();
         engine.CreatePhysicsSystem();
+        engine.CreateAudioSystem();
         engine.CreateScriptSystem();
 
         return engine;
@@ -412,6 +421,7 @@ namespace kailux
         mSimulationStartPending = false;
         scene.UpdateCameras();
         mPhysicsSystem.SetSimulationState(scene, SimulationState::Running);
+        mAudioSystem.SetSimulationState(scene, SimulationState::Running);
         mScriptSystem.SetFixedStep(1.f / mPhysicsSystem.GetTickRate());
         mScriptSystem.SetSimulationState(scene, SimulationState::Running);
     }
@@ -512,6 +522,11 @@ namespace kailux
         mPhysicsRegistry = PhysicsRegistry::create();
     }
 
+    void Engine::CreateAudioRegistry()
+    {
+        mAudioRegistry = AudioRegistry::create(mSpecification.enableHrtf);
+    }
+
     void Engine::CreateGizmoRegistry()
     {
         std::vector<Buffer> stagingBuffers;
@@ -560,6 +575,19 @@ namespace kailux
         mPhysicsSystem.SetOnFixedStep([this](auto& scene, float step)
         {
            mScriptSystem.FixedUpdate(scene, step);
+        });
+    }
+
+    void Engine::CreateAudioSystem()
+    {
+        mAudioSystem = AudioSystem{mAudioRegistry};
+        mAudioSystem.SetOnInfoLog([this](auto msg)
+        {
+            mOnInfoLog(msg);
+        });
+        mAudioSystem.SetOnWarningLog([this](auto msg)
+        {
+            mOnWarningLog(msg);
         });
     }
 
@@ -908,6 +936,7 @@ namespace kailux
         const bool startSimulation{std::exchange(mStartSimulationOnAttach, false)};
 
         mPhysicsSystem.AttachToScene(scene);
+        mAudioSystem.AttachToScene(scene);
         ScriptSystem::connect(scene);
 
         std::unordered_set<std::string> loadedPaths;
@@ -1008,6 +1037,7 @@ namespace kailux
         {
             mSimulationStartPending = false;
             mPhysicsSystem.SetSimulationState(scene, state);
+            mAudioSystem.SetSimulationState(scene, state);
             mScriptSystem.SetSimulationState(scene, state);
             return true;
         }
@@ -2046,6 +2076,33 @@ namespace kailux
         };
     }
 
+    void Engine::UpdateControlledCamera(Scene &scene, float deltaTime)
+    {
+        if (!mInputSource.Valid() || !mBuiltinCameraControl)
+        {
+            scene.UpdateCameras();
+            return;
+        }
+
+        const auto controlled{
+            mControlledCamera == entt::null ?
+            scene.GetSceneCamera() :
+            mControlledCamera
+        };
+
+        auto& registry{scene.GetEntityRegistry()};
+        if (registry.valid(controlled))
+            if (auto* camera{registry.try_get<CameraComponent>(controlled)})
+            {
+                camera->focused = mMouseLookActive;
+                camera::update_movement(*camera, mInputSource, deltaTime);
+                camera::update_look_at(*camera, mInputSource, deltaTime);
+                scene.SyncCameraTransform(controlled);
+            }
+
+        scene.UpdateCameras(controlled);
+    }
+
     void Engine::Update(Scene &scene, float deltaTime)
     {
         mAssetPipeline.Poll(scene);
@@ -2079,30 +2136,9 @@ namespace kailux
         mScriptSystem.Update(scene, deltaTime);
 
         scene.Update();
+        UpdateControlledCamera(scene, deltaTime);
 
-        if (!mInputSource.Valid() || !mBuiltinCameraControl)
-        {
-            scene.UpdateCameras();
-            return;
-        }
-
-        const auto controlled{
-            mControlledCamera == entt::null ?
-            scene.GetSceneCamera() :
-            mControlledCamera
-        };
-
-        auto& registry{scene.GetEntityRegistry()};
-        if (registry.valid(controlled))
-            if (auto* camera{registry.try_get<CameraComponent>(controlled)})
-            {
-                camera->focused = mMouseLookActive;
-                camera::update_movement(*camera, mInputSource, deltaTime);
-                camera::update_look_at(*camera, mInputSource, deltaTime);
-                scene.SyncCameraTransform(controlled);
-            }
-
-        scene.UpdateCameras(controlled);
+        mAudioSystem.Update(scene, deltaTime);
     }
 
     void Engine::UpdateFrameBuffers(const Scene &scene, FrameData &frame, const RenderTarget &sceneView, const CommandRecorder &recorder)

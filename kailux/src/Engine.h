@@ -24,6 +24,7 @@
 #include "EngineSpecification.h"
 #include "RenderTarget.h"
 #include "ResizeDebouncer.h"
+#include "audio/AudioSystem.h"
 #include "components/gpu/CameraData.h"
 #include "gizmo/GizmoRegistry.h"
 #include "passes/GizmoPass.h"
@@ -86,6 +87,11 @@ namespace kailux
         decltype(auto) GetPhysicsSystem(this auto&& self)
         {
             return (self.mPhysicsSystem);
+        }
+
+        decltype(auto) GetAudioSystem(this auto&& self)
+        {
+            return (self.mAudioSystem);
         }
 
         using OnLog = std::move_only_function<void(std::string_view)>;
@@ -154,9 +160,11 @@ namespace kailux
         void CreateMeshRegistry();
         void CreateTextureRegistry();
         void CreatePhysicsRegistry();
+        void CreateAudioRegistry();
         void CreateGizmoRegistry();
         void CreateAssetPipeline();
         void CreatePhysicsSystem();
+        void CreateAudioSystem();
         void CreateScriptSystem();
         void CreateImGui(Window& window);
 
@@ -192,6 +200,8 @@ namespace kailux
         void                                        RecordImGuiPass(Scene &scene, const FrameData& frame, CommandRecorder &recorder, uint32_t imageIndex);
 
         static CameraData build_camera_data(const Scene &scene, entt::entity entity, glm::ivec2 extent);
+
+        void UpdateControlledCamera(Scene &scene, float deltaTime);
 
         void UpdateFrameBuffers(const Scene &scene, FrameData& frame, const RenderTarget &sceneView, const CommandRecorder& recorder);
         void UpdateCameraBuffer(const Scene &scene, FrameData& frame, const RenderTarget &sceneView) const;
@@ -252,10 +262,12 @@ namespace kailux
         MeshRegistry                               mMeshRegistry;
         TextureRegistry                            mTextureRegistry;
         PhysicsRegistry                            mPhysicsRegistry;
+        AudioRegistry                              mAudioRegistry;
         GizmoRegistry                              mGizmoRegistry;
 
         AssetPipeline                                mAssetPipeline;
         PhysicsSystem                                mPhysicsSystem;
+        AudioSystem                                  mAudioSystem;
         ScriptSystem                                 mScriptSystem;
         DeferredResourceEraser<details::kFramesInFlight + 1> mDeferredResourceEraser;
 
