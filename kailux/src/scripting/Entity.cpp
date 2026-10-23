@@ -129,8 +129,62 @@ namespace kailux
     }
     void TransformRef::Set(const Transform &transform) const
     {
-        pScene->SetLocalTransform(mHandle, transform);
+         pScene->SetLocalTransform(mHandle, transform);
          details::sync_body(*pScene, mHandle, false);
+    }
+
+    glm::vec3 MaterialRef::Albedo() const
+    {
+         return {Get().albedoAndRoughness};
+    }
+
+    void MaterialRef::SetAlbedo(const glm::vec3 &albedo)
+    {
+         auto material{Get()};
+         material.albedoAndRoughness.x = albedo.x;
+         material.albedoAndRoughness.y = albedo.y;
+         material.albedoAndRoughness.z = albedo.z;
+         Set(material);
+    }
+
+    float MaterialRef::Roughness() const
+    {
+         return Get().albedoAndRoughness.w;
+    }
+
+    void MaterialRef::SetRoughness(float roughness)
+    {
+         auto material{Get()};
+         material.albedoAndRoughness.w = roughness;
+         Set(material);
+    }
+
+    float MaterialRef::Metallic() const
+    {
+         return Get().pbrParams.x;
+    }
+
+    void MaterialRef::SetMetallic(float metallic)
+    {
+         auto material{Get()};
+         material.pbrParams.x = metallic;
+         Set(material);
+    }
+
+    float MaterialRef::AO() const
+    {
+         return Get().pbrParams.y;
+    }
+
+    void MaterialRef::SetAO(float ao)
+    {
+         auto material{Get()};
+         material.pbrParams.y = ao;
+         Set(material);
+    }
+
+    MaterialRef::MaterialRef(Scene &scene, entt::entity handle) : pScene(&scene), mHandle(handle)
+    {
     }
 
     RigidBody::RigidBody(Scene &scene, entt::entity handle) : pScene(&scene), mHandle(handle)
@@ -152,6 +206,18 @@ namespace kailux
          }
 
          GetRegistry().emplace<NativeScriptComponent>(mHandle).Instantiate = factory;
+    }
+
+    MeshMaterialData MaterialRef::Get() const
+    {
+         if (const auto* material{pScene->GetEntityRegistry().try_get<MeshMaterialData>(mHandle)})
+             return *material;
+         return {};
+    }
+
+    void MaterialRef::Set(const MeshMaterialData &material) const
+    {
+         pScene->GetEntityRegistry().emplace_or_replace<MeshMaterialData>(mHandle, material);
     }
 
     bool RigidBody::Valid() const
@@ -314,6 +380,11 @@ namespace kailux
     TransformRef Entity::GetTransform() const
     {
         return TransformRef{*pScene, mHandle};
+    }
+
+    MaterialRef Entity::GetMaterial() const
+    {
+        return MaterialRef{*pScene, mHandle};
     }
 
     RigidBody Entity::GetBody() const
