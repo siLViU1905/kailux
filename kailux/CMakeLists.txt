@@ -73,6 +73,7 @@ add_library(kailux STATIC
         src/scripting/Time.cpp
         src/scripting/ScriptRegistry.cpp
         src/scripting/CameraRef.cpp
+        src/scripting/AudioSource.cpp
         src/layers/Layer.cpp
         src/layers/LayerStack.cpp
         src/Application.cpp
