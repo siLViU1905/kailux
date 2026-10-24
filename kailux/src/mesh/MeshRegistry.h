@@ -68,6 +68,8 @@ namespace kailux
 
         BuiltinMeshes GetBuiltins() const;
 
+        uint64_t GetGeneration() const;
+
         MeshBufferRegions GetRegions(MeshHandle handle) const;
 
     private:
@@ -117,6 +119,8 @@ namespace kailux
         std::vector<uint32_t>  mFreeSlots;
 
         BuiltinMeshes mBuiltins;
+
+        uint64_t mGeneration{};
 
     public:
         MeshHandle Upload(const Context &context,

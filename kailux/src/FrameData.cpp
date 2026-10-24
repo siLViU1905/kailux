@@ -38,7 +38,8 @@ namespace kailux
                                                        mPickerBuffer(std::move(other.mPickerBuffer)),
                                                        mCullerInputCommandsBuffer(
                                                            std::move(other.mCullerInputCommandsBuffer)),
-                                                       mCullerCountBuffer(std::move(other.mCullerCountBuffer))
+                                                       mCullerCountBuffer(std::move(other.mCullerCountBuffer)),
+                                                       mMeshUploadState(std::move(other.mMeshUploadState))
     {
     }
 
@@ -66,6 +67,7 @@ namespace kailux
             mPickerBuffer = std::move(other.mPickerBuffer);
             mCullerInputCommandsBuffer = std::move(other.mCullerInputCommandsBuffer);
             mCullerCountBuffer = std::move(other.mCullerCountBuffer);
+            mMeshUploadState = std::move(other.mMeshUploadState);
         }
         return *this;
     }

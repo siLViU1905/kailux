@@ -174,6 +174,7 @@ namespace kailux
         void CreateImGui(Window& window);
 
         void SeedDefaultTextures();
+        void ResetTextureDescriptors(std::span<const uint32_t> textureSlots);
 
         void CreateComputePicker();
         void CreateComputeCuller();
@@ -210,11 +211,10 @@ namespace kailux
 
         void UpdateFrameBuffers(const Scene &scene, FrameData& frame, const RenderTarget &sceneView, const CommandRecorder& recorder);
         void UpdateCameraBuffer(const Scene &scene, FrameData& frame, const RenderTarget &sceneView) const;
-        void UpdateMeshDataBuffer(const Scene &scene, FrameData& frame) const;
+        void UpdateMeshBuffers(const Scene &scene, FrameData& frame) const;
         void UpdateMaterialBuffer(FrameData& frame) const;
 
         void UpdateSceneBuffer(const Scene &scene, FrameData& frame) const;
-        void UpdateCullerBuffers(const Scene &scene, const FrameData& frame, const CommandRecorder &recorder);
 
         void ReadOutputBuffers(const FrameData& frame);
 

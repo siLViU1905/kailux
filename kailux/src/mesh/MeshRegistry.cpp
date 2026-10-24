@@ -15,7 +15,8 @@ namespace kailux
                                                                 mAssetIndexZone(std::move(other.mAssetIndexZone)),
                                                                 mAllocs(std::move(other.mAllocs)),
                                                                 mFreeSlots(std::move(other.mFreeSlots)),
-                                                                mBuiltins(other.mBuiltins)
+                                                                mBuiltins(other.mBuiltins),
+                                                                mGeneration(other.mGeneration)
     {
     }
 
@@ -32,6 +33,7 @@ namespace kailux
             mAllocs = std::move(other.mAllocs);
             mFreeSlots = std::move(other.mFreeSlots);
             mBuiltins = other.mBuiltins;
+            mGeneration = other.mGeneration;
         }
         return *this;
     }
@@ -112,6 +114,11 @@ namespace kailux
     BuiltinMeshes MeshRegistry::GetBuiltins() const
     {
         return mBuiltins;
+    }
+
+    uint64_t MeshRegistry::GetGeneration() const
+    {
+        return mGeneration;
     }
 
     MeshBufferRegions MeshRegistry::GetRegions(MeshHandle handle) const
@@ -205,6 +212,8 @@ namespace kailux
             lodCount,
             isBuiltin
         };
+
+        ++mGeneration;
         return handle;
     }
 
