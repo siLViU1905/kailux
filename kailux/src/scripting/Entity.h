@@ -165,6 +165,7 @@ namespace kailux
         AudioSource  GetAudio() const;
 
         AudioSource AddAudioSource(const std::filesystem::path& clip, const AudioSourceSettings& settings = {}) const;
+        bool RemoveAudioSource() const;
 
         template<typename T>
         T* GetScript() const

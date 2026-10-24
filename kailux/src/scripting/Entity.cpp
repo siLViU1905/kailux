@@ -413,6 +413,15 @@ namespace kailux
         return source;
     }
 
+    bool Entity::RemoveAudioSource() const
+    {
+        if (!Has<AudioSourceComponent>())
+            return false;
+
+        pScene->DetachAudioSource(mHandle);
+        return true;
+    }
+
     bool Entity::AddScript(std::string_view name) const
     {
         if (!Valid() || Has<NativeScriptComponent>())
