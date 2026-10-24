@@ -29,6 +29,8 @@ add_library(kailux STATIC
         src/passes/SkyboxPass.cpp
         src/mesh/MeshLoader.cpp
         src/utilities/ThreadDispatcher.cpp
+        src/utilities/LinearZone.cpp
+        src/utilities/FreeListZone.cpp
         src/texture/TextureRegistry.cpp
         src/passes/ComputePicker.cpp
         src/passes/OutlinePass.cpp
@@ -47,7 +49,6 @@ add_library(kailux STATIC
         src/physics/PhysicsSystem.cpp
         src/passes/GizmoPass.cpp
         src/gizmo/GizmoGeometry.cpp
-        src/utilities/LinearZone.cpp
         src/gizmo/GizmoRegistry.cpp
         src/mesh/MeshGeometry.cpp
         src/Shader.cpp

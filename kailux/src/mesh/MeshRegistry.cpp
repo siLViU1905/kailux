@@ -45,11 +45,8 @@ namespace kailux
 
         registry.mBuiltinVertexZone = {0, kBuiltinZoneSize, 0};
         registry.mBuiltinIndexZone = {0, kBuiltinZoneSize / 2, 0};
-        registry.mAssetVertexZone = {kBuiltinZoneSize, kAssetZoneSize};
-        registry.mAssetIndexZone = {kBuiltinZoneSize / 2, kAssetZoneSize / 2};
-
-        registry.mAssetVertexZone.freeBlocks.emplace_back(kBuiltinZoneSize, kAssetZoneSize);
-        registry.mAssetIndexZone.freeBlocks.emplace_back(kBuiltinZoneSize / 2, kAssetZoneSize / 2);
+        registry.mAssetVertexZone = FreeListZone::create(kBuiltinZoneSize, kAssetZoneSize);
+        registry.mAssetIndexZone = FreeListZone::create(kBuiltinZoneSize / 2, kAssetZoneSize / 2);
 
         auto uploadShape = [&](auto genFn, MeshHandle &out)
         {
@@ -129,75 +126,6 @@ namespace kailux
             alloc.indexOffset,
             static_cast<vk::DeviceSize>(alloc.indexCount) * sizeof(IndexType)
         };
-    }
-
-    vk::DeviceSize MeshRegistry::FreeListZone::Alloc(vk::DeviceSize size, vk::DeviceSize alignment)
-    {
-        for (auto it = freeBlocks.begin(); it != freeBlocks.end(); ++it)
-        {
-            vk::DeviceSize aligned = ((it->offset + alignment - 1) / alignment) * alignment;
-            vk::DeviceSize padding = aligned - it->offset;
-
-            if (it->size >= size + padding)
-            {
-                if (aligned < base || (aligned + size) > (base + capacity))
-                    return 0;
-
-                vk::DeviceSize offset = aligned;
-
-                vk::DeviceSize remaining = it->size - size - padding;
-                if (remaining > 64)
-                {
-                    Block leftover(aligned + size, remaining);
-                    freeBlocks.insert(std::next(it), leftover);
-                }
-
-                if (padding > 0)
-                    it->size = padding;
-                else
-                    freeBlocks.erase(it);
-
-                usedBlocks.emplace_back(offset, size);
-                return offset;
-            }
-        }
-        throw std::runtime_error("Asset zone out of memory");
-    }
-
-    void MeshRegistry::FreeListZone::Free(vk::DeviceSize offset)
-    {
-        auto it = std::ranges::find_if(usedBlocks, [offset](const Block &b)
-        {
-            return b.offset == offset;
-        });
-
-        if (it == usedBlocks.end())
-            throw std::runtime_error("MeshRegistry::free — invalid offset");
-
-        Block freed = *it;
-        usedBlocks.erase(it);
-
-        auto pos = std::ranges::lower_bound(freeBlocks, freed.offset,
-                                            {}, &Block::offset);
-        auto inserted = freeBlocks.insert(pos, freed);
-
-        auto next = std::next(inserted);
-        if (next != freeBlocks.end() &&
-            inserted->offset + inserted->size == next->offset)
-        {
-            inserted->size += next->size;
-            freeBlocks.erase(next);
-        }
-
-        if (inserted != freeBlocks.begin())
-        {
-            auto prev = std::prev(inserted);
-            if (prev->offset + prev->size == inserted->offset)
-            {
-                prev->size += inserted->size;
-                freeBlocks.erase(inserted);
-            }
-        }
     }
 
     MeshHandle MeshRegistry::AllocSlot()

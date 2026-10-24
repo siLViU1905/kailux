@@ -9,6 +9,7 @@
 #include "buffer/Buffer.h"
 #include "buffer/BufferAllocator.h"
 #include "utilities/LinearZone.h"
+#include "utilities/FreeListZone.h"
 
 namespace kailux
 {
@@ -70,26 +71,6 @@ namespace kailux
         MeshBufferRegions GetRegions(MeshHandle handle) const;
 
     private:
-        struct Block
-        {
-            vk::DeviceSize offset{};
-            vk::DeviceSize size{};
-        };
-
-        struct FreeListZone
-        {
-            static constexpr vk::DeviceSize kDefaultAlignment = 16;
-
-            vk::DeviceSize base{};
-            vk::DeviceSize capacity{};
-            std::list<Block> freeBlocks;
-            std::list<Block> usedBlocks;
-
-            vk::DeviceSize Alloc(vk::DeviceSize size, vk::DeviceSize alignment = kDefaultAlignment);
-
-            void Free(vk::DeviceSize offset);
-        };
-
         struct LodAlloc
         {
             uint32_t firstIndex{};
