@@ -129,6 +129,7 @@ namespace kailux
     {
         assert(handle.Valid() || handle.index < mMaterials.size());
         mMaterials[handle.index] = slot;
+        ++mMaterialGeneration;
     }
 
     std::vector<uint32_t> TextureRegistry::ReleaseMaterial(MaterialHandle handle)
@@ -222,7 +223,7 @@ namespace kailux
 
         auto process = [&](const auto &imgData, auto &slotIndexOut)
         {
-            if (!checkSize(imgData) || mFreeTextureSlots.emplace_back())
+            if (!checkSize(imgData) || mFreeTextureSlots.empty())
                 return;
 
             auto asyncTex{texture_allocator::create_from_image_data_async(context, mTexturePool, imgData)};
