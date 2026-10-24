@@ -26,10 +26,13 @@ add_library(kailux STATIC
         src/texture/Texture.cpp
         src/texture/TextureAllocator.cpp
         src/texture/ImageLoader.cpp
+        src/texture/TextureRegistry.cpp
+        src/texture/TextureMemoryPool.cpp
         src/passes/SkyboxPass.cpp
         src/mesh/MeshLoader.cpp
         src/utilities/ThreadDispatcher.cpp
-        src/texture/TextureRegistry.cpp
+        src/utilities/LinearZone.cpp
+        src/utilities/FreeListZone.cpp
         src/passes/ComputePicker.cpp
         src/passes/OutlinePass.cpp
         src/passes/GraphicsPass.cpp
@@ -47,7 +50,6 @@ add_library(kailux STATIC
         src/physics/PhysicsSystem.cpp
         src/passes/GizmoPass.cpp
         src/gizmo/GizmoGeometry.cpp
-        src/utilities/LinearZone.cpp
         src/gizmo/GizmoRegistry.cpp
         src/mesh/MeshGeometry.cpp
         src/Shader.cpp

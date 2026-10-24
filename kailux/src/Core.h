@@ -97,11 +97,11 @@ namespace kailux::details
 {
     constexpr uint32_t kFramesInFlight{2};
 
-    constexpr uint32_t kMaxMeshes{1'000};
+    constexpr uint32_t kMaxMeshes{10'000};
     constexpr uint32_t kMaxGeometryLods{5};
     constexpr uint32_t kMinLodIndices{1500};
     constexpr uint32_t kMaxTextures{4'096};
-    constexpr uint32_t kMaxMaterials{kMaxMeshes};
+    constexpr uint32_t kMaxMaterials{256};
     constexpr uint32_t kMaxPointLights{16};
     constexpr uint32_t kMaxCameras{4};
 
@@ -116,7 +116,19 @@ namespace kailux::details
     constexpr uint32_t kPointShadowFaceCount{6};
     constexpr uint32_t kMaxPointShadows{4};
 
-    constexpr uint32_t kMaxTextureDimension{1024};
+    constexpr uint32_t kMaxTextureDimension{512};
+
+    //512x512 RGBA8, a full mip chain adds ~1/3 on top of mip 0 -> ~1.33 MiB
+    constexpr uint64_t kTextureBytesPerPixel{4};
+    constexpr uint64_t kMaxTextureBytes{
+        static_cast<uint64_t>(kMaxTextureDimension) * kMaxTextureDimension * kTextureBytesPerPixel * 4 / 3
+    };
+
+    //worst case: every material has all 5 maps
+    constexpr uint64_t kTexturesPerMaterial{5};
+    constexpr uint64_t kTexturePoolMaterialBudget{128};
+
+    constexpr uint64_t kTexturePoolSize{kMaxTextureBytes * kTexturesPerMaterial * kTexturePoolMaterialBudget};
 }
 
 namespace kailux::details

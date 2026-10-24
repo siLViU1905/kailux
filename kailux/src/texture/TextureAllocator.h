@@ -1,6 +1,7 @@
 #pragma once
 #include "ImageLoader.h"
 #include "Texture.h"
+#include "TextureMemoryPool.h"
 #include "buffer/Buffer.h"
 
 namespace kailux
@@ -23,8 +24,15 @@ namespace kailux
                 const image_loader::ImageData &data
             );
 
-            AsyncTextureResult create_from_image_data_async(
+            std::optional<Texture> create_from_image_data(
+                const Context& context,
+                TextureMemoryPool& pool,
+                const image_loader::ImageData& data
+                );
+
+            std::optional<AsyncTextureResult> create_from_image_data_async(
                 const Context &context,
+                TextureMemoryPool& pool,
                 const image_loader::ImageData &data
             );
 
@@ -67,6 +75,26 @@ namespace kailux
         
         namespace details
         {
+            vk::raii::Image create_image(
+                const Context &context,
+                uint32_t width,
+                uint32_t height,
+                uint32_t mipLevels,
+                vk::Format format,
+                vk::ImageUsageFlags usage,
+                vk::SampleCountFlagBits samples
+            );
+
+            vk::raii::ImageView create_view(
+                const Context &context,
+                vk::Image image,
+                uint32_t mipLevels,
+                vk::Format format,
+                vk::ImageAspectFlags aspect
+            );
+
+            vk::raii::Sampler create_sampler(const Context &context, uint32_t mipLevels);
+
             Texture alloc(
                 const Context &context,
                 uint32_t width,
@@ -76,6 +104,23 @@ namespace kailux
                 vk::ImageUsageFlags usage,
                 vk::ImageAspectFlags aspect,
                 vk::SampleCountFlagBits samples = vk::SampleCountFlagBits::e1
+            );
+
+            std::optional<Texture> alloc_pooled(
+                const Context &context,
+                TextureMemoryPool &pool,
+                uint32_t width,
+                uint32_t height,
+                uint32_t mipLevels,
+                vk::Format format,
+                vk::ImageUsageFlags usage,
+                vk::ImageAspectFlags aspect
+            );
+
+            void upload_with_mipmaps(
+                const Context &context,
+                const Texture &texture,
+                const image_loader::ImageData &data
             );
 
             void transition_layout(

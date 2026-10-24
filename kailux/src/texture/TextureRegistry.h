@@ -4,6 +4,7 @@
 
 #include "ImageLoader.h"
 #include "Texture.h"
+#include "TextureMemoryPool.h"
 #include "Context.h"
 #include "Core.h"
 #include "TransferManager.h"
@@ -51,11 +52,13 @@ namespace kailux
         );
 
         std::optional<TextureHandle>  RegisterTexture(Texture&& texture);
-        void                          ReleaseTexture(TextureHandle handle);
+        bool                          ReleaseTexture(TextureHandle handle);
         const Texture&                GetTexture(TextureHandle handle) const;
         std::optional<MaterialHandle> RegisterMaterial(const MaterialSlot& slot);
         void                          UpdateMaterial(MaterialHandle handle, const MaterialSlot& slot);
-        void                          ReleaseMaterial(MaterialHandle handle);
+        std::vector<uint32_t>         ReleaseMaterial(MaterialHandle handle);
+        bool                          HasFreeMaterialSlot() const;
+        uint64_t                      GetMaterialGeneration() const;
         const MaterialSlot&           GetMaterial(MaterialHandle handle) const;
         MaterialHandle                GetDefaultMaterialHandle() const;
         TextureHandle                 GetDefaultTextureHandle(TextureType type) const;
@@ -83,12 +86,14 @@ namespace kailux
         void     CreateDefaultTextures(const Context& context);
         void     CreateAssetBrowserTextures(const Context& context, std::string_view directoryIconPath, std::string_view fileIconPath);
 
+        TextureMemoryPool                    mTexturePool;
         std::vector<std::optional<Texture>>  mTextures;
         std::vector<uint32_t>                mTextureRefCount;
         std::deque<uint32_t>                 mFreeTextureSlots;
 
         std::vector<MaterialSlot> mMaterials;
         std::deque<uint32_t>      mFreeMaterialSlots;
+        uint64_t                  mMaterialGeneration{};
 
         uint32_t       mDefaultAlbedoIdx{~0u};
         uint32_t       mDefaultNormalIdx{~0u};

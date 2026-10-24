@@ -22,6 +22,16 @@ namespace kailux
         }
 
         template<typename T>
+        std::span<T> Mapped() const
+        {
+            assert(mMapped && "Buffer is not host-visible");
+            return {
+                static_cast<T*>(mMapped),
+                static_cast<size_t>(mSize / sizeof(T))
+            };
+        }
+
+        template<typename T>
         T Read() const
         {
             assert(mMapped && "Buffer is not host-visible");

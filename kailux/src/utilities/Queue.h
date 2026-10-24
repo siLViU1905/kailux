@@ -1,6 +1,8 @@
 #pragma once
 #include <mutex>
 #include "../Core.h"
+#include <bit>
+#include <cassert>
 
 namespace kailux
 {
@@ -8,6 +10,8 @@ namespace kailux
     class Queue
     {
     public:
+        static_assert(std::has_single_bit(Capacity), "Queue capacity must be a power of 2");
+
         Queue() = default;
         Queue(const Queue&) = delete;
         Queue& operator=(const Queue&) = delete;
@@ -35,12 +39,14 @@ namespace kailux
         void Push(const T& val)
         {
             auto tail = mTail.load(std::memory_order_relaxed);
+            assert(tail - mHead.load(std::memory_order_acquire) < Capacity && "Queue is full");
             mBuffer[tail & kMask] = val;
             mTail.store(tail + 1, std::memory_order_release);
         }
         void Push(T&& val)
         {
             auto tail = mTail.load(std::memory_order_relaxed);
+            assert(tail - mHead.load(std::memory_order_acquire) < Capacity && "Queue is full");
             mBuffer[tail & kMask] = std::move(val);
             mTail.store(tail + 1, std::memory_order_release);
         }
@@ -48,6 +54,7 @@ namespace kailux
         void Emplace(Args&&... args)
         {
             auto tail = mTail.load(std::memory_order_relaxed);
+            assert(tail - mHead.load(std::memory_order_acquire) < Capacity && "Queue is full");
             mBuffer[tail & kMask] = T(std::forward<Args>(args)...);
             mTail.store(tail + 1, std::memory_order_release);
         }

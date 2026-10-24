@@ -284,7 +284,7 @@ namespace kailux
         mContext.GetDevice().waitIdle();
     }
 
-    Queue<AssetPipeline::PendingMeshData> &Engine::GetPendingMeshDataQueue()
+    AssetPipeline::PendingQueue &Engine::GetPendingMeshDataQueue()
     {
         return mAssetPipeline.GetPendingQueue();
     }
@@ -357,11 +357,7 @@ namespace kailux
         for (const auto &submesh : model->submeshes)
         {
             mMeshRegistry.Destroy(submesh.meshHandle);
-            const auto materialHandle{submesh.materialHandle};
-            mDeferredResourceEraser.Enqueue([this, materialHandle]()
-            {
-                mTextureRegistry.ReleaseMaterial(materialHandle);
-            });
+            UnregisterMaterial(submesh.materialHandle);
         }
     }
 
@@ -369,7 +365,7 @@ namespace kailux
     {
         mDeferredResourceEraser.Enqueue([this, handle]()
         {
-            mTextureRegistry.ReleaseMaterial(handle);
+            ResetTextureDescriptors(mTextureRegistry.ReleaseMaterial(handle));
         });
     }
 
@@ -620,6 +616,37 @@ namespace kailux
                     vk::ImageLayout::eShaderReadOnlyOptimal,
                     1
                 )
+            );
+        }
+
+        for (const auto& frame : mFrames)
+            frame.GetMeshDescriptorSet().UpdateInfo(mContext, writes);
+    }
+
+    void Engine::ResetTextureDescriptors(std::span<const uint32_t> textureSlots)
+    {
+        if (textureSlots.empty())
+            return;
+
+        const auto& fallback{
+            mTextureRegistry.GetTexture(
+                mTextureRegistry.GetDefaultTextureHandle(TextureType::Albedo)
+                )
+        };
+
+        std::vector<DescriptorSetUpdateInfo> writes;
+        writes.reserve(textureSlots.size());
+        for (const auto slot : textureSlots)
+        {
+            writes.emplace_back(
+                MainPass::kMeshTextureBindStart,
+                slot,
+                DescriptorSetImageInfo{
+                    fallback.GetSampler(),
+                    fallback.GetImageView(),
+                    vk::ImageLayout::eShaderReadOnlyOptimal,
+                    1
+                }
             );
         }
 
@@ -2129,10 +2156,9 @@ namespace kailux
     void Engine::UpdateFrameBuffers(const Scene &scene, FrameData &frame, const RenderTarget &sceneView, const CommandRecorder &recorder)
     {
         UpdateCameraBuffer(scene, frame, sceneView);
-        UpdateMeshDataBuffer(scene, frame);
+        UpdateMeshBuffers(scene, frame);
         UpdateMaterialBuffer(frame);
         UpdateSceneBuffer(scene, frame);
-        UpdateCullerBuffers(scene, frame, recorder);
 
         recorder.BufferMemoryBarriers(frame.GetBufferMemoryBarriers());
     }
@@ -2159,21 +2185,35 @@ namespace kailux
         frame.GetCameraBuffer().Upload(cameras.data(), sizeof(CameraData) * cameras.size());
     }
 
-    void Engine::UpdateMeshDataBuffer(const Scene &scene, FrameData &frame) const
+    void Engine::UpdateMeshBuffers(const Scene &scene, FrameData &frame) const
     {
-        std::vector<MeshData> data;
-        auto view = scene.GetEntityRegistry().view<
-            WorldTransform,
-            MeshMaterialData,
-            MeshComponent,
-            MaterialComponent>
-        (entt::exclude<PendingUploadComponent>);
-        data.reserve(view.size_hint());
-        for (auto entity: view)
+        const auto meshData{frame.GetModelBuffer().Mapped<MeshData>()};
+        const auto commands{frame.GetCullerInputCommandsBuffer().Mapped<vk::DrawIndexedIndirectCommand>()};
+        auto& uploadState{frame.GetMeshUploadState()};
+
+        if (uploadState.meshGeneration != mMeshRegistry.GetGeneration())
         {
+            uploadState.commandMeshes.clear();
+            uploadState.meshGeneration = mMeshRegistry.GetGeneration();
+        }
+
+        const auto view{
+            scene.GetEntityRegistry().view<
+                WorldTransform,
+                MeshMaterialData,
+                MeshComponent,
+                MaterialComponent>
+            (entt::exclude<PendingUploadComponent>)
+        };
+
+        uint32_t objectIndex{};
+        for (const auto entity: view)
+        {
+            if (objectIndex >= meshData.size())
+                break;
+
             const auto &world{view.get<WorldTransform>(entity)};
             const auto &mesh{view.get<MeshComponent>(entity)};
-            auto boundingSphere{view.get<MeshComponent>(entity).boundingSphere};
             auto material{view.get<MeshMaterialData>(entity)};
             material.materialIdx = view.get<MaterialComponent>(entity).handle.index;
 
@@ -2185,22 +2225,50 @@ namespace kailux
                 lodInfo.errors[3]
             };
 
-            data.emplace_back(
+            meshData[objectIndex] = {
                 world.model,
-                boundingSphere,
+                mesh.boundingSphere,
                 errors,
                 material,
                 static_cast<uint32_t>(entity),
                 lodInfo.count
-            );
+            };
+
+            const bool known{objectIndex < uploadState.commandMeshes.size()};
+            if (!known
+                || uploadState.commandMeshes[objectIndex] != mesh.handle.index)
+            {
+                for (uint32_t lod{}; lod < details::kMaxGeometryLods; ++lod)
+                {
+                    const auto meshView{mMeshRegistry.View(mesh.handle, lod)};
+                    commands[objectIndex * details::kMaxGeometryLods + lod] = vk::DrawIndexedIndirectCommand{
+                        meshView.indexCount,
+                        1,
+                        meshView.firstIndex,
+                        meshView.vertexOffset,
+                        objectIndex
+                    };
+                }
+
+                if (known)
+                    uploadState.commandMeshes[objectIndex] = mesh.handle.index;
+                else
+                    uploadState.commandMeshes.push_back(mesh.handle.index);
+            }
+            ++objectIndex;
         }
-        frame.GetModelBuffer().Upload(data.data(), data.size() * sizeof(MeshData));
+        uploadState.commandMeshes.resize(objectIndex);
     }
 
     void Engine::UpdateMaterialBuffer(FrameData &frame) const
     {
+        auto &uploadState{frame.GetMeshUploadState()};
+        if (uploadState.materialGeneration == mTextureRegistry.GetMaterialGeneration())
+            return;
+
         const auto materials = mTextureRegistry.ViewMaterials();
         frame.GetMaterialBuffer().Upload(materials);
+        uploadState.materialGeneration = mTextureRegistry.GetMaterialGeneration();
     }
 
     void Engine::UpdateSceneBuffer(const Scene &scene, FrameData &frame) const
@@ -2212,43 +2280,6 @@ namespace kailux
             data.pointShadows.views[view] = mPointShadowSets[view].GetData();
         }
         frame.GetSceneBuffer().Upload(&data, sizeof(SceneData));
-    }
-
-    void Engine::UpdateCullerBuffers(const Scene &scene, const FrameData &frame, const CommandRecorder &recorder)
-    {
-        std::vector<vk::DrawIndexedIndirectCommand> indirectCommands;
-        auto view = scene.GetEntityRegistry().view<
-            WorldTransform,
-            MeshMaterialData,
-            MeshComponent,
-            MaterialComponent>
-        (entt::exclude<PendingUploadComponent>);
-        indirectCommands.reserve(
-            scene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)
-            * details::kMaxGeometryLods
-        );
-        uint32_t objectIndex{};
-        for (const auto entity : view)
-        {
-            const auto &mesh{view.get<MeshComponent>(entity)};
-            for (uint32_t lod{}; lod < details::kMaxGeometryLods; ++lod)
-            {
-                const auto meshView{mMeshRegistry.View(mesh.handle, lod)};
-                indirectCommands.emplace_back(
-                    meshView.indexCount,
-                    1,
-                    meshView.firstIndex,
-                    meshView.vertexOffset,
-                    objectIndex
-                );
-            }
-            ++objectIndex;
-        }
-        if (indirectCommands.empty())
-            return;
-
-        frame.GetCullerInputCommandsBuffer().Upload(indirectCommands.data(),
-                                                    indirectCommands.size() * sizeof(vk::DrawIndexedIndirectCommand));
     }
 
     void Engine::ReadOutputBuffers(const FrameData &frame)

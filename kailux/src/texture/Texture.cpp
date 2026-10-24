@@ -1,4 +1,5 @@
 #include "Texture.h"
+#include <utility>
 
 namespace kailux
 {
@@ -12,7 +13,8 @@ namespace kailux
     Texture::Texture(Texture &&other) noexcept : mImage(std::move(other.mImage)),
                                                  mImageView(std::move(other.mImageView)),
                                                  mSampler(std::move(other.mSampler)),
-                                                 mMemory(std::move(other.mMemory))
+                                                 mMemory(std::move(other.mMemory)),
+                                                 mPoolOffset(std::exchange(other.mPoolOffset, std::nullopt))
     {
     }
 
@@ -24,6 +26,7 @@ namespace kailux
             mImageView = std::move(other.mImageView);
             mSampler = std::move(other.mSampler);
             mMemory = std::move(other.mMemory);
+            mPoolOffset = std::exchange(other.mPoolOffset, std::nullopt);
         }
         return *this;
     }
@@ -34,7 +37,19 @@ namespace kailux
                      vk::raii::Sampler &&sampler) : mImage(std::move(image)),
                                                     mImageView(std::move(view)),
                                                     mSampler(std::move(sampler)),
-                                                    mMemory(std::move(memory))
+                                                    mMemory(std::move(memory)),
+                                                    mPoolOffset({})
+    {
+    }
+
+    Texture::Texture(vk::raii::Image &&image,
+                     vk::DeviceSize poolOffset,
+                     vk::raii::ImageView &&view,
+                     vk::raii::Sampler &&sampler) : mImage(std::move(image)),
+                                                    mImageView(std::move(view)),
+                                                    mSampler(std::move(sampler)),
+                                                    mMemory({}),
+                                                    mPoolOffset(poolOffset)
     {
     }
 
@@ -51,5 +66,10 @@ namespace kailux
     vk::Sampler Texture::GetSampler() const
     {
         return *mSampler;
+    }
+
+    std::optional<vk::DeviceSize> Texture::GetPoolOffset() const
+    {
+        return mPoolOffset;
     }
 }
