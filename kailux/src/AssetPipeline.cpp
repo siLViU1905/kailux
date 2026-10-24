@@ -24,7 +24,7 @@ namespace kailux
     {
     }
 
-    Queue<AssetPipeline::PendingMeshData> &AssetPipeline::GetPendingQueue()
+    AssetPipeline::PendingQueue &AssetPipeline::GetPendingQueue()
     {
         return mPendingMeshData;
     }

@@ -55,7 +55,7 @@ namespace kailux
 
         void WaitIdle() const;
 
-        Queue<AssetPipeline::PendingMeshData> &GetPendingMeshDataQueue();
+        AssetPipeline::PendingQueue &GetPendingMeshDataQueue();
 
         void HandleMeshDragDrop(const std::filesystem::path& path, std::reference_wrapper<ThreadDispatcher> threadDispatcher);
 

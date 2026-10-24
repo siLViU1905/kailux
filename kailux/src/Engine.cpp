@@ -284,7 +284,7 @@ namespace kailux
         mContext.GetDevice().waitIdle();
     }
 
-    Queue<AssetPipeline::PendingMeshData> &Engine::GetPendingMeshDataQueue()
+    AssetPipeline::PendingQueue &Engine::GetPendingMeshDataQueue()
     {
         return mAssetPipeline.GetPendingQueue();
     }

@@ -1,4 +1,5 @@
 #pragma once
+#include <bit>
 
 #include "mesh/MeshRegistry.h"
 #include "physics/PhysicsRegistry.h"
@@ -58,7 +59,11 @@ namespace kailux
 
         bool IsIdle() const;
 
-        Queue<PendingMeshData> &GetPendingQueue();
+        using PendingQueue = Queue<
+            PendingMeshData,
+            std::bit_ceil(static_cast<size_t>(details::kMaxMeshes))
+        >;
+        PendingQueue &GetPendingQueue();
 
         bool IsCached(const std::filesystem::path &path) const;
 
@@ -103,7 +108,7 @@ namespace kailux
         std::reference_wrapper<TransferManager> mTransferManager;
         std::span<FrameData>                    mFrames;
 
-        Queue<PendingMeshData>                     mPendingMeshData;
+        PendingQueue                                 mPendingMeshData;
 
         std::unordered_map<std::string, CachedModel> mMeshCache;
         std::vector<CompleteUpload>                  mCompletedUploads;
