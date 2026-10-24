@@ -54,11 +54,11 @@ namespace kailux
     Entity World::SpawnPrimitive(std::string_view name, Primitive shape, const Transform &transform,
         std::optional<BodySettings> body)
     {
-        if (!pScene || !pServices || !pServices->spawnPrimitive)
+        if (!pScene || !pServices)
             return {};
 
         const auto type{shape == Primitive::Cube ? MeshType::Cube : MeshType::Sphere};
-        const auto entity{pServices->spawnPrimitive(*pScene, name, type, transform)};
+        const auto entity{pServices->SpawnPrimitive(*pScene, name, type, transform)};
         if (entity == entt::null)
             return {};
 
@@ -71,22 +71,23 @@ namespace kailux
     Entity World::SpawnMesh(const std::filesystem::path &path, std::string_view name, const Transform &transform,
         std::optional<BodySettings> body)
     {
-        if (!pScene || !pServices || !pServices->spawnMesh)
+        if (!pScene || !pServices)
             return {};
 
         std::optional<PhysicsCreationOptions> options;
         if (body)
             options = details::to_creation_options(*body);
-        const auto entity{pServices->spawnMesh(*pScene, path, name, transform, options)};
+        
+        const auto entity{pServices->SpawnMesh(*pScene, path, name, transform, options)};
         return entity == entt::null ? Entity{} : Entity{*pScene, entity};
     }
 
     bool World::AddBody(Entity entity, const BodySettings &settings)
     {
-        if (!pScene || !pServices || !pServices->addBody || !entity.Valid())
+        if (!pScene || !pServices || !entity.Valid())
             return false;
 
-        return pServices->addBody(*pScene, entity.GetHandle(), details::to_creation_options(settings));
+        return pServices->AddBody(*pScene, entity.GetHandle(), details::to_creation_options(settings));
     }
 
     void World::Destroy(Entity entity)
@@ -137,42 +138,42 @@ namespace kailux
 
     bool World::LoadScene(const std::filesystem::path &path)
     {
-        if (!pServices || !pServices->loadScene)
+        if (!pServices)
             return false;
-        return pServices->loadScene(path);
+        return pServices->LoadScene(path);
     }
 
     void World::SetBuiltinCameraControl(bool enabled)
     {
-        if (pServices && pServices->setBuiltinCameraControl)
-            pServices->setBuiltinCameraControl(enabled);
+        if (pServices)
+            pServices->SetBuiltinCameraControl(enabled);
     }
 
     bool World::PlayOneShot(const std::filesystem::path &path, float gain)
     {
-        if (!pServices || !pServices->playOneShot)
+        if (!pServices)
             return false;
-        return pServices->playOneShot(path, std::nullopt, gain);
+        return pServices->PlayOneShot(path, std::nullopt, gain);
     }
 
     bool World::PlayOneShotAt(const std::filesystem::path &path, const glm::vec3 &position, float gain)
     {
-        if (!pServices || !pServices->playOneShot)
+        if (!pServices)
             return false;
-        return pServices->playOneShot(path, position, gain);
+        return pServices->PlayOneShot(path, position, gain);
     }
 
     void World::SetMasterVolume(float volume)
     {
-        if (pServices && pServices->setMasterVolume)
-            pServices->setMasterVolume(volume);
+        if (pServices)
+            pServices->SetMasterVolume(volume);
     }
 
     float World::GetMasterVolume() const
     {
-        if (!pServices || !pServices->getMasterVolume)
+        if (!pServices)
            return 0.f;
-        return pServices->getMasterVolume();
+        return pServices->GetMasterVolume();
     }
 
     void World::Bind(Scene &scene, ScriptServices& services)

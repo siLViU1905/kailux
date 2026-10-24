@@ -146,6 +146,8 @@ namespace kailux
         void SetBuiltinCameraControl(bool enabled);
         bool GetBuiltinCameraControl() const;
 
+        friend class ScriptServices;
+
     private:
         static constexpr std::string_view kDirectoryIconPath = "assets/icons/directory_icon.png";
         static constexpr std::string_view kFileIconPath = "assets/icons/file_icon.png";

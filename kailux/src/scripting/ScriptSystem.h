@@ -16,7 +16,7 @@ namespace kailux
         SimulationState GetSimulationState() const;
 
         void SetFixedStep(float step);
-        void SetServices(ScriptServices&& services);
+        void MakeServices(Engine& engine);
 
         void BeginFrame(float deltaTime, const InputSource& input, glm::vec2 scrollDelta);
         void FixedUpdate(Scene& scene, float fixedStep);

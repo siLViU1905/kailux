@@ -30,9 +30,9 @@ namespace kailux
         mContext->time.mFixedStep = step;
     }
 
-    void ScriptSystem::SetServices(ScriptServices &&services)
+    void ScriptSystem::MakeServices(Engine& engine)
     {
-        mContext->services = std::move(services);
+        mContext->services = ScriptServices{&engine};
     }
 
     void ScriptSystem::BeginFrame(float deltaTime, const InputSource& input, glm::vec2 scrollDelta)
@@ -144,8 +144,7 @@ namespace kailux
             script.instance.reset();
         }
 
-        if (mContext->services.setBuiltinCameraControl)
-            mContext->services.setBuiltinCameraControl(true);
+        mContext->services.SetBuiltinCameraControl(true);
 
         mContext->world.Clear();
         mContext->input.Reset();

@@ -66,6 +66,7 @@ add_library(kailux STATIC
         src/shadow/PointShadowSet.cpp
         src/RenderTarget.cpp
         src/scripting/ScriptSystem.cpp
+        src/scripting/ScriptContext.cpp
         src/scripting/Script.cpp
         src/scripting/Entity.cpp
         src/scripting/Input.cpp

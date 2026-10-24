@@ -11,41 +11,32 @@
 
 namespace kailux
 {
-    struct ScriptServices
+    class Engine;
+
+    class ScriptServices
     {
-        std::move_only_function<entt::entity(
-                Scene &,
-                std::string_view, MeshType,
-                const Transform &
-            )
-        > spawnPrimitive;
+    public:
+        explicit ScriptServices(Engine* engine);
 
-        std::move_only_function<entt::entity(
-                Scene &,
-                const std::filesystem::path &,
-                std::string_view,
-                const Transform &,
-                std::optional<PhysicsCreationOptions>)
-        > spawnMesh;
+        entt::entity SpawnPrimitive(Scene &scene, std::string_view name, MeshType type, const Transform &transform) const;
+        entt::entity SpawnMesh(Scene &scene,
+                               const std::filesystem::path &path,
+                               std::string_view name,
+                               const Transform & transform,
+                               std::optional<PhysicsCreationOptions> physics) const;
 
-        std::move_only_function<bool(
-                Scene &,
-                entt::entity,
-                PhysicsCreationOptions)
-        > addBody;
+        bool AddBody(Scene& scene, entt::entity entity, PhysicsCreationOptions options) const;
 
-        std::move_only_function<bool(const std::filesystem::path &)> loadScene;
+        bool LoadScene(const std::filesystem::path& path) const;
 
-        std::move_only_function<void(bool)> setBuiltinCameraControl;
+        void SetBuiltinCameraControl(bool enable) const;
 
-        std::move_only_function<bool(
-            const std::filesystem::path&,
-            std::optional<glm::vec3>,
-            float
-            )> playOneShot;
+        bool  PlayOneShot(const std::filesystem::path& path, std::optional<glm::vec3> position, float gain) const;
+        void  SetMasterVolume(float volume) const;
+        float GetMasterVolume() const;
 
-        std::move_only_function<void(float)> setMasterVolume;
-        std::move_only_function<float()>     getMasterVolume;
+    private:
+        Engine* pEngine{};
     };
 
     struct ScriptContext
@@ -53,6 +44,6 @@ namespace kailux
         World          world;
         Input          input;
         Time           time;
-        ScriptServices services;
+        ScriptServices services{nullptr};
     };
 }
