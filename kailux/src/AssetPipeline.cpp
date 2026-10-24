@@ -167,6 +167,13 @@ namespace kailux
     MaterialHandle AssetPipeline::UploadMaterialDataToRegistry(const TextureRegistry::MaterialData &data)
     {
         auto &textureRegistry = mTextureRegistry.get();
+        if (!textureRegistry.HasFreeMaterialSlot())
+        {
+            mOnWarningLog(std::format("Material limit ({}) reached, using the default material",
+                                      details::kMaxMaterials));
+            return textureRegistry.GetDefaultMaterialHandle();
+        }
+
         auto result = textureRegistry.CreateMaterialFromData(mContext, data);
 
         std::vector<DescriptorSetUpdateInfo> writes;
