@@ -1,6 +1,8 @@
 #include "ScriptContext.h"
 #include "Engine.h"
 
+#include <cassert>
+
 namespace kailux
 {
     ScriptServices::ScriptServices(Engine* engine) : pEngine(engine)
@@ -21,7 +23,7 @@ namespace kailux
         std::optional<PhysicsCreationOptions> physics) const
     {
         assert(pEngine && "Engine ptr is null!");
-        return pEngine->SpawnMesh(scene, path, name, transform, physics);;
+        return pEngine->SpawnMesh(scene, path, name, transform, physics);
     }
 
     bool ScriptServices::AddBody(Scene &scene, entt::entity entity, PhysicsCreationOptions options) const
