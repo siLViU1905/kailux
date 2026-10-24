@@ -26,12 +26,13 @@ add_library(kailux STATIC
         src/texture/Texture.cpp
         src/texture/TextureAllocator.cpp
         src/texture/ImageLoader.cpp
+        src/texture/TextureRegistry.cpp
+        src/texture/TextureMemoryPool.cpp
         src/passes/SkyboxPass.cpp
         src/mesh/MeshLoader.cpp
         src/utilities/ThreadDispatcher.cpp
         src/utilities/LinearZone.cpp
         src/utilities/FreeListZone.cpp
-        src/texture/TextureRegistry.cpp
         src/passes/ComputePicker.cpp
         src/passes/OutlinePass.cpp
         src/passes/GraphicsPass.cpp

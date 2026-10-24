@@ -1,16 +1,19 @@
 #include "TextureRegistry.h"
 
 #include "TextureAllocator.h"
+#include "Log.h"
 
 namespace kailux
 {
     TextureRegistry::TextureRegistry() = default;
 
-    TextureRegistry::TextureRegistry(TextureRegistry &&other) noexcept : mTextures(std::move(other.mTextures)),
+    TextureRegistry::TextureRegistry(TextureRegistry &&other) noexcept : mTexturePool(std::move(other.mTexturePool)),
+                                                                         mTextures(std::move(other.mTextures)),
                                                                          mTextureRefCount(std::move(other.mTextureRefCount)),
                                                                          mFreeTextureSlots(std::move(other.mFreeTextureSlots)),
                                                                          mMaterials(std::move(other.mMaterials)),
                                                                          mFreeMaterialSlots(std::move(other.mFreeMaterialSlots)),
+                                                                         mMaterialGeneration(other.mMaterialGeneration),
                                                                          mDefaultAlbedoIdx(other.mDefaultAlbedoIdx),
                                                                          mDefaultNormalIdx(other.mDefaultNormalIdx),
                                                                          mDefaultWhiteIdx(other.mDefaultWhiteIdx),
@@ -27,11 +30,13 @@ namespace kailux
     {
         if (this != &other)
         {
+            mTexturePool = std::move(other.mTexturePool);
             mTextures = std::move(other.mTextures);
             mTextureRefCount = std::move(other.mTextureRefCount);
             mFreeTextureSlots = std::move(other.mFreeTextureSlots);
             mMaterials = std::move(other.mMaterials);
             mFreeMaterialSlots = std::move(other.mFreeMaterialSlots);
+            mMaterialGeneration = other.mMaterialGeneration;
             mDefaultAlbedoIdx = other.mDefaultAlbedoIdx;
             mDefaultNormalIdx = other.mDefaultNormalIdx;
             mDefaultWhiteIdx = other.mDefaultWhiteIdx;
@@ -48,6 +53,7 @@ namespace kailux
     )
     {
         TextureRegistry registry;
+        registry.mTexturePool = TextureMemoryPool::create(context, details::kTexturePoolSize);
         registry.AllocResources();
         registry.CreateDefaultTextures(context);
         registry.mDefaultMaterialHandle = *registry.RegisterMaterial(
@@ -76,23 +82,28 @@ namespace kailux
         return {{slot}};
     }
 
-    void TextureRegistry::ReleaseTexture(TextureHandle handle)
+    bool TextureRegistry::ReleaseTexture(TextureHandle handle)
     {
         assert(handle.Valid() || handle.index < mMaterials.size());
 
         if (handle.index == mDefaultAlbedoIdx ||
             handle.index == mDefaultNormalIdx ||
             handle.index == mDefaultWhiteIdx)
-            return;
+            return false;
 
         if (mTextureRefCount[handle.index] == 0)
-            return;
+            return false;
 
         if (--mTextureRefCount[handle.index] == 0)
         {
+            const auto poolOffset{mTextures[handle.index]->GetPoolOffset()};
             mTextures[handle.index] = {};
+            if (poolOffset)
+                mTexturePool.Free(*poolOffset);
             mFreeTextureSlots.push_back(handle.index);
+            return true;
         }
+        return false;
     }
 
     const Texture & TextureRegistry::GetTexture(TextureHandle handle) const
@@ -109,6 +120,7 @@ namespace kailux
         auto idx = mFreeMaterialSlots.front();
         mFreeMaterialSlots.pop_front();
         mMaterials[idx] = slot;
+        ++mMaterialGeneration;
 
         return {{idx}};
     }
@@ -119,18 +131,33 @@ namespace kailux
         mMaterials[handle.index] = slot;
     }
 
-    void TextureRegistry::ReleaseMaterial(MaterialHandle handle)
+    std::vector<uint32_t> TextureRegistry::ReleaseMaterial(MaterialHandle handle)
     {
         assert(handle.Valid() && handle.index < mMaterials.size());
         if (handle.index == mDefaultMaterialHandle.index)
-            return;
+            return {};
 
+        std::vector<uint32_t> freedTextureSlots;
         const auto& slot = mMaterials[handle.index];
         for (auto textureIdx : {slot.albedoIdx, slot.normalIdx, slot.roughnessIdx,
                              slot.metallicIdx, slot.aoIdx})
-            ReleaseTexture({textureIdx});
+            if (ReleaseTexture({textureIdx}))
+                freedTextureSlots.push_back(textureIdx);
 
         mFreeMaterialSlots.push_back(handle.index);
+        ++mMaterialGeneration;
+
+        return freedTextureSlots;
+    }
+
+    bool TextureRegistry::HasFreeMaterialSlot() const
+    {
+        return !mFreeMaterialSlots.empty();
+    }
+
+    uint64_t TextureRegistry::GetMaterialGeneration() const
+    {
+        return mMaterialGeneration;
     }
 
     const MaterialSlot & TextureRegistry::GetMaterial(MaterialHandle handle) const
@@ -195,25 +222,28 @@ namespace kailux
 
         auto process = [&](const auto &imgData, auto &slotIndexOut)
         {
-            if (!checkSize(imgData))
+            if (!checkSize(imgData) || mFreeTextureSlots.emplace_back())
                 return;
 
-            auto asyncTex = texture_allocator::create_from_image_data_async(context, imgData);
+            auto asyncTex{texture_allocator::create_from_image_data_async(context, mTexturePool, imgData)};
+            if (!asyncTex)
+            {
+                log::console.Warning("texture registry: memory pool full, using default texture");
+                return;
+            }
 
             result.uploads.emplace_back(
-                asyncTex.texture.GetImage(),
-                asyncTex.staging.GetBuffer(),
-                asyncTex.width,
-                asyncTex.height,
-                asyncTex.mipLevels
+                asyncTex->texture.GetImage(),
+                asyncTex->staging.GetBuffer(),
+                asyncTex->width,
+                asyncTex->height,
+                asyncTex->mipLevels
             );
-            result.staging.push_back(std::move(asyncTex.staging));
+            result.staging.push_back(std::move(asyncTex->staging));
 
-            if (auto handle = RegisterTexture(std::move(asyncTex.texture)))
-            {
-                slotIndexOut = handle->index;
-                result.handles.push_back(*handle);
-            }
+            const auto handle{RegisterTexture(std::move(asyncTex->texture))};
+            slotIndexOut = handle->index;
+            result.handles.push_back(*handle);
         };
 
         process(data.albedoData,    result.slot.albedoIdx);
@@ -249,7 +279,7 @@ namespace kailux
             1,
             {191, 191, 191, 255}
         };
-        mDefaultAlbedoIdx = RegisterTexture(texture_allocator::create_from_image_data(context, data))->index;
+        mDefaultAlbedoIdx = RegisterTexture(*texture_allocator::create_from_image_data(context, mTexturePool, data))->index;
 
         data = {
             1,
@@ -257,7 +287,7 @@ namespace kailux
             1,
             {128, 128, 255, 255}
         };
-       mDefaultNormalIdx = RegisterTexture(texture_allocator::create_from_image_data(context, data))->index;
+       mDefaultNormalIdx = RegisterTexture(*texture_allocator::create_from_image_data(context, mTexturePool, data))->index;
 
         data = {
             1,
@@ -265,7 +295,7 @@ namespace kailux
             1,
             {255, 255, 255, 255}
         };
-        mDefaultWhiteIdx = RegisterTexture(texture_allocator::create_from_image_data(context, data))->index;
+        mDefaultWhiteIdx = RegisterTexture(*texture_allocator::create_from_image_data(context, mTexturePool, data))->index;
     }
 
     void TextureRegistry::CreateAssetBrowserTextures(const Context &context, std::string_view directoryIconPath,

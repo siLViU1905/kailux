@@ -17,6 +17,8 @@ namespace kailux
 
         void Free(vk::DeviceSize offset);
 
+        vk::DeviceSize GetSize() const;
+
     private:
         static constexpr vk::DeviceSize kDefaultAlignment{16};
 

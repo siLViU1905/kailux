@@ -102,4 +102,9 @@ namespace kailux
             }
         }
     }
+
+    vk::DeviceSize FreeListZone::GetSize() const
+    {
+        return mCapacity;
+    }
 }

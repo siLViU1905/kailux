@@ -8,11 +8,7 @@ namespace kailux::texture_allocator
 {
     Texture create_from_image_data(const Context &context, const image_loader::ImageData &data)
     {
-        vk::DeviceSize imageSize = data.pixels.size() * sizeof(image_loader::ImageData::Pixel);
-        auto stagingBuffer = buffer_allocator::alloc_staging(context, imageSize);
-        stagingBuffer.Upload(data.pixels.data(), imageSize);
-
-        auto texture = details::alloc(
+       auto texture = details::alloc(
             context,
             data.width,
             data.height,
@@ -23,50 +19,43 @@ namespace kailux::texture_allocator
             vk::ImageUsageFlagBits::eTransferDst,
             vk::ImageAspectFlagBits::eColor
         );
-
-        auto otc = OneTimeCommand::create(context);
-        details::transition_layout(
-            otc.GetCommandBuffer(),
-            texture.GetImage(),
-            data.mipLevels,
-            1,
-            vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal
-        );
-
-        vk::BufferImageCopy region{};
-        region.imageSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
-        region.imageSubresource.mipLevel = 0;
-        region.imageSubresource.layerCount = 1;
-        region.imageExtent = vk::Extent3D(data.width, data.height, 1);
-
-        otc.GetCommandBuffer().copyBufferToImage(
-            stagingBuffer.GetBuffer(),
-            texture.GetImage(),
-            vk::ImageLayout::eTransferDstOptimal,
-            region
-        );
-
-        details::generate_mipmaps(
-            otc.GetCommandBuffer(),
-            texture.GetImage(),
-            data.width,
-            data.height,
-            data.mipLevels
-        );
-        otc.Submit(context);
+        details::upload_with_mipmaps(context, texture, data);
 
         return texture;
     }
 
-    AsyncTextureResult create_from_image_data_async(const Context &context,
-                                                                      const image_loader::ImageData &data)
+    std::optional<Texture> create_from_image_data(const Context &context, TextureMemoryPool &pool,
+        const image_loader::ImageData &data)
     {
-        vk::DeviceSize imageSize = data.pixels.size() * sizeof(image_loader::ImageData::Pixel);
-        auto stagingBuffer = buffer_allocator::alloc_staging(context, imageSize);
-        stagingBuffer.Upload(data.pixels.data(), imageSize);
+        auto texture{
+            details::alloc_pooled(
+                context,
+                pool,
+                data.width,
+                data.height,
+                data.mipLevels,
+                vk::Format::eR8G8B8A8Unorm,
+                vk::ImageUsageFlagBits::eSampled |
+                vk::ImageUsageFlagBits::eTransferSrc |
+                vk::ImageUsageFlagBits::eTransferDst,
+                vk::ImageAspectFlagBits::eColor
+            )
+        };
+        if (!texture)
+            return std::nullopt;
 
-        auto texture = details::alloc(
+        details::upload_with_mipmaps(context, *texture, data);
+
+        return texture;
+    }
+
+    std::optional<AsyncTextureResult> create_from_image_data_async(const Context &context,
+                                                                   TextureMemoryPool &pool,
+                                                                   const image_loader::ImageData &data)
+    {
+        auto texture = details::alloc_pooled(
             context,
+            pool,
             data.width,
             data.height,
             data.mipLevels,
@@ -76,9 +65,15 @@ namespace kailux::texture_allocator
             vk::ImageUsageFlagBits::eTransferDst,
             vk::ImageAspectFlagBits::eColor
         );
+        if (!texture)
+            return std::nullopt;
 
-        return {
-            std::move(texture),
+        vk::DeviceSize imageSize = data.pixels.size() * sizeof(image_loader::ImageData::Pixel);
+        auto stagingBuffer = buffer_allocator::alloc_staging(context, imageSize);
+        stagingBuffer.Upload(data.pixels.data(), imageSize);
+
+        return AsyncTextureResult{
+            std::move(*texture),
             std::move(stagingBuffer),
             data.width,
             data.height,
@@ -369,6 +364,60 @@ namespace kailux::texture_allocator
         details::generate_mipmaps(cmd, image, width, height, mipLevels);
     }
 
+    vk::raii::Image details::create_image(const Context &context, uint32_t width, uint32_t height, uint32_t mipLevels,
+        vk::Format format, vk::ImageUsageFlags usage, vk::SampleCountFlagBits samples)
+    {
+        vk::ImageCreateInfo imageInfo{};
+        imageInfo.imageType = vk::ImageType::e2D;
+        imageInfo.format = format;
+        imageInfo.extent = vk::Extent3D(width, height, 1);
+        imageInfo.mipLevels = mipLevels;
+        imageInfo.arrayLayers = 1;
+        imageInfo.samples = samples;
+        imageInfo.tiling = vk::ImageTiling::eOptimal;
+        imageInfo.usage = usage;
+        imageInfo.sharingMode = vk::SharingMode::eExclusive;
+        imageInfo.initialLayout = vk::ImageLayout::eUndefined;
+
+        return {context.GetRAIIDevice(), imageInfo};
+    }
+
+    vk::raii::ImageView details::create_view(const Context &context, vk::Image image, uint32_t mipLevels,
+        vk::Format format, vk::ImageAspectFlags aspect)
+    {
+        vk::ImageViewCreateInfo viewInfo{};
+        viewInfo.image = image;
+        viewInfo.viewType = vk::ImageViewType::e2D;
+        viewInfo.format = format;
+        viewInfo.subresourceRange.aspectMask = aspect;
+        viewInfo.subresourceRange.baseMipLevel = 0;
+        viewInfo.subresourceRange.levelCount = mipLevels;
+        viewInfo.subresourceRange.baseArrayLayer = 0;
+        viewInfo.subresourceRange.layerCount = 1;
+
+        return {context.GetRAIIDevice(), viewInfo};
+    }
+
+    vk::raii::Sampler details::create_sampler(const Context &context, uint32_t mipLevels)
+    {
+        vk::SamplerCreateInfo samplerInfo{};
+        samplerInfo.magFilter = vk::Filter::eLinear;
+        samplerInfo.minFilter = vk::Filter::eLinear;
+        samplerInfo.addressModeU = vk::SamplerAddressMode::eRepeat;
+        samplerInfo.addressModeV = vk::SamplerAddressMode::eRepeat;
+        samplerInfo.addressModeW = vk::SamplerAddressMode::eRepeat;
+        samplerInfo.borderColor = vk::BorderColor::eIntOpaqueBlack;
+        samplerInfo.unnormalizedCoordinates = vk::False;
+        samplerInfo.compareEnable = vk::False;
+        samplerInfo.compareOp = vk::CompareOp::eAlways;
+        samplerInfo.mipmapMode = vk::SamplerMipmapMode::eLinear;
+        samplerInfo.mipLodBias = 0.f;
+        samplerInfo.minLod = 0.f;
+        samplerInfo.maxLod = static_cast<float>(mipLevels);
+
+        return {context.GetRAIIDevice(), samplerInfo};
+    }
+
     namespace details
     {
         Texture alloc(
@@ -382,21 +431,19 @@ namespace kailux::texture_allocator
             vk::SampleCountFlagBits samples
         )
         {
-            vk::ImageCreateInfo imageInfo{};
-            imageInfo.imageType = vk::ImageType::e2D;
-            imageInfo.format = format;
-            imageInfo.extent = vk::Extent3D(width, height, 1);
-            imageInfo.mipLevels = mipLevels;
-            imageInfo.arrayLayers = 1;
-            imageInfo.samples = samples;
-            imageInfo.tiling = vk::ImageTiling::eOptimal;
-            imageInfo.usage = usage;
-            imageInfo.sharingMode = vk::SharingMode::eExclusive;
-            imageInfo.initialLayout = vk::ImageLayout::eUndefined;
+            auto image{
+                create_image(
+                    context,
+                    width,
+                    height,
+                    mipLevels,
+                    format,
+                    usage,
+                    samples
+                )
+            };
 
-            vk::raii::Image image(context.GetRAIIDevice(), imageInfo);
-
-            auto memRequirements = image.getMemoryRequirements();
+            const auto memRequirements{image.getMemoryRequirements()};
             vk::MemoryAllocateInfo allocInfo{};
             allocInfo.allocationSize = memRequirements.size;
             allocInfo.memoryTypeIndex = context.FindMemoryType(
@@ -404,37 +451,11 @@ namespace kailux::texture_allocator
                 vk::MemoryPropertyFlagBits::eDeviceLocal
             );
 
-            vk::raii::DeviceMemory memory(context.GetRAIIDevice(), allocInfo);
+            vk::raii::DeviceMemory memory{context.GetRAIIDevice(), allocInfo};
             image.bindMemory(*memory, 0);
 
-            vk::ImageViewCreateInfo viewInfo{};
-            viewInfo.image = *image;
-            viewInfo.viewType = vk::ImageViewType::e2D;
-            viewInfo.format = format;
-            viewInfo.subresourceRange.aspectMask = aspect;
-            viewInfo.subresourceRange.baseMipLevel = 0;
-            viewInfo.subresourceRange.levelCount = mipLevels;
-            viewInfo.subresourceRange.baseArrayLayer = 0;
-            viewInfo.subresourceRange.layerCount = 1;
-
-            vk::raii::ImageView imageView(context.GetRAIIDevice(), viewInfo);
-
-            vk::SamplerCreateInfo samplerInfo{};
-            samplerInfo.magFilter = vk::Filter::eLinear;
-            samplerInfo.minFilter = vk::Filter::eLinear;
-            samplerInfo.addressModeU = vk::SamplerAddressMode::eRepeat;
-            samplerInfo.addressModeV = vk::SamplerAddressMode::eRepeat;
-            samplerInfo.addressModeW = vk::SamplerAddressMode::eRepeat;
-            samplerInfo.borderColor = vk::BorderColor::eIntOpaqueBlack;
-            samplerInfo.unnormalizedCoordinates = vk::False;
-            samplerInfo.compareEnable = vk::False;
-            samplerInfo.compareOp = vk::CompareOp::eAlways;
-            samplerInfo.mipmapMode = vk::SamplerMipmapMode::eLinear;
-            samplerInfo.mipLodBias = 0.f;
-            samplerInfo.minLod = 0.f;
-            samplerInfo.maxLod = static_cast<float>(mipLevels);
-
-            vk::raii::Sampler sampler(context.GetRAIIDevice(), samplerInfo);
+            auto imageView{create_view(context, *image, mipLevels, format, aspect)};
+            auto sampler{create_sampler(context, mipLevels)};
 
             return {
                 std::move(image),
@@ -442,6 +463,54 @@ namespace kailux::texture_allocator
                 std::move(imageView),
                 std::move(sampler)
             };
+        }
+
+        std::optional<Texture> alloc_pooled(const Context &context, TextureMemoryPool &pool, uint32_t width,
+            uint32_t height, uint32_t mipLevels, vk::Format format, vk::ImageUsageFlags usage,
+            vk::ImageAspectFlags aspect)
+        {
+            auto image{create_image(context, width, height, mipLevels, format, usage, vk::SampleCountFlagBits::e1)};
+
+            const auto offset{pool.Alloc(image.getMemoryRequirements())};
+            if (!offset)
+                return std::nullopt;
+
+            image.bindMemory(pool.GetMemory(), *offset);
+
+            auto imageView = create_view(context, *image, mipLevels, format, aspect);
+            auto sampler = create_sampler(context, mipLevels);
+
+            return Texture{
+                std::move(image),
+                *offset,
+                std::move(imageView),
+                std::move(sampler)
+            };
+        }
+
+        void upload_with_mipmaps(const Context &context, const Texture &texture, const image_loader::ImageData &data)
+        {
+            const vk::DeviceSize imageSize{data.pixels.size() * sizeof(image_loader::ImageData::Pixel)};
+            const auto stagingBuffer{buffer_allocator::alloc_staging(context, imageSize)};
+            stagingBuffer.Upload(data.pixels.data(), imageSize);
+
+            const auto otc{OneTimeCommand::create(context)};
+            record_texture_copy(
+                otc.GetCommandBuffer(),
+                texture.GetImage(),
+                stagingBuffer.GetBuffer(),
+                data.width,
+                data.height,
+                data.mipLevels
+            );
+            generate_mipmaps(
+                otc.GetCommandBuffer(),
+                texture.GetImage(),
+                data.width,
+                data.height,
+                data.mipLevels
+            );
+            otc.Submit(context);
         }
 
         void transition_layout(
