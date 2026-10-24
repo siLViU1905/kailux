@@ -15,7 +15,7 @@ namespace kailux
 
         std::optional<vk::DeviceSize> TryAlloc(vk::DeviceSize size, vk::DeviceSize alignment = kDefaultAlignment);
 
-        bool Free(vk::DeviceSize offset);
+        void Free(vk::DeviceSize offset);
 
     private:
         static constexpr vk::DeviceSize kDefaultAlignment{16};

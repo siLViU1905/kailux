@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <stdexcept>
 
+#include "Log.h"
+
 namespace kailux
 {
     FreeListZone FreeListZone::create(vk::DeviceSize base, vk::DeviceSize capacity)
@@ -55,7 +57,7 @@ namespace kailux
         return std::nullopt;
     }
 
-    bool FreeListZone::Free(vk::DeviceSize offset)
+    void FreeListZone::Free(vk::DeviceSize offset)
     {
         const auto it{std::ranges::find_if(
             mUsedBlocks,
@@ -66,7 +68,10 @@ namespace kailux
             )};
 
         if (it == mUsedBlocks.end())
-            return false;
+        {
+            log::console.Debug("free list zone: cannot free block with offset '{}'", offset);
+            return;
+        }
 
         const Block freed{*it};
         mUsedBlocks.erase(it);
@@ -96,6 +101,5 @@ namespace kailux
                 mFreeBlocks.erase(inserted);
             }
         }
-        return true;
     }
 }
