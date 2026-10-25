@@ -28,17 +28,19 @@ add_library(kailux STATIC
         src/texture/ImageLoader.cpp
         src/texture/TextureRegistry.cpp
         src/texture/TextureMemoryPool.cpp
-        src/passes/SkyboxPass.cpp
         src/mesh/MeshLoader.cpp
         src/utilities/ThreadDispatcher.cpp
         src/utilities/LinearZone.cpp
         src/utilities/FreeListZone.cpp
+        src/utilities/Bounds.cpp
+        src/passes/SkyboxPass.cpp
         src/passes/ComputePicker.cpp
         src/passes/OutlinePass.cpp
         src/passes/GraphicsPass.cpp
         src/passes/MainPass.cpp
         src/passes/ComputePass.cpp
         src/passes/ComputeCuller.cpp
+        src/passes/ShadowPass.cpp
         src/Geometry.cpp
         src/physics/impl/BroadPhaseLayer.cpp
         src/physics/impl/ObjectVsBroadPhaseLayerFilter.cpp
@@ -62,10 +64,10 @@ add_library(kailux STATIC
         src/components/math/Transform.cpp
         src/shadow/ShadowMap.cpp
         src/shadow/ShadowCascades.cpp
-        src/passes/ShadowPass.cpp
         src/shadow/PointShadows.cpp
         src/shadow/DirectionalShadowSet.cpp
         src/shadow/PointShadowSet.cpp
+        src/shadow/ShadowCuller.cpp
         src/RenderTarget.cpp
         src/scripting/ScriptSystem.cpp
         src/scripting/ScriptContext.cpp
