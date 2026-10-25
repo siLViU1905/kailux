@@ -153,12 +153,18 @@ namespace kailux
 
     std::array<entt::entity, details::kMaxPointLights> Scene::GetPointLightEntities() const
     {
-        std::array<entt::entity, details::kMaxPointLights> entities{entt::null};
+        std::array<entt::entity, details::kMaxPointLights> entities{};
+        entities.fill(entt::null);
 
         const auto view{mEntityRegistry.view<PointLightData, WorldTransform>()};
         uint32_t index{};
         for (const auto entity : view)
+        {
+            if (index >= entities.size())
+                break;
+
             entities[index++] = entity;
+        }
 
         return entities;
     }
