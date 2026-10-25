@@ -222,8 +222,12 @@ void main()
 
         float NdotL = max(dot(N, L), 0.0);
         float shadow = 1.0;
-        if (sceneData.directionalShadows[fragCameraIdx].params.x > 0.5)
+        float shadowFar = sceneData.directionalShadows[fragCameraIdx].splitDepths[kShadowCascadeCount - 1u];
+        if (sceneData.directionalShadows[fragCameraIdx].params.x > 0.5 && fragViewDepth < shadowFar)
+        {
             shadow = sampleDirectionalShadow(selectCascade(fragViewDepth), fragPos, N, L);
+            shadow = mix(shadow, 1.0, smoothstep(shadowFar * 0.9, shadowFar, fragViewDepth));
+        }
 
         Lo = (kD * albedo / PI + specular) * radiance * NdotL * shadow;
     }

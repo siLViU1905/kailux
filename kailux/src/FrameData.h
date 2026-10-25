@@ -22,6 +22,9 @@ namespace kailux
         std::vector<uint32_t> commandMeshes;
         uint64_t              meshGeneration{~0ull};
         uint64_t              materialGeneration{~0ull};
+
+        std::array<uint32_t, details::kDirectionalShadowDrawLists> directionalShadowDrawCounts{};
+        std::array<uint32_t, details::kPointShadowDrawLists> pointShadowDrawCounts{};
     };
 
     class FrameData
@@ -69,13 +72,15 @@ namespace kailux
         const Buffer& GetPickerBuffer() const;
         const Buffer& GetCullerInputCommandsBuffer() const;
         const Buffer& GetCullerCountBuffer() const;
+        const Buffer& GetDirectionalShadowCommandsBuffer() const;
+        const Buffer& GetPointShadowCommandsBuffer() const;
 
         decltype(auto) GetMeshUploadState(this auto&& self)
         {
             return (self.mMeshUploadState);
         }
 
-        static constexpr uint32_t kBufferMemoryBarriersCount{1 + 1 + 1 + 1 + 1}; // camera buffer + mesh data buffer + materials buffer + culler input buffer + scene buffer
+        static constexpr uint32_t kBufferMemoryBarriersCount{1 + 1 + 1 + 1 + 1 + 1 + 1}; // camera buffer + mesh data buffer + materials buffer + culler input buffer + directional shadow commands + point shadow commands + scene buffer
         std::array<vk::BufferMemoryBarrier2, kBufferMemoryBarriersCount>       GetBufferMemoryBarriers() const;
 
         vk::BufferMemoryBarrier2                                               GetPickerBufferMemoryBarrier() const;
@@ -116,6 +121,8 @@ namespace kailux
         void CreateSceneBuffer(const Context& context);
         void CreatePickerBuffer(const Context& context);
         void CreateCullerBuffers(const Context &context);
+        void CreateDirectionalShadowBuffer(const Context &context);
+        void CreatePointShadowBuffer(const Context &context);
 
         void SeedPointShadowDescriptors(const Context &context, const ShadowMap& pointShadowMap);
 
@@ -169,6 +176,8 @@ namespace kailux
         Buffer                  mPickerBuffer;
         Buffer                  mCullerInputCommandsBuffer;
         Buffer                  mCullerCountBuffer;
+        Buffer                  mDirectionalShadowCommandsBuffer;
+        Buffer                  mPointShadowCommandsBuffer;
 
         MeshUploadState         mMeshUploadState;
     };

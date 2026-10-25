@@ -853,12 +853,12 @@ namespace kailux
 
             TransitionForShadowPass(frame, recorder);
             for (uint32_t view{}; view < details::kMaxCameraViews; ++view)
-                RecordDirectionalShadows(scene, frame, recorder, view);
+                RecordDirectionalShadows(frame, recorder, view);
             TransitionShadowMapForSampling(frame, recorder);
 
             TransitionForPointShadowPass(frame, recorder);
             for (uint32_t view{}; view < details::kMaxCameraViews; ++view)
-                RecordPointShadows(scene, frame, recorder, view);
+                RecordPointShadows(frame, recorder, view);
             TransitionPointShadowMapForSampling(frame, recorder);
 
             if (IsEditor())
@@ -1623,14 +1623,15 @@ namespace kailux
         );
     }
 
-    void Engine::RecordDirectionalShadows(const Scene &scene, const FrameData &frame, CommandRecorder &recorder, uint32_t viewIndex) const
+    void Engine::RecordDirectionalShadows(const FrameData &frame, CommandRecorder &recorder, uint32_t viewIndex) const
     {
         const auto cmd{recorder.GetCommandBuffer()};
         const auto extent{mDirectionalShadowMap.GetExtent()};
 
-        const auto objectCount{scene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)};
         const auto& shadowSet{mDirectionalShadowSets[viewIndex]};
-        const bool castShadows{objectCount > 0 && shadowSet.Enabled()};
+        const bool castShadows{shadowSet.Enabled()};
+
+        const auto& drawCount{frame.GetMeshUploadState().directionalShadowDrawCounts};
 
         for (uint32_t cascade{}; cascade < details::kShadowCascadeCount; ++cascade)
         {
@@ -1654,29 +1655,30 @@ namespace kailux
                     shadowSet.GetCascade(cascade)
                 });
 
-                cmd.drawIndexedIndirect(
-                    frame.GetCullerInputCommandsBuffer().GetBuffer(),
-                    0,
-                    objectCount,
-                    details::kMaxGeometryLods * sizeof(vk::DrawIndexedIndirectCommand)
-                );
+                const auto list{details::directional_shadow_draw_list(viewIndex, cascade)};
+                if (drawCount[list] > 0)
+                    cmd.drawIndexedIndirect(
+                        frame.GetDirectionalShadowCommandsBuffer().GetBuffer(),
+                        static_cast<vk::DeviceSize>(list) * details::kMaxMeshes * sizeof(vk::DrawIndexedIndirectCommand),
+                        drawCount[list],
+                        sizeof(vk::DrawIndexedIndirectCommand)
+                    );
             }
-
             recorder.EndRendering();
         }
     }
 
-    void Engine::RecordPointShadows(const Scene &scene, const FrameData &frame, CommandRecorder &recorder, uint32_t viewIndex) const
+    void Engine::RecordPointShadows(const FrameData &frame, CommandRecorder &recorder, uint32_t viewIndex) const
     {
         const auto cmd{recorder.GetCommandBuffer()};
         const auto extent{mPointShadowMap.GetExtent()};
         const auto &shadowSet{mPointShadowSets[viewIndex]};
 
-        const auto objectCount{scene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)};
+        const auto& drawCount{frame.GetMeshUploadState().pointShadowDrawCounts};
 
         for (uint32_t slot{}; slot < details::kMaxPointShadows; ++slot)
         {
-            if (objectCount == 0 || !shadowSet.NeedsRedraw(slot))
+            if (!shadowSet.NeedsRedraw(slot))
                 continue;
 
             for (uint32_t face{}; face < details::kPointShadowFaceCount; ++face)
@@ -1702,12 +1704,14 @@ namespace kailux
                                      shadowSet.GetFace(slot, face)
                                  });
 
-                cmd.drawIndexedIndirect(
-                    frame.GetCullerInputCommandsBuffer().GetBuffer(),
-                    0,
-                    objectCount,
-                    details::kMaxGeometryLods * sizeof(vk::DrawIndexedIndirectCommand)
-                );
+                const auto list{details::point_shadow_draw_list(viewIndex, slot, face)};
+                if (drawCount[list] > 0)
+                    cmd.drawIndexedIndirect(
+                        frame.GetPointShadowCommandsBuffer().GetBuffer(),
+                        static_cast<vk::DeviceSize>(list) * details::kMaxMeshes * sizeof(vk::DrawIndexedIndirectCommand),
+                        drawCount[list],
+                        sizeof(vk::DrawIndexedIndirectCommand)
+                    );
 
                 recorder.EndRendering();
             }
@@ -2138,7 +2142,7 @@ namespace kailux
             scriptsHaveInput ? mInputSource : InputSource{},
             std::exchange(mScrollDelta, glm::vec2{0.f})
         );
-        
+
         if (mPhysicsSystem.GetSimulationState() == SimulationState::Running)
         {
             mPhysicsSystem.Update(scene, deltaTime);
@@ -2197,6 +2201,85 @@ namespace kailux
             uploadState.meshGeneration = mMeshRegistry.GetGeneration();
         }
 
+        struct CascadeCullTarget
+        {
+            uint32_t                 view;
+            uint32_t                 cascade;
+            std::array<glm::vec4, 6> planes;
+        };
+
+        const auto cascadeCommands{frame.GetDirectionalShadowCommandsBuffer().Mapped<vk::DrawIndexedIndirectCommand>()};
+        auto &cascadeDrawCounts{uploadState.directionalShadowDrawCounts};
+        cascadeDrawCounts.fill(0);
+
+        std::array<CascadeCullTarget, details::kDirectionalShadowDrawLists> cascadeTargets{};
+        uint32_t cascadeTargetCount{};
+        for (uint32_t viewIndex{}; viewIndex < details::kMaxCameraViews; ++viewIndex)
+        {
+            const auto &shadowSet{mDirectionalShadowSets[viewIndex]};
+            if (!shadowSet.Enabled())
+                continue;
+
+            for (uint32_t cascade{}; cascade < details::kShadowCascadeCount; ++cascade)
+            {
+                auto &target{cascadeTargets[cascadeTargetCount++]};
+                target.view = viewIndex;
+                target.cascade = cascade;
+                target.planes = camera::get_frustum_planes(shadowSet.GetCascade(cascade), glm::mat4{1.f});
+            }
+        }
+
+        struct PointShadowCullTarget
+        {
+            uint32_t  view;
+            uint32_t  slot;
+            glm::vec3 position;
+            float     farPlane;
+            std::array<std::array<glm::vec4, 6>, details::kPointShadowFaceCount> facePlanes;
+        };
+
+        const auto pointShadowCommands{frame.GetPointShadowCommandsBuffer().Mapped<vk::DrawIndexedIndirectCommand>()};
+        auto &pointShadowDrawCounts{uploadState.pointShadowDrawCounts};
+        pointShadowDrawCounts.fill(0);
+
+        std::array<PointShadowCullTarget, details::kMaxCameraViews * details::kMaxPointShadows> shadowTargets{};
+        uint32_t shadowTargetCount{};
+        for (uint32_t viewIndex{}; viewIndex < details::kMaxCameraViews; ++viewIndex)
+        {
+            const auto &shadowSet{mPointShadowSets[viewIndex]};
+            for (uint32_t slot{}; slot < details::kMaxPointShadows; ++slot)
+            {
+                if (!shadowSet.NeedsRedraw(slot))
+                    continue;
+
+                auto &target{shadowTargets[shadowTargetCount++]};
+                const auto positionAndFar{shadowSet.GetData().slots[slot].positionAndFar};
+                target.view = viewIndex;
+                target.slot = slot;
+                target.position = glm::vec3(positionAndFar);
+                target.farPlane = positionAndFar.w;
+                for (uint32_t face{}; face < details::kPointShadowFaceCount; ++face)
+                    target.facePlanes[face] = camera::get_frustum_planes(shadowSet.GetFace(slot, face), glm::mat4{1.f});
+            }
+        }
+
+        const auto sphereInCascade{[](const std::array<glm::vec4, 6> &planes, const glm::vec3 &center, float radius)
+        {
+            constexpr uint32_t kNearPlane{4};
+            for (uint32_t i{}; i < planes.size(); ++i)
+                if (i != kNearPlane && glm::dot(glm::vec3(planes[i]), center) + planes[i].w < -radius)
+                    return false;
+            return true;
+        }};
+
+        const auto sphereInFrustum{[](const std::array<glm::vec4, 6> &planes, const glm::vec3 &center, float radius)
+        {
+            for (const auto &plane: planes)
+                if (glm::dot(glm::vec3(plane), center) + plane.w < -radius)
+                    return false;
+            return true;
+        }};
+
         const auto view{
             scene.GetEntityRegistry().view<
                 WorldTransform,
@@ -2254,6 +2337,63 @@ namespace kailux
                     uploadState.commandMeshes[objectIndex] = mesh.handle.index;
                 else
                     uploadState.commandMeshes.push_back(mesh.handle.index);
+            }
+            if (cascadeTargetCount > 0 || shadowTargetCount > 0)
+            {
+                const glm::vec3 center{world.model * glm::vec4{glm::vec3{mesh.boundingSphere}, 1.f}};
+                const float maxScale{std::max({
+                    glm::length(glm::vec3(world.model[0])),
+                    glm::length(glm::vec3(world.model[1])),
+                    glm::length(glm::vec3(world.model[2]))
+                })};
+                const float radius{mesh.boundingSphere.w * maxScale};
+                const uint32_t lodCount{std::max(lodInfo.count, 1u)};
+
+                for (uint32_t t{}; t < cascadeTargetCount; ++t)
+                {
+                    const auto &target{cascadeTargets[t]};
+                    if (!sphereInCascade(target.planes, center, radius))
+                        continue;
+                    const auto meshView{mMeshRegistry.View(mesh.handle, std::min(target.cascade, lodCount - 1))};
+                    const uint32_t list{details::directional_shadow_draw_list(target.view, target.cascade)};
+                    cascadeCommands[list * details::kMaxMeshes + cascadeDrawCounts[list]++] = vk::DrawIndexedIndirectCommand{
+                        meshView.indexCount,
+                        1,
+                        meshView.firstIndex,
+                        meshView.vertexOffset,
+                        objectIndex
+                    };
+                }
+
+                for (uint32_t t{}; t < shadowTargetCount; ++t)
+                {
+                    const auto &target{shadowTargets[t]};
+                    const float distance{glm::length(center - target.position)};
+                    if (distance > target.farPlane + radius)
+                        continue;
+
+                    const auto lod{std::min(
+                        lodCount - 1,
+                        static_cast<uint32_t>(distance / target.farPlane * static_cast<float>(lodCount))
+                    )};
+                    const auto meshView{mMeshRegistry.View(mesh.handle, lod)};
+                    const vk::DrawIndexedIndirectCommand command{
+                        meshView.indexCount,
+                        1,
+                        meshView.firstIndex,
+                        meshView.vertexOffset,
+                        objectIndex
+                    };
+
+                    for (uint32_t face{}; face < details::kPointShadowFaceCount; ++face)
+                    {
+                        if (!sphereInFrustum(target.facePlanes[face], center, radius))
+                            continue;
+
+                        const uint32_t list{details::point_shadow_draw_list(target.view, target.slot, face)};
+                        pointShadowCommands[list * details::kMaxMeshes + pointShadowDrawCounts[list]++] = command;
+                    }
+                }
             }
             ++objectIndex;
         }

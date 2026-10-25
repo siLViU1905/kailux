@@ -79,7 +79,8 @@ namespace kailux
 
     std::array<entt::entity, details::kMaxPointShadows> PointShadowSet::GetLights() const
     {
-        std::array<entt::entity, details::kMaxPointShadows> lights{entt::null};
+        std::array<entt::entity, details::kMaxPointShadows> lights{};
+        lights.fill(entt::null);
         for (size_t i{}; i < mSlots.size(); ++i)
             lights[i] = mSlots[i].light;
 
@@ -129,7 +130,8 @@ namespace kailux
 
     std::array<entt::entity, details::kMaxPointShadows> PointShadowSet::Select(const Scene &scene, entt::entity camera) const
     {
-        std::array<entt::entity, details::kMaxPointShadows> selected{entt::null};
+        std::array<entt::entity, details::kMaxPointShadows> selected{};
+        selected.fill(entt::null);
 
         const auto &registry{scene.GetEntityRegistry()};
         if (camera == entt::null || !registry.valid(camera))

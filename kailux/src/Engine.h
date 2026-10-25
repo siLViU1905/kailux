@@ -193,8 +193,8 @@ namespace kailux
         void                                        Submit(const FrameData& frame, vk::Semaphore imageAvailableSemaphore, vk::Semaphore renderFinishedSemaphore) const;
         void                                        RecordMeshData(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex, bool writeIds) const;
         void                                        RecordSkybox(const FrameData &frame, const CommandRecorder &recorder, uint32_t cameraIndex, bool multisampled) const;
-        void                                        RecordDirectionalShadows(const Scene &scene, const FrameData &frame, CommandRecorder &recorder, uint32_t viewIndex) const;
-        void                                        RecordPointShadows(const Scene &scene, const FrameData& frame, CommandRecorder &recorder, uint32_t viewIndex) const;
+        void                                        RecordDirectionalShadows(const FrameData &frame, CommandRecorder &recorder, uint32_t viewIndex) const;
+        void                                        RecordPointShadows(const FrameData& frame, CommandRecorder &recorder, uint32_t viewIndex) const;
         void                                        RecordGizmos(const Scene &scene, const FrameData &frame, const CommandRecorder &recorder) const;
         void                                        RecordImGuiData(Scene &scene, const FrameData& frame);
         void                                        RecordPicker(const FrameData& frame, const CommandRecorder &recorder) const;

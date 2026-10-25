@@ -7,6 +7,7 @@ namespace kailux
     {
         mSetup = {};
         mData = {};
+        mData.params.x = 0.f;
 
         const auto &registry{scene.GetEntityRegistry()};
         const auto sun{scene.GetSun()};
