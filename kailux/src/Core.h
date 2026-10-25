@@ -115,6 +115,12 @@ namespace kailux::details
     constexpr uint32_t kPointShadowResolution{512};
     constexpr uint32_t kPointShadowFaceCount{6};
     constexpr uint32_t kMaxPointShadows{4};
+    constexpr uint32_t kPointShadowDrawLists{kMaxCameraViews * kMaxPointShadows * kPointShadowFaceCount};
+
+    constexpr uint32_t point_shadow_draw_list(uint32_t view, uint32_t slot, uint32_t face)
+    {
+        return (view * kMaxPointShadows + slot) * kPointShadowFaceCount + face;
+    }
 
     constexpr uint32_t kMaxTextureDimension{512};
 

@@ -788,6 +788,7 @@ namespace kailux
 
     void Engine::Render(Scene &scene, const Window &window)
     {
+        auto start{Clock::now()};
         auto &frame{mFrames[mCurrentFrame]};
         const auto &sceneView{mSceneViews[mCurrentFrame]};
 
@@ -851,14 +852,14 @@ namespace kailux
                     CullingPreset::SceneView
                     );
 
-            TransitionForShadowPass(frame, recorder);
-            for (uint32_t view{}; view < details::kMaxCameraViews; ++view)
-                RecordDirectionalShadows(scene, frame, recorder, view);
-            TransitionShadowMapForSampling(frame, recorder);
+            // TransitionForShadowPass(frame, recorder);
+            // for (uint32_t view{}; view < details::kMaxCameraViews; ++view)
+            //     RecordDirectionalShadows(scene, frame, recorder, view);
+            // TransitionShadowMapForSampling(frame, recorder);
 
             TransitionForPointShadowPass(frame, recorder);
             for (uint32_t view{}; view < details::kMaxCameraViews; ++view)
-                RecordPointShadows(scene, frame, recorder, view);
+                RecordPointShadows(frame, recorder, view);
             TransitionPointShadowMapForSampling(frame, recorder);
 
             if (IsEditor())
@@ -881,6 +882,7 @@ namespace kailux
         RetireViews();
 
         mCurrentFrame = (mCurrentFrame + 1) % details::kFramesInFlight;
+        log::console.Trace("[engine] render: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
     }
 
     std::optional<std::filesystem::path> Engine::get_supported_mesh_type(const std::filesystem::path &directory)
@@ -1666,17 +1668,17 @@ namespace kailux
         }
     }
 
-    void Engine::RecordPointShadows(const Scene &scene, const FrameData &frame, CommandRecorder &recorder, uint32_t viewIndex) const
+    void Engine::RecordPointShadows(const FrameData &frame, CommandRecorder &recorder, uint32_t viewIndex) const
     {
         const auto cmd{recorder.GetCommandBuffer()};
         const auto extent{mPointShadowMap.GetExtent()};
         const auto &shadowSet{mPointShadowSets[viewIndex]};
 
-        const auto objectCount{scene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)};
+        const auto& drawCount{frame.GetMeshUploadState().pointShadowDrawCounts};
 
         for (uint32_t slot{}; slot < details::kMaxPointShadows; ++slot)
         {
-            if (objectCount == 0 || !shadowSet.NeedsRedraw(slot))
+            if (!shadowSet.NeedsRedraw(slot))
                 continue;
 
             for (uint32_t face{}; face < details::kPointShadowFaceCount; ++face)
@@ -1702,12 +1704,14 @@ namespace kailux
                                      shadowSet.GetFace(slot, face)
                                  });
 
-                cmd.drawIndexedIndirect(
-                    frame.GetCullerInputCommandsBuffer().GetBuffer(),
-                    0,
-                    objectCount,
-                    details::kMaxGeometryLods * sizeof(vk::DrawIndexedIndirectCommand)
-                );
+                const auto list{details::point_shadow_draw_list(viewIndex, slot, face)};
+                if (drawCount[list] > 0)
+                    cmd.drawIndexedIndirect(
+                        frame.GetPointShadowCommandsBuffer().GetBuffer(),
+                        static_cast<vk::DeviceSize>(list) * details::kMaxMeshes * sizeof(vk::DrawIndexedIndirectCommand),
+                        drawCount[list],
+                        sizeof(vk::DrawIndexedIndirectCommand)
+                    );
 
                 recorder.EndRendering();
             }
@@ -2138,27 +2142,47 @@ namespace kailux
             scriptsHaveInput ? mInputSource : InputSource{},
             std::exchange(mScrollDelta, glm::vec2{0.f})
         );
-        
+
+        auto start{Clock::now()};
         if (mPhysicsSystem.GetSimulationState() == SimulationState::Running)
         {
+            start = Clock::now();
             mPhysicsSystem.Update(scene, deltaTime);
             mScriptSystem.DispatchContacts(scene, mPhysicsSystem.DrainContactEvents());
+            log::console.Trace("[physics system] update: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
         }
 
+        start = Clock::now();
         mScriptSystem.Update(scene, deltaTime);
+        log::console.Trace("[script system] update: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
 
+        start = Clock::now();
         scene.Update();
         UpdateControlledCamera(scene, deltaTime);
+        log::console.Trace("[scene] update: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
 
+        start = Clock::now();
         mAudioSystem.Update(scene, deltaTime);
+        log::console.Trace("[audio system] update: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
     }
 
     void Engine::UpdateFrameBuffers(const Scene &scene, FrameData &frame, const RenderTarget &sceneView, const CommandRecorder &recorder)
     {
+        auto start{Clock::now()};
         UpdateCameraBuffer(scene, frame, sceneView);
+        log::console.Trace("[camera buffer] update: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
+
+        start = Clock::now();
         UpdateMeshBuffers(scene, frame);
+        log::console.Trace("[mesh buffers] update: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
+
+        start = Clock::now();
         UpdateMaterialBuffer(frame);
+        log::console.Trace("[material buffer] update: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
+
+        start = Clock::now();
         UpdateSceneBuffer(scene, frame);
+        log::console.Trace("[scene buffer] update: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
 
         recorder.BufferMemoryBarriers(frame.GetBufferMemoryBarriers());
     }
@@ -2196,6 +2220,48 @@ namespace kailux
             uploadState.commandMeshes.clear();
             uploadState.meshGeneration = mMeshRegistry.GetGeneration();
         }
+
+        struct PointShadowCullTarget
+        {
+            uint32_t  view;
+            uint32_t  slot;
+            glm::vec3 position;
+            float     farPlane;
+            std::array<std::array<glm::vec4, 6>, details::kPointShadowFaceCount> facePlanes;
+        };
+
+        const auto shadowCommands{frame.GetPointShadowCommandsBuffer().Mapped<vk::DrawIndexedIndirectCommand>()};
+        auto &shadowDrawCounts{uploadState.pointShadowDrawCounts};
+        shadowDrawCounts.fill(0);
+
+        std::array<PointShadowCullTarget, details::kMaxCameraViews * details::kMaxPointShadows> shadowTargets{};
+        uint32_t shadowTargetCount{};
+        for (uint32_t viewIndex{}; viewIndex < details::kMaxCameraViews; ++viewIndex)
+        {
+            const auto &shadowSet{mPointShadowSets[viewIndex]};
+            for (uint32_t slot{}; slot < details::kMaxPointShadows; ++slot)
+            {
+                if (!shadowSet.NeedsRedraw(slot))
+                    continue;
+
+                auto &target{shadowTargets[shadowTargetCount++]};
+                const auto positionAndFar{shadowSet.GetData().slots[slot].positionAndFar};
+                target.view = viewIndex;
+                target.slot = slot;
+                target.position = glm::vec3(positionAndFar);
+                target.farPlane = positionAndFar.w;
+                for (uint32_t face{}; face < details::kPointShadowFaceCount; ++face)
+                    target.facePlanes[face] = camera::get_frustum_planes(shadowSet.GetFace(slot, face), glm::mat4{1.f});
+            }
+        }
+
+        const auto sphereInFrustum{[](const std::array<glm::vec4, 6> &planes, const glm::vec3 &center, float radius)
+        {
+            for (const auto &plane: planes)
+                if (glm::dot(glm::vec3(plane), center) + plane.w < -radius)
+                    return false;
+            return true;
+        }};
 
         const auto view{
             scene.GetEntityRegistry().view<
@@ -2254,6 +2320,47 @@ namespace kailux
                     uploadState.commandMeshes[objectIndex] = mesh.handle.index;
                 else
                     uploadState.commandMeshes.push_back(mesh.handle.index);
+            }
+            if (shadowTargetCount > 0)
+            {
+                const glm::vec3 center{world.model * glm::vec4{glm::vec3{mesh.boundingSphere}, 1.f}};
+                const float maxScale{std::max({
+                    glm::length(glm::vec3(world.model[0])),
+                    glm::length(glm::vec3(world.model[1])),
+                    glm::length(glm::vec3(world.model[2]))
+                })};
+                const float radius{mesh.boundingSphere.w * maxScale};
+                const uint32_t lodCount{std::max(lodInfo.count, 1u)};
+
+                for (uint32_t t{}; t < shadowTargetCount; ++t)
+                {
+                    const auto &target{shadowTargets[t]};
+                    const float distance{glm::length(center - target.position)};
+                    if (distance > target.farPlane + radius)
+                        continue;
+
+                    const auto lod{std::min(
+                        lodCount - 1,
+                        static_cast<uint32_t>(distance / target.farPlane * static_cast<float>(lodCount))
+                    )};
+                    const auto meshView{mMeshRegistry.View(mesh.handle, lod)};
+                    const vk::DrawIndexedIndirectCommand command{
+                        meshView.indexCount,
+                        1,
+                        meshView.firstIndex,
+                        meshView.vertexOffset,
+                        objectIndex
+                    };
+
+                    for (uint32_t face{}; face < details::kPointShadowFaceCount; ++face)
+                    {
+                        if (!sphereInFrustum(target.facePlanes[face], center, radius))
+                            continue;
+
+                        const uint32_t list{details::point_shadow_draw_list(target.view, target.slot, face)};
+                        shadowCommands[list * details::kMaxMeshes + shadowDrawCounts[list]++] = command;
+                    }
+                }
             }
             ++objectIndex;
         }
