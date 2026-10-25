@@ -39,6 +39,8 @@ namespace kailux
                                                        mCullerInputCommandsBuffer(
                                                            std::move(other.mCullerInputCommandsBuffer)),
                                                        mCullerCountBuffer(std::move(other.mCullerCountBuffer)),
+                                                       mDirectionalShadowCommandsBuffer(
+                                                           std::move(other.mDirectionalShadowCommandsBuffer)),
                                                        mPointShadowCommandsBuffer(
                                                            std::move(other.mPointShadowCommandsBuffer)),
                                                        mMeshUploadState(std::move(other.mMeshUploadState))
@@ -69,6 +71,7 @@ namespace kailux
             mPickerBuffer = std::move(other.mPickerBuffer);
             mCullerInputCommandsBuffer = std::move(other.mCullerInputCommandsBuffer);
             mCullerCountBuffer = std::move(other.mCullerCountBuffer);
+            mDirectionalShadowCommandsBuffer = std::move(other.mDirectionalShadowCommandsBuffer);
             mPointShadowCommandsBuffer = std::move(other.mPointShadowCommandsBuffer);
             mMeshUploadState = std::move(other.mMeshUploadState);
         }
@@ -104,6 +107,7 @@ namespace kailux
         frame.CreateSceneBuffer(context);
         frame.CreatePickerBuffer(context);
         frame.CreateCullerBuffers(context);
+        frame.CreateDirectionalShadowBuffer(context);
         frame.CreatePointShadowBuffer(context);
         const auto descSetInfo{frame.MakeMeshDescriptorSetInfo(skybox, textureRegistry, directionalShadowMap, pointShadowMap)};
         frame.CreateMeshDescriptorSet(context, mainPass.GetDescriptorLayout(), mainPass.GetDescriptorPool(), descSetInfo);
@@ -268,6 +272,11 @@ namespace kailux
         return mCullerCountBuffer;
     }
 
+    const Buffer & FrameData::GetDirectionalShadowCommandsBuffer() const
+    {
+        return mDirectionalShadowCommandsBuffer;
+    }
+
     const Buffer & FrameData::GetPointShadowCommandsBuffer() const
     {
         return mPointShadowCommandsBuffer;
@@ -320,6 +329,17 @@ namespace kailux
                 mCullerInputCommandsBuffer.GetBuffer(),
                 {},
                 mCullerInputCommandsBuffer.GetSize()
+            ),
+            vk::BufferMemoryBarrier2( // directional shadows commands
+                vk::PipelineStageFlagBits2::eHost,
+                vk::AccessFlagBits2::eHostWrite,
+                vk::PipelineStageFlagBits2::eDrawIndirect,
+                vk::AccessFlagBits2::eIndirectCommandRead,
+                vk::QueueFamilyIgnored,
+                vk::QueueFamilyIgnored,
+                mDirectionalShadowCommandsBuffer.GetBuffer(),
+                {},
+                mDirectionalShadowCommandsBuffer.GetSize()
             ),
             vk::BufferMemoryBarrier2( // point shadows commands
                 vk::PipelineStageFlagBits2::eHost,
@@ -554,6 +574,15 @@ namespace kailux
             sizeof(uint32_t),
             vk::BufferUsageFlagBits::eStorageBuffer |
             vk::BufferUsageFlagBits::eIndirectBuffer);
+    }
+
+    void FrameData::CreateDirectionalShadowBuffer(const Context &context)
+    {
+        mDirectionalShadowCommandsBuffer = buffer_allocator::alloc_host(
+            context,
+            details::kDirectionalShadowDrawLists * details::kMaxMeshes * sizeof(vk::DrawIndexedIndirectCommand),
+            vk::BufferUsageFlagBits::eIndirectBuffer
+            );
     }
 
     void FrameData::CreatePointShadowBuffer(const Context &context)

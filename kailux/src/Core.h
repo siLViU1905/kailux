@@ -111,6 +111,12 @@ namespace kailux::details
 
     constexpr uint32_t kShadowCascadeCount{4};
     constexpr uint32_t kShadowMapResolution{2048};
+    constexpr uint32_t kDirectionalShadowDrawLists{kMaxCameraViews * kShadowCascadeCount};
+
+    constexpr uint32_t directional_shadow_draw_list(uint32_t view, uint32_t cascade)
+    {
+        return view * kShadowCascadeCount + cascade;
+    }
 
     constexpr uint32_t kPointShadowResolution{512};
     constexpr uint32_t kPointShadowFaceCount{6};
