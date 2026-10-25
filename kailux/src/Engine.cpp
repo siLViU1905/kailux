@@ -788,7 +788,6 @@ namespace kailux
 
     void Engine::Render(Scene &scene, const Window &window)
     {
-        auto start{Clock::now()};
         auto &frame{mFrames[mCurrentFrame]};
         const auto &sceneView{mSceneViews[mCurrentFrame]};
 
@@ -882,7 +881,6 @@ namespace kailux
         RetireViews();
 
         mCurrentFrame = (mCurrentFrame + 1) % details::kFramesInFlight;
-        log::console.Trace("[engine] render: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
     }
 
     std::optional<std::filesystem::path> Engine::get_supported_mesh_type(const std::filesystem::path &directory)
@@ -2145,46 +2143,26 @@ namespace kailux
             std::exchange(mScrollDelta, glm::vec2{0.f})
         );
 
-        auto start{Clock::now()};
         if (mPhysicsSystem.GetSimulationState() == SimulationState::Running)
         {
-            start = Clock::now();
             mPhysicsSystem.Update(scene, deltaTime);
             mScriptSystem.DispatchContacts(scene, mPhysicsSystem.DrainContactEvents());
-            log::console.Trace("[physics system] update: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
         }
 
-        start = Clock::now();
         mScriptSystem.Update(scene, deltaTime);
-        log::console.Trace("[script system] update: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
 
-        start = Clock::now();
         scene.Update();
         UpdateControlledCamera(scene, deltaTime);
-        log::console.Trace("[scene] update: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
 
-        start = Clock::now();
         mAudioSystem.Update(scene, deltaTime);
-        log::console.Trace("[audio system] update: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
     }
 
     void Engine::UpdateFrameBuffers(const Scene &scene, FrameData &frame, const RenderTarget &sceneView, const CommandRecorder &recorder)
     {
-        auto start{Clock::now()};
         UpdateCameraBuffer(scene, frame, sceneView);
-        log::console.Trace("[camera buffer] update: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
-
-        start = Clock::now();
         UpdateMeshBuffers(scene, frame);
-        log::console.Trace("[mesh buffers] update: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
-
-        start = Clock::now();
         UpdateMaterialBuffer(frame);
-        log::console.Trace("[material buffer] update: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
-
-        start = Clock::now();
         UpdateSceneBuffer(scene, frame);
-        log::console.Trace("[scene buffer] update: {}ms", Clock::get_elapsed<float, TimeType::Milliseconds>(start));
 
         recorder.BufferMemoryBarriers(frame.GetBufferMemoryBarriers());
     }
