@@ -128,6 +128,8 @@ namespace kailux::details
         return (view * kMaxPointShadows + slot) * kPointShadowFaceCount + face;
     }
 
+    constexpr float kMaxShadowDistance{100.f};
+
     constexpr uint32_t kMaxTextureDimension{512};
 
     //512x512 RGBA8, a full mip chain adds ~1/3 on top of mip 0 -> ~1.33 MiB

@@ -6,7 +6,8 @@ namespace kailux::shadow_cascades
     {
         CascadeSetup setup;
 
-        const auto splits{details::compute_splits(info.zNear, info.zFar, info.splitLambda)};
+        const float shadowFar{std::max(std::min(info.zFar, info.maxShadowDistance), info.zNear + 0.01f)};
+        const auto splits{details::compute_splits(info.zNear, shadowFar, info.splitLambda)};
         const auto inverseView{glm::inverse(info.cameraView)};
 
         float splitNear{info.zNear};

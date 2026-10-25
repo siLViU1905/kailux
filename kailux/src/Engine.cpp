@@ -2420,9 +2420,6 @@ namespace kailux
             ++objectIndex;
         }
         uploadState.commandMeshes.resize(objectIndex);
-
-        log::console.Info("editor: {}, dir0: {}, dir1: {}, simActive: {}",
-    IsEditor(), mDirectionalShadowSets[0].Enabled(), mDirectionalShadowSets[1].Enabled(), mSimulationViewActive);
     }
 
     void Engine::UpdateMaterialBuffer(FrameData &frame) const

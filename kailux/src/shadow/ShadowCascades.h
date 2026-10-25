@@ -16,6 +16,8 @@ namespace kailux
 
         float     splitLambda{0.92f};
 
+        float     maxShadowDistance{details::kMaxShadowDistance};
+
         float     depthExtension{50.f};
 
         float     resolution{static_cast<float>(details::kShadowMapResolution)};
