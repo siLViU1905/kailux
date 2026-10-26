@@ -8,6 +8,7 @@ BUILD_TYPE=""
 BUILD_DIR=""
 DO_CLEAN=0
 BUILD_SAMPLES="OFF"
+ENABLE_PROFILING="OFF"
 
 for arg in "$@"; do
     case "$arg" in
@@ -15,6 +16,7 @@ for arg in "$@"; do
         release|Release) BUILD_TYPE="Release"; BUILD_DIR="release" ;;
         clean)           DO_CLEAN=1 ;;
         samples)         BUILD_SAMPLES="ON" ;;
+        profiling)       ENABLE_PROFILING="ON" ;;
         *) echo "[WARN] unknown arg: $arg" ;;
     esac
 done
@@ -28,6 +30,7 @@ if [ -z "${BUILD_TYPE}" ]; then
     echo "          ./linux_build.sh release"
     echo "          ./linux_build.sh debug clean     (wipe build/ first)"
     echo "          ./linux_build.sh debug samples   (also build the sample games)"
+    echo "          ./linux_build.sh release samples profiling  (also build the benchmark)"
     exit 1
 fi
 
@@ -75,7 +78,8 @@ cmake "${PROJECT_ROOT}" -G "Ninja" \
     -DCMAKE_CXX_STANDARD=23 \
     -DCMAKE_CXX_STANDARD_REQUIRED=ON \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-    -DKAILUX_BUILD_SAMPLES=${BUILD_SAMPLES}
+    -DKAILUX_BUILD_SAMPLES=${BUILD_SAMPLES} \
+    -DKAILUX_ENABLE_PROFILING=${ENABLE_PROFILING}
 
 echo "[INFO] Building with Ninja..."
 cmake --build . -j "${JOBS}"
