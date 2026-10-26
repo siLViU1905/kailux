@@ -88,6 +88,7 @@ add_library(kailux STATIC
         src/audio/AudioRegistry.cpp
         src/audio/AudioSystem.cpp
         src/profiling/CpuProfiler.cpp
+        src/profiling/GpuProfiler.cpp
 )
 
 target_compile_definitions(kailux PUBLIC
