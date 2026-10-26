@@ -87,13 +87,20 @@ add_library(kailux STATIC
         src/audio/AudioLoader.cpp
         src/audio/AudioRegistry.cpp
         src/audio/AudioSystem.cpp
-        src/profiling/CpuProfiler.cpp
-        src/profiling/GpuProfiler.cpp
 )
 
 target_compile_definitions(kailux PUBLIC
         IMGUI_DEFINE_MATH_OPERATORS
 )
+
+if(KAILUX_ENABLE_PROFILING)
+    target_sources(kailux PRIVATE
+            src/profiling/CpuProfiler.cpp
+            src/profiling/GpuProfiler.cpp
+    )
+    target_compile_definitions(kailux PUBLIC KAILUX_PROFILING)
+    message(STATUS "Kailux profiling: enabled")
+endif()
 
 if(MSVC)
     set(SIMD_FLAGS "/arch:AVX2")

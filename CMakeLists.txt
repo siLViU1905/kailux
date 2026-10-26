@@ -123,6 +123,7 @@ function(kailux_copy_resources target)
     )
 endfunction()
 
+option(KAILUX_ENABLE_PROFILING "Compile the CPU/GPU profiling scopes into the engine (needed by the benchmark sample)" OFF)
 
 add_subdirectory(kailux)
 add_subdirectory(prism)
