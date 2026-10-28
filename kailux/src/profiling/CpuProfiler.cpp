@@ -38,6 +38,7 @@ namespace kailux
     CpuScope::~CpuScope()
     {
         const std::chrono::duration<float, std::milli> elapsed{std::chrono::steady_clock::now() - mStart};
+        profiling::cpu().Add(mSection, elapsed.count());
     }
 
     CpuProfiler & profiling::cpu()

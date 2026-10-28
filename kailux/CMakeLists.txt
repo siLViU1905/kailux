@@ -98,7 +98,7 @@ if(KAILUX_ENABLE_PROFILING)
             src/profiling/CpuProfiler.cpp
             src/profiling/GpuProfiler.cpp
     )
-    target_compile_definitions(kailux PUBLIC KAILUX_PROFILING)
+    target_compile_definitions(kailux PUBLIC KAILUX_ENABLE_PROFILING)
     message(STATUS "Kailux profiling: enabled")
 endif()
 
