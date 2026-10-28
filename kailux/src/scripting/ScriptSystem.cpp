@@ -1,6 +1,7 @@
 #include "ScriptSystem.h"
 
 #include "components/entt/NativeScriptComponent.h"
+#include "profiling/Profiling.h"
 
 namespace kailux
 {
@@ -37,6 +38,7 @@ namespace kailux
 
     void ScriptSystem::BeginFrame(float deltaTime, const InputSource& input, glm::vec2 scrollDelta)
     {
+        KAILUX_PROFILE_CPU(CpuSection::ScriptSystem);
         if (mSimulationState != SimulationState::Running)
             return;
 
@@ -63,6 +65,7 @@ namespace kailux
 
     void ScriptSystem::DispatchContacts(Scene &scene, std::span<const ContactEvent> events)
     {
+        KAILUX_PROFILE_CPU(CpuSection::ScriptSystem);
         if (mSimulationState != SimulationState::Running)
             return;
 
@@ -93,6 +96,7 @@ namespace kailux
 
     void ScriptSystem::Update(Scene &scene, float deltaTime)
     {
+        KAILUX_PROFILE_CPU(CpuSection::ScriptSystem);
         if (mSimulationState != SimulationState::Running)
             return;
 

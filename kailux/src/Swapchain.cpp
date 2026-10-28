@@ -1,6 +1,7 @@
 #include "Swapchain.h"
 
 #include "Log.h"
+#include "profiling/Profiling.h"
 
 namespace kailux
 {
@@ -211,6 +212,7 @@ namespace kailux
 
     std::optional<Swapchain::AcquireResult> Swapchain::Acquire()
     {
+        KAILUX_PROFILE_CPU(CpuSection::FrameWait);
         auto semaphore = *mAcquireSemaphores[mSemaphoreIndex];
         try
         {
@@ -235,6 +237,7 @@ namespace kailux
 
     bool Swapchain::Present(const Context &context, uint32_t imageIndex, vk::Semaphore renderFinishedSemaphore) const
     {
+        KAILUX_PROFILE_CPU(CpuSection::SubmitPresent);
         vk::PresentInfoKHR presentInfo{
             renderFinishedSemaphore,
             *mSwapchain,

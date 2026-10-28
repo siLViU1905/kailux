@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef KAILUX_PROFILING
+#ifdef KAILUX_ENABLE_PROFILING
 
 #include "CpuProfiler.h"
 #include "GpuProfiler.h"

@@ -10,6 +10,7 @@
 #include "components/entt/HierarchyComponent.h"
 #include "components/entt/LocalTransform.h"
 #include "components/entt/WorldTransform.h"
+#include "profiling/Profiling.h"
 
 namespace kailux
 {
@@ -103,6 +104,7 @@ namespace kailux
 
     void PhysicsSystem::Update(Scene& scene, float deltaTime)
     {
+        KAILUX_PROFILE_CPU(CpuSection::PhysicsSystem);
         const auto start{Clock::now()};
 
         mAccumulator = std::min(mAccumulator + deltaTime, kMaxFrameTime);

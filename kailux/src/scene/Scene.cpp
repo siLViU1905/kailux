@@ -17,6 +17,7 @@
 #include "components/entt/PhysicsInterpolation.h"
 #include "components/entt/SceneSettings.h"
 #include "components/entt/WorldTransform.h"
+#include "profiling/Profiling.h"
 
 namespace kailux
 {
@@ -73,6 +74,7 @@ namespace kailux
 
     void Scene::Update()
     {
+        KAILUX_PROFILE_CPU(CpuSection::SceneRegistry);
         UpdateTransforms();
     }
 

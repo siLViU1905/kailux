@@ -6,6 +6,7 @@
 #include "components/gpu/MeshData.h"
 #include "components/gpu/SceneData.h"
 #include  "texture/TextureAllocator.h"
+#include "profiling/Profiling.h"
 
 namespace kailux
 {
@@ -134,6 +135,7 @@ namespace kailux
 
     void FrameData::Reset(const Context &context) const
     {
+        KAILUX_PROFILE_CPU(CpuSection::FrameWait);
         auto result = context.GetDevice().waitForFences(*mFenceInFlight, true, UINT64_MAX);
         if (result != vk::Result::eSuccess)
             throw std::runtime_error("waitForFences failed");

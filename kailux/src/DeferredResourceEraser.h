@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include  "profiling/Profiling.h"
 
 namespace kailux
 {
@@ -16,6 +17,7 @@ namespace kailux
 
         void Tick()
         {
+            KAILUX_PROFILE_CPU(CpuSection::ResourceEraser);
             std::erase_if(mTasks, [](auto &pending)
             {
                 --pending.remainingFrames;

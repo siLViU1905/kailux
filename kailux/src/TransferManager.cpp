@@ -1,6 +1,7 @@
 #include "TransferManager.h"
 
 #include "texture/TextureAllocator.h"
+#include "profiling/Profiling.h"
 
 namespace kailux
 {
@@ -187,6 +188,7 @@ namespace kailux
 
     void TransferManager::Poll(const Context &context)
     {
+        KAILUX_PROFILE_CPU(CpuSection::TransferManager);
         std::erase_if(mPending, [&](auto& pending)
         {
             auto status = context.GetDevice().getFenceStatus(pending.graphicsCmd.GetFence());
