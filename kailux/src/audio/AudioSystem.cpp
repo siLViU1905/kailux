@@ -4,6 +4,7 @@
 #include  "components/entt/AudioSourceComponent.h"
 #include "components/entt/PhysicsControlComponent.h"
 #include "components/entt/WorldTransform.h"
+#include "profiling/Profiling.h"
 
 namespace kailux
 {
@@ -21,6 +22,7 @@ namespace kailux
 
     void AudioSystem::Update(Scene &scene, float deltaTime)
     {
+        KAILUX_PROFILE_CPU(CpuSection::AudioSystem);
         if (mSimulationState != SimulationState::Running
             || !pAudioRegistry->Available())
             return;

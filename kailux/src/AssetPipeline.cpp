@@ -8,6 +8,7 @@
 #include "components/entt/CachedPhysicsData.h"
 #include "components/entt/PendingUploadComponent.h"
 #include "components/entt/TagComponent.h"
+#include "profiling/Profiling.h"
 
 namespace kailux
 {
@@ -110,6 +111,7 @@ namespace kailux
 
     void AssetPipeline::Poll(Scene &scene)
     {
+        KAILUX_PROFILE_CPU(CpuSection::AssetPipeline);
         const auto start{Clock::now()};
         while (auto data{mPendingMeshData.TryPop()})
         {
@@ -410,6 +412,7 @@ namespace kailux
 
     void AssetPipeline::FlushCompletedUploads(Scene &scene)
     {
+        KAILUX_PROFILE_CPU(CpuSection::AssetPipeline);
         auto &registry{scene.GetEntityRegistry()};
         for (const auto &upload : mCompletedUploads)
         {

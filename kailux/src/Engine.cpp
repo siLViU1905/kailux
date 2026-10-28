@@ -28,6 +28,7 @@
 #include "shadow/ShadowCascades.h"
 #include "shadow/ShadowCuller.h"
 #include "texture/TextureAllocator.h"
+#include "profiling/Profiling.h"
 
 namespace kailux
 {
@@ -168,6 +169,7 @@ namespace kailux
         if (mContext.GetDevice())
         {
             WaitIdle();
+            KAILUX_PROFILE_GPU_SHUTDOWN();
             mTransferManager.Clear();
             mFrames = {};
             OneTimeCommand::destroy_command_pools();
@@ -219,6 +221,8 @@ namespace kailux
         engine.CreatePhysicsSystem();
         engine.CreateAudioSystem();
         engine.CreateScriptSystem();
+
+        KAILUX_PROFILE_GPU_INIT(engine.mContext);
 
         return engine;
     }
@@ -763,6 +767,7 @@ namespace kailux
     void Engine::Submit(const FrameData &frame, vk::Semaphore imageAvailableSemaphore,
                         vk::Semaphore renderFinishedSemaphore) const
     {
+        KAILUX_PROFILE_CPU(CpuSection::SubmitPresent);
         vk::SemaphoreSubmitInfo waitInfo{
             imageAvailableSemaphore,
             1,
@@ -823,7 +828,9 @@ namespace kailux
         const auto sceneCamera{IsEditor() ? scene.GetSceneCamera() : entt::null};
 
         const auto renderFinishedSemaphore = mSwapchain.GetPresentSemaphore(acquired->imageIndex); {
+            KAILUX_PROFILE_CPU(CpuSection::RenderRecord);
             CommandRecorder recorder(frame.GetCommandBuffer());
+            KAILUX_PROFILE_GPU_FRAME(recorder.GetCommandBuffer(), mCurrentFrame);
 
             mDirectionalShadowSets[details::kSceneViewCameraIndex].Update(
                scene,
@@ -1169,6 +1176,10 @@ namespace kailux
         CullingPreset preset
     ) const
     {
+        KAILUX_PROFILE_GPU(
+            recorder.GetCommandBuffer(),
+            preset == CullingPreset::SceneView ? GpuSection::SceneCulling : GpuSection::SimulationCulling
+        );
         const auto cmd = recorder.GetCommandBuffer();
 
         recorder.GetCommandBuffer().fillBuffer(
@@ -1626,6 +1637,7 @@ namespace kailux
 
     void Engine::RecordDirectionalShadows(const FrameData &frame, CommandRecorder &recorder, uint32_t viewIndex) const
     {
+        KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuSection::DirectionalShadows);
         const auto cmd{recorder.GetCommandBuffer()};
         const auto extent{mDirectionalShadowMap.GetExtent()};
 
@@ -1671,6 +1683,7 @@ namespace kailux
 
     void Engine::RecordPointShadows(const FrameData &frame, CommandRecorder &recorder, uint32_t viewIndex) const
     {
+        KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuSection::PointShadows);
         const auto cmd{recorder.GetCommandBuffer()};
         const auto extent{mPointShadowMap.GetExtent()};
         const auto &shadowSet{mPointShadowSets[viewIndex]};
@@ -1721,6 +1734,7 @@ namespace kailux
 
     void Engine::RecordGizmos(const Scene &scene, const FrameData &frame, const CommandRecorder &recorder) const
     {
+        KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuSection::Gizmos);
         const auto cmd = recorder.GetCommandBuffer();
         mGizmoPass.Bind(cmd);
         mGizmoRegistry.Bind(cmd);
@@ -1781,6 +1795,7 @@ namespace kailux
 
     void Engine::RecordPicker(const FrameData &frame, const CommandRecorder &recorder) const
     {
+        KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuSection::Picker);
         const auto cmd = recorder.GetCommandBuffer();
         mComputePicker.Bind(cmd);
         frame.GetPickerDescriptorSet().Bind(mComputePicker.GetPipeline(), cmd);
@@ -1793,6 +1808,7 @@ namespace kailux
 
     void Engine::RecordOutline(const Scene &scene, const FrameData &frame, const CommandRecorder &recorder)
     {
+        KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuSection::Outline);
         const auto cmd = recorder.GetCommandBuffer();
         mOutlinePass.Bind(cmd);
         frame.GetOutlineDescriptorSet().Bind(mOutlinePass.GetPipeline(), cmd);
@@ -1806,6 +1822,8 @@ namespace kailux
         const auto primaryCamera{scene.GetPrimaryCamera()};
         if (primaryCamera == entt::null)
             return;
+
+        KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuSection::SimulationView);
 
         const auto& simulationView{GetCurrentSimulationView()};
 
@@ -1946,53 +1964,56 @@ namespace kailux
         if (hasView)
             RenderSimulationView(scene, frame, recorder);
 
-        TransitionForBlit(recorder, imageIndex, hasView);
-        const auto swapchainImage{mSwapchain.GetImage(imageIndex)};
-        if (hasView)
         {
-            const auto sourceExtent{GetCurrentSimulationView().GetVkExtent()};
-            const auto targetExtent{mSwapchain.GetExtent()};
-            constexpr vk::ImageSubresourceLayers kColorLayer{vk::ImageAspectFlagBits::eColor, 0, 0, 1};
-            const vk::ImageBlit2 region{
-                kColorLayer,
-                std::array{
-                    vk::Offset3D{0, 0, 0},
-                    vk::Offset3D{static_cast<int32_t>(sourceExtent.width), static_cast<int32_t>(sourceExtent.height), 1}
-                },
-                kColorLayer,
-                std::array{
-                    vk::Offset3D{0, 0, 0},
-                    vk::Offset3D{static_cast<int32_t>(targetExtent.width), static_cast<int32_t>(targetExtent.height), 1}
-                }
-            };
-            const bool sameSize{
-                sourceExtent.width == targetExtent.width &&
-                sourceExtent.height == targetExtent.height
-            };
-            const vk::BlitImageInfo2 blitInfo{
-                GetCurrentSimulationView().GetPresentedTexture().GetImage(),
-                vk::ImageLayout::eTransferSrcOptimal,
-                swapchainImage,
-                vk::ImageLayout::eTransferDstOptimal,
-                1,
-                &region,
-                sameSize ? vk::Filter::eNearest : vk::Filter::eLinear
-            };
-            recorder.GetCommandBuffer().blitImage2(blitInfo);
-        }
-        else
-        {
-            constexpr vk::ClearColorValue kBlack{std::array{0.f, 0.f, 0.f, 1.f}};
-            constexpr vk::ImageSubresourceRange kColorRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1};
-            recorder.GetCommandBuffer().clearColorImage(
-                swapchainImage,
-                vk::ImageLayout::eTransferDstOptimal,
-                kBlack,
-                kColorRange
-            );
-        }
+            KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuSection::Blit);
+            TransitionForBlit(recorder, imageIndex, hasView);
+            const auto swapchainImage{mSwapchain.GetImage(imageIndex)};
+            if (hasView)
+            {
+                const auto sourceExtent{GetCurrentSimulationView().GetVkExtent()};
+                const auto targetExtent{mSwapchain.GetExtent()};
+                constexpr vk::ImageSubresourceLayers kColorLayer{vk::ImageAspectFlagBits::eColor, 0, 0, 1};
+                const vk::ImageBlit2 region{
+                    kColorLayer,
+                    std::array{
+                        vk::Offset3D{0, 0, 0},
+                        vk::Offset3D{static_cast<int32_t>(sourceExtent.width), static_cast<int32_t>(sourceExtent.height), 1}
+                    },
+                    kColorLayer,
+                    std::array{
+                        vk::Offset3D{0, 0, 0},
+                        vk::Offset3D{static_cast<int32_t>(targetExtent.width), static_cast<int32_t>(targetExtent.height), 1}
+                    }
+                };
+                const bool sameSize{
+                    sourceExtent.width == targetExtent.width &&
+                    sourceExtent.height == targetExtent.height
+                };
+                const vk::BlitImageInfo2 blitInfo{
+                    GetCurrentSimulationView().GetPresentedTexture().GetImage(),
+                    vk::ImageLayout::eTransferSrcOptimal,
+                    swapchainImage,
+                    vk::ImageLayout::eTransferDstOptimal,
+                    1,
+                    &region,
+                    sameSize ? vk::Filter::eNearest : vk::Filter::eLinear
+                };
+                recorder.GetCommandBuffer().blitImage2(blitInfo);
+            }
+            else
+            {
+                constexpr vk::ClearColorValue kBlack{std::array{0.f, 0.f, 0.f, 1.f}};
+                constexpr vk::ImageSubresourceRange kColorRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1};
+                recorder.GetCommandBuffer().clearColorImage(
+                    swapchainImage,
+                    vk::ImageLayout::eTransferDstOptimal,
+                    kBlack,
+                    kColorRange
+                );
+            }
 
-        TransitionAfterBlit(recorder, imageIndex);
+            TransitionAfterBlit(recorder, imageIndex);
+        }
         if (UsesImGui())
         {
             RecordImGuiPass(scene, frame, recorder, imageIndex);
@@ -2002,6 +2023,7 @@ namespace kailux
 
     void Engine::RenderScenePass(const FrameData &frame, CommandRecorder &recorder, const RenderTarget &sceneView)
     {
+        KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuSection::ScenePass);
         const auto sceneExtent{sceneView.GetVkExtent()};
 
         TransitionForMainPass(sceneView, recorder);
@@ -2057,6 +2079,7 @@ namespace kailux
 
     void Engine::RecordImGuiPass(Scene &scene, const FrameData &frame, CommandRecorder &recorder, uint32_t imageIndex)
     {
+        KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuSection::ImGui);
         const std::array imguiOverlay{
             ColorAttachmentInfo
             (mSwapchain.GetImageView(imageIndex),
@@ -2095,6 +2118,7 @@ namespace kailux
 
     void Engine::UpdateControlledCamera(Scene &scene, float deltaTime)
     {
+        KAILUX_PROFILE_CPU(CpuSection::CameraControl);
         if (!mInputSource.Valid() || !mBuiltinCameraControl)
         {
             scene.UpdateCameras();
@@ -2122,6 +2146,9 @@ namespace kailux
 
     void Engine::Update(Scene &scene, float deltaTime)
     {
+        KAILUX_PROFILE_CPU_FRAME();
+        KAILUX_PROFILE_CPU(CpuSection::EngineUpdate);
+
         mAssetPipeline.Poll(scene);
         mTransferManager.Poll(mContext);
         mAssetPipeline.FlushCompletedUploads(scene);

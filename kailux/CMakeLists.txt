@@ -93,6 +93,15 @@ target_compile_definitions(kailux PUBLIC
         IMGUI_DEFINE_MATH_OPERATORS
 )
 
+if(KAILUX_ENABLE_PROFILING)
+    target_sources(kailux PRIVATE
+            src/profiling/CpuProfiler.cpp
+            src/profiling/GpuProfiler.cpp
+    )
+    target_compile_definitions(kailux PUBLIC KAILUX_ENABLE_PROFILING)
+    message(STATUS "Kailux profiling: enabled")
+endif()
+
 if(MSVC)
     set(SIMD_FLAGS "/arch:AVX2")
 else()
