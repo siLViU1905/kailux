@@ -1683,7 +1683,7 @@ namespace kailux
 
     void Engine::RecordPointShadows(const FrameData &frame, CommandRecorder &recorder, uint32_t viewIndex) const
     {
-        KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuPass::PointShadows);
+        KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuSection::PointShadows);
         const auto cmd{recorder.GetCommandBuffer()};
         const auto extent{mPointShadowMap.GetExtent()};
         const auto &shadowSet{mPointShadowSets[viewIndex]};
@@ -1734,7 +1734,7 @@ namespace kailux
 
     void Engine::RecordGizmos(const Scene &scene, const FrameData &frame, const CommandRecorder &recorder) const
     {
-        KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuPass::Gizmos);
+        KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuSection::Gizmos);
         const auto cmd = recorder.GetCommandBuffer();
         mGizmoPass.Bind(cmd);
         mGizmoRegistry.Bind(cmd);
@@ -1795,7 +1795,7 @@ namespace kailux
 
     void Engine::RecordPicker(const FrameData &frame, const CommandRecorder &recorder) const
     {
-        KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuPass::Picker);
+        KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuSection::Picker);
         const auto cmd = recorder.GetCommandBuffer();
         mComputePicker.Bind(cmd);
         frame.GetPickerDescriptorSet().Bind(mComputePicker.GetPipeline(), cmd);
@@ -1808,7 +1808,7 @@ namespace kailux
 
     void Engine::RecordOutline(const Scene &scene, const FrameData &frame, const CommandRecorder &recorder)
     {
-        KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuPass::Outline);
+        KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuSection::Outline);
         const auto cmd = recorder.GetCommandBuffer();
         mOutlinePass.Bind(cmd);
         frame.GetOutlineDescriptorSet().Bind(mOutlinePass.GetPipeline(), cmd);
@@ -1823,7 +1823,7 @@ namespace kailux
         if (primaryCamera == entt::null)
             return;
 
-        KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuPass::SimulationView);
+        KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuSection::SimulationView);
 
         const auto& simulationView{GetCurrentSimulationView()};
 
@@ -1965,7 +1965,7 @@ namespace kailux
             RenderSimulationView(scene, frame, recorder);
 
         {
-            KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuPass::Blit);
+            KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuSection::Blit);
             TransitionForBlit(recorder, imageIndex, hasView);
             const auto swapchainImage{mSwapchain.GetImage(imageIndex)};
             if (hasView)
@@ -2023,7 +2023,7 @@ namespace kailux
 
     void Engine::RenderScenePass(const FrameData &frame, CommandRecorder &recorder, const RenderTarget &sceneView)
     {
-        KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuPass::ScenePass);
+        KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuSection::ScenePass);
         const auto sceneExtent{sceneView.GetVkExtent()};
 
         TransitionForMainPass(sceneView, recorder);
@@ -2079,7 +2079,7 @@ namespace kailux
 
     void Engine::RecordImGuiPass(Scene &scene, const FrameData &frame, CommandRecorder &recorder, uint32_t imageIndex)
     {
-        KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuPass::ImGui);
+        KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuSection::ImGui);
         const std::array imguiOverlay{
             ColorAttachmentInfo
             (mSwapchain.GetImageView(imageIndex),
