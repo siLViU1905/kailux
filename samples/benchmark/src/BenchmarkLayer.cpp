@@ -78,9 +78,13 @@ namespace benchmark
             ImGui::Text("Recording: %u readings, one every %.1f s", mSampleCount, kSampleIntervalSeconds);
         ImGui::TextUnformatted(mOutputPath.generic_string().c_str());
 
-        ImGui::SeparatorText("CPU (ms)");
+        ImGui::SeparatorText("CPU");
         if (ImGui::BeginTable("cpu", 2, ImGuiTableFlags_RowBg))
         {
+            ImGui::TableSetupColumn("Section");
+            ImGui::TableSetupColumn("Time");
+            ImGui::TableHeadersRow();
+
             const auto& cpu{kailux::profiling::cpu()};
             for (size_t section{}; section < kailux::CpuProfiler::kSectionCount; ++section)
             {
@@ -90,18 +94,27 @@ namespace benchmark
             ImGui::EndTable();
         }
 
-        ImGui::SeparatorText("GPU (ms)");
+        ImGui::SeparatorText("GPU");
         const auto& gpu{kailux::profiling::gpu()};
         if (!gpu.IsSupported())
             ImGui::TextUnformatted("Timestamp queries are not available");
 
-        else if (ImGui::BeginTable("gpu", 2, ImGuiTableFlags_RowBg))
+        else if (ImGui::BeginTable("gpu", 3, ImGuiTableFlags_RowBg))
         {
+            ImGui::TableSetupColumn("Pass");
+            ImGui::TableSetupColumn("Time");
+            ImGui::TableSetupColumn("Draws");
+            ImGui::TableHeadersRow();
+
             for (size_t pass{}; pass < kailux::GpuProfiler::kPassCount; ++pass)
             {
                 const auto id{static_cast<kailux::GpuSection>(pass)};
                 if (const auto time{gpu.GetTime(id)}; time >= 0.f)
+                {
                     draw_row(kailux::GpuProfiler::get_name(id), time);
+                    ImGui::TableNextColumn();
+                    ImGui::Text("%u draws", gpu.GetDraws(id));
+                }
             }
             ImGui::EndTable();
         }
@@ -121,12 +134,16 @@ namespace benchmark
         mOutput << std::format("# sample_interval_s: {}\n", kSampleIntervalSeconds);
         mOutput << std::format("# warmup_s: {}\n", kWarmupSeconds);
         mOutput << "# all timings are in milliseconds, an empty gpu value means the pass was not recorded\n";
+        mOutput << "# draws_ columns count the draws the GPU executed per pass, every command of an indirect draw counts once\n";
 
         mOutput << "time_s,frame";
         for (size_t section{}; section < kailux::CpuProfiler::kSectionCount; ++section)
             mOutput << ",cpu_" << kailux::CpuProfiler::get_name(static_cast<kailux::CpuSection>(section));
         for (size_t pass{}; pass < kailux::GpuProfiler::kPassCount; ++pass)
+        {
             mOutput << ",gpu_" << kailux::GpuProfiler::get_name(static_cast<kailux::GpuSection>(pass));
+            mOutput << ",draws_" << kailux::GpuProfiler::get_name(static_cast<kailux::GpuSection>(pass));
+        }
         mOutput << '\n';
         mOutput.flush();
     }
@@ -146,6 +163,15 @@ namespace benchmark
                 mOutput << std::format(",{:.4f}", time);
             else
                 mOutput << ',';
+
+        for (size_t pass{}; pass < kailux::GpuProfiler::kPassCount; ++pass)
+        {
+            const auto id{static_cast<kailux::GpuSection>(pass)};
+            if (gpu.IsSupported() && gpu.GetTime(id) >= 0.f)
+                mOutput << ',' << gpu.GetDraws(id);
+            else
+                mOutput << ',';
+        }
         mOutput << '\n';
 
         mOutput.flush();
@@ -158,6 +184,6 @@ namespace benchmark
         ImGui::TableNextColumn();
         ImGui::TextUnformatted(name.data(), name.data() + name.size());
         ImGui::TableNextColumn();
-        ImGui::Text("%.3f", milliseconds);
+        ImGui::Text("%.3f ms", milliseconds);
     }
 }
