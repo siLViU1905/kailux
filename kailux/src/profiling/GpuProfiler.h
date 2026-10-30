@@ -3,6 +3,7 @@
 
 #include "../Context.h"
 #include "../Core.h"
+#include "../buffer/Buffer.h"
 
 namespace kailux
 {
@@ -33,9 +34,12 @@ namespace kailux
         static constexpr uint32_t kMaxScopesPerPass{4};
 
         using Timings = std::array<float, kPassCount>;
+        using DrawCounts = std::array<uint32_t, kPassCount>;
 
         static constexpr float    kNotRecorded{-1.f};
         static constexpr uint32_t kNoQuery{~0u};
+
+        static constexpr uint32_t kMaxIndirectReadbacks{4};
 
         static GpuProfiler create(const Context& context);
 
@@ -49,6 +53,12 @@ namespace kailux
         const Timings& GetTimings() const;
         float          GetTime(GpuSection section) const;
 
+        void AddDraws(GpuSection section, uint32_t count);
+        void AddIndirectDraws(vk::CommandBuffer cmd, vk::Buffer countBuffer, GpuSection section);
+
+        const DrawCounts& GetDrawCounts() const;
+        uint32_t          GetDraws(GpuSection section) const;
+
         static std::string_view get_name(GpuSection section);
 
     private:
@@ -60,9 +70,11 @@ namespace kailux
         }
 
         void CreateQueryPools(const Context &context);
+        void CreateReadbackBuffers(const Context &context);
         void Collect(uint32_t frameIndex);
 
         using ScopeCounts = std::array<uint32_t, kPassCount>;
+        using ReadbackSections = std::array<GpuSection, kMaxIndirectReadbacks>;
 
         std::vector<vk::raii::QueryPool>                       mQueryPools;
         std::array<ScopeCounts, details::kFramesInFlight>      mScopeCounts{};
@@ -72,6 +84,13 @@ namespace kailux
         uint64_t mTimestampMask{};
 
         Timings mTimings{};
+
+        std::vector<Buffer>                                    mReadbackBuffers;
+        std::array<ReadbackSections, details::kFramesInFlight> mReadbackSections{};
+        std::array<uint32_t, details::kFramesInFlight>         mReadbackCounts{};
+        std::array<DrawCounts, details::kFramesInFlight>       mPendingDraws{};
+
+        DrawCounts mDrawCounts{};
     };
 
     class GpuScope
@@ -107,5 +126,7 @@ namespace kailux
     namespace profiling
     {
         GpuProfiler& gpu();
+
+        uint32_t imgui_draw_count();
     }
 }

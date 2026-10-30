@@ -3,6 +3,7 @@
 #include <magic_enum/magic_enum.hpp>
 
 #include "Log.h"
+#include "buffer/BufferAllocator.h"
 
 namespace kailux
 {
@@ -16,7 +17,12 @@ namespace kailux
                                                              mCurrentFrame(other.mCurrentFrame),
                                                              mTimestampPeriod(other.mTimestampPeriod),
                                                              mTimestampMask(other.mTimestampMask),
-                                                             mTimings(other.mTimings)
+                                                             mTimings(other.mTimings),
+                                                             mReadbackBuffers(std::move(other.mReadbackBuffers)),
+                                                             mReadbackSections(other.mReadbackSections),
+                                                             mReadbackCounts(other.mReadbackCounts),
+                                                             mPendingDraws(other.mPendingDraws),
+                                                             mDrawCounts(other.mDrawCounts)
     {
     }
 
@@ -30,6 +36,11 @@ namespace kailux
             mTimestampPeriod = other.mTimestampPeriod;
             mTimestampMask = other.mTimestampMask;
             mTimings = other.mTimings;
+            mReadbackBuffers = std::move(other.mReadbackBuffers);
+            mReadbackSections = other.mReadbackSections;
+            mReadbackCounts = other.mReadbackCounts;
+            mPendingDraws = other.mPendingDraws;
+            mDrawCounts = other.mDrawCounts;
         }
         return *this;
     }
@@ -53,6 +64,9 @@ namespace kailux
         profiler.CreateQueryPools(context);
         log::console.Debug("gpu profiler: query pools created");
 
+        profiler.CreateReadbackBuffers(context);
+        log::console.Debug("gpu profiler: draw count readback buffers created");
+
         return profiler;
     }
 
@@ -70,6 +84,8 @@ namespace kailux
 
         mCurrentFrame = frameIndex;
         mScopeCounts[frameIndex].fill(0);
+        mPendingDraws[frameIndex].fill(0);
+        mReadbackCounts[frameIndex] = 0;
         cmd.resetQueryPool(*mQueryPools[frameIndex], 0, kQueryCount);
     }
 
@@ -107,6 +123,72 @@ namespace kailux
         return mTimings[index(section)];
     }
 
+    void GpuProfiler::AddDraws(GpuSection section, uint32_t count)
+    {
+        if (!IsSupported())
+            return;
+
+        mPendingDraws[mCurrentFrame][index(section)] += count;
+    }
+
+    void GpuProfiler::AddIndirectDraws(vk::CommandBuffer cmd, vk::Buffer countBuffer, GpuSection section)
+    {
+        if (!IsSupported())
+            return;
+
+        auto& slot{mReadbackCounts[mCurrentFrame]};
+        if (slot == kMaxIndirectReadbacks)
+            return;
+
+        const auto readback{mReadbackBuffers[mCurrentFrame].GetBuffer()};
+        const vk::DeviceSize offset{slot * sizeof(uint32_t)};
+
+        const vk::BufferMemoryBarrier2 beforeCopy{
+            vk::PipelineStageFlagBits2::eComputeShader, vk::AccessFlagBits2::eShaderWrite,
+            vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eTransferRead,
+            vk::QueueFamilyIgnored, vk::QueueFamilyIgnored,
+            countBuffer,
+            0,
+            sizeof(uint32_t)
+        };
+        cmd.pipelineBarrier2(vk::DependencyInfo{{}, {}, beforeCopy, {}});
+
+        cmd.copyBuffer(countBuffer, readback, vk::BufferCopy{0, offset, sizeof(uint32_t)});
+
+        const std::array afterCopy{
+            vk::BufferMemoryBarrier2{
+                vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eNone,
+                vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eTransferWrite,
+                vk::QueueFamilyIgnored, vk::QueueFamilyIgnored,
+                countBuffer,
+                0,
+                sizeof(uint32_t)
+            },
+            vk::BufferMemoryBarrier2{
+                vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eTransferWrite,
+                vk::PipelineStageFlagBits2::eHost, vk::AccessFlagBits2::eHostRead,
+                vk::QueueFamilyIgnored, vk::QueueFamilyIgnored,
+                readback,
+                offset,
+                sizeof(uint32_t)
+            }
+        };
+        cmd.pipelineBarrier2(vk::DependencyInfo{{}, {}, afterCopy, {}});
+
+        mReadbackSections[mCurrentFrame][slot] = section;
+        ++slot;
+    }
+
+    const GpuProfiler::DrawCounts & GpuProfiler::GetDrawCounts() const
+    {
+        return mDrawCounts;
+    }
+
+    uint32_t GpuProfiler::GetDraws(GpuSection section) const
+    {
+        return mDrawCounts[index(section)];
+    }
+
     std::string_view GpuProfiler::get_name(GpuSection section)
     {
         return magic_enum::enum_name(section);
@@ -123,6 +205,17 @@ namespace kailux
         mQueryPools.reserve(details::kFramesInFlight);
         for (uint32_t frame{}; frame < details::kFramesInFlight; ++frame)
             mQueryPools.emplace_back(context.GetRAIIDevice(), createInfo);
+    }
+
+    void GpuProfiler::CreateReadbackBuffers(const Context &context)
+    {
+        mReadbackBuffers.reserve(details::kFramesInFlight);
+        for (uint32_t frame{}; frame < details::kFramesInFlight; ++frame)
+            mReadbackBuffers.push_back(buffer_allocator::alloc_host(
+                context,
+                kMaxIndirectReadbacks * sizeof(uint32_t),
+                vk::BufferUsageFlagBits::eTransferDst
+            ));
     }
 
     void GpuProfiler::Collect(uint32_t frameIndex)
@@ -157,6 +250,14 @@ namespace kailux
             }
             mTimings[pass] = static_cast<float>(static_cast<double>(elapsedTicks) * mTimestampPeriod / 1'000'000.0);
         }
+
+        auto draws{mPendingDraws[frameIndex]};
+        const auto readback{mReadbackBuffers[frameIndex].Mapped<const uint32_t>()};
+        for (uint32_t slot{}; slot < mReadbackCounts[frameIndex]; ++slot)
+            draws[index(mReadbackSections[frameIndex][slot])] += readback[slot];
+
+        draws[index(GpuSection::Frame)] = std::accumulate(draws.begin(), draws.end(), 0u);
+        mDrawCounts = draws;
     }
 
     GpuScope::GpuScope(vk::CommandBuffer cmd, GpuSection section) : mCmd(cmd),
@@ -184,5 +285,17 @@ namespace kailux
     {
         static GpuProfiler profiler;
         return profiler;
+    }
+
+    uint32_t profiling::imgui_draw_count()
+    {
+        const auto* drawData{ImGui::GetDrawData()};
+        if (!drawData)
+            return 0;
+
+        uint32_t count{};
+        for (const auto* list : drawData->CmdLists)
+            count += static_cast<uint32_t>(list->CmdBuffer.Size);
+        return count;
     }
 }
