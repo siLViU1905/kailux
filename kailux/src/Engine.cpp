@@ -1232,6 +1232,12 @@ namespace kailux
         mComputeCuller.Execute(cmd, {groupX, 1, 1});
 
         recorder.BufferMemoryBarriers(frame.GetCullerBufferMemoryBarriers());
+
+        KAILUX_PROFILE_GPU_INDIRECT_DRAWS(
+            cmd,
+            frame.GetCullerCountBuffer().GetBuffer(),
+            preset == CullingPreset::SceneView ? GpuSection::ScenePass : GpuSection::SimulationView
+            );
     }
 
     void Engine::ResizeSceneView(glm::ivec2 extent)
@@ -1669,6 +1675,7 @@ namespace kailux
                 });
 
                 const auto list{details::directional_shadow_draw_list(viewIndex, cascade)};
+                KAILUX_PROFILE_GPU_DRAWS(GpuSection::DirectionalShadows, drawCount[list]);
                 if (drawCount[list] > 0)
                     cmd.drawIndexedIndirect(
                         frame.GetDirectionalShadowCommandsBuffer().GetBuffer(),
@@ -1719,6 +1726,7 @@ namespace kailux
                                  });
 
                 const auto list{details::point_shadow_draw_list(viewIndex, slot, face)};
+                KAILUX_PROFILE_GPU_DRAWS(GpuSection::PointShadows, drawCount[list]);
                 if (drawCount[list] > 0)
                     cmd.drawIndexedIndirect(
                         frame.GetPointShadowCommandsBuffer().GetBuffer(),
@@ -1753,6 +1761,7 @@ namespace kailux
 
                 mGizmoPass.Push(cmd, pc);
 
+                KAILUX_PROFILE_GPU_DRAWS(GpuSection::Gizmos, 1);
                 cmd.drawIndexed(
                     gizmoView.indexCount,
                     1,
@@ -1788,6 +1797,7 @@ namespace kailux
         if (mOnImGuiRender)
             mOnImGuiRender(scene);
         mImGuiBackend.EndFrame();
+        KAILUX_PROFILE_GPU_DRAWS(GpuSection::ImGui, profiling::imgui_draw_count());
 
         CommandRecorder recorder(frame.GetImGuiCommandBuffer(), inheritanceInfo);
         mImGuiBackend.RecordDrawData(recorder.GetCommandBuffer());
@@ -1815,6 +1825,7 @@ namespace kailux
         mOutlineInfo.color = {scene.GetEntityRegistry().get<SceneSettings>(scene.GetSettingsEntity()).outlineColor, 0.f};
         mOutlinePass.Push(cmd, mOutlineInfo);
         cmd.draw(3, 1, 0, 0);
+        KAILUX_PROFILE_GPU_DRAWS(GpuSection::Outline, 1);
     }
 
     void Engine::RenderSimulationView(const Scene &scene, const FrameData &frame, CommandRecorder &recorder)
@@ -1864,6 +1875,7 @@ namespace kailux
 
         RecordMeshData(frame, recorder, details::kSimulationViewCameraIndex, false);
         RecordSkybox(frame, recorder, details::kSimulationViewCameraIndex, simulationView.IsMultisampled());
+        KAILUX_PROFILE_GPU_DRAWS(GpuSection::SimulationView, 1);
 
         recorder.EndRendering();
 
@@ -2073,6 +2085,7 @@ namespace kailux
 
         RecordMeshData(frame, recorder, details::kSceneViewCameraIndex, true);
         RecordSkybox(frame, recorder, details::kSceneViewCameraIndex, sceneView.IsMultisampled());
+        KAILUX_PROFILE_GPU_DRAWS(GpuSection::ScenePass, 1);
 
         recorder.EndRendering();
     }
