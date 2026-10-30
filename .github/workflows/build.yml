@@ -71,8 +71,10 @@ jobs:
           restore-keys: |
             conan-${{ runner.os }}-${{ matrix.build_type }}-
 
-      - name: Export local imguizmo recipe
-        run: conan export scripts/imguizmo
+      - name: Export local recipes
+        run: |
+          conan export scripts/imguizmo
+          conan export scripts/imgui
 
       - name: Conan install
         shell: bash
