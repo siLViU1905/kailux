@@ -575,7 +575,8 @@ namespace kailux
             context,
             sizeof(uint32_t),
             vk::BufferUsageFlagBits::eStorageBuffer |
-            vk::BufferUsageFlagBits::eIndirectBuffer);
+            vk::BufferUsageFlagBits::eIndirectBuffer |
+            vk::BufferUsageFlagBits::eTransferSrc);
     }
 
     void FrameData::CreateDirectionalShadowBuffer(const Context &context)

@@ -20,6 +20,10 @@
 #define KAILUX_PROFILE_GPU_FRAME(cmd, frameIndex) \
     const kailux::GpuFrameScope KAILUX_PROFILE_CONCAT(kailuxGpuFrameScope, __LINE__){cmd, frameIndex}
 
+#define KAILUX_PROFILE_GPU_DRAWS(section, count) kailux::profiling::gpu().AddDraws(section, count)
+
+#define KAILUX_PROFILE_GPU_INDIRECT_DRAWS(cmd, countBuffer, section) \
+    kailux::profiling::gpu().AddIndirectDraws(cmd, countBuffer, section)
 
 #define KAILUX_PROFILE_GPU_INIT(context) kailux::profiling::gpu() = kailux::GpuProfiler::create(context)
 #define KAILUX_PROFILE_GPU_SHUTDOWN() kailux::profiling::gpu() = kailux::GpuProfiler{}
@@ -30,6 +34,8 @@
 #define KAILUX_PROFILE_CPU_FRAME()
 #define KAILUX_PROFILE_GPU(cmd, pass)
 #define KAILUX_PROFILE_GPU_FRAME(cmd, frameIndex)
+#define KAILUX_PROFILE_GPU_DRAWS(section, count)
+#define KAILUX_PROFILE_GPU_INDIRECT_DRAWS(cmd, countBuffer, section)
 #define KAILUX_PROFILE_GPU_INIT(context)
 #define KAILUX_PROFILE_GPU_SHUTDOWN()
 
