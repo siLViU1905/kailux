@@ -33,13 +33,15 @@ namespace kailux
     {
         const auto t{Clock::now()};
 
-        const auto document{scene_serializer::read_file(path)};
+        auto document{scene_serializer::read_file(path)};
         if (!document)
         {
             auto error{std::format("Scene '{}' not loaded: {}", path.generic_string(), document.error())};
             mOnErrorLog(error);
             return std::unexpected{std::move(error)};
         }
+
+        scene_serializer::resolve_asset_paths(*document, path);
 
         auto scene{CreateScene(document->meta.name)};
         auto requests{scene_instantiator::apply(*scene, *document, context)};
@@ -76,14 +78,24 @@ namespace kailux
     {
         auto &scene{GetActiveScene()};
         scene.SetSavePath(path);
-        if (const auto result{scene_serializer::save(scene, path)}; !result)
+
+        const auto report{scene_serializer::save(scene, path)};
+        if (!report)
         {
-            auto error{std::format("Scene '{}' not saved: {}", path.generic_string(), result.error())};
+            auto error{std::format("Scene '{}' not saved: {}", path.generic_string(), report.error())};
             mOnErrorLog(error);
             return std::unexpected{std::move(error)};
         }
 
+        for (const auto &warning : report->warnings)
+            mOnErrorLog(std::format("Scene '{}': {}", scene.GetName(), warning));
+
         mOnInfoLog(std::format("Scene '{}' saved to '{}'", scene.GetName(), path.generic_string()));
+
+        if (report->packedAssets > 0)
+            mOnInfoLog(std::format("Copied {} asset(s) to '{}_assets' next to the scene", report->packedAssets,
+                                   path.stem().string()));
+
         return {};
     }
 

@@ -15,7 +15,7 @@ namespace kailux
         uint8_t major{};
         uint8_t minor{};
     };
-    constexpr Version kSceneVersion{4, 1};
+    constexpr Version kSceneVersion{4, 2};
 
     constexpr uint32_t kNoEntity{~0u};
 
