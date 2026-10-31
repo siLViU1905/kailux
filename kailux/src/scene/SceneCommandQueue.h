@@ -13,9 +13,9 @@ namespace kailux
 
     namespace scene_cmd_queue
     {
-        static bool can_delete_entity(const Scene &scene, entt::entity entity);
-        static bool name_exists(const entt::registry &registry, entt::entity self, std::string_view name);
-        static void propagate_rename_to_children(entt::registry &registry, entt::entity entity, std::string_view oldName);
+        bool can_delete_entity(const Scene &scene, entt::entity entity);
+        bool name_exists(const entt::registry &registry, entt::entity self, std::string_view name);
+        void propagate_rename_to_children(entt::registry &registry, entt::entity entity, std::string_view oldName);
 
         struct SceneCommandExecutor
         {

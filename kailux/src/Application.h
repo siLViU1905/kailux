@@ -6,6 +6,7 @@
 #include "Engine.h"
 #include "layers/LayerStack.h"
 #include "scene/SceneManager.h"
+#include "scene/SceneCommandQueue.h"
 #include "utilities/ThreadDispatcher.h"
 #include "window/Window.h"
 
@@ -69,6 +70,10 @@ namespace kailux
         {
             return (self.mSceneManager);
         }
+        decltype(auto) GetSceneCommandQueue(this auto&& self)
+        {
+            return (self.mSceneCommandQueue);
+        }
 
         SceneManager::Result LoadScene(const std::filesystem::path& path);
 
@@ -79,11 +84,12 @@ namespace kailux
         void RenderImGui(Scene& scene);
         void CommitPendingScene();
 
-        Window           mWindow;
-        Engine           mEngine;
-        SceneManager     mSceneManager;
-        Clock            mClock;
-        ThreadDispatcher mThreadDispatcher;
-        LayerStack       mLayerStack;
+        Window            mWindow;
+        Engine            mEngine;
+        SceneManager      mSceneManager;
+        SceneCommandQueue mSceneCommandQueue;
+        Clock             mClock;
+        ThreadDispatcher  mThreadDispatcher;
+        LayerStack        mLayerStack;
     };
 }
