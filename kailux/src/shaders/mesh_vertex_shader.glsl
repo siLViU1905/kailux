@@ -60,13 +60,18 @@ struct MeshData
     uint batchIndex;
     uint __padding;
 };
+
 layout (std430, set = 0, binding = 1) readonly buffer TransformBuffer {
     MeshData data[];
 } meshData;
 
+layout (std430, set = 0, binding = 2) readonly buffer InstanceIdsBuffer {
+    uint instanceIds[];
+};
+
 void main()
 {
-    MeshData mData =  meshData.data[gl_InstanceIndex];
+    MeshData mData =  meshData.data[instanceIds[gl_InstanceIndex]];
     mat4 model = mData.model;
     vec4 worldPos = model * vec4(aPos, 1.0);
     fragPos = worldPos.xyz;

@@ -78,6 +78,11 @@ namespace kailux
                 vk::DescriptorType::eCombinedImageSampler,
                 details::kMaxTextures, // textures array
                 vk::ShaderStageFlagBits::eFragment
+            ),
+            DescriptorLayoutBinding(
+                vk::DescriptorType::eStorageBuffer,
+                1, // instance ids, written by the culler
+                vk::ShaderStageFlagBits::eVertex
             )
         };
         static constexpr std::array kDescriptorPoolSizes = {
@@ -124,6 +129,10 @@ namespace kailux
             DescriptorPoolSize(
                 vk::DescriptorType::eCombinedImageSampler,
                 details::kMaxTextures // textures array
+            ),
+            DescriptorPoolSize(
+                vk::DescriptorType::eStorageBuffer,
+                1 // instance ids
             )
         };
         static_assert(
