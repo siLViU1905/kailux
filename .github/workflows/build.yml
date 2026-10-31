@@ -31,11 +31,14 @@ jobs:
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Use GCC 14
+      - name: Install GCC 15
         if: runner.os == 'Linux'
         run: |
-          echo "CC=gcc-14" >> "$GITHUB_ENV"
-          echo "CXX=g++-14" >> "$GITHUB_ENV"
+          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          sudo apt-get update
+          sudo apt-get install -y gcc-15 g++-15
+          echo "CC=gcc-15" >> "$GITHUB_ENV"
+          echo "CXX=g++-15" >> "$GITHUB_ENV"
 
       - name: Setup CMake and Ninja
         uses: lukka/get-cmake@latest
