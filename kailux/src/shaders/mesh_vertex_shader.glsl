@@ -57,7 +57,8 @@ struct MeshData
 
     uint idx;
     uint lodCount;
-    uint __padding[2];
+    uint batchIndex;
+    uint __padding;
 };
 layout (std430, set = 0, binding = 1) readonly buffer TransformBuffer {
     MeshData data[];

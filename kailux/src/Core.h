@@ -99,6 +99,8 @@ namespace kailux::details
 
     constexpr uint32_t kMaxMeshes{10'000};
     constexpr uint32_t kMaxGeometryLods{5};
+    constexpr uint32_t kMaxBatchCommands{kMaxMeshes * kMaxGeometryLods};
+    constexpr uint32_t kMaxInstanceSlots{kMaxMeshes * kMaxGeometryLods};
     constexpr uint32_t kMinLodIndices{1500};
     constexpr uint32_t kMaxTextures{4'096};
     constexpr uint32_t kMaxMaterials{256};
