@@ -30,7 +30,7 @@ namespace kailux
                                                        mPickerDescriptorSet(std::move(other.mPickerDescriptorSet)),
                                                        mOutlineDescriptorSet(std::move(other.mOutlineDescriptorSet)),
                                                        mCullerDescriptorSet(std::move(other.mCullerDescriptorSet)),
-                                                       mShadowDescriptorSet(std::move(other.mShadowDescriptorSet)),
+                                                       mCompactorDescriptorSet(std::move(other.mCompactorDescriptorSet)),                                                       mShadowDescriptorSet(std::move(other.mShadowDescriptorSet)),
                                                        mCameraBuffer(std::move(other.mCameraBuffer)),
                                                        mMeshDataBuffer(std::move(other.mMeshDataBuffer)),
                                                        mMaterialsBuffer(std::move(other.mMaterialsBuffer)),
@@ -40,6 +40,8 @@ namespace kailux
                                                        mCullerInputCommandsBuffer(
                                                            std::move(other.mCullerInputCommandsBuffer)),
                                                        mCullerCountBuffer(std::move(other.mCullerCountBuffer)),
+                                                       mBatchCommandsBuffer(std::move(other.mBatchCommandsBuffer)),
+                                                       mInstanceIdsBuffer(std::move(other.mInstanceIdsBuffer)),
                                                        mDirectionalShadowCommandsBuffer(
                                                            std::move(other.mDirectionalShadowCommandsBuffer)),
                                                        mPointShadowCommandsBuffer(
@@ -63,6 +65,7 @@ namespace kailux
             mPickerDescriptorSet = std::move(other.mPickerDescriptorSet);
             mOutlineDescriptorSet = std::move(other.mOutlineDescriptorSet);
             mCullerDescriptorSet = std::move(other.mCullerDescriptorSet);
+            mCompactorDescriptorSet = std::move(other.mCompactorDescriptorSet);
             mShadowDescriptorSet = std::move(other.mShadowDescriptorSet);
             mCameraBuffer = std::move(other.mCameraBuffer);
             mMeshDataBuffer = std::move(other.mMeshDataBuffer);
@@ -72,6 +75,8 @@ namespace kailux
             mPickerBuffer = std::move(other.mPickerBuffer);
             mCullerInputCommandsBuffer = std::move(other.mCullerInputCommandsBuffer);
             mCullerCountBuffer = std::move(other.mCullerCountBuffer);
+            mBatchCommandsBuffer = std::move(other.mBatchCommandsBuffer);
+            mInstanceIdsBuffer = std::move(other.mInstanceIdsBuffer);
             mDirectionalShadowCommandsBuffer = std::move(other.mDirectionalShadowCommandsBuffer);
             mPointShadowCommandsBuffer = std::move(other.mPointShadowCommandsBuffer);
             mMeshUploadState = std::move(other.mMeshUploadState);
@@ -89,6 +94,7 @@ namespace kailux
         const ComputePicker &picker,
         const OutlinePass &outlinePass,
         const ComputeCuller &culler,
+        const ComputeCompactor& compactor,
         const ShadowPass& shadowPass,
         const ShadowMap& directionalShadowMap,
         const ShadowMap& pointShadowMap,
@@ -126,6 +132,9 @@ namespace kailux
         const auto cullerDescInfo{frame.MakeCullerDescriptorSetInfo()};
         frame.CreateCullerDescriptorSet(context, culler.GetDescriptorLayout(), culler.GetDescriptorPool(),
                                         cullerDescInfo);
+        const auto compactorDescInfo{frame.MakeCompactorDescriptorSetInfo()};
+        frame.CreateCompactorDescriptorSet(context, compactor.GetDescriptorLayout(), compactor.GetDescriptorPool(),
+                                           compactorDescInfo);
         const auto shadowDescInfo{frame.MakeShadowDescriptorSetInfo()};
         frame.CreateShadowDescriptorSet(context, shadowPass.GetDescriptorLayout(), shadowPass.GetDescriptorPool(),
                                         shadowDescInfo);
@@ -224,6 +233,11 @@ namespace kailux
         return mCullerDescriptorSet;
     }
 
+    const DescriptorSet & FrameData::GetCompactorDescriptorSet() const
+    {
+        return mCompactorDescriptorSet;
+    }
+
     const DescriptorSet & FrameData::GetShadowDescriptorSet() const
     {
         return mShadowDescriptorSet;
@@ -267,6 +281,16 @@ namespace kailux
     const Buffer &FrameData::GetCullerInputCommandsBuffer() const
     {
         return mCullerInputCommandsBuffer;
+    }
+
+    const Buffer & FrameData::GetBatchCommandsBuffer() const
+    {
+        return mBatchCommandsBuffer;
+    }
+
+    const Buffer & FrameData::GetInstanceIdsBuffer() const
+    {
+        return mInstanceIdsBuffer;
     }
 
     const Buffer &FrameData::GetCullerCountBuffer() const
@@ -321,11 +345,11 @@ namespace kailux
                 {},
                 mMaterialsBuffer.GetSize()
             ),
-            vk::BufferMemoryBarrier2( // culler input
+            vk::BufferMemoryBarrier2( // culler input (batch command templates, copied at the start of culling)
                 vk::PipelineStageFlagBits2::eHost,
                 vk::AccessFlagBits2::eHostWrite,
-                vk::PipelineStageFlagBits2::eComputeShader | vk::PipelineStageFlagBits2::eDrawIndirect,
-                vk::AccessFlagBits2::eShaderStorageRead | vk::AccessFlagBits2::eIndirectCommandRead,
+                vk::PipelineStageFlagBits2::eTransfer,
+                vk::AccessFlagBits2::eTransferRead,
                 vk::QueueFamilyIgnored,
                 vk::QueueFamilyIgnored,
                 mCullerInputCommandsBuffer.GetBuffer(),
@@ -412,35 +436,90 @@ namespace kailux
         };
     }
 
-    vk::BufferMemoryBarrier2 FrameData::GetCullerCountBufferFillMemoryBarrier() const
+    std::array<vk::BufferMemoryBarrier2, FrameData::kCullerFillMemoryBarriersCount> FrameData::
+    GetCullerFillMemoryBarriers() const
     {
         return {
-            vk::PipelineStageFlagBits2::eTransfer,
-            vk::AccessFlagBits2::eTransferWrite,
-            vk::PipelineStageFlagBits2::eComputeShader,
-            vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite,
-            vk::QueueFamilyIgnored,
-            vk::QueueFamilyIgnored,
-            mCullerCountBuffer.GetBuffer(),
-            {},
-            mCullerCountBuffer.GetSize()
+            vk::BufferMemoryBarrier2( // culler count, cleared -> compactor atomics
+                vk::PipelineStageFlagBits2::eTransfer,
+                vk::AccessFlagBits2::eTransferWrite,
+                vk::PipelineStageFlagBits2::eComputeShader,
+                vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite,
+                vk::QueueFamilyIgnored,
+                vk::QueueFamilyIgnored,
+                mCullerCountBuffer.GetBuffer(),
+                {},
+                mCullerCountBuffer.GetSize()
+            ),
+            vk::BufferMemoryBarrier2( // batch commands, copied from the templates -> culler atomics
+                vk::PipelineStageFlagBits2::eTransfer,
+                vk::AccessFlagBits2::eTransferWrite,
+                vk::PipelineStageFlagBits2::eComputeShader,
+                vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite,
+                vk::QueueFamilyIgnored,
+                vk::QueueFamilyIgnored,
+                mBatchCommandsBuffer.GetBuffer(),
+                {},
+                mBatchCommandsBuffer.GetSize()
+            )
+        };
+    }
+
+    std::array<vk::BufferMemoryBarrier2, FrameData::kCullerOutputMemoryBarriersCount> FrameData::
+    GetCullerOutputMemoryBarriers() const
+    {
+        return {
+            vk::BufferMemoryBarrier2( // batch commands -> compactor
+                vk::PipelineStageFlagBits2::eComputeShader,
+                vk::AccessFlagBits2::eShaderWrite,
+                vk::PipelineStageFlagBits2::eComputeShader,
+                vk::AccessFlagBits2::eShaderRead,
+                vk::QueueFamilyIgnored,
+                vk::QueueFamilyIgnored,
+                mBatchCommandsBuffer.GetBuffer(),
+                {},
+                mBatchCommandsBuffer.GetSize()
+            ),
+            vk::BufferMemoryBarrier2( // instance ids -> main pass vertex shader
+                vk::PipelineStageFlagBits2::eComputeShader,
+                vk::AccessFlagBits2::eShaderWrite,
+                vk::PipelineStageFlagBits2::eVertexShader,
+                vk::AccessFlagBits2::eShaderStorageRead,
+                vk::QueueFamilyIgnored,
+                vk::QueueFamilyIgnored,
+                mInstanceIdsBuffer.GetBuffer(),
+                {},
+                mInstanceIdsBuffer.GetSize()
+            )
         };
     }
 
     std::array<vk::BufferMemoryBarrier2, FrameData::kIndirectReadToWriteMemoryBarriersCount> FrameData::GetIndirectReadToWriteBarriers() const
     {
         return {
-            vk::BufferMemoryBarrier2{ // indirect buffer
+            vk::BufferMemoryBarrier2{ // indirect buffer, rewritten by the compactor
                 vk::PipelineStageFlagBits2::eDrawIndirect, vk::AccessFlagBits2::eIndirectCommandRead,
-                vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eTransferWrite,
+                vk::PipelineStageFlagBits2::eComputeShader, vk::AccessFlagBits2::eShaderWrite,
                 vk::QueueFamilyIgnored, vk::QueueFamilyIgnored,
                 mIndirectBuffer.GetBuffer(), 0, vk::WholeSize
             },
-            vk::BufferMemoryBarrier2{  // culler count
+            vk::BufferMemoryBarrier2{  // culler count, cleared with a fill
                 vk::PipelineStageFlagBits2::eDrawIndirect, vk::AccessFlagBits2::eIndirectCommandRead,
                 vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eTransferWrite,
                 vk::QueueFamilyIgnored, vk::QueueFamilyIgnored,
                 mCullerCountBuffer.GetBuffer(), 0, vk::WholeSize
+            },
+            vk::BufferMemoryBarrier2{  // batch commands, read by the compactor, overwritten by the template copy
+                vk::PipelineStageFlagBits2::eComputeShader, vk::AccessFlagBits2::eShaderRead,
+                vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eTransferWrite,
+                vk::QueueFamilyIgnored, vk::QueueFamilyIgnored,
+                mBatchCommandsBuffer.GetBuffer(), 0, vk::WholeSize
+            },
+            vk::BufferMemoryBarrier2{  // instance ids, read by the main pass, rewritten by the culler
+                vk::PipelineStageFlagBits2::eVertexShader, vk::AccessFlagBits2::eShaderStorageRead,
+                vk::PipelineStageFlagBits2::eComputeShader, vk::AccessFlagBits2::eShaderWrite,
+                vk::QueueFamilyIgnored, vk::QueueFamilyIgnored,
+                mInstanceIdsBuffer.GetBuffer(), 0, vk::WholeSize
             }
         };
     }
@@ -526,8 +605,14 @@ namespace kailux
         mCullerDescriptorSet = DescriptorSet::create(context, descriptorLayout, descriptorPool, infos);
     }
 
-    void FrameData::CreateShadowDescriptorSet(const Context &context, const DescriptorLayout &descriptorLayout,
+    void FrameData::CreateCompactorDescriptorSet(const Context &context, const DescriptorLayout &descriptorLayout,
         const DescriptorPool &descriptorPool, std::span<const DescriptorSetInfo> infos)
+    {
+        mCompactorDescriptorSet = DescriptorSet::create(context, descriptorLayout, descriptorPool, infos);
+    }
+
+    void FrameData::CreateShadowDescriptorSet(const Context &context, const DescriptorLayout &descriptorLayout,
+                                              const DescriptorPool &descriptorPool, std::span<const DescriptorSetInfo> infos)
     {
         mShadowDescriptorSet = DescriptorSet::create(context, descriptorLayout, descriptorPool, infos);
     }
@@ -568,15 +653,23 @@ namespace kailux
     {
         mCullerInputCommandsBuffer = buffer_allocator::alloc_host(
             context,
-            details::kMaxMeshes * details::kMaxGeometryLods * sizeof(vk::DrawIndexedIndirectCommand),
-            vk::BufferUsageFlagBits::eStorageBuffer |
-            vk::BufferUsageFlagBits::eIndirectBuffer);
+            details::kMaxBatchCommands * sizeof(vk::DrawIndexedIndirectCommand),
+            vk::BufferUsageFlagBits::eTransferSrc);
         mCullerCountBuffer = buffer_allocator::alloc_local(
             context,
             sizeof(uint32_t),
             vk::BufferUsageFlagBits::eStorageBuffer |
             vk::BufferUsageFlagBits::eIndirectBuffer |
             vk::BufferUsageFlagBits::eTransferSrc);
+        mBatchCommandsBuffer = buffer_allocator::alloc_local(
+            context,
+            details::kMaxBatchCommands * sizeof(vk::DrawIndexedIndirectCommand),
+            vk::BufferUsageFlagBits::eStorageBuffer |
+            vk::BufferUsageFlagBits::eTransferDst);
+        mInstanceIdsBuffer = buffer_allocator::alloc_local(
+            context,
+            details::kMaxInstanceSlots * sizeof(uint32_t),
+            vk::BufferUsageFlagBits::eStorageBuffer);
     }
 
     void FrameData::CreateDirectionalShadowBuffer(const Context &context)
@@ -690,6 +783,12 @@ namespace kailux
                 textureRegistry.GetTexture(textureRegistry.GetDefaultTextureHandle(TextureType::Albedo)).GetImageView(),
                 vk::ImageLayout::eShaderReadOnlyOptimal,
                 details::kMaxTextures
+            ),
+            DescriptorSetBufferInfo(
+                mInstanceIdsBuffer.GetBuffer(),
+                mInstanceIdsBuffer.GetSize(),
+                1,
+                vk::DescriptorType::eStorageBuffer
             )
         };
     }
@@ -770,8 +869,27 @@ namespace kailux
                 vk::DescriptorType::eStorageBuffer
             ),
             DescriptorSetBufferInfo(
-                mCullerInputCommandsBuffer.GetBuffer(),
-                mCullerInputCommandsBuffer.GetSize(),
+                mBatchCommandsBuffer.GetBuffer(),
+                mBatchCommandsBuffer.GetSize(),
+                1,
+                vk::DescriptorType::eStorageBuffer
+            ),
+            DescriptorSetBufferInfo(
+                mInstanceIdsBuffer.GetBuffer(),
+                mInstanceIdsBuffer.GetSize(),
+                1,
+                vk::DescriptorType::eStorageBuffer
+            )
+        };
+    }
+
+    std::array<DescriptorSetInfo, FrameData::kCompactorDescriptorSetInfoCount> FrameData::
+    MakeCompactorDescriptorSetInfo() const
+    {
+        return {
+            DescriptorSetBufferInfo(
+                mBatchCommandsBuffer.GetBuffer(),
+                mBatchCommandsBuffer.GetSize(),
                 1,
                 vk::DescriptorType::eStorageBuffer
             ),
