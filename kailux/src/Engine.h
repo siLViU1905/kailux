@@ -178,6 +178,7 @@ namespace kailux
 
         void CreateComputePicker();
         void CreateComputeCuller();
+        void CreateComputeCompactor();
 
         void CreateDirectionalShadowMap();
         void CreatePointShadowMap();
@@ -212,7 +213,7 @@ namespace kailux
         void UpdateFrameBuffers(const Scene &scene, FrameData& frame, const RenderTarget &sceneView, const CommandRecorder& recorder);
         void UpdateCameraBuffer(const Scene &scene, FrameData& frame, const RenderTarget &sceneView) const;
         void UpdateMeshBuffers(const Scene &scene, FrameData& frame) const;
-        void UpdateObjectCommands(FrameData& frame, uint32_t objectIndex, MeshHandle mesh) const;
+
         void UpdateMaterialBuffer(FrameData& frame) const;
 
         void UpdateSceneBuffer(const Scene &scene, FrameData& frame) const;
@@ -314,6 +315,7 @@ namespace kailux
         ComputePicker                              mComputePicker;
         uint32_t                                   mPickedEntity;
         ComputeCuller                              mComputeCuller;
+        ComputeCompactor                           mComputeCompactor;
         ShadowPass                                 mShadowPass;
 
         ShadowMap                                  mDirectionalShadowMap;

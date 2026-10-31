@@ -86,6 +86,7 @@ namespace kailux
                                               mComputePicker(std::move(other.mComputePicker)),
                                               mPickedEntity(other.mPickedEntity),
                                               mComputeCuller(std::move(other.mComputeCuller)),
+                                              mComputeCompactor(std::move(other.mComputeCompactor)),
                                               mShadowPass(std::move(other.mShadowPass)),
                                               mDirectionalShadowMap(std::move(other.mDirectionalShadowMap)),
                                               mPointShadowMap(std::move(other.mPointShadowMap)),
@@ -147,6 +148,7 @@ namespace kailux
             mComputePicker = std::move(other.mComputePicker);
             mPickedEntity = other.mPickedEntity;
             mComputeCuller = std::move(other.mComputeCuller);
+            mComputeCompactor = std::move(other.mComputeCompactor);
             mShadowPass = std::move(other.mShadowPass);
             mDirectionalShadowMap = std::move(other.mDirectionalShadowMap);
             mPointShadowMap = std::move(other.mPointShadowMap);
@@ -204,6 +206,7 @@ namespace kailux
         engine.CreateGizmoRegistry();
         engine.CreateComputePicker();
         engine.CreateComputeCuller();
+        engine.CreateComputeCompactor();
         engine.CreateDirectionalShadowMap();
         engine.CreatePointShadowMap();
 
@@ -488,6 +491,7 @@ namespace kailux
                 mComputePicker,
                 mOutlinePass,
                 mComputeCuller,
+                mComputeCompactor,
                 mShadowPass,
                 mDirectionalShadowMap,
                 mPointShadowMap,
@@ -667,6 +671,11 @@ namespace kailux
     void Engine::CreateComputeCuller()
     {
         mComputeCuller = ComputeCuller::create(mContext, details::kFramesInFlight);
+    }
+
+    void Engine::CreateComputeCompactor()
+    {
+        mComputeCompactor = ComputeCompactor::create(mContext, details::kFramesInFlight);
     }
 
     void Engine::CreateDirectionalShadowMap()
@@ -1182,17 +1191,26 @@ namespace kailux
         );
         const auto cmd = recorder.GetCommandBuffer();
 
-        recorder.GetCommandBuffer().fillBuffer(
+        const auto& uploadState{frame.GetMeshUploadState()};
+        const auto totalObjects{uploadState.objectCount};
+        const auto commandCount{uploadState.batches.GetCommandCount()};
+
+        cmd.fillBuffer(
             frame.GetCullerCountBuffer().GetBuffer(),
             0,
             frame.GetCullerCountBuffer().GetSize(),
             0
         );
 
-        std::array countBufferBarrier = {frame.GetCullerCountBufferFillMemoryBarrier()};
-        recorder.BufferMemoryBarriers(countBufferBarrier);
+        if (commandCount > 0)
+            cmd.copyBuffer(
+                frame.GetCullerInputCommandsBuffer().GetBuffer(),
+                frame.GetBatchCommandsBuffer().GetBuffer(),
+                vk::BufferCopy{0, 0, commandCount * sizeof(vk::DrawIndexedIndirectCommand)}
+                );
 
-        const auto totalObjects{scene.GetEntityCount<MeshComponent>(entt::exclude<PendingUploadComponent>)};
+        recorder.BufferMemoryBarriers(frame.GetCullerFillMemoryBarriers());
+
         if (totalObjects == 0)
             return;
 
@@ -1231,7 +1249,15 @@ namespace kailux
         uint32_t groupX = (totalObjects + 255) / 256;
         mComputeCuller.Execute(cmd, {groupX, 1, 1});
 
-        recorder.BufferMemoryBarriers(frame.GetCullerBufferMemoryBarriers());
+        recorder.BufferMemoryBarriers(frame.GetCullerOutputMemoryBarriers());
+
+        mComputeCompactor.Bind(cmd);
+        frame.GetCompactorDescriptorSet().Bind(mComputeCompactor.GetPipeline(), cmd);
+        mComputeCompactor.Push<compute_pass_push_constants::CompactParams>(cmd, {commandCount});
+        mComputeCompactor.Execute(
+            cmd,
+            {(commandCount + ComputeCompactor::kWorkgroupSize - 1) / ComputeCompactor::kWorkgroupSize, 1, 1}
+        );
 
         KAILUX_PROFILE_GPU_INDIRECT_DRAWS(
             cmd,
@@ -2235,11 +2261,8 @@ namespace kailux
         const auto meshData{frame.GetModelBuffer().Mapped<MeshData>()};
         auto& uploadState{frame.GetMeshUploadState()};
 
-        if (uploadState.meshGeneration != mMeshRegistry.GetGeneration())
-        {
-            uploadState.commandMeshes.clear();
-            uploadState.meshGeneration = mMeshRegistry.GetGeneration();
-        }
+        auto& batches{uploadState.batches};
+        batches.Begin();
 
         ShadowCuller shadowCuller{
             frame,
@@ -2282,10 +2305,9 @@ namespace kailux
                 errors,
                 material,
                 static_cast<uint32_t>(entity),
-                lodInfo.count
+                lodInfo.count,
+                batches.Add(mesh.handle)
             };
-
-            UpdateObjectCommands(frame, objectIndex, mesh.handle);
 
             if (!shadowCuller.Empty())
                 shadowCuller.Submit(
@@ -2295,37 +2317,13 @@ namespace kailux
                     lodInfo.count
                 );
 
-
             ++objectIndex;
         }
-        uploadState.commandMeshes.resize(objectIndex);
-    }
-
-    void Engine::UpdateObjectCommands(FrameData &frame, uint32_t objectIndex, MeshHandle mesh) const
-    {
-        auto &uploadState{frame.GetMeshUploadState()};
-
-        const bool known{objectIndex < uploadState.commandMeshes.size()};
-        if (known && uploadState.commandMeshes[objectIndex] == mesh.index)
-            return;
-
-        const auto commands{frame.GetCullerInputCommandsBuffer().Mapped<vk::DrawIndexedIndirectCommand>()};
-        for (uint32_t lod{}; lod < details::kMaxGeometryLods; ++lod)
-        {
-            const auto meshView{mMeshRegistry.View(mesh, lod)};
-            commands[objectIndex * details::kMaxGeometryLods + lod] = vk::DrawIndexedIndirectCommand{
-                meshView.indexCount,
-                1,
-                meshView.firstIndex,
-                meshView.vertexOffset,
-                objectIndex
-            };
-        }
-
-        if (known)
-            uploadState.commandMeshes[objectIndex] = mesh.index;
-        else
-            uploadState.commandMeshes.push_back(mesh.index);
+        if (batches.End(mMeshRegistry.GetGeneration()))
+            batches.WriteCommands(
+                frame.GetCullerInputCommandsBuffer().Mapped<vk::DrawIndexedIndirectCommand>(),
+                mMeshRegistry
+            );
     }
 
     void Engine::UpdateMaterialBuffer(FrameData &frame) const
