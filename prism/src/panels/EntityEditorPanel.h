@@ -23,14 +23,17 @@ namespace kailux
 
         void SetSimulationState(bool running);
 
-        using OnBodyTypeChange = std::move_only_function<void(PhysicsComponent, PhysicsBodyType)>;
-        void SetOnBodyTypeChange(OnBodyTypeChange&& callback);
+        using OnTransformChange = std::move_only_function<void(entt::entity, const Transform&, bool syncBodyScale)>;
+        void  SetOnTransformChange(OnTransformChange&& callback);
 
-        using OnBodyScaleChange = std::move_only_function<void(PhysicsComponent, const glm::vec3&)>;
-        void SetOnBodyScaleChange(OnBodyScaleChange&& callback);
+        using OnBodyTypeChange = std::move_only_function<void(entt::entity, PhysicsBodyType)>;
+        void  SetOnBodyTypeChange(OnBodyTypeChange&& callback);
 
-        using OnBodyMassChange = std::move_only_function<void(PhysicsComponent, float)>;
-        void SetOnBodyMassChange(OnBodyMassChange&& callback);
+        using OnBodyMassChange = std::move_only_function<void(entt::entity, float mass, bool commit)>;
+        void  SetOnBodyMassChange(OnBodyMassChange&& callback);
+
+        using OnRemoveAudioSource = std::move_only_function<void(entt::entity)>;
+        void  SetOnRemoveAudioSource(OnRemoveAudioSource&& callback);
 
     private:
         static constexpr std::array<std::string_view, 3> kOperations{"Move", "Rotate", "Scale"};
@@ -41,13 +44,13 @@ namespace kailux
 
         void RenderGizmo(Scene& scene);
         void RenderHeader(const entt::registry &registry) const;
-        void RenderMeshProperties(entt::registry &registry);
+        void RenderMeshProperties(const entt::registry &registry);
         void RenderBodyProperties(entt::registry &registry);
         void RenderMaterialProperties(Scene &scene) const;
         void RenderDirectionalLightProperties(entt::registry &registry) const;
         void RenderPointLightProperties(entt::registry &registry) const;
         void RenderCameraProperties(Scene &scene) const;
-        void RenderAudioSourceProperties(Scene &scene) const;
+        void RenderAudioSourceProperties(Scene &scene);
 
         static void propagate_material_to_children(Scene &scene, entt::entity entity, const MeshMaterialData& material);
 
@@ -64,8 +67,9 @@ namespace kailux
         bool                mGizmoWasDragging;
         bool                mSimulationRunning;
 
-        OnBodyTypeChange  mOnBodyTypeChange;
-        OnBodyScaleChange mOnBodyScaleChange;
-        OnBodyMassChange  mOnBodyMassChange;
+        OnTransformChange   mOnTransformChange;
+        OnBodyTypeChange    mOnBodyTypeChange;
+        OnBodyMassChange    mOnBodyMassChange;
+        OnRemoveAudioSource mOnRemoveAudioSource;
     };
 }

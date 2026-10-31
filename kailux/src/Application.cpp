@@ -47,6 +47,8 @@ namespace kailux
             while (auto event = mWindow.GetEvent())
                 DispatchEvent(scene, *event);
 
+            mSceneCommandQueue.Flush(*this, scene);
+
             const auto deltaTime{mClock.GetDeltaTime<float, TimeType::Seconds>()};
 
             for (auto& layer : mLayerStack)
@@ -106,5 +108,6 @@ namespace kailux
         mEngine.DetachScene(mSceneManager.GetActiveScene());
         const auto meshRequests{mSceneManager.CommitPending()};
         mEngine.AttachScene(mSceneManager.GetActiveScene(), *meshRequests);
+        mSceneCommandQueue.Clear();
     }
 }

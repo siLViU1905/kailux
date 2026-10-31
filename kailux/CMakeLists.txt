@@ -58,6 +58,7 @@ add_library(kailux STATIC
         src/scene/SceneSerializer.cpp
         src/scene/SceneInstantiator.cpp
         src/scene/AssetPaths.cpp
+        src/scene/SceneCommandQueue.cpp
         src/SimulationView.cpp
         src/window/InputSource.cpp
         src/pipeline/GraphicsPipeline.cpp

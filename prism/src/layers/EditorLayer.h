@@ -57,11 +57,11 @@ namespace kailux
             return (self.mApplication.GetSceneManager().GetActiveScene());
         }
 
-        Application&      mApplication;
-        Window&           mWindow;
-        Engine&           mEngine;
-        SceneManager&     mSceneManager;
-        ThreadDispatcher& mThreadDispatcher;
+        Application&       mApplication;
+        Window&            mWindow;
+        Engine&            mEngine;
+        SceneManager&      mSceneManager;
+        SceneCommandQueue& mSceneCommands;
 
         PanelStack        mPanels;
         bool              mSimulationWasRunning{};

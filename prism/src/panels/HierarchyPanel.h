@@ -16,8 +16,11 @@ namespace kailux
         using OnEntitySelected = std::move_only_function<void(entt::entity, const Scene&)>;
         void  SetOnEntitySelected(OnEntitySelected&& callback);
 
-        using OnMeshDeleted = std::move_only_function<void(entt::entity)>;
-        void  SetOnMeshDeleted(OnMeshDeleted&& callback);
+        using OnDeleteEntity = std::move_only_function<void(entt::entity)>;
+        void  SetOnDeleteEntity(OnDeleteEntity&& callback);
+
+        using OnRenameEntity = std::move_only_function<void(entt::entity, std::string_view)>;
+        void  SetOnRenameEntity(OnRenameEntity&& callback);
 
         using OnDragDrop = std::move_only_function<void(const std::filesystem::path&)>;
         void  SetOnDragDrop(OnDragDrop&& callback);
@@ -60,19 +63,15 @@ namespace kailux
         static bool can_attach_physics(const entt::registry &registry, entt::entity entity);
         static bool can_attach_audio(const Scene& scene, entt::entity entity);
 
-        void                       OnEntityDelete(Scene &scene, entt::entity entity);
-        std::optional<std::string> OnEntityRename(entt::registry &registry, entt::entity entity);
-
-        static void propagate_rename_to_children(entt::registry &registry, entt::entity entity, std::string_view oldName);
-
-        void        NotifyAndDestroyHierarchy(entt::registry& registry, entt::entity entity);
-        static void destroy_subtree(entt::registry& registry, entt::entity entity);
+        void ValidateSelection(const Scene &scene);
+        void RenderRenamePopup(const entt::registry &registry, entt::entity entity);
 
         void RenderEntityNode(Scene& scene, entt::entity entity);
         void RenderAddPhysicsPopup(const Scene &scene);
 
         OnEntitySelected mOnEntitySelected;
-        OnMeshDeleted  mOnEntityDeleted;
+        OnDeleteEntity   mOnDeleteEntity;
+        OnRenameEntity   mOnRenameEntity;
         OnDragDrop       mOnDragDrop;
         OnNewMesh        mOnNewMesh;
         OnNewLight       mOnNewLight;
