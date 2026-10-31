@@ -123,19 +123,24 @@ namespace kailux
         mSimulationRunning = running;
     }
 
+    void EntityEditorPanel::SetOnTransformChange(OnTransformChange &&callback)
+    {
+        mOnTransformChange = std::move(callback);
+    }
+
     void EntityEditorPanel::SetOnBodyTypeChange(OnBodyTypeChange &&callback)
     {
         mOnBodyTypeChange = std::move(callback);
     }
 
-    void EntityEditorPanel::SetOnBodyScaleChange(OnBodyScaleChange &&callback)
-    {
-        mOnBodyScaleChange = std::move(callback);
-    }
-
     void EntityEditorPanel::SetOnBodyMassChange(OnBodyMassChange &&callback)
     {
         mOnBodyMassChange = std::move(callback);
+    }
+
+    void EntityEditorPanel::SetOnRemoveAudioSource(OnRemoveAudioSource &&callback)
+    {
+        mOnRemoveAudioSource = std::move(callback);
     }
 
     void EntityEditorPanel::RenderGizmo(Scene &scene)
@@ -168,10 +173,7 @@ namespace kailux
         if (mGizmoWasDragging && !isDragging)
             if (operation == ImGuizmo::SCALE &&
                 registry.all_of<PhysicsComponent>(mSelectedEntity))
-                mOnBodyScaleChange(
-                    registry.get<PhysicsComponent>(mSelectedEntity),
-                    registry.get<LocalTransform>(mSelectedEntity).scale
-                    );
+                mOnTransformChange(mSelectedEntity, registry.get<LocalTransform>(mSelectedEntity), true);
 
         mGizmoWasDragging = isDragging;
 
@@ -179,15 +181,14 @@ namespace kailux
         if (isDragging)
         {
             scene.SetWorldTransform(mSelectedEntity, modelMatrix);
-            auto local = registry.get<LocalTransform>(mSelectedEntity);
-            if (mUniformScale && operation == ImGuizmo::SCALE)
+            auto local{Transform::from_matrix(glm::inverse(scene.GetParentWorldMatrix(mSelectedEntity)) * modelMatrix)};            if (mUniformScale && operation == ImGuizmo::SCALE)
             {
                 const float avgScale = (local.scale.x + local.scale.y + local.scale.z) / 3.f;
                 local.scale = glm::vec3(avgScale);
-                scene.SetLocalTransform(mSelectedEntity, local);
             }
 
             mRotationDegrees = glm::degrees(glm::eulerAngles(local.rotation));
+            mOnTransformChange(mSelectedEntity, local, false);
         }
     }
 
@@ -208,14 +209,15 @@ namespace kailux
         ImGui::Dummy(ImVec2(0.f, 4.f));
     }
 
-    void EntityEditorPanel::RenderMeshProperties(entt::registry &registry)
+    void EntityEditorPanel::RenderMeshProperties(const entt::registry &registry)
     {
         if (registry.all_of<MeshComponent>(mSelectedEntity))
             widgets::segmented("##gizmo_op", mCurrentGizmoOperation, kOperations, kOperationValues);
         
         widgets::segmented("##gizmo_mode", mCurrentGizmoMode, kOperationModeLabels, kOperationModes);
 
-        auto &transform = registry.get<LocalTransform>(mSelectedEntity);
+        Transform transform{registry.get<LocalTransform>(mSelectedEntity)};
+        bool      changed{};
         if (!widgets::section("Transform"))
             return;
 
@@ -223,11 +225,14 @@ namespace kailux
             return;
 
          widgets::property("Position");
-         widgets::vec3_control("pos", transform.position);
+        changed |= widgets::vec3_control("pos", transform.position);
 
          widgets::property("Rotation");
         if (widgets::vec3_control("rot", mRotationDegrees, 5.f, 0.f, nullptr, "%.1f"))
+        {
             transform.rotation = glm::quat(glm::radians(mRotationDegrees));
+            changed = true;
+        }
 
          widgets::property("Scale");
         {
@@ -236,14 +241,17 @@ namespace kailux
 
             const auto oldScale = transform.scale;
             bool editDone{};
-            if (widgets::vec3_control("scale", transform.scale, 0.02f, 1.f, &editDone, "%.3f", fieldsWidth) &&
-                mUniformScale)
+            if (widgets::vec3_control("scale", transform.scale, 0.02f, 1.f, &editDone, "%.3f", fieldsWidth))
             {
-                float newValue = oldScale.x;
-                if (transform.scale.x != oldScale.x)      newValue = transform.scale.x;
-                else if (transform.scale.y != oldScale.y) newValue = transform.scale.y;
-                else if (transform.scale.z != oldScale.z) newValue = transform.scale.z;
-                transform.scale = glm::vec3(newValue);
+                changed = true;
+                if (mUniformScale)
+                {
+                    float newValue = oldScale.x;
+                    if (transform.scale.x != oldScale.x)      newValue = transform.scale.x;
+                    else if (transform.scale.y != oldScale.y) newValue = transform.scale.y;
+                    else if (transform.scale.z != oldScale.z) newValue = transform.scale.z;
+                    transform.scale = glm::vec3(newValue);
+                }
             }
 
             ImGui::SameLine(0.f, 6.f);
@@ -251,8 +259,9 @@ namespace kailux
             if (ImGui::IsItemHovered())
                 ImGui::SetTooltip("Uniform scale");
 
-            if (editDone && registry.all_of<PhysicsComponent>(mSelectedEntity))
-                mOnBodyScaleChange(registry.get<PhysicsComponent>(mSelectedEntity), transform.scale);
+            const bool syncBodyScale{editDone && registry.all_of<PhysicsComponent>(mSelectedEntity)};
+            if (changed || syncBodyScale)
+                mOnTransformChange(mSelectedEntity, transform, syncBodyScale);
         }
 
          widgets::end_properties();
@@ -263,7 +272,7 @@ namespace kailux
         if (!widgets::section("Physics"))
             return;
 
-        auto &physics = registry.get<PhysicsComponent>(mSelectedEntity);
+        const auto &physics = registry.get<PhysicsComponent>(mSelectedEntity);
         auto &control = registry.get<PhysicsControlComponent>(mSelectedEntity);
 
         if (!widgets::begin_properties("##physics"))
@@ -276,10 +285,7 @@ namespace kailux
         ImGui::BeginDisabled(locked);
         int typeIndex = static_cast<int>(physics.type);
         if (ImGui::Combo("##body_type", &typeIndex, HierarchyPanel::s_BodyTypeOptions.data()))
-        {
-            physics.type = static_cast<PhysicsBodyType>(typeIndex);
-            mOnBodyTypeChange(physics, physics.type);
-        }
+            mOnBodyTypeChange(mSelectedEntity, static_cast<PhysicsBodyType>(typeIndex));
         ImGui::EndDisabled();
         if (locked)
             ImGui::SetItemTooltip("Created as a static mesh; re-add physics with \"can become dynamic\" to change type");
@@ -287,10 +293,12 @@ namespace kailux
         widgets::property("Mass");
         ImGui::BeginDisabled(!physics.canBecomeDynamic);
         ImGui::SetNextItemWidth(-std::numeric_limits<float>::min());
-        ImGui::DragFloat("##mass", &physics.mass, 0.5f, 0.f, 1.0e6f,
-                         physics.mass > 0.f ? "%.2f kg" : "auto", ImGuiSliderFlags_AlwaysClamp);
+        float mass{physics.mass};
+        if (ImGui::DragFloat("##mass", &mass, 0.5f, 0.f, 1.0e6f,
+                             mass > 0.f ? "%.2f kg" : "auto", ImGuiSliderFlags_AlwaysClamp))
+            mOnBodyMassChange(mSelectedEntity, mass, false);
         if (ImGui::IsItemDeactivatedAfterEdit())
-            mOnBodyMassChange(physics, physics.mass);
+            mOnBodyMassChange(mSelectedEntity, mass, true);
         ImGui::EndDisabled();
         ImGui::SetItemTooltip("0 = auto, computed from volume (1000 kg/m^3)");
 
@@ -430,7 +438,7 @@ namespace kailux
          widgets::end_properties();
     }
 
-    void EntityEditorPanel::RenderAudioSourceProperties(Scene &scene) const
+    void EntityEditorPanel::RenderAudioSourceProperties(Scene &scene)
     {
         if (!widgets::section("Audio source"))
             return;
@@ -487,7 +495,7 @@ namespace kailux
         const bool remove{ImGui::Button("Remove audio source", ImVec2(-FLT_MIN, 0.f))};
          widgets::end_properties();
         if (remove)
-            scene.DetachAudioSource(mSelectedEntity);
+            mOnRemoveAudioSource(mSelectedEntity);
     }
 
     void EntityEditorPanel::propagate_material_to_children(Scene &scene, entt::entity entity,

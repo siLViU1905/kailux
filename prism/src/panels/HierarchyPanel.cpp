@@ -27,6 +27,8 @@ namespace kailux
 
     void HierarchyPanel::Render(Scene &scene)
     {
+        ValidateSelection(scene);
+
         if (mSelectedEntity != mLastSelectedEntity)
         {
             mLastSelectedEntity = mSelectedEntity;
@@ -122,7 +124,7 @@ namespace kailux
         ImGui::PopStyleColor();
 
         if (can_delete_entity(scene, mPendingDeleteEntity))
-            OnEntityDelete(scene, mPendingDeleteEntity);
+            mOnDeleteEntity(mPendingDeleteEntity);
         mPendingDeleteEntity = entt::null;
     }
 
@@ -131,9 +133,14 @@ namespace kailux
         mOnEntitySelected = std::move(callback);
     }
 
-    void HierarchyPanel::SetOnMeshDeleted(OnMeshDeleted &&callback)
+    void HierarchyPanel::SetOnDeleteEntity(OnDeleteEntity &&callback)
     {
-        mOnEntityDeleted = std::move(callback);
+        mOnDeleteEntity = std::move(callback);
+    }
+
+    void HierarchyPanel::SetOnRenameEntity(OnRenameEntity &&callback)
+    {
+        mOnRenameEntity = std::move(callback);
     }
 
     void HierarchyPanel::SetOnDragDrop(OnDragDrop &&callback)
@@ -188,87 +195,11 @@ namespace kailux
         mPendingDeleteEntity = mSelectedEntity;
     }
 
-    std::optional<std::string> HierarchyPanel::OnEntityRename(entt::registry &registry, entt::entity entity)
-    {
-        if (ImGui::IsWindowAppearing() || mRenameTarget != entity)
-        {
-            mRenameTarget     = entity;
-            mRenameNameExists = false;
-            mRenameBuffer     = registry.get<TagComponent>(entity).name;
-        }
-
-        ImGui::Text("Rename Entity");
-
-        std::optional<std::string> committedOldName;
-
-        if (ImGui::InputText("##rename", &mRenameBuffer, ImGuiInputTextFlags_EnterReturnsTrue))
-        {
-            bool foundDuplicate = false;
-            for (auto otherEntity: registry.view<TagComponent>())
-            {
-                if (otherEntity != entity &&
-                    registry.get<TagComponent>(otherEntity).name == mRenameBuffer)
-                {
-                    foundDuplicate = true;
-                    break;
-                }
-            }
-
-            if (!mRenameBuffer.empty() && !foundDuplicate)
-            {
-                auto& name{registry.get<TagComponent>(entity).name};
-                committedOldName = name;
-                name = mRenameBuffer;
-                mRenameNameExists = false;
-                ImGui::CloseCurrentPopup();
-            }
-            else
-                mRenameNameExists = foundDuplicate;
-        }
-
-        if (mRenameNameExists)
-            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Name already exists!");
-
-        return committedOldName;
-    }
-
-    void HierarchyPanel::propagate_rename_to_children(entt::registry &registry, entt::entity entity, std::string_view oldName)
-    {
-        const auto* hierarchy{registry.try_get<HierarchyComponent>(entity)};
-        if (!hierarchy || hierarchy->parent != entt::null)
-            return;
-
-        const auto& newName{registry.get<TagComponent>(entity).name};
-        for (const auto child : hierarchy->children)
-        {
-            auto& name{registry.get<TagComponent>(child).name};
-            if (name.substr(0, oldName.size()) == oldName)
-                name.replace(
-                    0,
-                    oldName.size(),
-                    newName
-                );
-        }
-    }
-
     bool HierarchyPanel::can_delete_entity(const Scene &scene, entt::entity entity)
     {
         return scene.GetEntityRegistry().valid(entity) &&
                entity != scene.GetSun() &&
                entity != scene.GetSceneCamera();
-    }
-
-    void HierarchyPanel::OnEntityDelete(Scene &scene, entt::entity entity)
-    {
-        NotifyAndDestroyHierarchy(scene.GetEntityRegistry(), entity);
-
-        if (mSelectedEntity == entity)
-        {
-            mSelectedEntity = entt::null;
-            mLastSelectedEntity = entt::null;
-            mPendingDeleteEntity = entt::null;
-            mOnEntitySelected(mSelectedEntity, scene);
-        }
     }
 
     bool HierarchyPanel::can_attach_physics(const entt::registry &registry, entt::entity entity)
@@ -290,26 +221,48 @@ namespace kailux
                && !registry.any_of<AudioSourceComponent, BuiltinCamera>(entity);
     }
 
-    void HierarchyPanel::NotifyAndDestroyHierarchy(entt::registry &registry, entt::entity entity)
+    void HierarchyPanel::ValidateSelection(const Scene &scene)
     {
-        if (const auto *source{registry.try_get<MeshSourceComponent>(entity)};
-            source && source->type == MeshType::Loaded)
-            mOnEntityDeleted(entity);
-
-        destroy_subtree(registry, entity);
+        if (mSelectedEntity != entt::null && !scene.GetEntityRegistry().valid(mSelectedEntity))
+            mSelectedEntity = entt::null;
     }
 
-    void HierarchyPanel::destroy_subtree(entt::registry &registry, entt::entity entity)
+    void HierarchyPanel::RenderRenamePopup(const entt::registry &registry, entt::entity entity)
     {
-        std::vector<entt::entity> children;
-        if (const auto *hierarchy{registry.try_get<HierarchyComponent>(entity)})
-            children = hierarchy->children;
+        if (ImGui::IsWindowAppearing() || mRenameTarget != entity)
+        {
+            mRenameTarget     = entity;
+            mRenameNameExists = false;
+            mRenameBuffer     = registry.get<TagComponent>(entity).name;
+        }
 
-        for (const auto child : children)
-            if (registry.valid(child))
-                destroy_subtree(registry, child);
+        ImGui::Text("Rename Entity");
 
-        registry.destroy(entity);
+        if (ImGui::InputText("##rename", &mRenameBuffer, ImGuiInputTextFlags_EnterReturnsTrue))
+        {
+            bool foundDuplicate = false;
+            for (auto otherEntity: registry.view<TagComponent>())
+            {
+                if (otherEntity != entity &&
+                    registry.get<TagComponent>(otherEntity).name == mRenameBuffer)
+                {
+                    foundDuplicate = true;
+                    break;
+                }
+            }
+
+            if (!mRenameBuffer.empty() && !foundDuplicate)
+            {
+                mOnRenameEntity(entity, mRenameBuffer);
+                mRenameNameExists = false;
+                ImGui::CloseCurrentPopup();
+            }
+            else
+                mRenameNameExists = foundDuplicate;
+        }
+
+        if (mRenameNameExists)
+            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Name already exists!");
     }
 
     void HierarchyPanel::RenderEntityNode(Scene &scene, entt::entity entity)
@@ -365,8 +318,7 @@ namespace kailux
             if (ImGui::IsWindowAppearing() || lastEntity != entity)
                 lastEntity = entity;
 
-            if (const auto result{OnEntityRename(registry, entity)})
-                propagate_rename_to_children(registry, entity, *result);
+            RenderRenamePopup(registry, entity);
 
             ImGui::Separator();
 
