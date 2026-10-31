@@ -1259,6 +1259,8 @@ namespace kailux
             {(commandCount + ComputeCompactor::kWorkgroupSize - 1) / ComputeCompactor::kWorkgroupSize, 1, 1}
         );
 
+        recorder.BufferMemoryBarriers(frame.GetCullerBufferMemoryBarriers());
+
         KAILUX_PROFILE_GPU_INDIRECT_DRAWS(
             cmd,
             frame.GetCullerCountBuffer().GetBuffer(),
@@ -2319,6 +2321,8 @@ namespace kailux
 
             ++objectIndex;
         }
+        uploadState.objectCount = objectIndex;
+
         if (batches.End(mMeshRegistry.GetGeneration()))
             batches.WriteCommands(
                 frame.GetCullerInputCommandsBuffer().Mapped<vk::DrawIndexedIndirectCommand>(),
