@@ -65,7 +65,7 @@ layout (std430, set = 0, binding = 1) readonly buffer TransformBuffer {
     MeshData data[];
 } meshData;
 
-layout (std430, set = 0, binding = 2) readonly buffer InstanceIdsBuffer {
+layout (std430, set = 0, binding = 11) readonly buffer InstanceIdsBuffer {
     uint instanceIds[];
 };
 

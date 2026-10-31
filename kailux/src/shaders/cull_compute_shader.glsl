@@ -37,7 +37,7 @@ layout (std430, binding = 0) readonly buffer ModelBuffer
     MeshData objects[];
 };
 
-layout (std430, binding = 1) readonly buffer BatchCommandsBuffer
+layout (std430, binding = 1) buffer BatchCommandsBuffer
 {
     IndexedIndirectCommand batchCommands[];
 };
