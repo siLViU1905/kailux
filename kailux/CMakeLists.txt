@@ -41,6 +41,7 @@ add_library(kailux STATIC
         src/passes/MainPass.cpp
         src/passes/ComputePass.cpp
         src/passes/ComputeCuller.cpp
+        src/passes/ComputeCompactor.cpp
         src/passes/ShadowPass.cpp
         src/Geometry.cpp
         src/physics/impl/BroadPhaseLayer.cpp

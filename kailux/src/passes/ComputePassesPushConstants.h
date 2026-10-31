@@ -24,4 +24,10 @@ namespace kailux::compute_pass_push_constants
         static constexpr auto kSceneLodErrorThreshold{std::numeric_limits<float>::max()};
         static constexpr auto kSimulationLodErrorThreshold{1.5f};
     };
+
+    struct CompactParams
+    {
+        uint32_t                commandCount{};
+        std::array<uint32_t, 3> _padding{};
+    };
 }
