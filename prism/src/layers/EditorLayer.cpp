@@ -7,7 +7,7 @@ namespace kailux
                                                          mWindow(application.GetWindow()),
                                                          mEngine(application.GetEngine()),
                                                          mSceneManager(application.GetSceneManager()),
-                                                         mThreadDispatcher(application.GetThreadDispatcher())
+                                                         mSceneCommands(application.GetSceneCommandQueue())
     {
     }
 
@@ -117,29 +117,25 @@ namespace kailux
     void EditorLayer::SetCallbacks()
     {
         auto& hierarchyPanel{GetPanel<HierarchyPanel>()};
-        hierarchyPanel.SetOnMeshDeleted([this](auto entity)
+        hierarchyPanel.SetOnDeleteEntity([this](auto entity)
         {
-            mEngine.UnregisterMesh(GetActiveScene(), entity);
+            mSceneCommands.Submit(scene_commands::DeleteEntity{entity});
         });
+        hierarchyPanel.SetOnRenameEntity([this](auto entity, auto name)
+       {
+           mSceneCommands.Submit(scene_commands::RenameEntity{entity, std::string{name}});
+       });
         hierarchyPanel.SetOnDragDrop([this](const auto& path)
         {
-            mEngine.HandleMeshDragDrop(path, mThreadDispatcher);
+            mSceneCommands.Submit(scene_commands::ImportMesh{path});
         });
         hierarchyPanel.SetOnNewMesh([this](auto type)
         {
-            mEngine.GetPendingMeshDataQueue().Emplace(
-                entt::null,
-                "",
-                mesh_loader::LoadData{},
-                "",
-                Transform{},
-                MeshMaterialData{},
-                type
-            );
+            mSceneCommands.Submit(scene_commands::SpawnPrimitive{type});
         });
         hierarchyPanel.SetOnNewLight([this](auto type)
         {
-            mEngine.AddLightEntity(GetActiveScene(), type);
+            mSceneCommands.Submit(scene_commands::SpawnLight{type});
         });
         hierarchyPanel.SetOnNewCamera([this]()
         {
@@ -149,19 +145,19 @@ namespace kailux
                 extent = simulationPanel.GetInputSource().GetFramebufferSize();
             else
                 extent = GetPanel<ViewportPanel>().GetInputSource().GetFramebufferSize();
-            mEngine.AddCameraEntity(GetActiveScene(), extent.x, extent.y);
+            mSceneCommands.Submit(scene_commands::SpawnCamera{extent});
         });
         hierarchyPanel.SetOnAddPhysics([this](auto entity, auto bodyType, auto canBecomeDynamic, auto mass)
         {
-            mEngine.AddPhysicsToEntity(GetActiveScene(), entity, {bodyType, canBecomeDynamic, mass});
+            mSceneCommands.Submit(scene_commands::AddPhysics{entity, {bodyType, canBecomeDynamic, mass}});
         });
         hierarchyPanel.SetOnNewAudioSource([this]()
         {
-            mEngine.AddAudioSourceEntity(GetActiveScene());
+            mSceneCommands.Submit(scene_commands::SpawnAudioSource{});
         });
         hierarchyPanel.SetOnAddAudioSource([this](auto entity)
         {
-            mEngine.AddAudioSourceToEntity(GetActiveScene(), entity);
+            mSceneCommands.Submit(scene_commands::AddAudioSource{entity});
         });
 
         auto& menuPanel{GetPanel<MenuPanel>()};
@@ -215,17 +211,21 @@ namespace kailux
         });
 
         auto& entityEditor{GetPanel<EntityEditorPanel>()};
-        entityEditor.SetOnBodyTypeChange([this](auto component, auto type)
+        entityEditor.SetOnTransformChange([this](auto entity, const auto& transform, auto syncBodyScale)
         {
-            mEngine.UpdateBodyType(component.handle, type);
+            mSceneCommands.Submit(scene_commands::SetTransform{entity, transform, syncBodyScale});
         });
-        entityEditor.SetOnBodyScaleChange([this](auto component, const auto& scale)
+        entityEditor.SetOnBodyTypeChange([this](auto entity, auto type)
         {
-            mEngine.UpdateBodyScale(component.handle, scale);
+            mSceneCommands.Submit(scene_commands::SetBodyType{entity, type});
         });
-        entityEditor.SetOnBodyMassChange([this](auto component, auto mass)
+        entityEditor.SetOnBodyMassChange([this](auto entity, auto mass, auto commit)
         {
-            mEngine.UpdateBodyMass(component.handle, mass);
+            mSceneCommands.Submit(scene_commands::SetBodyMass{entity, mass, commit});
+        });
+        entityEditor.SetOnRemoveAudioSource([this](auto entity)
+        {
+            mSceneCommands.Submit(scene_commands::RemoveAudioSource{entity});
         });
 
         auto& viewportPanel{GetPanel<ViewportPanel>()};
@@ -251,8 +251,13 @@ namespace kailux
     {
         if (mLoadSceneDialog.Poll())
             if (const auto path{mLoadSceneDialog.TryPopPath()})
-                if (mApplication.LoadScene(*path))
-                    GetPanel<ViewportPanel>().RequestSimulationState(SimulationState::Paused);
+                mSceneCommands.Submit(scene_commands::LoadScene{
+                    *path,
+                    [this]()
+                    {
+                        GetPanel<ViewportPanel>().RequestSimulationState(SimulationState::Paused);
+                    }
+                });
         if (mSaveSceneDialog.Poll())
             if (const auto path{mSaveSceneDialog.TryPopPath()})
                 SaveScene(*path);
