@@ -180,8 +180,8 @@ namespace kailux
         mGizmoInUse = isDragging || ImGuizmo::IsOver();
         if (isDragging)
         {
-            scene.SetWorldTransform(mSelectedEntity, modelMatrix);
-            auto local{Transform::from_matrix(glm::inverse(scene.GetParentWorldMatrix(mSelectedEntity)) * modelMatrix)};            if (mUniformScale && operation == ImGuizmo::SCALE)
+            auto local{Transform::from_matrix(glm::inverse(scene.GetParentWorldMatrix(mSelectedEntity)) * modelMatrix)};
+            if (mUniformScale && operation == ImGuizmo::SCALE)
             {
                 const float avgScale = (local.scale.x + local.scale.y + local.scale.z) / 3.f;
                 local.scale = glm::vec3(avgScale);
