@@ -36,14 +36,14 @@ namespace kailux::asset_paths
     std::string from_scene_relative(const std::filesystem::path &stored, const std::filesystem::path &sceneDir, bool legacy)
     {
         if (stored.empty() || stored.is_absolute())
-            return {stored};
+            return stored.string();
 
         const auto resolved{(sceneDir / stored).lexically_normal()};
         if (legacy)
         {
             std::error_code ec;
             if (fs::exists(stored, ec) || !fs::exists(resolved, ec))
-                return std::string{stored};
+                return stored.string();
         }
 
         return resolved.generic_string();
@@ -68,7 +68,7 @@ namespace kailux::asset_paths
             return std::unexpected(std::format("Asset '{}' does not exist", path.generic_string()));
 
         if (details::is_inside(absolute, mSceneDir))
-            return std::string{path};
+            return path.string();
 
         fs::path sourceRoot, rest;
         if (details::is_inside(absolute, mWorkspace))
