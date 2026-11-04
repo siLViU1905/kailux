@@ -7,7 +7,7 @@
 
 namespace kailux
 {
-    struct ScriptServices;
+    class ScriptServices;
 
     struct RaycastHit
     {

@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
     {
         kailux::log::open_file("sphere_shooter_benchmark.log");
 
-        const std::filesystem::path scenePath{argc > 1 ? argv[1] : "scenes/arena-9500.klx"};
+        const std::filesystem::path scenePath{argc > 1 ? argv[1] : "scenes/arena.klx"};
         const std::filesystem::path outputPath{argc > 2 ? argv[2] : default_output_path()};
 
         kailux::EngineSpecification engine;
