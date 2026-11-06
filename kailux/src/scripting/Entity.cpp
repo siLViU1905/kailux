@@ -8,6 +8,7 @@
 #include "components/entt/TagComponent.h"
 #include "components/entt/WorldTransform.h"
 #include "scene/Scene.h"
+#include "physics/PhysicsRegistry.h"
 
 namespace kailux
 {

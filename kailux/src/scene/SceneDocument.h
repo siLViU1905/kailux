@@ -5,7 +5,7 @@
 #include "components/gpu/DirectionalLightData.h"
 #include "components/gpu/MeshMaterialData.h"
 #include "components/math/Transform.h"
-#include "physics/PhysicsRegistry.h"
+#include "physics/PhysicsTypes.h"
 #include "audio/AudioRegistry.h"
 
 namespace kailux
