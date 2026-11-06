@@ -1,11 +1,13 @@
 #pragma once
 #include <vulkan/vulkan_raii.hpp>
 
+#include "Core.h"
 #include "DeviceInfo.h"
-#include "window/Window.h"
 
 namespace kailux
 {
+    class Window;
+
     class Context
     {
     public:
