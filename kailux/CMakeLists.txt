@@ -91,6 +91,14 @@ add_library(kailux STATIC
         src/audio/AudioSystem.cpp
 )
 
+set_source_files_properties(
+        src/imgui_backend/bindings/imgui_impl_glfw.cpp
+        src/imgui_backend/bindings/imgui_impl_vulkan.cpp
+        src/imgui_backend/misc/imgui_stdlib.cpp
+        ${IMGUIZMO_CPP}
+        PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON
+)
+
 target_compile_definitions(kailux PUBLIC
         IMGUI_DEFINE_MATH_OPERATORS
 )
