@@ -51,10 +51,14 @@ namespace kailux
                   "Number of push constants doesnt correspond with kPushConstantRanges");
 
             uint32_t currentOffset = 0;
+#ifndef NDEBUG
             size_t index = 0;
+#endif
 
             ([&]() {
+#ifndef NDEBUG
                 assert(sizeof(Pcs) == PcRanges[index].size);
+#endif
 
                 cmd.pushConstants(
                     mPipeline.GetLayout(),
@@ -65,7 +69,9 @@ namespace kailux
                 );
 
                 currentOffset += static_cast<uint32_t>(sizeof(Pcs));
+#ifndef NDEBUG
                 ++index;
+#endif
             }(), ...);
         }
 
