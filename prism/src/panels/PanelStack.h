@@ -40,8 +40,11 @@ namespace kailux
         TPanel* TryGetPanel()
         {
             for (auto& panel : mPanels)
-                if (typeid(*panel) == typeid(TPanel))
+            {
+                const auto& p{*panel};
+                if (typeid(p) == typeid(TPanel))
                     return static_cast<TPanel *>(panel.get());
+            }
             return nullptr;
         }
 
