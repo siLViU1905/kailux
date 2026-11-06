@@ -9,6 +9,7 @@ set BUILD_SUBDIR=
 set DO_CLEAN=0
 set BUILD_SAMPLES=OFF
 set ENABLE_PROFILING=OFF
+set UNITY_BUILD=OFF
 
 :parse_args
 if "%~1"=="" goto after_args
@@ -17,6 +18,7 @@ if /i "%~1"=="release" (set BUILD_TYPE=Release& set BUILD_SUBDIR=release)
 if /i "%~1"=="clean"   set DO_CLEAN=1
 if /i "%~1"=="samples" set BUILD_SAMPLES=ON
 if /i "%~1"=="profiling" set ENABLE_PROFILING=ON
+if /i "%~1"=="unity" set UNITY_BUILD=ON
 shift
 goto parse_args
 :after_args
@@ -31,11 +33,12 @@ if "%BUILD_TYPE%"=="" (
     echo           windows_build.bat debug clean
     echo           windows_build.bat debug samples
     echo           windows_build.bat release samples profiling
+    echo           windows_build.bat release unity
     pause
     exit /b 1
 )
 
-echo [INFO] Build type: %BUILD_TYPE%, samples: %BUILD_SAMPLES%, profiling: %ENABLE_PROFILING%
+echo [INFO] Build type: %BUILD_TYPE%, samples: %BUILD_SAMPLES%, profiling: %ENABLE_PROFILING%, unity: %UNITY_BUILD%
 
 conan export scripts\imguizmo
 conan export scripts\imgui
@@ -104,7 +107,8 @@ cmake "%PROJECT_ROOT%" -G "Ninja" ^
     -DCMAKE_CXX_STANDARD_REQUIRED=ON ^
     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ^
     -DKAILUX_BUILD_SAMPLES=%BUILD_SAMPLES% ^
-    -DKAILUX_ENABLE_PROFILING=%ENABLE_PROFILING%
+    -DKAILUX_ENABLE_PROFILING=%ENABLE_PROFILING% ^
+    -DKAILUX_UNITY_BUILD=%UNITY_BUILD%
 
 if %errorlevel% neq 0 (
     echo [ERROR] CMake config failed
