@@ -4,6 +4,7 @@
 #include <unordered_set>
 #include <magic_enum/magic_enum.hpp>
 
+#include "window/Window.h"
 #include "Clock.h"
 #include "EngineSpecification.h"
 #include "FileDialog.h"

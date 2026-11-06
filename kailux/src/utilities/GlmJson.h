@@ -1,5 +1,7 @@
 #pragma once
+#include <glm/glm.hpp>
 #include <glm/detail/type_quat.hpp>
+#include <nlohmann/json.hpp>
 
 namespace glm
 {

@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 #include <print>
 
+#include "window/Window.h"
 #include "Log.h"
 
 namespace kailux

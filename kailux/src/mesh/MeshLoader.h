@@ -2,9 +2,14 @@
 #include <expected>
 
 #include "MeshGeometry.h"
-#include <assimp/scene.h>
+#include <assimp/matrix4x4.h>
 
 #include "texture/TextureRegistry.h"
+
+struct aiScene;
+struct aiNode;
+struct aiMesh;
+struct aiMaterial;
 
 namespace kailux::mesh_loader
 {

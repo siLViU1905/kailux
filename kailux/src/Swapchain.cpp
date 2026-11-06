@@ -1,5 +1,6 @@
 #include "Swapchain.h"
 
+#include "window/Window.h"
 #include "Log.h"
 #include "profiling/Profiling.h"
 

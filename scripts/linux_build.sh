@@ -9,6 +9,7 @@ BUILD_DIR=""
 DO_CLEAN=0
 BUILD_SAMPLES="OFF"
 ENABLE_PROFILING="OFF"
+UNITY_BUILD="OFF"
 
 for arg in "$@"; do
     case "$arg" in
@@ -17,6 +18,7 @@ for arg in "$@"; do
         clean)           DO_CLEAN=1 ;;
         samples)         BUILD_SAMPLES="ON" ;;
         profiling)       ENABLE_PROFILING="ON" ;;
+        unity)           UNITY_BUILD="ON" ;;    
         *) echo "[WARN] unknown arg: $arg" ;;
     esac
 done
@@ -31,11 +33,12 @@ if [ -z "${BUILD_TYPE}" ]; then
     echo "          ./linux_build.sh debug clean     (wipe build/ first)"
     echo "          ./linux_build.sh debug samples   (also build the sample games)"
     echo "          ./linux_build.sh release samples profiling  (also build the benchmark)"
+    echo "          ./linux_build.sh release unity   (unity build: faster full builds)"
     exit 1
 fi
 
 JOBS=$(nproc)
-echo "[INFO] Build type: ${BUILD_TYPE}, samples: ${BUILD_SAMPLES}, jobs: ${JOBS}"
+echo "[INFO] Build type: ${BUILD_TYPE}, samples: ${BUILD_SAMPLES}, unity: ${UNITY_BUILD}, jobs: ${JOBS}"
 
 conan export scripts/imguizmo
 conan export scripts/imgui
@@ -79,7 +82,8 @@ cmake "${PROJECT_ROOT}" -G "Ninja" \
     -DCMAKE_CXX_STANDARD_REQUIRED=ON \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
     -DKAILUX_BUILD_SAMPLES=${BUILD_SAMPLES} \
-    -DKAILUX_ENABLE_PROFILING=${ENABLE_PROFILING}
+    -DKAILUX_ENABLE_PROFILING=${ENABLE_PROFILING} \
+    -DKAILUX_UNITY_BUILD=${UNITY_BUILD}
 
 echo "[INFO] Building with Ninja..."
 cmake --build . -j "${JOBS}"

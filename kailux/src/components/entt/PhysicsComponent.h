@@ -1,7 +1,7 @@
 #pragma once
 
 #include <entt/entt.hpp>
-#include "physics/PhysicsRegistry.h"
+#include "physics/PhysicsTypes.h"
 
 namespace kailux
 {
