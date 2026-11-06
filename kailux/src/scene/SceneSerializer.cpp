@@ -2,8 +2,9 @@
 
 #include <fstream>
 
+#include "SceneDocument.h"
+#include "SceneDocumentJson.h"
 #include "AssetPaths.h"
-
 #include "components/entt/AudioSourceComponent.h"
 #include "components/entt/BuiltinCamera.h"
 #include "components/entt/HierarchyComponent.h"
