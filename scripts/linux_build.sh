@@ -50,11 +50,11 @@ fi
 
 export CONAN_CMAKE_GENERATOR=Ninja
 
-TOOLCHAIN="${PROJECT_ROOT}/build/build/${BUILD_TYPE}/generators/conan_toolchain.cmake"
+TOOLCHAIN="${PROJECT_ROOT}/build/${BUILD_DIR}/build/${BUILD_TYPE}/generators/conan_toolchain.cmake"
 
 if [ ! -f "${TOOLCHAIN}" ]; then
     echo "[INFO] Conan install: ${BUILD_TYPE}..."
-    conan install . --output-folder=build --build=missing \
+    conan install . --output-folder="build/${BUILD_DIR}" --build=missing \
         -s build_type=${BUILD_TYPE} \
         -s compiler.cppstd=23 \
         -c tools.system.package_manager:mode=install \
