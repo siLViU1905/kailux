@@ -74,6 +74,11 @@ namespace kailux
             engine.AddAudioSourceEntity(scene);
         }
 
+        void SceneCommandExecutor::operator()(scene_commands::SpawnParticleEmitter &) const
+        {
+            engine.AddParticleEmitterEntity(scene);
+        }
+
         void SceneCommandExecutor::operator()(scene_commands::DeleteEntity &command) const
         {
             if (!can_delete_entity(scene, command.entity))
@@ -131,6 +136,19 @@ namespace kailux
         void SceneCommandExecutor::operator()(scene_commands::RemoveAudioSource &command) const
         {
             scene.DetachAudioSource(command.entity);
+        }
+
+        void SceneCommandExecutor::operator()(scene_commands::AddParticleEmitter &command) const
+        {
+            if (!Registry().valid(command.entity))
+                return;
+
+            engine.AddParticleEmitterToEntity(scene, command.entity);
+        }
+
+        void SceneCommandExecutor::operator()(scene_commands::RemoveParticleEmitter &command) const
+        {
+            scene.DetachParticleEmitter(command.entity);
         }
 
         void SceneCommandExecutor::operator()(scene_commands::SetBodyType &command) const
