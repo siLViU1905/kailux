@@ -18,6 +18,10 @@ namespace kailux::graphics_pass_push_constants
 
     struct ShadowCascade
     {
-        glm::mat4 viewProjection{1.f};
+        static constexpr uint32_t kDirectInstances{~0u};
+
+        glm::mat4               viewProjection{1.f};
+        uint32_t                instanceBase{kDirectInstances};
+        std::array<uint32_t, 3> _padding{};
     };
 }
