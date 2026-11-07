@@ -1,7 +1,5 @@
 #pragma once
 
-#include "../Core.h"
-
 namespace kailux::compute_pass_push_constants
 {
     struct MouseCords
@@ -31,12 +29,5 @@ namespace kailux::compute_pass_push_constants
     {
         uint32_t                commandCount{};
         std::array<uint32_t, 3> _padding{};
-    };
-
-    struct ShadowCullParams
-    {
-        uint32_t                objectCount{};
-        uint32_t                listStride{}; 
-        std::array<uint32_t, 2> _padding{};
     };
 }

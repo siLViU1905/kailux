@@ -31,7 +31,7 @@ namespace kailux
                                                        mOutlineDescriptorSet(std::move(other.mOutlineDescriptorSet)),
                                                        mCullerDescriptorSet(std::move(other.mCullerDescriptorSet)),
                                                        mCompactorDescriptorSet(std::move(other.mCompactorDescriptorSet)),                                                       mShadowDescriptorSet(std::move(other.mShadowDescriptorSet)),
-                                                       mShadowCullerDescriptorSet(std::move(other.mShadowCullerDescriptorSet)),                                                       mCameraBuffer(std::move(other.mCameraBuffer)),
+                                                       mCameraBuffer(std::move(other.mCameraBuffer)),
                                                        mMeshDataBuffer(std::move(other.mMeshDataBuffer)),
                                                        mMaterialsBuffer(std::move(other.mMaterialsBuffer)),
                                                        mIndirectBuffer(std::move(other.mIndirectBuffer)),
@@ -44,11 +44,6 @@ namespace kailux
                                                        mInstanceIdsBuffer(std::move(other.mInstanceIdsBuffer)),
                                                        mDirectionalShadowCommandsBuffer(
                                                            std::move(other.mDirectionalShadowCommandsBuffer)),
-                                                       mDirectionalShadowTemplatesBuffer(
-                                                           std::move(other.mDirectionalShadowTemplatesBuffer)),
-                                                       mDirectionalShadowInstanceIdsBuffer(
-                                                           std::move(other.mDirectionalShadowInstanceIdsBuffer)),
-                                                       mShadowCullTargetsBuffer(std::move(other.mShadowCullTargetsBuffer)),
                                                        mPointShadowCommandsBuffer(
                                                            std::move(other.mPointShadowCommandsBuffer)),
                                                        mMeshUploadState(std::move(other.mMeshUploadState))
@@ -72,7 +67,6 @@ namespace kailux
             mCullerDescriptorSet = std::move(other.mCullerDescriptorSet);
             mCompactorDescriptorSet = std::move(other.mCompactorDescriptorSet);
             mShadowDescriptorSet = std::move(other.mShadowDescriptorSet);
-            mShadowCullerDescriptorSet = std::move(other.mShadowCullerDescriptorSet);
             mCameraBuffer = std::move(other.mCameraBuffer);
             mMeshDataBuffer = std::move(other.mMeshDataBuffer);
             mMaterialsBuffer = std::move(other.mMaterialsBuffer);
@@ -84,9 +78,6 @@ namespace kailux
             mBatchCommandsBuffer = std::move(other.mBatchCommandsBuffer);
             mInstanceIdsBuffer = std::move(other.mInstanceIdsBuffer);
             mDirectionalShadowCommandsBuffer = std::move(other.mDirectionalShadowCommandsBuffer);
-            mDirectionalShadowTemplatesBuffer = std::move(other.mDirectionalShadowTemplatesBuffer);
-            mDirectionalShadowInstanceIdsBuffer = std::move(other.mDirectionalShadowInstanceIdsBuffer);
-            mShadowCullTargetsBuffer = std::move(other.mShadowCullTargetsBuffer);
             mPointShadowCommandsBuffer = std::move(other.mPointShadowCommandsBuffer);
             mMeshUploadState = std::move(other.mMeshUploadState);
         }
@@ -104,7 +95,6 @@ namespace kailux
         const OutlinePass &outlinePass,
         const ComputeCuller &culler,
         const ComputeCompactor& compactor,
-        const ComputeShadowCuller& shadowCuller,
         const ShadowPass& shadowPass,
         const ShadowMap& directionalShadowMap,
         const ShadowMap& pointShadowMap,
@@ -148,9 +138,6 @@ namespace kailux
         const auto shadowDescInfo{frame.MakeShadowDescriptorSetInfo()};
         frame.CreateShadowDescriptorSet(context, shadowPass.GetDescriptorLayout(), shadowPass.GetDescriptorPool(),
                                         shadowDescInfo);
-        const auto shadowCullerDescInfo{frame.MakeShadowCullerDescriptorSetInfo()};
-        frame.CreateShadowCullerDescriptorSet(context, shadowCuller.GetDescriptorLayout(), shadowCuller.GetDescriptorPool(),
-                                              shadowCullerDescInfo);
         frame.SeedPointShadowDescriptors(context, pointShadowMap);
         return frame;
     }
@@ -256,11 +243,6 @@ namespace kailux
         return mShadowDescriptorSet;
     }
 
-    const DescriptorSet &FrameData::GetShadowCullerDescriptorSet() const
-    {
-        return mShadowCullerDescriptorSet;
-    }
-
     Buffer &FrameData::GetCameraBuffer()
     {
         return mCameraBuffer;
@@ -321,16 +303,6 @@ namespace kailux
         return mDirectionalShadowCommandsBuffer;
     }
 
-    const Buffer &FrameData::GetDirectionalShadowTemplatesBuffer() const
-    {
-        return mDirectionalShadowTemplatesBuffer;
-    }
-
-    const Buffer &FrameData::GetShadowCullTargetsBuffer() const
-    {
-        return mShadowCullTargetsBuffer;
-    }
-
     const Buffer & FrameData::GetPointShadowCommandsBuffer() const
     {
         return mPointShadowCommandsBuffer;
@@ -387,24 +359,13 @@ namespace kailux
             vk::BufferMemoryBarrier2( // directional shadows commands
                 vk::PipelineStageFlagBits2::eHost,
                 vk::AccessFlagBits2::eHostWrite,
-                vk::PipelineStageFlagBits2::eTransfer,
-                vk::AccessFlagBits2::eTransferRead,
+                vk::PipelineStageFlagBits2::eDrawIndirect,
+                vk::AccessFlagBits2::eIndirectCommandRead,
                 vk::QueueFamilyIgnored,
                 vk::QueueFamilyIgnored,
-                mDirectionalShadowTemplatesBuffer.GetBuffer(),
+                mDirectionalShadowCommandsBuffer.GetBuffer(),
                 {},
-                mDirectionalShadowTemplatesBuffer.GetSize()
-            ),
-            vk::BufferMemoryBarrier2( // shadow cull targets
-                vk::PipelineStageFlagBits2::eHost,
-                vk::AccessFlagBits2::eHostWrite,
-                vk::PipelineStageFlagBits2::eComputeShader,
-                vk::AccessFlagBits2::eShaderStorageRead,
-                vk::QueueFamilyIgnored,
-                vk::QueueFamilyIgnored,
-                mShadowCullTargetsBuffer.GetBuffer(),
-                {},
-                mShadowCullTargetsBuffer.GetSize()
+                mDirectionalShadowCommandsBuffer.GetSize()
             ),
             vk::BufferMemoryBarrier2( // point shadows commands
                 vk::PipelineStageFlagBits2::eHost,
@@ -533,53 +494,6 @@ namespace kailux
         };
     }
 
-    std::array<vk::BufferMemoryBarrier2, FrameData::kShadowCullerFillMemoryBarriersCount> FrameData::
-    GetShadowCullerFillMemoryBarriers() const
-    {
-        return {
-            vk::BufferMemoryBarrier2( // directional shadow commands, copied from the templates -> shadow culler atomics
-                vk::PipelineStageFlagBits2::eTransfer,
-                vk::AccessFlagBits2::eTransferWrite,
-                vk::PipelineStageFlagBits2::eComputeShader,
-                vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite,
-                vk::QueueFamilyIgnored,
-                vk::QueueFamilyIgnored,
-                mDirectionalShadowCommandsBuffer.GetBuffer(),
-                {},
-                mDirectionalShadowCommandsBuffer.GetSize()
-            )
-        };
-    }
-
-    std::array<vk::BufferMemoryBarrier2, FrameData::kShadowCullerOutputMemoryBarriersCount> FrameData::
-    GetShadowCullerOutputMemoryBarriers() const
-    {
-        return {
-            vk::BufferMemoryBarrier2( // directional shadow commands -> draw indirect
-                vk::PipelineStageFlagBits2::eComputeShader,
-                vk::AccessFlagBits2::eShaderWrite,
-                vk::PipelineStageFlagBits2::eDrawIndirect,
-                vk::AccessFlagBits2::eIndirectCommandRead,
-                vk::QueueFamilyIgnored,
-                vk::QueueFamilyIgnored,
-                mDirectionalShadowCommandsBuffer.GetBuffer(),
-                {},
-                mDirectionalShadowCommandsBuffer.GetSize()
-            ),
-            vk::BufferMemoryBarrier2( // directional shadow instance ids -> shadow vertex shader
-                vk::PipelineStageFlagBits2::eComputeShader,
-                vk::AccessFlagBits2::eShaderWrite,
-                vk::PipelineStageFlagBits2::eVertexShader,
-                vk::AccessFlagBits2::eShaderStorageRead,
-                vk::QueueFamilyIgnored,
-                vk::QueueFamilyIgnored,
-                mDirectionalShadowInstanceIdsBuffer.GetBuffer(),
-                {},
-                mDirectionalShadowInstanceIdsBuffer.GetSize()
-            )
-        };
-    }
-
     std::array<vk::BufferMemoryBarrier2, FrameData::kIndirectReadToWriteMemoryBarriersCount> FrameData::GetIndirectReadToWriteBarriers() const
     {
         return {
@@ -703,13 +617,6 @@ namespace kailux
         mShadowDescriptorSet = DescriptorSet::create(context, descriptorLayout, descriptorPool, infos);
     }
 
-    void FrameData::CreateShadowCullerDescriptorSet(const Context &context, const DescriptorLayout &descriptorLayout,
-                                                    const DescriptorPool &descriptorPool,
-                                                    std::span<const DescriptorSetInfo> infos)
-    {
-        mShadowCullerDescriptorSet = DescriptorSet::create(context, descriptorLayout, descriptorPool, infos);
-    }
-
     void FrameData::CreateCameraBuffer(const Context &context)
     {
         mCameraBuffer = buffer_allocator::alloc_uniform(context, sizeof(CameraData) * (details::kMaxCameras * details::kMaxCameraViews));
@@ -767,29 +674,10 @@ namespace kailux
 
     void FrameData::CreateDirectionalShadowBuffer(const Context &context)
     {
-        mDirectionalShadowCommandsBuffer = buffer_allocator::alloc_local(
+        mDirectionalShadowCommandsBuffer = buffer_allocator::alloc_host(
             context,
             details::kDirectionalShadowDrawLists * details::kMaxMeshes * sizeof(vk::DrawIndexedIndirectCommand),
-            vk::BufferUsageFlagBits::eIndirectBuffer |
-            vk::BufferUsageFlagBits::eStorageBuffer
-            );
-
-        mDirectionalShadowTemplatesBuffer = buffer_allocator::alloc_host(
-            context,
-            details::kShadowCascadeCount * details::kMaxMeshes * sizeof(vk::DrawIndexedIndirectCommand),
-            vk::BufferUsageFlagBits::eTransferSrc
-            );
-
-        // kMaxMeshes slots per draw list, every object appears at most once in a list
-        mDirectionalShadowInstanceIdsBuffer = buffer_allocator::alloc_local(
-            context,
-            details::kDirectionalShadowDrawLists * details::kMaxMeshes * sizeof(uint32_t),
-            vk::BufferUsageFlagBits::eStorageBuffer
-            );
-
-        mShadowCullTargetsBuffer = buffer_allocator::alloc_storage(
-            context,
-            details::kDirectionalShadowDrawLists * sizeof(ShadowCullTarget)
+            vk::BufferUsageFlagBits::eIndirectBuffer
             );
     }
 
@@ -1027,43 +915,6 @@ namespace kailux
             DescriptorSetBufferInfo(
                 mMeshDataBuffer.GetBuffer(),
                 mMeshDataBuffer.GetSize(),
-                1,
-                vk::DescriptorType::eStorageBuffer
-            ),
-            DescriptorSetBufferInfo(
-                mDirectionalShadowInstanceIdsBuffer.GetBuffer(),
-                mDirectionalShadowInstanceIdsBuffer.GetSize(),
-                1,
-                vk::DescriptorType::eStorageBuffer
-            )
-        };
-    }
-
-    std::array<DescriptorSetInfo, FrameData::kShadowCullerDescriptorSetInfoCount> FrameData::
-    MakeShadowCullerDescriptorSetInfo() const
-    {
-        return {
-            DescriptorSetBufferInfo(
-                mMeshDataBuffer.GetBuffer(),
-                mMeshDataBuffer.GetSize(),
-                1,
-                vk::DescriptorType::eStorageBuffer
-            ),
-            DescriptorSetBufferInfo(
-                mShadowCullTargetsBuffer.GetBuffer(),
-                mShadowCullTargetsBuffer.GetSize(),
-                1,
-                vk::DescriptorType::eStorageBuffer
-            ),
-            DescriptorSetBufferInfo(
-                mDirectionalShadowCommandsBuffer.GetBuffer(),
-                mDirectionalShadowCommandsBuffer.GetSize(),
-                1,
-                vk::DescriptorType::eStorageBuffer
-            ),
-            DescriptorSetBufferInfo(
-                mDirectionalShadowInstanceIdsBuffer.GetBuffer(),
-                mDirectionalShadowInstanceIdsBuffer.GetSize(),
                 1,
                 vk::DescriptorType::eStorageBuffer
             )

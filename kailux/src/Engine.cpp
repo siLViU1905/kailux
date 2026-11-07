@@ -88,7 +88,6 @@ namespace kailux
                                               mPickedEntity(other.mPickedEntity),
                                               mComputeCuller(std::move(other.mComputeCuller)),
                                               mComputeCompactor(std::move(other.mComputeCompactor)),
-                                              mComputeShadowCuller(std::move(other.mComputeShadowCuller)),
                                               mShadowPass(std::move(other.mShadowPass)),
                                               mDirectionalShadowMap(std::move(other.mDirectionalShadowMap)),
                                               mPointShadowMap(std::move(other.mPointShadowMap)),
@@ -151,7 +150,6 @@ namespace kailux
             mPickedEntity = other.mPickedEntity;
             mComputeCuller = std::move(other.mComputeCuller);
             mComputeCompactor = std::move(other.mComputeCompactor);
-            mComputeShadowCuller = std::move(other.mComputeShadowCuller);
             mShadowPass = std::move(other.mShadowPass);
             mDirectionalShadowMap = std::move(other.mDirectionalShadowMap);
             mPointShadowMap = std::move(other.mPointShadowMap);
@@ -210,7 +208,6 @@ namespace kailux
         engine.CreateComputePicker();
         engine.CreateComputeCuller();
         engine.CreateComputeCompactor();
-        engine.CreateComputeShadowCuller();
         engine.CreateDirectionalShadowMap();
         engine.CreatePointShadowMap();
 
@@ -496,7 +493,6 @@ namespace kailux
                 mOutlinePass,
                 mComputeCuller,
                 mComputeCompactor,
-                mComputeShadowCuller,
                 mShadowPass,
                 mDirectionalShadowMap,
                 mPointShadowMap,
@@ -681,11 +677,6 @@ namespace kailux
     void Engine::CreateComputeCompactor()
     {
         mComputeCompactor = ComputeCompactor::create(mContext, details::kFramesInFlight);
-    }
-
-    void Engine::CreateComputeShadowCuller()
-    {
-        mComputeShadowCuller = ComputeShadowCuller::create(mContext, details::kFramesInFlight);
     }
 
     void Engine::CreateDirectionalShadowMap()
@@ -877,8 +868,6 @@ namespace kailux
                     sceneExtent,
                     CullingPreset::SceneView
                     );
-
-            ExecuteShadowCulling(frame, recorder);
 
             TransitionForShadowPass(frame, recorder);
             for (uint32_t view{}; view < details::kMaxCameraViews; ++view)
@@ -1690,7 +1679,7 @@ namespace kailux
         const auto& shadowSet{mDirectionalShadowSets[viewIndex]};
         const bool castShadows{shadowSet.Enabled()};
 
-        const auto batchCount{static_cast<uint32_t>(frame.GetMeshUploadState().batches.GetBatches().size())};
+        const auto& drawCount{frame.GetMeshUploadState().directionalShadowDrawCounts};
 
         for (uint32_t cascade{}; cascade < details::kShadowCascadeCount; ++cascade)
         {
@@ -1710,18 +1699,17 @@ namespace kailux
                 mShadowPass.Bind(cmd);
                 mMeshRegistry.Bind(cmd);
                 frame.GetShadowDescriptorSet().Bind(mShadowPass.GetPipeline(), cmd);
-                const auto list{details::directional_shadow_draw_list(viewIndex, cascade)};
                 mShadowPass.Push(cmd, graphics_pass_push_constants::ShadowCascade{
-                    shadowSet.GetCascade(cascade),
-                    list * details::kMaxMeshes
+                    shadowSet.GetCascade(cascade)
                 });
 
-                KAILUX_PROFILE_GPU_DRAWS(GpuSection::DirectionalShadows, batchCount);
-                if (batchCount > 0)
+                const auto list{details::directional_shadow_draw_list(viewIndex, cascade)};
+                KAILUX_PROFILE_GPU_DRAWS(GpuSection::DirectionalShadows, drawCount[list]);
+                if (drawCount[list] > 0)
                     cmd.drawIndexedIndirect(
                         frame.GetDirectionalShadowCommandsBuffer().GetBuffer(),
                         static_cast<vk::DeviceSize>(list) * details::kMaxMeshes * sizeof(vk::DrawIndexedIndirectCommand),
-                        batchCount,
+                        drawCount[list],
                         sizeof(vk::DrawIndexedIndirectCommand)
                     );
             }
@@ -2243,7 +2231,6 @@ namespace kailux
     {
         UpdateCameraBuffer(scene, frame, sceneView);
         UpdateMeshBuffers(scene, frame);
-        UpdateShadowCullTargets(frame);
         UpdateMaterialBuffer(frame);
         UpdateSceneBuffer(scene, frame);
 
@@ -2283,6 +2270,7 @@ namespace kailux
         ShadowCuller shadowCuller{
             frame,
             mMeshRegistry,
+            mDirectionalShadowSets,
             mPointShadowSets
         };
 
@@ -2336,90 +2324,11 @@ namespace kailux
         }
         uploadState.objectCount = objectIndex;
 
-        if (batches.End(mMeshRegistry.GetGeneration())) {
-          batches.WriteCommands(frame.GetCullerInputCommandsBuffer()
-                                    .Mapped<vk::DrawIndexedIndirectCommand>(),
-                                mMeshRegistry);
-          batches.WriteShadowCommands(
-              frame.GetDirectionalShadowTemplatesBuffer()
-                  .Mapped<vk::DrawIndexedIndirectCommand>(),
-              mMeshRegistry);
-        }
-    }
-
-    void Engine::UpdateShadowCullTargets(FrameData &frame) const
-    {
-        const auto targets{frame.GetShadowCullTargetsBuffer().Mapped<ShadowCullTarget>()};
-        for (uint32_t viewIndex{}; viewIndex < details::kMaxCameraViews; ++viewIndex)
-        {
-            const auto &shadowSet{mDirectionalShadowSets[viewIndex]};
-            for (uint32_t cascade{}; cascade < details::kShadowCascadeCount; ++cascade)
-            {
-                auto &target{targets[details::directional_shadow_draw_list(viewIndex, cascade)]};
-                target.info.x = shadowSet.Enabled() ? 1u : 0u;
-                if (shadowSet.Enabled())
-                    target.planes = camera::get_frustum_planes(shadowSet.GetCascade(cascade), glm::mat4{1.f});
-            }
-        }
-    }
-
-    void Engine::ExecuteShadowCulling(const FrameData &frame, const CommandRecorder &recorder) const
-    {
-        KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuSection::DirectionalShadows);
-        const auto cmd{recorder.GetCommandBuffer()};
-
-        const auto &uploadState{frame.GetMeshUploadState()};
-        const auto objectCount{uploadState.objectCount};
-        const auto batchCount{static_cast<uint32_t>(uploadState.batches.GetBatches().size())};
-        if (objectCount == 0 || batchCount == 0)
-            return;
-
-        constexpr vk::DeviceSize kCommandSize{sizeof(vk::DrawIndexedIndirectCommand)};
-        std::array<vk::BufferCopy, details::kDirectionalShadowDrawLists> copies{};
-        uint32_t copyCount{};
-        for (uint32_t viewIndex{}; viewIndex < details::kMaxCameraViews; ++viewIndex)
-        {
-            if (!mDirectionalShadowSets[viewIndex].Enabled())
-                continue;
-
-            for (uint32_t cascade{}; cascade < details::kShadowCascadeCount; ++cascade)
-            {
-                const auto list{details::directional_shadow_draw_list(viewIndex, cascade)};
-                copies[copyCount++] = vk::BufferCopy{
-                    cascade * details::kMaxMeshes * kCommandSize,
-                    list * details::kMaxMeshes * kCommandSize,
-                    batchCount * kCommandSize
-                };
-            }
-        }
-
-        if (copyCount == 0)
-            return;
-
-        cmd.copyBuffer(
-            frame.GetDirectionalShadowTemplatesBuffer().GetBuffer(),
-            frame.GetDirectionalShadowCommandsBuffer().GetBuffer(),
-            vk::ArrayProxy<const vk::BufferCopy>(copyCount, copies.data())
-        );
-        recorder.BufferMemoryBarriers(frame.GetShadowCullerFillMemoryBarriers());
-
-        mComputeShadowCuller.Bind(cmd);
-        frame.GetShadowCullerDescriptorSet().Bind(mComputeShadowCuller.GetPipeline(), cmd);
-        mComputeShadowCuller.Push<compute_pass_push_constants::ShadowCullParams>(
-            cmd,
-            {objectCount, details::kMaxMeshes}
-        );
-        // y = draw list, lists that are not drawn this frame return at once
-        mComputeShadowCuller.Execute(
-            cmd,
-            {
-                (objectCount + ComputeShadowCuller::kWorkgroupSize - 1) / ComputeShadowCuller::kWorkgroupSize,
-                details::kDirectionalShadowDrawLists,
-                1
-            }
-        );
-        
-        recorder.BufferMemoryBarriers(frame.GetShadowCullerOutputMemoryBarriers());
+        if (batches.End(mMeshRegistry.GetGeneration()))
+            batches.WriteCommands(
+                frame.GetCullerInputCommandsBuffer().Mapped<vk::DrawIndexedIndirectCommand>(),
+                mMeshRegistry
+            );
     }
 
     void Engine::UpdateMaterialBuffer(FrameData &frame) const

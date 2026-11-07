@@ -140,9 +140,10 @@ namespace benchmark
         for (size_t section{}; section < kailux::CpuProfiler::kSectionCount; ++section)
             mOutput << ",cpu_" << kailux::CpuProfiler::get_name(static_cast<kailux::CpuSection>(section));
         for (size_t pass{}; pass < kailux::GpuProfiler::kPassCount; ++pass)
+        {
             mOutput << ",gpu_" << kailux::GpuProfiler::get_name(static_cast<kailux::GpuSection>(pass));
-        for (size_t pass{}; pass < kailux::GpuProfiler::kPassCount; ++pass)
             mOutput << ",draws_" << kailux::GpuProfiler::get_name(static_cast<kailux::GpuSection>(pass));
+        }
         mOutput << '\n';
         mOutput.flush();
     }

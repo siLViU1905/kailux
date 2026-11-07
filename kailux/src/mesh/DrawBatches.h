@@ -25,7 +25,6 @@ namespace kailux
         bool End(uint64_t meshGeneration);
 
         void WriteCommands(std::span<vk::DrawIndexedIndirectCommand> commands, const MeshRegistry& meshRegistry) const;
-        void WriteShadowCommands(std::span<vk::DrawIndexedIndirectCommand> commands, const MeshRegistry& meshRegistry) const;
 
         std::span<const Batch> GetBatches() const;
         uint32_t               GetCommandCount() const;
