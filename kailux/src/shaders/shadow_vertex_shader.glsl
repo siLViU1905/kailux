@@ -29,24 +29,13 @@ layout (std430, set = 0, binding = 0) readonly buffer TransformBuffer {
     MeshData data[];
 } meshData;
 
-layout (std430, set = 0, binding = 1) readonly buffer InstanceIdsBuffer {
-    uint instanceIds[];
-};
-
-const uint kDirectInstances = 0xFFFFFFFFu;
-
 layout (push_constant) uniform Cascade
 {
     mat4 lightViewProjection;
-    uint instanceBase;
 };
 
 void main()
 {
-    uint objectIndex = instanceBase == kDirectInstances
-        ? uint(gl_InstanceIndex)
-        : instanceIds[instanceBase + uint(gl_InstanceIndex)];
-        
-    mat4 model = meshData.data[objectIndex].model;
+    mat4 model = meshData.data[gl_InstanceIndex].model;
     gl_Position = lightViewProjection * model * vec4(aPos, 1.0);
 }
