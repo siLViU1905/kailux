@@ -179,6 +179,7 @@ namespace kailux
         void CreateComputePicker();
         void CreateComputeCuller();
         void CreateComputeCompactor();
+        void CreateComputeShadowCuller();
 
         void CreateDirectionalShadowMap();
         void CreatePointShadowMap();
@@ -230,6 +231,9 @@ namespace kailux
             vk::Extent2D extent,
             CullingPreset preset
         ) const;
+
+        void UpdateShadowCullTargets(FrameData &frame) const;
+        void ExecuteShadowCulling(const FrameData &frame, const CommandRecorder &recorder) const;
 
         void ResizeSceneView(glm::ivec2 extent);
         void ResizeSimulationView(glm::ivec2 extent);
@@ -316,6 +320,7 @@ namespace kailux
         uint32_t                                   mPickedEntity;
         ComputeCuller                              mComputeCuller;
         ComputeCompactor                           mComputeCompactor;
+        ComputeShadowCuller                        mComputeShadowCuller;
         ShadowPass                                 mShadowPass;
 
         ShadowMap                                  mDirectionalShadowMap;
