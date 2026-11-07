@@ -360,6 +360,7 @@ namespace kailux
                 }
             );
             cmd.draw(6, range.y, 0, range.x);
+            KAILUX_PROFILE_GPU_DRAWS(GpuSection::Particles, 1);
         }
     }
 
