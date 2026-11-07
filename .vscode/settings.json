@@ -1,0 +1,18 @@
+{
+  "cmake.useCMakePresets": "always",
+  "cmake.configureOnOpen": true,
+  "cmake.buildBeforeRun": true,
+
+  "C_Cpp.intelliSenseEngine": "disabled",
+
+  "clangd.arguments": [
+    "--compile-commands-dir=${workspaceFolder}/build/debug",
+    "--background-index",
+    "--clang-tidy",
+    "--header-insertion=never"
+  ],
+
+  "files.associations": {
+    "*.klx": "json"
+  }
+}
