@@ -25,12 +25,21 @@ namespace kailux
                 vk::DescriptorType::eStorageBuffer,
                 1, // model
                 vk::ShaderStageFlagBits::eVertex
+            ),
+            DescriptorLayoutBinding(
+                vk::DescriptorType::eStorageBuffer,
+                1, // directional shadow instance ids, written by the shadow culler
+                vk::ShaderStageFlagBits::eVertex
             )
         };
         static constexpr std::array kDescriptorPoolSizes = {
             DescriptorPoolSize(
                 vk::DescriptorType::eStorageBuffer,
                 1 // model
+            ),
+             DescriptorPoolSize(
+                vk::DescriptorType::eStorageBuffer,
+                1 // directional shadow instance ids
             )
         };
         static_assert(
