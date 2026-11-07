@@ -33,7 +33,8 @@ namespace kailux
                                            mMeshEntityNameCount(other.mMeshEntityNameCount),
                                            mLightEntityNameCount(other.mLightEntityNameCount),
                                            mCameraEntityNameCount(other.mCameraEntityNameCount),
-                                           mAudioSourceEntityNameCount(other.mAudioSourceEntityNameCount)
+                                           mAudioSourceEntityNameCount(other.mAudioSourceEntityNameCount),
+                                           mParticleEmitterEntityNameCount(other.mParticleEmitterEntityNameCount)
     {
         other.mSceneCameraEntity = entt::null;
         other.mSun               = entt::null;
@@ -54,6 +55,7 @@ namespace kailux
             mLightEntityNameCount = other.mLightEntityNameCount;
             mCameraEntityNameCount = other.mCameraEntityNameCount;
             mAudioSourceEntityNameCount = other.mAudioSourceEntityNameCount;
+            mParticleEmitterEntityNameCount = other.mParticleEmitterEntityNameCount;
 
             other.mSceneCameraEntity = entt::null;
             other.mSun               = entt::null;
@@ -177,6 +179,18 @@ namespace kailux
         const auto entity{CreateEntity(name)};
 
         AttachAudioSource(entity, component, {});
+        SetLocalTransform(entity, {position});
+        mEntityRegistry.emplace<HierarchyComponent>(entity);
+
+        return entity;
+    }
+
+    Scene::CreateResult Scene::CreateParticleEmitterEntity(std::string_view name, const GizmoComponent &component,
+        const glm::vec3 &position, const ParticleEmitterSettings &settings)
+    {
+        const auto entity{CreateEntity(name)};
+
+        AttachParticleEmitter(entity, component, settings);
         SetLocalTransform(entity, {position});
         mEntityRegistry.emplace<HierarchyComponent>(entity);
 
@@ -307,6 +321,11 @@ namespace kailux
         return std::format("AudioSource{}", mAudioSourceEntityNameCount++);
     }
 
+    std::string Scene::GetParticleEmitterEntityName()
+    {
+        return std::format("ParticleEmitter{}", mParticleEmitterEntityNameCount++);
+    }
+
     void Scene::SetSavePath(const std::filesystem::path &path)
     {
         mSavePath = path;
@@ -324,6 +343,8 @@ namespace kailux
         mMeshEntityNameCount   = meta.meshNameCount;
         mLightEntityNameCount  = meta.lightNameCount;
         mCameraEntityNameCount = meta.cameraNameCount;
+        mAudioSourceEntityNameCount     = meta.audioSourceNameCount;
+        mParticleEmitterEntityNameCount = meta.particleEmitterNameCount;
     }
 
     SceneMeta Scene::GetMeta() const
@@ -334,7 +355,8 @@ namespace kailux
             mMeshEntityNameCount,
             mLightEntityNameCount,
             mCameraEntityNameCount,
-            mAudioSourceEntityNameCount
+            mAudioSourceEntityNameCount,
+            mParticleEmitterEntityNameCount
         };
     }
 
@@ -437,7 +459,31 @@ namespace kailux
             return;
 
         mEntityRegistry.remove<AudioSourceComponent>(entity);
-        if (!mEntityRegistry.any_of<PointLightData, CameraComponent>(entity))
+        if (!mEntityRegistry.any_of<PointLightData, CameraComponent, ParticleEmitterComponent>(entity))
+            mEntityRegistry.remove<GizmoComponent>(entity);
+    }
+
+    bool Scene::AttachParticleEmitter(entt::entity entity, const GizmoComponent &component,
+        const ParticleEmitterSettings &settings)
+    {
+        if (!mEntityRegistry.valid(entity)
+            || mEntityRegistry.any_of<ParticleEmitterComponent, BuiltinCamera>(entity))
+            return false;
+
+        if (!mEntityRegistry.all_of<GizmoComponent>(entity))
+            mEntityRegistry.emplace<GizmoComponent>(entity, component);
+
+        mEntityRegistry.emplace<ParticleEmitterComponent>(entity, settings);
+        return true;
+    }
+
+    void Scene::DetachParticleEmitter(entt::entity entity)
+    {
+        if (!mEntityRegistry.valid(entity))
+            return;
+
+        mEntityRegistry.remove<ParticleEmitterComponent>(entity);
+        if (!mEntityRegistry.any_of<PointLightData, CameraComponent, AudioSourceComponent>(entity))
             mEntityRegistry.remove<GizmoComponent>(entity);
     }
 

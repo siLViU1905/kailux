@@ -118,6 +118,16 @@ namespace kailux::scene_instantiator
                     }
                 );
             }
+
+            if (record.particles)
+            {
+                const GizmoComponent gizmo{
+                    gizmoRegistry.GetBuiltins().particleEmitter,
+                    0.5f,
+                    {1.f, 1.f, 1.f, 1.f}
+                };
+                scene.AttachParticleEmitter(entity, gizmo, *record.particles);
+            }
         }
 
         constexpr Version kPrimaryCameraVersion{2, 1};

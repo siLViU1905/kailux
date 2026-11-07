@@ -15,6 +15,10 @@ namespace kailux
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(SunData, directionAndIntensity, colorAndEnabled)
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(AudioSourceRecord, clip, gain, pitch, loop, playOnStart, spatial,
                                                     referenceDistance, maxDistance, rolloff)
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ParticleEmitterSettings, shape, boxExtents, confineToBox,
+                                                maxParticles, rate, emitting, lifeMin, lifeMax, direction, spread,
+                                                speedMin, speedMax, gravity, drag, turbulence, startColor, endColor,
+                                                startSize, endSize, stretch, additive)
 
     namespace details
     {
@@ -125,7 +129,8 @@ namespace kailux
             {"mesh_name_count", meta.meshNameCount},
             {"light_name_count", meta.lightNameCount},
             {"camera_name_count", meta.cameraNameCount},
-            {"audio_source_name_count", meta.audioSourceNameCount}
+            {"audio_source_name_count", meta.audioSourceNameCount},
+            {"particle_emitter_name_count", meta.particleEmitterNameCount}
         };
 
     }
@@ -137,6 +142,7 @@ namespace kailux
         meta.lightNameCount  = js.value("light_name_count", meta.lightNameCount);
         meta.cameraNameCount = js.value("camera_name_count", meta.cameraNameCount);
         meta.audioSourceNameCount = js.value("audio_source_name_count", meta.audioSourceNameCount);
+        meta.particleEmitterNameCount = js.value("particle_emitter_name_count", meta.particleEmitterNameCount);
     }
 
     inline void to_json(nlohmann::json &js, const EntityRecord &record)
@@ -157,6 +163,7 @@ namespace kailux
         details::writeOptional(js, "camera", record.camera);
         details::writeOptional(js, "script", record.script);
         details::writeOptional(js, "audio", record.audio);
+        details::writeOptional(js, "particles", record.particles);
     }
     inline void from_json(const nlohmann::json &js, EntityRecord &record)
     {
@@ -172,6 +179,7 @@ namespace kailux
         details::readOptional(js, "camera", record.camera);
         details::readOptional(js, "script", record.script);
         details::readOptional(js, "audio", record.audio);
+        details::readOptional(js, "particles", record.particles);
     }
 
     inline void to_json(nlohmann::json &js, const SceneDocument &document)
