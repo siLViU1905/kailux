@@ -423,6 +423,30 @@ namespace kailux
         return true;
     }
 
+    ParticleEmitter Entity::GetParticles() const
+    {
+        return pScene ? ParticleEmitter{*pScene, mHandle} : ParticleEmitter{};
+    }
+
+    ParticleEmitter Entity::AddParticleEmitter(const ParticleEmitterSettings &settings) const
+    {
+        if (!Valid())
+            return {};
+
+        auto& component{GetRegistry().get_or_emplace<ParticleEmitterComponent>(mHandle)};
+        component.settings = settings;
+        return ParticleEmitter{*pScene, mHandle};
+    }
+
+    bool Entity::RemoveParticleEmitter() const
+    {
+        if (!Has<ParticleEmitterComponent>())
+            return false;
+
+        pScene->DetachParticleEmitter(mHandle);
+        return true;
+    }
+
     bool Entity::AddScript(std::string_view name) const
     {
         if (!Valid() || Has<NativeScriptComponent>())

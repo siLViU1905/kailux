@@ -64,4 +64,10 @@ namespace kailux
         assert(pEngine && "Engine ptr is null!");
         return pEngine->mAudioSystem.GetMasterVolume();
     }
+
+    void ScriptServices::EmitParticles(const glm::vec3 &position, const ParticleBurst &burst) const
+    {
+        assert(pEngine && "Engine ptr is null!");
+        pEngine->EmitParticles(position, burst);
+    }
 }

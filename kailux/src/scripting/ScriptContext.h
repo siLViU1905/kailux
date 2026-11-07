@@ -34,6 +34,8 @@ namespace kailux
         void  SetMasterVolume(float volume) const;
         float GetMasterVolume() const;
 
+        void EmitParticles(const glm::vec3& position, const ParticleBurst& burst) const;
+
     private:
         Engine* pEngine{};
     };
