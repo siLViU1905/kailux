@@ -8,6 +8,7 @@
 #include "buffer/BufferAllocator.h"
 #include "components/entt/ParticleEmitterComponent.h"
 #include "components/entt/WorldTransform.h"
+#include "profiling/Profiling.h"
 #include "scene/Scene.h"
 
 namespace kailux
@@ -115,6 +116,7 @@ namespace kailux
 
     void ParticleSystem::Update(Scene &scene, float deltaTime, bool simulating)
     {
+        KAILUX_PROFILE_CPU(CpuSection::ParticleSystem);
         auto &registry{scene.GetEntityRegistry()};
 
         mSimulating = simulating;

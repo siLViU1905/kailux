@@ -877,7 +877,10 @@ namespace kailux
                     CullingPreset::SceneView
                     );
 
-            mParticleSystem.Simulate(recorder, mCurrentFrame);
+            {
+                KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuSection::Particles);
+                mParticleSystem.Simulate(recorder, mCurrentFrame);
+            }
 
             TransitionForShadowPass(frame, recorder);
             for (uint32_t view{}; view < details::kMaxCameraViews; ++view)

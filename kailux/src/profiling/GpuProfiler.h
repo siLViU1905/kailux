@@ -17,6 +17,7 @@ namespace kailux
         Gizmos,
         Outline,
         Picker,
+        Particles,
         SimulationCulling,
         SimulationView,
         Blit,
