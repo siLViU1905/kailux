@@ -216,6 +216,58 @@ namespace kailux::gizmo_geometry
         return data;
     }
 
+    GizmoData generate_particle_emitter_gizmo(glm::vec3 color)
+    {
+        GizmoData data;
+
+        constexpr float pi{std::numbers::pi_v<float>};
+
+        constexpr float thickness{0.02f};
+        constexpr float halfThickness{thickness / 2.f};
+
+        constexpr uint32_t ringSegments{12};
+        constexpr float    ringRadius{0.12f};
+
+        constexpr uint32_t rayCount{8};
+        constexpr float    rayInner{0.2f};
+        constexpr float    rayOuter{0.38f};
+
+        constexpr uint32_t dotCount{8};
+        constexpr float    dotRadius{0.5f};
+        constexpr float    dotHalfSize{0.025f};
+
+        constexpr uint32_t quadCount{ringSegments + rayCount + dotCount};
+        data.vertices.reserve(quadCount * 4);
+        data.indices.reserve(quadCount * 6);
+
+        for (uint32_t i{}; i < ringSegments; ++i)
+        {
+            const float a0{(static_cast<float>(i) / ringSegments) * 2.f * pi};
+            const float a1{(static_cast<float>(i + 1) / ringSegments) * 2.f * pi};
+            details::append_segment(data,
+                                    {std::cos(a0) * ringRadius, std::sin(a0) * ringRadius},
+                                    {std::cos(a1) * ringRadius, std::sin(a1) * ringRadius},
+                                    halfThickness, color);
+        }
+
+        for (uint32_t i{}; i < rayCount; ++i)
+        {
+            const float a{(static_cast<float>(i) / rayCount) * 2.f * pi};
+            const glm::vec2 dir{std::cos(a), std::sin(a)};
+            details::append_segment(data, dir * rayInner, dir * rayOuter, halfThickness, color);
+        }
+
+        for (uint32_t i{}; i < dotCount; ++i)
+        {
+            const float a{(static_cast<float>(i) + 0.5f) / dotCount * 2.f * pi};
+            const glm::vec2 center{std::cos(a) * dotRadius, std::sin(a) * dotRadius};
+            details::append_segment(data, center - glm::vec2{dotHalfSize, 0.f}, center + glm::vec2{dotHalfSize, 0.f},
+                                    dotHalfSize, color);
+        }
+
+        return data;
+    }
+
     void details::append_segment(GizmoData &data, glm::vec2 a, glm::vec2 b, float halfThickness, glm::vec3 color)
     {
         auto dir{b - a};
