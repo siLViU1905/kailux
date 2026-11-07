@@ -16,6 +16,7 @@ namespace kailux
         SceneRegistry,
         CameraControl,
         AudioSystem,
+        ParticleSystem,
         EngineUpdate,
         FrameWait,
         RenderRecord,

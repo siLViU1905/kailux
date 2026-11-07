@@ -13,6 +13,7 @@
 #include "components/math/Transform.h"
 #include "physics/PhysicsTypes.h"
 #include "audio/AudioRegistry.h"
+#include "particles/ParticleTypes.h"
 
 namespace kailux
 {
@@ -21,7 +22,7 @@ namespace kailux
         uint8_t major{};
         uint8_t minor{};
     };
-    constexpr Version kSceneVersion{4, 2};
+    constexpr Version kSceneVersion{5, 0};
 
     constexpr uint32_t kNoEntity{~0u};
 
@@ -89,17 +90,18 @@ namespace kailux
 
     struct EntityRecord
     {
-        uint32_t                         id{kNoEntity};
-        uint32_t                         parent{kNoEntity};
-        std::string                      name;
-        std::optional<Transform>         transform{};
-        std::optional<MeshRecord>        mesh;
-        std::optional<MeshMaterialData>  material;
-        std::optional<PointLightRecord>  light;
-        std::optional<PhysicsRecord>     physics;
-        std::optional<CameraComponent>   camera;
-        std::optional<ScriptRecord>      script;
-        std::optional<AudioSourceRecord> audio;
+        uint32_t                               id{kNoEntity};
+        uint32_t                               parent{kNoEntity};
+        std::string                            name;
+        std::optional<Transform>               transform{};
+        std::optional<MeshRecord>              mesh;
+        std::optional<MeshMaterialData>        material;
+        std::optional<PointLightRecord>        light;
+        std::optional<PhysicsRecord>           physics;
+        std::optional<CameraComponent>         camera;
+        std::optional<ScriptRecord>            script;
+        std::optional<AudioSourceRecord>       audio;
+        std::optional<ParticleEmitterSettings> particles;
     };
 
     struct SceneMeta
@@ -110,6 +112,7 @@ namespace kailux
         uint32_t              lightNameCount{};
         uint32_t              cameraNameCount{};
         uint32_t              audioSourceNameCount{};
+        uint32_t              particleEmitterNameCount{};
     };
 
     struct SceneDocument

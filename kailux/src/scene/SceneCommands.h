@@ -36,6 +36,8 @@ namespace kailux::scene_commands
 
     struct SpawnAudioSource {};
 
+    struct SpawnParticleEmitter {};
+
     struct DeleteEntity
     {
         entt::entity entity{entt::null};
@@ -70,6 +72,16 @@ namespace kailux::scene_commands
         entt::entity entity{entt::null};
     };
 
+    struct AddParticleEmitter
+    {
+        entt::entity entity{entt::null};
+    };
+
+    struct RemoveParticleEmitter
+    {
+        entt::entity entity{entt::null};
+    };
+
     struct SetBodyType
     {
         entt::entity    entity{entt::null};
@@ -98,12 +110,15 @@ namespace kailux
          scene_commands::SpawnLight,
          scene_commands::SpawnCamera,
          scene_commands::SpawnAudioSource,
+         scene_commands::SpawnParticleEmitter,
          scene_commands::DeleteEntity,
          scene_commands::RenameEntity,
          scene_commands::SetTransform,
          scene_commands::AddPhysics,
          scene_commands::AddAudioSource,
          scene_commands::RemoveAudioSource,
+         scene_commands::AddParticleEmitter,
+         scene_commands::RemoveParticleEmitter,
          scene_commands::SetBodyType,
          scene_commands::SetBodyMass,
          scene_commands::LoadScene

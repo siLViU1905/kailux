@@ -45,6 +45,8 @@ namespace kailux
         void  SetMasterVolume(float volume);
         float GetMasterVolume() const;
 
+        void EmitParticles(const glm::vec3& position, const ParticleBurst& burst = {});
+
     private:
         void Bind(Scene& scene, ScriptServices& services);
         void SetViewportSize(glm::ivec2 size);

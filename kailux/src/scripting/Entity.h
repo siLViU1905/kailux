@@ -3,6 +3,7 @@
 #include <entt/entt.hpp>
 
 #include "AudioSource.h"
+#include "ParticleEmitter.h"
 #include "components/math/Transform.h"
 #include "components/gpu/MeshMaterialData.h"
 
@@ -166,6 +167,10 @@ namespace kailux
 
         AudioSource AddAudioSource(const std::filesystem::path& clip, const AudioSourceSettings& settings = {}) const;
         bool RemoveAudioSource() const;
+
+        ParticleEmitter GetParticles() const;
+        ParticleEmitter AddParticleEmitter(const ParticleEmitterSettings& settings = {}) const;
+        bool            RemoveParticleEmitter() const;
 
         template<typename T>
         T* GetScript() const

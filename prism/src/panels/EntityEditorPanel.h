@@ -35,6 +35,9 @@ namespace kailux
         using OnRemoveAudioSource = std::move_only_function<void(entt::entity)>;
         void  SetOnRemoveAudioSource(OnRemoveAudioSource&& callback);
 
+        using OnRemoveParticleEmitter = std::move_only_function<void(entt::entity)>;
+        void  SetOnRemoveParticleEmitter(OnRemoveParticleEmitter&& callback);
+
     private:
         static constexpr std::array<std::string_view, 3> kOperations{"Move", "Rotate", "Scale"};
         static constexpr std::array                      kOperationValues{ImGuizmo::TRANSLATE, ImGuizmo::ROTATE, ImGuizmo::SCALE};
@@ -51,6 +54,7 @@ namespace kailux
         void RenderPointLightProperties(entt::registry &registry) const;
         void RenderCameraProperties(Scene &scene) const;
         void RenderAudioSourceProperties(Scene &scene);
+        void RenderParticleEmitterProperties(Scene &scene);
 
         static void propagate_material_to_children(Scene &scene, entt::entity entity, const MeshMaterialData& material);
 
@@ -67,9 +71,10 @@ namespace kailux
         bool                mGizmoWasDragging;
         bool                mSimulationRunning;
 
-        OnTransformChange   mOnTransformChange;
-        OnBodyTypeChange    mOnBodyTypeChange;
-        OnBodyMassChange    mOnBodyMassChange;
-        OnRemoveAudioSource mOnRemoveAudioSource;
+        OnTransformChange       mOnTransformChange;
+        OnBodyTypeChange        mOnBodyTypeChange;
+        OnBodyMassChange        mOnBodyMassChange;
+        OnRemoveAudioSource     mOnRemoveAudioSource;
+        OnRemoveParticleEmitter mOnRemoveParticleEmitter;
     };
 }

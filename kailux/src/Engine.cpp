@@ -89,6 +89,7 @@ namespace kailux
                                               mComputeCuller(std::move(other.mComputeCuller)),
                                               mComputeCompactor(std::move(other.mComputeCompactor)),
                                               mShadowPass(std::move(other.mShadowPass)),
+                                              mParticleSystem(std::move(other.mParticleSystem)),
                                               mDirectionalShadowMap(std::move(other.mDirectionalShadowMap)),
                                               mPointShadowMap(std::move(other.mPointShadowMap)),
                                               mDirectionalShadowSets(other.mDirectionalShadowSets),
@@ -151,6 +152,7 @@ namespace kailux
             mComputeCuller = std::move(other.mComputeCuller);
             mComputeCompactor = std::move(other.mComputeCompactor);
             mShadowPass = std::move(other.mShadowPass);
+            mParticleSystem = std::move(other.mParticleSystem);
             mDirectionalShadowMap = std::move(other.mDirectionalShadowMap);
             mPointShadowMap = std::move(other.mPointShadowMap);
             mDirectionalShadowSets = other.mDirectionalShadowSets;
@@ -224,6 +226,7 @@ namespace kailux
         engine.CreateAssetPipeline();
         engine.CreatePhysicsSystem();
         engine.CreateAudioSystem();
+        engine.CreateParticleSystem();
         engine.CreateScriptSystem();
 
         KAILUX_PROFILE_GPU_INIT(engine.mContext);
@@ -597,6 +600,11 @@ namespace kailux
         });
     }
 
+    void Engine::CreateParticleSystem()
+    {
+        mParticleSystem = ParticleSystem::create(mContext, mSwapchain, mFrames);
+    }
+
     void Engine::CreateScriptSystem()
     {
         mScriptSystem = {};
@@ -869,6 +877,11 @@ namespace kailux
                     CullingPreset::SceneView
                     );
 
+            {
+                KAILUX_PROFILE_GPU(recorder.GetCommandBuffer(), GpuSection::Particles);
+                mParticleSystem.Simulate(recorder, mCurrentFrame);
+            }
+
             TransitionForShadowPass(frame, recorder);
             for (uint32_t view{}; view < details::kMaxCameraViews; ++view)
                 RecordDirectionalShadows(frame, recorder, view);
@@ -958,6 +971,7 @@ namespace kailux
         mPhysicsSystem.AttachToScene(scene);
         mAudioSystem.AttachToScene(scene);
         ScriptSystem::connect(scene);
+        mParticleSystem.Reset();
 
         std::unordered_set<std::string> loadedPaths;
         for (const auto &request : meshRequests)
@@ -995,6 +1009,7 @@ namespace kailux
         mPhysicsSystem.DestroyAllBodies();
         mAudioSystem.SetSimulationState(scene, SimulationState::Paused);
         mAudioSystem.DetachScene(scene);
+        mParticleSystem.Reset();
         SetControlledCamera(entt::null, {});
     }
 
@@ -1904,6 +1919,12 @@ namespace kailux
 
         RecordMeshData(frame, recorder, details::kSimulationViewCameraIndex, false);
         RecordSkybox(frame, recorder, details::kSimulationViewCameraIndex, simulationView.IsMultisampled());
+        mParticleSystem.Draw(
+            recorder.GetCommandBuffer(),
+            mCurrentFrame,
+            details::kSimulationViewCameraIndex,
+            simulationView.IsMultisampled()
+        );
         KAILUX_PROFILE_GPU_DRAWS(GpuSection::SimulationView, 1);
 
         recorder.EndRendering();
@@ -2114,6 +2135,12 @@ namespace kailux
 
         RecordMeshData(frame, recorder, details::kSceneViewCameraIndex, true);
         RecordSkybox(frame, recorder, details::kSceneViewCameraIndex, sceneView.IsMultisampled());
+        mParticleSystem.Draw(
+            recorder.GetCommandBuffer(),
+            mCurrentFrame,
+            details::kSceneViewCameraIndex,
+            sceneView.IsMultisampled()
+        );
         KAILUX_PROFILE_GPU_DRAWS(GpuSection::ScenePass, 1);
 
         recorder.EndRendering();
@@ -2225,6 +2252,12 @@ namespace kailux
         UpdateControlledCamera(scene, deltaTime);
 
         mAudioSystem.Update(scene, deltaTime);
+
+        mParticleSystem.Update(
+            scene,
+            deltaTime,
+            mPhysicsSystem.GetSimulationState() == SimulationState::Running
+        );
     }
 
     void Engine::UpdateFrameBuffers(const Scene &scene, FrameData &frame, const RenderTarget &sceneView, const CommandRecorder &recorder)
@@ -2441,6 +2474,41 @@ namespace kailux
             },
             {}
         );
+    }
+
+    void Engine::AddParticleEmitterEntity(Scene &scene, const ParticleEmitterSettings &settings)
+    {
+        if (const auto emitter{
+            scene.CreateParticleEmitterEntity(
+                scene.GetParticleEmitterEntityName(),
+                {
+                    mGizmoRegistry.GetBuiltins().particleEmitter,
+                    0.5f,
+                    {1.f, 1.f, 1.f, 1.f}
+                },
+                {},
+                settings
+            )
+        }; !emitter)
+            mOnWarningLog(emitter.error());
+    }
+
+    bool Engine::AddParticleEmitterToEntity(Scene &scene, entt::entity entity, const ParticleEmitterSettings &settings)
+    {
+        return scene.AttachParticleEmitter(
+            entity,
+            {
+                mGizmoRegistry.GetBuiltins().particleEmitter,
+                0.5f,
+                {1.f, 1.f, 1.f, 1.f}
+            },
+            settings
+        );
+    }
+
+    void Engine::EmitParticles(const glm::vec3 &position, const ParticleBurst &burst)
+    {
+        mParticleSystem.QueueBurst(position, burst);
     }
 
     DeviceInfo Engine::GetDeviceInfo() const

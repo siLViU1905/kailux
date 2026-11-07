@@ -1,4 +1,5 @@
 #pragma once
+#include "../Core.h"
 
 namespace kailux::compute_pass_push_constants
 {
@@ -29,5 +30,13 @@ namespace kailux::compute_pass_push_constants
     {
         uint32_t                commandCount{};
         std::array<uint32_t, 3> _padding{};
+    };
+
+    struct ParticleSimulation
+    {
+        float    deltaTime{};
+        float    time{};
+        uint32_t seed{};
+        uint32_t emitterCount{};
     };
 }

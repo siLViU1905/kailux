@@ -33,12 +33,15 @@ namespace kailux
             void operator()(scene_commands::SpawnLight &command) const;
             void operator()(scene_commands::SpawnCamera &command) const;
             void operator()(scene_commands::SpawnAudioSource &) const;
+            void operator()(scene_commands::SpawnParticleEmitter &) const;
             void operator()(scene_commands::DeleteEntity &command) const;
             void operator()(scene_commands::RenameEntity &command) const;
             void operator()(scene_commands::SetTransform &command) const;
             void operator()(scene_commands::AddPhysics &command) const;
             void operator()(scene_commands::AddAudioSource &command) const;
             void operator()(scene_commands::RemoveAudioSource &command) const;
+            void operator()(scene_commands::AddParticleEmitter &command) const;
+            void operator()(scene_commands::RemoveParticleEmitter &command) const;
             void operator()(scene_commands::SetBodyType &command) const;
             void operator()(scene_commands::SetBodyMass &command) const;
             void operator()(scene_commands::LoadScene &command) const;

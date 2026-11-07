@@ -43,6 +43,8 @@ add_library(kailux STATIC
         src/passes/ComputeCuller.cpp
         src/passes/ComputeCompactor.cpp
         src/passes/ShadowPass.cpp
+        src/passes/ComputeParticle.cpp
+        src/passes/ParticlePass.cpp
         src/Geometry.cpp
         src/physics/impl/BroadPhaseLayer.cpp
         src/physics/impl/ObjectVsBroadPhaseLayerFilter.cpp
@@ -83,6 +85,7 @@ add_library(kailux STATIC
         src/scripting/ScriptRegistry.cpp
         src/scripting/CameraRef.cpp
         src/scripting/AudioSource.cpp
+        src/scripting/ParticleEmitter.cpp
         src/layers/Layer.cpp
         src/layers/LayerStack.cpp
         src/Application.cpp
@@ -91,6 +94,7 @@ add_library(kailux STATIC
         src/audio/AudioLoader.cpp
         src/audio/AudioRegistry.cpp
         src/audio/AudioSystem.cpp
+        src/particles/ParticleSystem.cpp
 )
 
 set_source_files_properties(

@@ -176,6 +176,12 @@ namespace kailux
         return pServices->GetMasterVolume();
     }
 
+    void World::EmitParticles(const glm::vec3 &position, const ParticleBurst &burst)
+    {
+        if (pServices)
+            pServices->EmitParticles(position, burst);
+    }
+
     void World::Bind(Scene &scene, ScriptServices& services)
     {
         pScene = std::addressof(scene);

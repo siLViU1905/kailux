@@ -6,6 +6,7 @@
 #include "SceneDocumentJson.h"
 #include "AssetPaths.h"
 #include "components/entt/AudioSourceComponent.h"
+#include "components/entt/ParticleEmitterComponent.h"
 #include "components/entt/BuiltinCamera.h"
 #include "components/entt/HierarchyComponent.h"
 #include "components/entt/LocalTransform.h"
@@ -108,6 +109,9 @@ namespace kailux::scene_serializer
 
             if (const auto *audio = registry.try_get<AudioSourceComponent>(entity))
                 record.audio = AudioSourceRecord::from(audio->clip, audio->settings);
+
+            if (const auto *emitter = registry.try_get<ParticleEmitterComponent>(entity))
+                record.particles = emitter->settings;
 
             document.entities.push_back(std::move(record));
         }

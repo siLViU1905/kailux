@@ -43,6 +43,12 @@ namespace kailux
         using OnAddAudioSource = std::move_only_function<void(entt::entity)>;
         void  SetOnAddAudioSource(OnAddAudioSource&& callback);
 
+        using OnNewParticleEmitter = std::move_only_function<void()>;
+        void  SetOnNewParticleEmitter(OnNewParticleEmitter&& callback);
+
+        using OnAddParticleEmitter = std::move_only_function<void(entt::entity)>;
+        void  SetOnAddParticleEmitter(OnAddParticleEmitter&& callback);
+
         void         SelectEntity(entt::entity entity);
         entt::entity GetSelectedEntity() const;
 
@@ -62,6 +68,7 @@ namespace kailux
 
         static bool can_attach_physics(const entt::registry &registry, entt::entity entity);
         static bool can_attach_audio(const Scene& scene, entt::entity entity);
+        static bool can_attach_particles(const Scene& scene, entt::entity entity);
 
         void ValidateSelection(const Scene &scene);
         void RenderRenamePopup(const entt::registry &registry, entt::entity entity);
@@ -79,6 +86,8 @@ namespace kailux
         OnAddPhysics     mOnAddPhysics;
         OnNewAudioSource mOnNewAudioSource;
         OnAddAudioSource mOnAddAudioSource;
+        OnNewParticleEmitter mOnNewParticleEmitter;
+        OnAddParticleEmitter mOnAddParticleEmitter;
         entt::entity     mSelectedEntity;
         entt::entity     mLastSelectedEntity{entt::null};
         entt::entity     mPendingDeleteEntity{entt::null};

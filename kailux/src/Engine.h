@@ -28,6 +28,7 @@
 #include "components/gpu/CameraData.h"
 #include "gizmo/GizmoRegistry.h"
 #include "passes/GizmoPass.h"
+#include "particles/ParticleSystem.h"
 #include "scripting/ScriptSystem.h"
 #include "shadow/DirectionalShadowSet.h"
 #include "shadow/PointShadowSet.h"
@@ -134,6 +135,10 @@ namespace kailux
         void AddAudioSourceEntity(Scene& scene);
         bool AddAudioSourceToEntity(Scene& scene, entt::entity entity);
 
+        void AddParticleEmitterEntity(Scene& scene, const ParticleEmitterSettings& settings = {});
+        bool AddParticleEmitterToEntity(Scene& scene, entt::entity entity, const ParticleEmitterSettings& settings = {});
+        void EmitParticles(const glm::vec3& position, const ParticleBurst& burst);
+
         DeviceInfo GetDeviceInfo() const;
 
         void SetRenderScale(float scale);
@@ -170,6 +175,7 @@ namespace kailux
         void CreateAssetPipeline();
         void CreatePhysicsSystem();
         void CreateAudioSystem();
+        void CreateParticleSystem();
         void CreateScriptSystem();
         void CreateImGui(Window& window);
 
@@ -317,6 +323,7 @@ namespace kailux
         ComputeCuller                              mComputeCuller;
         ComputeCompactor                           mComputeCompactor;
         ShadowPass                                 mShadowPass;
+        ParticleSystem                             mParticleSystem;
 
         ShadowMap                                  mDirectionalShadowMap;
         ShadowMap                                  mPointShadowMap;

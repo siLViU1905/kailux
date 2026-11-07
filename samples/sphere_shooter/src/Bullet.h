@@ -16,6 +16,11 @@ namespace sphere_shooter
         static constexpr float             kLoudSpeed{15.f};
         static constexpr float             kCooldown{0.08f};
 
+        static constexpr float             kMinSparks{8.f};
+        static constexpr float             kMaxSparks{48.f};
+        static constexpr float             kSparkSpeed{7.f};
+        static constexpr glm::vec4         kSparkColor{1.f, 0.65f, 0.25f, 1.f};
+
         float mLastBounce{-1.f};
     };
 }

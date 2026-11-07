@@ -11,6 +11,7 @@
 #include "project_panel/ProjectPanel.h"
 #include "../UIWidgets.h"
 #include "components/entt/AudioSourceComponent.h"
+#include "components/entt/ParticleEmitterComponent.h"
 #include "components/entt/BuiltinCamera.h"
 #include "components/entt/WorldTransform.h"
 
@@ -91,6 +92,9 @@ namespace kailux
 
                     if (ImGui::MenuItem("Audio source"))
                         mOnNewAudioSource();
+
+                    if (ImGui::MenuItem("Particle emitter"))
+                        mOnNewParticleEmitter();
 
                     ImGui::EndMenu();
                 }
@@ -178,6 +182,16 @@ namespace kailux
         mOnAddAudioSource = std::move(callback);
     }
 
+    void HierarchyPanel::SetOnNewParticleEmitter(OnNewParticleEmitter &&callback)
+    {
+        mOnNewParticleEmitter = std::move(callback);
+    }
+
+    void HierarchyPanel::SetOnAddParticleEmitter(OnAddParticleEmitter &&callback)
+    {
+        mOnAddParticleEmitter = std::move(callback);
+    }
+
     void HierarchyPanel::SelectEntity(entt::entity entity)
     {
         mSelectedEntity = entity;
@@ -219,6 +233,14 @@ namespace kailux
         return entity != scene.GetSun()
                && registry.all_of<WorldTransform>(entity)
                && !registry.any_of<AudioSourceComponent, BuiltinCamera>(entity);
+    }
+
+    bool HierarchyPanel::can_attach_particles(const Scene &scene, entt::entity entity)
+    {
+        const auto& registry{scene.GetEntityRegistry()};
+        return entity != scene.GetSun()
+               && registry.all_of<WorldTransform>(entity)
+               && !registry.any_of<ParticleEmitterComponent, BuiltinCamera>(entity);
     }
 
     void HierarchyPanel::ValidateSelection(const Scene &scene)
@@ -343,6 +365,10 @@ namespace kailux
             if (can_attach_audio(scene, entity)
                 && ImGui::MenuItem("Add audio source"))
                 mOnAddAudioSource(entity);
+
+            if (can_attach_particles(scene, entity)
+                && ImGui::MenuItem("Add particle emitter"))
+                mOnAddParticleEmitter(entity);
 
             ImGui::EndPopup();
         }

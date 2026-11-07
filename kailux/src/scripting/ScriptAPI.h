@@ -1,6 +1,7 @@
 #pragma once
 #include "CameraRef.h"
 #include "AudioSource.h"
+#include "ParticleEmitter.h"
 #include "Entity.h"
 #include "Input.h"
 #include "Log.h"
