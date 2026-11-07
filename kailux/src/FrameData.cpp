@@ -767,7 +767,7 @@ namespace kailux
 
     void FrameData::CreateDirectionalShadowBuffer(const Context &context)
     {
-        mDirectionalShadowCommandsBuffer = buffer_allocator::alloc_host(
+        mDirectionalShadowCommandsBuffer = buffer_allocator::alloc_local(
             context,
             details::kDirectionalShadowDrawLists * details::kMaxMeshes * sizeof(vk::DrawIndexedIndirectCommand),
             vk::BufferUsageFlagBits::eIndirectBuffer |
