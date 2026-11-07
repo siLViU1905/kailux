@@ -12,7 +12,7 @@ void main()
     if (d >= 1.0)
         discard;
 
-    float coverage = 1.0 - smoothStep(0.35, 1.0, d);
+    float coverage = 1.0 - smoothstep(0.35, 1.0, d);
     float alpha    = fragColor.a * coverage;
     
     outColor = vec4(fragColor.rgb * alpha, fragAdditive > 0.5 ? 0.0 : alpha);
