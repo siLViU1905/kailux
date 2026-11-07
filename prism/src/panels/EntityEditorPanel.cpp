@@ -15,6 +15,8 @@
 #include "audio/AudioLoader.h"
 #include "imgui_backend/misc/imgui_stdlib.h"
 #include "components/entt/AudioSourceComponent.h"
+#include "components/entt/ParticleEmitterComponent.h"
+#include "particles/ParticleSystem.h"
 #include "project_panel/AssetBrowser.h"
 
 namespace kailux
@@ -90,6 +92,9 @@ namespace kailux
             if (registry.all_of<AudioSourceComponent>(mSelectedEntity))
                 RenderAudioSourceProperties(scene);
 
+            if (registry.all_of<ParticleEmitterComponent>(mSelectedEntity))
+                RenderParticleEmitterProperties(scene);
+
             ImGui::EndDisabled();
         }
         ImGui::End();
@@ -141,6 +146,11 @@ namespace kailux
     void EntityEditorPanel::SetOnRemoveAudioSource(OnRemoveAudioSource &&callback)
     {
         mOnRemoveAudioSource = std::move(callback);
+    }
+
+    void EntityEditorPanel::SetOnRemoveParticleEmitter(OnRemoveParticleEmitter &&callback)
+    {
+        mOnRemoveParticleEmitter = std::move(callback);
     }
 
     void EntityEditorPanel::RenderGizmo(Scene &scene)
@@ -201,6 +211,7 @@ namespace kailux
         else if (registry.all_of<PointLightData>(mSelectedEntity))  kind = "Point light";
         else if (registry.all_of<CameraComponent>(mSelectedEntity)) kind = "Camera";
         else if (registry.all_of<MeshComponent>(mSelectedEntity))   kind = "Mesh";
+        else if (registry.all_of<ParticleEmitterComponent>(mSelectedEntity)) kind = "Particle emitter";
 
         ImGui::SetWindowFontScale(1.15f);
         ImGui::TextUnformatted(name.c_str());
@@ -496,6 +507,105 @@ namespace kailux
          widgets::end_properties();
         if (remove)
             mOnRemoveAudioSource(mSelectedEntity);
+    }
+
+    void EntityEditorPanel::RenderParticleEmitterProperties(Scene &scene)
+    {
+        if (!widgets::section("Particle emitter"))
+            return;
+
+        auto &settings = scene.GetEntityRegistry().get<ParticleEmitterComponent>(mSelectedEntity).settings;
+
+        if (!widgets::begin_properties("##particle_emitter"))
+            return;
+
+        widgets::property("Preset");
+        {
+            const float width{(ImGui::GetContentRegionAvail().x - 2.f * ImGui::GetStyle().ItemSpacing.x) / 3.f};
+            if (ImGui::Button("Sparks", ImVec2(width, 0.f)))
+                settings = particle_presets::sparks();
+            ImGui::SameLine();
+            if (ImGui::Button("Rain", ImVec2(width, 0.f)))
+                settings = particle_presets::rain();
+            ImGui::SameLine();
+            if (ImGui::Button("Snow", ImVec2(width, 0.f)))
+                settings = particle_presets::snow();
+        }
+
+        widgets::property("Emitting");
+        ImGui::Checkbox("##emitting", &settings.emitting);
+
+        widgets::property("Shape");
+        int shape{static_cast<int>(settings.shape)};
+        if (ImGui::Combo("##shape", &shape, "Point\0Box\0"))
+            settings.shape = static_cast<ParticleShape>(shape);
+
+        if (settings.shape == ParticleShape::Box)
+        {
+            widgets::property("Box extents");
+            ImGui::DragFloat3("##box_extents", &settings.boxExtents.x, 0.1f, 0.f, FLT_MAX, "%.1f");
+            ImGui::SetItemTooltip("Half size of the box around the emitter, in world units");
+
+            widgets::property("Confine to box");
+            ImGui::Checkbox("##confine", &settings.confineToBox);
+            ImGui::SetItemTooltip("Particles that leave the box die. Parent the emitter to the camera for rain or snow that follows it");
+        }
+
+        widgets::property("Max particles");
+        int maxParticles{static_cast<int>(settings.maxParticles)};
+        if (ImGui::DragInt("##max_particles", &maxParticles, 10.f, 1, static_cast<int>(ParticleSystem::kMaxParticles)))
+            settings.maxParticles = static_cast<uint32_t>(std::max(maxParticles, 1));
+        ImGui::SetItemTooltip("Changing it restarts every emitter of the scene");
+
+        widgets::property("Rate");
+        ImGui::DragFloat("##rate", &settings.rate, 1.f, 0.f, FLT_MAX, "%.0f / s");
+
+        widgets::property("Lifetime");
+        ImGui::DragFloatRange2("##life", &settings.lifeMin, &settings.lifeMax, 0.01f, 0.01f, 60.f, "%.2f s", "%.2f s");
+
+        widgets::property("Direction");
+        ImGui::DragFloat3("##direction", &settings.direction.x, 0.01f, -1.f, 1.f, "%.2f");
+
+        widgets::property("Spread");
+        ImGui::SliderFloat("##spread", &settings.spread, 0.f, 180.f, "%.0f deg");
+
+        widgets::property("Speed");
+        ImGui::DragFloatRange2("##speed", &settings.speedMin, &settings.speedMax, 0.05f, 0.f, FLT_MAX, "%.2f", "%.2f");
+
+        widgets::property("Gravity");
+        ImGui::DragFloat3("##gravity", &settings.gravity.x, 0.05f, -FLT_MAX, FLT_MAX, "%.2f");
+
+        widgets::property("Drag");
+        ImGui::DragFloat("##drag", &settings.drag, 0.01f, 0.f, 20.f, "%.2f");
+
+        widgets::property("Turbulence");
+        ImGui::DragFloat("##turbulence", &settings.turbulence, 0.01f, 0.f, 20.f, "%.2f");
+
+        widgets::property("Start color");
+        ImGui::ColorEdit4("##start_color", &settings.startColor.x);
+
+        widgets::property("End color");
+        ImGui::ColorEdit4("##end_color", &settings.endColor.x);
+
+        widgets::property("Start size");
+        ImGui::DragFloat("##start_size", &settings.startSize, 0.001f, 0.f, 10.f, "%.3f");
+
+        widgets::property("End size");
+        ImGui::DragFloat("##end_size", &settings.endSize, 0.001f, 0.f, 10.f, "%.3f");
+
+        widgets::property("Stretch");
+        ImGui::DragFloat("##stretch", &settings.stretch, 0.001f, 0.f, 1.f, "%.3f");
+        ImGui::SetItemTooltip("Streaks along the velocity, for rain or fast sparks. 0 keeps the particles round");
+
+        widgets::property("Additive");
+        ImGui::Checkbox("##additive", &settings.additive);
+        ImGui::SetItemTooltip("Additive for sparks and fire, off for snow, rain or smoke");
+
+        widgets::property("");
+        const bool remove{ImGui::Button("Remove particle emitter", ImVec2(-FLT_MIN, 0.f))};
+        widgets::end_properties();
+        if (remove)
+            mOnRemoveParticleEmitter(mSelectedEntity);
     }
 
     void EntityEditorPanel::propagate_material_to_children(Scene &scene, entt::entity entity,

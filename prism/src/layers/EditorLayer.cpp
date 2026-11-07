@@ -159,6 +159,14 @@ namespace kailux
         {
             mSceneCommands.Submit(scene_commands::AddAudioSource{entity});
         });
+        hierarchyPanel.SetOnNewParticleEmitter([this]()
+        {
+            mSceneCommands.Submit(scene_commands::SpawnParticleEmitter{});
+        });
+        hierarchyPanel.SetOnAddParticleEmitter([this](auto entity)
+        {
+            mSceneCommands.Submit(scene_commands::AddParticleEmitter{entity});
+        });
 
         auto& menuPanel{GetPanel<MenuPanel>()};
         menuPanel.SetOnSceneSave([this](const auto& path)
@@ -226,6 +234,10 @@ namespace kailux
         entityEditor.SetOnRemoveAudioSource([this](auto entity)
         {
             mSceneCommands.Submit(scene_commands::RemoveAudioSource{entity});
+        });
+        entityEditor.SetOnRemoveParticleEmitter([this](auto entity)
+        {
+            mSceneCommands.Submit(scene_commands::RemoveParticleEmitter{entity});
         });
 
         auto& viewportPanel{GetPanel<ViewportPanel>()};
