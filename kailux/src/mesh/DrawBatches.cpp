@@ -74,6 +74,26 @@ namespace kailux
         }
     }
 
+    void DrawBatches::WriteShadowCommands(std::span<vk::DrawIndexedIndirectCommand> commands,
+        const MeshRegistry &meshRegistry) const
+    {
+        for (uint32_t cascade{}; cascade < details::kShadowCascadeCount; ++cascade)
+        {
+            for (uint32_t batchIndex{}; batchIndex < mBatches.size(); ++batchIndex)
+            {
+                const auto& batch{mBatches[batchIndex]};
+                const auto meshView{meshRegistry.View(batch.meshHandle, cascade)};
+                commands[cascade * details::kMaxMeshes + batchIndex] = vk::DrawIndexedIndirectCommand{
+                    meshView.indexCount,
+                    0,
+                    meshView.firstIndex,
+                    meshView.vertexOffset,
+                    batch.firstObject
+                };
+            }
+        }
+    }
+
     std::span<const DrawBatches::Batch> DrawBatches::GetBatches() const
     {
         return mBatches;
