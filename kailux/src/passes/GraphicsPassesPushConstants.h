@@ -20,4 +20,10 @@ namespace kailux::graphics_pass_push_constants
     {
         glm::mat4 viewProjection{1.f};
     };
+
+    struct Particles
+    {
+        uint32_t emitterIndex{};
+        uint32_t cameraIdx{};
+    };
 }
