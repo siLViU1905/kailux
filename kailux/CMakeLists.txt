@@ -44,6 +44,7 @@ add_library(kailux STATIC
         src/passes/ComputeCompactor.cpp
         src/passes/ShadowPass.cpp
         src/passes/ComputeParticle.cpp
+        src/passes/ParticlePass.cpp
         src/Geometry.cpp
         src/physics/impl/BroadPhaseLayer.cpp
         src/physics/impl/ObjectVsBroadPhaseLayerFilter.cpp
