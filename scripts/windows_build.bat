@@ -50,12 +50,12 @@ if %DO_CLEAN%==1 (
     )
 )
 
-set TOOLCHAIN=%PROJECT_ROOT%\build\build\%BUILD_TYPE%\generators\conan_toolchain.cmake
-set VCVARS=%PROJECT_ROOT%\build\build\%BUILD_TYPE%\generators\conanbuild.bat
+set TOOLCHAIN=%PROJECT_ROOT%\build\%BUILD_SUBDIR%\build\%BUILD_TYPE%\generators\conan_toolchain.cmake
+set VCVARS=%PROJECT_ROOT%\build\%BUILD_SUBDIR%\build\%BUILD_TYPE%\generators\conanbuild.bat
 
 if not exist "%TOOLCHAIN%" (
     echo [INFO] Conan install: %BUILD_TYPE%...
-    conan install . --output-folder=build --build=missing ^
+    conan install . --output-folder=build\%BUILD_SUBDIR% --build=missing ^
         -s build_type=%BUILD_TYPE% ^
         -s compiler.cppstd=23 ^
         -c tools.cmake.cmaketoolchain:generator=Ninja
