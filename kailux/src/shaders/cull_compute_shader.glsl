@@ -27,7 +27,8 @@ struct MeshData
 
     uint id;
     uint lodCount;
-    uint __padding[2];
+    uint batchIndex;
+    uint __padding;
 };
 
 
@@ -36,19 +37,14 @@ layout (std430, binding = 0) readonly buffer ModelBuffer
     MeshData objects[];
 };
 
-layout (std430, binding = 1) readonly buffer InputCommandsBuffer
+layout (std430, binding = 1) buffer BatchCommandsBuffer
 {
-    IndexedIndirectCommand inputCommands[];
+    IndexedIndirectCommand batchCommands[];
 };
 
-layout (std430, binding = 2) writeonly buffer IndirectDrawBuffer
+layout (std430, binding = 2) writeonly buffer InstanceIdsBuffer
 {
-    IndexedIndirectCommand outputCommands[];
-};
-
-layout (std430, binding = 3) buffer CommandCountBuffer
-{
-    uint drawCount;
+    uint instanceIds[];
 };
 
 layout (push_constant) uniform CullParams
@@ -71,7 +67,8 @@ layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
 #define kMaxGeometryLod 5
 
-void main() {
+void main() 
+{
     uint gId = gl_GlobalInvocationID.x;
 
     uint totalObjects = uint(params.x);
@@ -110,8 +107,8 @@ void main() {
             lod = i;
         }
 
-        uint drawIndex = atomicAdd(drawCount, 1);
-        outputCommands[drawIndex] = inputCommands[gId * kMaxGeometryLod + lod];
-        outputCommands[drawIndex].firstInstance = gId;
+        uint command = objects[gId].batchIndex * kMaxGeometryLod + lod;
+        uint slot = atomicAdd(batchCommands[command].instanceCount, 1);
+        instanceIds[batchCommands[command].firstInstance + slot] = gId;
     }
 }

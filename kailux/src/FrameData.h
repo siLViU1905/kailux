@@ -6,6 +6,9 @@
 #include "command/CommandRecorder.h"
 #include "descriptor/DescriptorSet.h"
 #include "passes/ComputeCuller.h"
+#include "passes/ComputeCompactor.h"
+#include "passes/ComputeShadowCuller.h"
+#include "mesh/DrawBatches.h"
 #include "texture/Texture.h"
 #include "texture/TextureRegistry.h"
 #include "passes/ComputePicker.h"
@@ -19,11 +22,11 @@ namespace kailux
 {
     struct MeshUploadState
     {
-        std::vector<uint32_t> commandMeshes;
-        uint64_t              meshGeneration{~0ull};
-        uint64_t              materialGeneration{~0ull};
+        DrawBatches batches;
+        uint32_t    objectCount{};
 
-        std::array<uint32_t, details::kDirectionalShadowDrawLists> directionalShadowDrawCounts{};
+        uint64_t materialGeneration{~0ull};
+
         std::array<uint32_t, details::kPointShadowDrawLists> pointShadowDrawCounts{};
     };
 
@@ -41,6 +44,8 @@ namespace kailux
                                 const ComputePicker& picker,
                                 const OutlinePass& outlinePass,
                                 const ComputeCuller& culler,
+                                const ComputeCompactor& compactor,
+                                const ComputeShadowCuller& shadowCuller,
                                 const ShadowPass& shadowPass,
                                 const ShadowMap& directionalShadowMap,
                                 const ShadowMap& pointShadowMap,
@@ -61,7 +66,9 @@ namespace kailux
         const DescriptorSet& GetPickerDescriptorSet() const;
         const DescriptorSet& GetOutlineDescriptorSet() const;
         const DescriptorSet& GetCullerDescriptorSet() const;
+        const DescriptorSet& GetCompactorDescriptorSet() const;
         const DescriptorSet& GetShadowDescriptorSet() const;
+        const DescriptorSet& GetShadowCullerDescriptorSet() const;
 
         Buffer&       GetCameraBuffer();
         Buffer&       GetModelBuffer();
@@ -71,8 +78,12 @@ namespace kailux
         Buffer&       GetSceneBuffer();
         const Buffer& GetPickerBuffer() const;
         const Buffer& GetCullerInputCommandsBuffer() const;
+        const Buffer& GetBatchCommandsBuffer() const;
+        const Buffer& GetInstanceIdsBuffer() const;
         const Buffer& GetCullerCountBuffer() const;
         const Buffer& GetDirectionalShadowCommandsBuffer() const;
+        const Buffer& GetDirectionalShadowTemplatesBuffer() const;
+        const Buffer& GetShadowCullTargetsBuffer() const;
         const Buffer& GetPointShadowCommandsBuffer() const;
 
         decltype(auto) GetMeshUploadState(this auto&& self)
@@ -80,7 +91,7 @@ namespace kailux
             return (self.mMeshUploadState);
         }
 
-        static constexpr uint32_t kBufferMemoryBarriersCount{1 + 1 + 1 + 1 + 1 + 1 + 1}; // camera buffer + mesh data buffer + materials buffer + culler input buffer + directional shadow commands + point shadow commands + scene buffer
+        static constexpr uint32_t kBufferMemoryBarriersCount{1 + 1 + 1 + 1 + 1 + 1 + 1 + 1}; // camera buffer + mesh data buffer + materials buffer + culler input buffer + directional shadow templates + shadow cull targets + point shadow commands + scene buffer
         std::array<vk::BufferMemoryBarrier2, kBufferMemoryBarriersCount>       GetBufferMemoryBarriers() const;
 
         vk::BufferMemoryBarrier2                                               GetPickerBufferMemoryBarrier() const;
@@ -88,9 +99,19 @@ namespace kailux
         static constexpr uint32_t kCullerBufferMemoryBarriersCount{1 + 1}; // indirect buffer + culler count buffer
         std::array<vk::BufferMemoryBarrier2, kCullerBufferMemoryBarriersCount> GetCullerBufferMemoryBarriers() const;
 
-        vk::BufferMemoryBarrier2                                               GetCullerCountBufferFillMemoryBarrier() const;
+        static constexpr uint32_t kCullerFillMemoryBarriersCount{1 + 1}; // culler count buffer + batch commands
+        std::array<vk::BufferMemoryBarrier2, kCullerFillMemoryBarriersCount> GetCullerFillMemoryBarriers() const;
 
-        static constexpr uint32_t kIndirectReadToWriteMemoryBarriersCount{1 + 1}; // indirect buffer + culler count buffer
+        static constexpr uint32_t kCullerOutputMemoryBarriersCount{1 + 1}; // batch commands + instance ids
+        std::array<vk::BufferMemoryBarrier2, kCullerOutputMemoryBarriersCount> GetCullerOutputMemoryBarriers() const;
+
+        static constexpr uint32_t kShadowCullerFillMemoryBarriersCount{1}; // directional shadow commands
+        std::array<vk::BufferMemoryBarrier2, kShadowCullerFillMemoryBarriersCount> GetShadowCullerFillMemoryBarriers() const;
+
+        static constexpr uint32_t kShadowCullerOutputMemoryBarriersCount{1 + 1}; // directional shadow commands + instance ids
+        std::array<vk::BufferMemoryBarrier2, kShadowCullerOutputMemoryBarriersCount> GetShadowCullerOutputMemoryBarriers() const;
+
+        static constexpr uint32_t kIndirectReadToWriteMemoryBarriersCount{1 + 1 + 1 + 1}; // indirect buffer + culler count buffer + batch commands + instance ids
         std::array<vk::BufferMemoryBarrier2, kIndirectReadToWriteMemoryBarriersCount> GetIndirectReadToWriteBarriers() const;
 
     private:
@@ -112,7 +133,11 @@ namespace kailux
                                        DescriptorSetInfo> infos);
         void CreateCullerDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
                                        DescriptorSetInfo> infos);
+        void CreateCompactorDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
+                                       DescriptorSetInfo> infos);
         void CreateShadowDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
+                                       DescriptorSetInfo> infos);
+        void CreateShadowCullerDescriptorSet(const Context& context, const DescriptorLayout& descriptorLayout, const DescriptorPool& descriptorPool, std::span<const
                                        DescriptorSetInfo> infos);
         void CreateCameraBuffer(const Context& context);
         void CreateMeshDataBuffer(const Context &context);
@@ -131,15 +156,17 @@ namespace kailux
         // skybox sampler + irradiance map +
         // prefiltered env + brdf lut +
         // directional shadow + point shadow cubes +
-        // textures array
-        static constexpr uint32_t kDescriptorSetInfoCount{11};
+        // textures array + instance ids
+        static constexpr uint32_t kDescriptorSetInfoCount{12};
         static constexpr uint32_t kSkyboxDescriptorSetInfoCount{1 + 1}; // camera buffer + cube texture
         static constexpr uint32_t kGizmoDescriptorSetInfoCount{1}; // camera buffer
         static constexpr uint32_t kPickerDescriptorSetInfoCount{1 + 1}; // id image + out buffer
         static constexpr uint32_t kOutlineDescriptorSetInfoCount{1}; // id image
-        static constexpr uint32_t kCullerDescriptorSetInfoCount{4}; // mesh data + template + out indirect + counter
-        static constexpr uint32_t kShadowDescriptorSetInfoCount{1}; // mesh data
-        std::array<DescriptorSetInfo, kDescriptorSetInfoCount> MakeMeshDescriptorSetInfo(
+        static constexpr uint32_t kCullerDescriptorSetInfoCount{3}; // mesh data + batch commands + out instance ids
+        static constexpr uint32_t kCompactorDescriptorSetInfoCount{3}; // batch commands + out indirect + counter
+        static constexpr uint32_t kShadowDescriptorSetInfoCount{1 + 1}; // mesh data + directional shadow instance ids
+        static constexpr uint32_t kShadowCullerDescriptorSetInfoCount{4}; // mesh data + targets + shadow commands + out instance ids
+                std::array<DescriptorSetInfo, kDescriptorSetInfoCount> MakeMeshDescriptorSetInfo(
             const SkyboxPass &skybox,
             const TextureRegistry &textureRegistry,
             const ShadowMap &directionalShadowMap,
@@ -150,7 +177,9 @@ namespace kailux
         std::array<DescriptorSetInfo, kPickerDescriptorSetInfoCount>  MakePickerDescriptorSetInfo(const RenderTarget &sceneView) const;
         std::array<DescriptorSetInfo, kOutlineDescriptorSetInfoCount> MakeOutlineDescriptorSetInfo(const RenderTarget &sceneView) const;
         std::array<DescriptorSetInfo, kCullerDescriptorSetInfoCount>  MakeCullerDescriptorSetInfo() const;
+        std::array<DescriptorSetInfo, kCompactorDescriptorSetInfoCount> MakeCompactorDescriptorSetInfo() const;
         std::array<DescriptorSetInfo, kShadowDescriptorSetInfoCount>  MakeShadowDescriptorSetInfo() const;
+        std::array<DescriptorSetInfo, kShadowCullerDescriptorSetInfoCount> MakeShadowCullerDescriptorSetInfo() const;
         static constexpr uint32_t kPickerResolvedViewDescriptorSetBinding = 0;
         static constexpr uint32_t kOutlineIdResolvedViewDescriptorSetBinding = 0;
 
@@ -166,7 +195,9 @@ namespace kailux
         DescriptorSet           mPickerDescriptorSet;
         DescriptorSet           mOutlineDescriptorSet;
         DescriptorSet           mCullerDescriptorSet;
+        DescriptorSet           mCompactorDescriptorSet;
         DescriptorSet           mShadowDescriptorSet;
+        DescriptorSet           mShadowCullerDescriptorSet;
 
         Buffer                  mCameraBuffer;
         Buffer                  mMeshDataBuffer;
@@ -176,7 +207,12 @@ namespace kailux
         Buffer                  mPickerBuffer;
         Buffer                  mCullerInputCommandsBuffer;
         Buffer                  mCullerCountBuffer;
+        Buffer                  mBatchCommandsBuffer;
+        Buffer                  mInstanceIdsBuffer;
         Buffer                  mDirectionalShadowCommandsBuffer;
+        Buffer                  mDirectionalShadowTemplatesBuffer;
+        Buffer                  mDirectionalShadowInstanceIdsBuffer;
+        Buffer                  mShadowCullTargetsBuffer;
         Buffer                  mPointShadowCommandsBuffer;
 
         MeshUploadState         mMeshUploadState;

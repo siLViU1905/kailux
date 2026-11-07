@@ -13,7 +13,8 @@ namespace kailux
         MeshMaterialData  material;
         uint32_t          id{~0u};
         uint32_t          lodCount{1};
-        std::array<uint32_t, 2> _padding{};
+        uint32_t          batchIndex{};
+        uint32_t          _padding{};
     };
 
     KAILUX_CHECK_DATA_STRUCTURE_SIZE(MeshData)

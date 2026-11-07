@@ -5,31 +5,12 @@
 namespace kailux
 {
     ShadowCuller::ShadowCuller(FrameData &frame, const MeshRegistry &meshRegistry,
-                               std::span<const DirectionalShadowSet, details::kMaxCameraViews> directionalSets,
                                std::span<const PointShadowSet, details::kMaxCameraViews> pointSets) : mMeshRegistry(
             meshRegistry),
-        mCascadeCommands(frame.GetDirectionalShadowCommandsBuffer().Mapped<vk::DrawIndexedIndirectCommand>()),
         mPointCommands(frame.GetPointShadowCommandsBuffer().Mapped<vk::DrawIndexedIndirectCommand>()),
-        mCascadeDrawCounts(frame.GetMeshUploadState().directionalShadowDrawCounts),
         mPointDrawCounts(frame.GetMeshUploadState().pointShadowDrawCounts)
     {
-        mCascadeDrawCounts.fill(0);
         mPointDrawCounts.fill(0);
-
-        for (uint32_t viewIndex{}; viewIndex < details::kMaxCameraViews; ++viewIndex)
-        {
-            const auto &shadowSet{directionalSets[viewIndex]};
-            if (!shadowSet.Enabled())
-                continue;
-
-            for (uint32_t cascade{}; cascade < details::kShadowCascadeCount; ++cascade)
-            {
-                auto &target{mCascadeTargets[mCascadeTargetCount++]};
-                target.view = viewIndex;
-                target.cascade = cascade;
-                target.planes = camera::get_frustum_planes(shadowSet.GetCascade(cascade), glm::mat4{1.f});
-            }
-        }
 
         for (uint32_t viewIndex{}; viewIndex < details::kMaxCameraViews; ++viewIndex)
         {
@@ -56,16 +37,6 @@ namespace kailux
     {
         lodCount = std::max(lodCount, 1u);
 
-        for (uint32_t t{}; t < mCascadeTargetCount; ++t)
-        {
-            const auto &target{mCascadeTargets[t]};
-            if (!bounds::sphere_in_planes(target.planes, sphere, true))
-                continue;
-
-            const uint32_t list{details::directional_shadow_draw_list(target.view, target.cascade)};
-            mCascadeCommands[list * details::kMaxMeshes + mCascadeDrawCounts[list]++] =
-                MakeCommand(mesh, std::min(target.cascade, lodCount - 1), objectIndex);
-        }
         for (uint32_t t{}; t < mPointTargetCount; ++t)
         {
             const auto &target{mPointTargets[t]};
@@ -91,7 +62,7 @@ namespace kailux
 
     bool ShadowCuller::Empty() const
     {
-        return mCascadeTargetCount == 0 && mPointTargetCount == 0;
+        return mPointTargetCount == 0;
     }
 
     vk::DrawIndexedIndirectCommand ShadowCuller::MakeCommand(MeshHandle mesh, uint32_t lod, uint32_t objectIndex) const

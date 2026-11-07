@@ -1,5 +1,5 @@
 #pragma once
-#include "DirectionalShadowSet.h"
+
 #include "PointShadowSet.h"
 #include "FrameData.h"
 #include "mesh/MeshRegistry.h"
@@ -7,13 +7,13 @@
 
 namespace kailux
 {
+    // point shadow only, directional shadows are culled on the GPU(ComputeShadowCuller)
     class ShadowCuller
     {
     public:
         ShadowCuller(
             FrameData &frame,
             const MeshRegistry &meshRegistry,
-            std::span<const DirectionalShadowSet, details::kMaxCameraViews> directionalSets,
             std::span<const PointShadowSet, details::kMaxCameraViews> pointSets
         );
 
@@ -22,13 +22,6 @@ namespace kailux
         bool Empty() const;
 
     private:
-        struct CascadeTarget
-        {
-            uint32_t                 view;
-            uint32_t                 cascade;
-            std::array<glm::vec4, 6> planes;
-        };
-
         struct PointTarget
         {
             uint32_t  view;
@@ -42,14 +35,10 @@ namespace kailux
 
         const MeshRegistry &mMeshRegistry;
 
-        std::span<vk::DrawIndexedIndirectCommand> mCascadeCommands;
         std::span<vk::DrawIndexedIndirectCommand> mPointCommands;
 
-        std::array<uint32_t, details::kDirectionalShadowDrawLists> &mCascadeDrawCounts;
-        std::array<uint32_t, details::kPointShadowDrawLists>       &mPointDrawCounts;
+        std::array<uint32_t, details::kPointShadowDrawLists> &mPointDrawCounts;
 
-        std::array<CascadeTarget, details::kDirectionalShadowDrawLists>               mCascadeTargets{};
-        uint32_t                                                                      mCascadeTargetCount{};
         std::array<PointTarget, details::kMaxCameraViews * details::kMaxPointShadows> mPointTargets{};
         uint32_t                                                                      mPointTargetCount{};
     };

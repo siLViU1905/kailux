@@ -16,6 +16,8 @@ add_library(kailux STATIC
         src/buffer/Buffer.cpp
         src/buffer/BufferAllocator.cpp
         src/mesh/MeshRegistry.cpp
+        src/mesh/MeshLoader.cpp
+        src/mesh/DrawBatches.cpp
         src/descriptor/DescriptorLayout.cpp
         src/command/OneTimeCommand.cpp
         src/Camera.cpp
@@ -28,7 +30,6 @@ add_library(kailux STATIC
         src/texture/ImageLoader.cpp
         src/texture/TextureRegistry.cpp
         src/texture/TextureMemoryPool.cpp
-        src/mesh/MeshLoader.cpp
         src/utilities/ThreadDispatcher.cpp
         src/utilities/LinearZone.cpp
         src/utilities/FreeListZone.cpp
@@ -40,7 +41,9 @@ add_library(kailux STATIC
         src/passes/MainPass.cpp
         src/passes/ComputePass.cpp
         src/passes/ComputeCuller.cpp
+        src/passes/ComputeCompactor.cpp
         src/passes/ShadowPass.cpp
+        src/passes/ComputeShadowCuller.cpp
         src/Geometry.cpp
         src/physics/impl/BroadPhaseLayer.cpp
         src/physics/impl/ObjectVsBroadPhaseLayerFilter.cpp

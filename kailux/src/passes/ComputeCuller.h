@@ -28,17 +28,12 @@ namespace kailux
             ),
             DescriptorLayoutBinding(
                 vk::DescriptorType::eStorageBuffer,
-                1, // in indirect commands
+                1, // batch commands, one per (batch, lod)
                 vk::ShaderStageFlagBits::eCompute
             ),
             DescriptorLayoutBinding(
                 vk::DescriptorType::eStorageBuffer,
-                1, // out indirect commands
-                vk::ShaderStageFlagBits::eCompute
-            ),
-            DescriptorLayoutBinding(
-                vk::DescriptorType::eStorageBuffer,
-                1, // counter
+                1, // out instance ids
                 vk::ShaderStageFlagBits::eCompute
             )
         };
@@ -49,15 +44,11 @@ namespace kailux
             ),
             DescriptorPoolSize(
                 vk::DescriptorType::eStorageBuffer,
-                1 // in indirect commands
+                1 // batch commands
             ),
             DescriptorPoolSize(
                 vk::DescriptorType::eStorageBuffer,
-                1 // out indirect commands
-            ),
-            DescriptorPoolSize(
-                vk::DescriptorType::eStorageBuffer,
-                1 // counter
+                1 // out instance ids
             ),
         };
         static_assert(
