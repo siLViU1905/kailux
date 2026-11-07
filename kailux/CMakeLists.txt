@@ -93,6 +93,7 @@ add_library(kailux STATIC
         src/audio/AudioLoader.cpp
         src/audio/AudioRegistry.cpp
         src/audio/AudioSystem.cpp
+        src/particles/ParticleSystem.cpp
 )
 
 set_source_files_properties(
