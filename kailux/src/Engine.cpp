@@ -36,6 +36,7 @@ namespace kailux
     Engine::Engine() : mAssetPipeline(mContext, mMeshRegistry, mTextureRegistry, mTransferManager, mFrames),
                        mPhysicsSystem(mPhysicsRegistry),
                        mAudioSystem(mAudioRegistry),
+                       mMaterialTextureSystem(mContext, mTextureRegistry, mTransferManager, mFrames, mDeferredResourceEraser),
                        mCurrentFrame(0),
                        mOutlineInfo(),
                        mPickedEntity(~0u),
@@ -60,6 +61,7 @@ namespace kailux
                                               mAudioSystem(std::move(other.mAudioSystem)),
                                               mScriptSystem(std::move(other.mScriptSystem)),
                                               mDeferredResourceEraser(std::move(other.mDeferredResourceEraser)),
+                                              mMaterialTextureSystem(mContext, mTextureRegistry, mTransferManager, mFrames, mDeferredResourceEraser),
                                               mFrames(std::move(other.mFrames)),
                                               mCurrentFrame(other.mCurrentFrame),
                                               mControlledCamera(other.mControlledCamera),
@@ -99,6 +101,7 @@ namespace kailux
                                               mOnErrorLog(std::move(other.mOnErrorLog))
     {
         CreateAssetPipeline();
+        CreateMaterialTextureSystem();
         CreatePhysicsSystem();
         CreateAudioSystem();
         CreateScriptSystem();
@@ -162,6 +165,7 @@ namespace kailux
             mOnErrorLog = std::move(other.mOnErrorLog);
 
             CreateAssetPipeline();
+            CreateMaterialTextureSystem();
             CreatePhysicsSystem();
             CreateAudioSystem();
             CreateScriptSystem();
@@ -224,6 +228,7 @@ namespace kailux
             engine.AcquireViewTextureIds();
 
         engine.CreateAssetPipeline();
+        engine.CreateMaterialTextureSystem();
         engine.CreatePhysicsSystem();
         engine.CreateAudioSystem();
         engine.CreateParticleSystem();
@@ -377,8 +382,27 @@ namespace kailux
     {
         mDeferredResourceEraser.Enqueue([this, handle]()
         {
-            ResetTextureDescriptors(mTextureRegistry.ReleaseMaterial(handle));
+            OnTextureSlotsFreed(mTextureRegistry.ReleaseMaterial(handle));
         });
+    }
+
+    void Engine::SetMaterialTexture(Scene &scene, entt::entity entity, TextureType type,
+                                    const std::filesystem::path &path)
+    {
+        if (!path.empty() && !is_image_type_supported(path))
+        {
+            mOnWarningLog(std::format("'{}' is not a supported texture (png, jpg, jpeg)", path.generic_string()));
+            return;
+        }
+
+        mMaterialTextureSystem.Request(scene, entity, type, path.generic_string());
+    }
+
+    ImTextureID Engine::GetMaterialTexturePreview(const Scene &scene, entt::entity entity, TextureType type)
+    {
+        if (!UsesImGui())
+            return {};
+        return mMaterialTextureSystem.GetPreview(scene, entity, type);
     }
 
     ImTextureID Engine::GetAssetBrowserDirectoryTextureId() const
@@ -570,6 +594,20 @@ namespace kailux
         });
     }
 
+    void Engine::CreateMaterialTextureSystem()
+    {
+        mMaterialTextureSystem = {mContext, mTextureRegistry, mTransferManager, mFrames, mDeferredResourceEraser};
+        mMaterialTextureSystem.SetThreadDispatcher(pThreadDispatcher);
+        mMaterialTextureSystem.SetOnTexturesFreed([this](auto slots)
+        {
+            OnTextureSlotsFreed(slots);
+        });
+        mMaterialTextureSystem.SetOnWarningLog([this](auto msg)
+        {
+            mOnWarningLog(msg);
+        });
+    }
+
     void Engine::CreatePhysicsSystem()
     {
         mPhysicsSystem = PhysicsSystem{mPhysicsRegistry};
@@ -670,6 +708,12 @@ namespace kailux
 
         for (const auto& frame : mFrames)
             frame.GetMeshDescriptorSet().UpdateInfo(mContext, writes);
+    }
+
+    void Engine::OnTextureSlotsFreed(std::span<const uint32_t> textureSlots)
+    {
+        mMaterialTextureSystem.DropPreviews(textureSlots);
+        ResetTextureDescriptors(textureSlots);
     }
 
     void Engine::CreateComputePicker()
@@ -970,6 +1014,7 @@ namespace kailux
 
         mPhysicsSystem.AttachToScene(scene);
         mAudioSystem.AttachToScene(scene);
+        mMaterialTextureSystem.AttachScene(scene);
         ScriptSystem::connect(scene);
         mParticleSystem.Reset();
 
@@ -1009,6 +1054,7 @@ namespace kailux
         mPhysicsSystem.DestroyAllBodies();
         mAudioSystem.SetSimulationState(scene, SimulationState::Paused);
         mAudioSystem.DetachScene(scene);
+        mMaterialTextureSystem.DetachScene(scene);
         mParticleSystem.Reset();
         SetControlledCamera(entt::null, {});
     }
@@ -1098,6 +1144,7 @@ namespace kailux
     bool Engine::IsSceneReady(const Scene &scene) const
     {
         return mAssetPipeline.IsIdle()
+               && mMaterialTextureSystem.IsIdle()
                && !mTransferManager.HasPending()
                && scene.GetEntityCount<PendingUploadComponent>() == 0u;
     }
@@ -2221,6 +2268,7 @@ namespace kailux
         mAssetPipeline.Poll(scene);
         mTransferManager.Poll(mContext);
         mAssetPipeline.FlushCompletedUploads(scene);
+        mMaterialTextureSystem.Update(scene);
         mDeferredResourceEraser.Tick();
 
         if (mSimulationStartPending && IsSceneReady(scene))
@@ -2530,6 +2578,7 @@ namespace kailux
     void Engine::SetThreadDispatcher(ThreadDispatcher &dispatcher)
     {
         pThreadDispatcher = std::addressof(dispatcher);
+        mMaterialTextureSystem.SetThreadDispatcher(pThreadDispatcher);
     }
 
     void Engine::SetOnLoadSceneRequest(OnLoadSceneRequest &&callback)

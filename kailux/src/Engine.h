@@ -32,6 +32,7 @@
 #include "scripting/ScriptSystem.h"
 #include "shadow/DirectionalShadowSet.h"
 #include "shadow/PointShadowSet.h"
+#include "texture/MaterialTextureSystem.h"
 
 namespace kailux
 {
@@ -60,8 +61,11 @@ namespace kailux
 
         void HandleMeshDragDrop(const std::filesystem::path& path, std::reference_wrapper<ThreadDispatcher> threadDispatcher);
 
-        void UnregisterMesh(Scene &scene, entt::entity entityh);
+        void UnregisterMesh(Scene &scene, entt::entity entity);
         void UnregisterMaterial(MaterialHandle handle);
+
+        void        SetMaterialTexture(Scene &scene, entt::entity entity, TextureType type, const std::filesystem::path &path);
+        ImTextureID GetMaterialTexturePreview(const Scene &scene, entt::entity entity, TextureType type);
 
         ImTextureID GetAssetBrowserDirectoryTextureId() const;
         ImTextureID GetAssetBrowserFileTextureId() const;
@@ -173,6 +177,7 @@ namespace kailux
         void CreateAudioRegistry();
         void CreateGizmoRegistry();
         void CreateAssetPipeline();
+        void CreateMaterialTextureSystem();
         void CreatePhysicsSystem();
         void CreateAudioSystem();
         void CreateParticleSystem();
@@ -181,6 +186,7 @@ namespace kailux
 
         void SeedDefaultTextures();
         void ResetTextureDescriptors(std::span<const uint32_t> textureSlots);
+        void OnTextureSlotsFreed(std::span<const uint32_t> textureSlots);
 
         void CreateComputePicker();
         void CreateComputeCuller();
@@ -283,7 +289,7 @@ namespace kailux
         AudioSystem                                  mAudioSystem;
         ScriptSystem                                 mScriptSystem;
         DeferredResourceEraser<details::kFramesInFlight + 1> mDeferredResourceEraser;
-
+        MaterialTextureSystem                                mMaterialTextureSystem;
         std::array<FrameData, details::kFramesInFlight>    mFrames;
         uint32_t                                   mCurrentFrame;
 
