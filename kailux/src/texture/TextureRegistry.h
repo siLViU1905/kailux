@@ -24,6 +24,13 @@ namespace kailux
         AO = aiTextureType_AMBIENT_OCCLUSION
     };
 
+    struct AsyncTextureUpload
+    {
+        TextureHandle handle;
+        ImageUpload   upload;
+        Buffer        staging;
+    };
+
     struct AsyncMaterialResult
     {
         MaterialSlot               slot;
@@ -49,6 +56,32 @@ namespace kailux
             TextureType::AO
         };
 
+        static constexpr uint32_t texture_type_index(TextureType type)
+        {
+            for (uint32_t i{}; i < kTextureTypes.size(); ++i)
+                if (kTextureTypes[i] == type)
+                    return i;
+            return 0;
+        }
+
+        static constexpr std::string_view texture_type_name(TextureType type)
+        {
+            switch (type)
+            {
+                case TextureType::Albedo:    return "Albedo";
+                case TextureType::Normal:    return "Normal";
+                case TextureType::Roughness: return "Roughness";
+                case TextureType::Metallic:  return "Metallic";
+                case TextureType::AO:        return "AO";
+            }
+            return "";
+        }
+
+        static constexpr image_loader::ColorSpace texture_color_space(TextureType type)
+        {
+            return type == TextureType::Albedo ? image_loader::ColorSpace::Srgb : image_loader::ColorSpace::Linear;
+        }
+
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(TextureRegistry)
 
         static TextureRegistry create(const Context &context,
@@ -58,9 +91,14 @@ namespace kailux
 
         std::optional<TextureHandle>  RegisterTexture(Texture&& texture);
         bool                          ReleaseTexture(TextureHandle handle);
+        void                          AcquireTexture(TextureHandle handle);
+        bool                          IsDefaultTexture(TextureHandle handle) const;
         const Texture&                GetTexture(TextureHandle handle) const;
         std::optional<MaterialHandle> RegisterMaterial(const MaterialSlot& slot);
         void                          UpdateMaterial(MaterialHandle handle, const MaterialSlot& slot);
+        std::optional<MaterialHandle> CloneMaterial(MaterialHandle source);
+        TextureHandle                 UpdateTexture(MaterialHandle handle, TextureType type, TextureHandle texture);
+        TextureHandle                 GetMaterialTexture(MaterialHandle handle, TextureType type) const;
         std::vector<uint32_t>         ReleaseMaterial(MaterialHandle handle);
         bool                          HasFreeMaterialSlot() const;
         uint64_t                      GetMaterialGeneration() const;
@@ -86,10 +124,14 @@ namespace kailux
 
         AsyncMaterialResult CreateMaterialFromData(const Context &context, const MaterialData& data);
 
+        std::optional<AsyncTextureUpload> CreateTextureFromData(const Context &context, const image_loader::ImageData& data);
+
     private:
         void     AllocResources();
         void     CreateDefaultTextures(const Context& context);
         void     CreateAssetBrowserTextures(const Context& context, std::string_view directoryIconPath, std::string_view fileIconPath);
+
+        static uint32_t& slot_index(MaterialSlot& slot, TextureType type);
 
         TextureMemoryPool                    mTexturePool;
         std::vector<std::optional<Texture>>  mTextures;
