@@ -11,6 +11,7 @@ namespace kailux
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(PhysicsRecord, type, canBecomeDynamic, mass, isSensor)
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Transform, position, rotation, scale)
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(MeshMaterialData, albedoAndRoughness, pbrParams)
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(MaterialTexturesRecord, albedo, normal, roughness, metallic, ao)
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(PointLightRecord, intensity, range, colorAndEnabled)
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(SunData, directionAndIntensity, colorAndEnabled)
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(AudioSourceRecord, clip, gain, pitch, loop, playOnStart, spatial,
@@ -158,6 +159,7 @@ namespace kailux
         details::writeOptional(js, "transform", record.transform);
         details::writeOptional(js, "mesh", record.mesh);
         details::writeOptional(js, "material", record.material);
+        details::writeOptional(js, "material_textures", record.materialTextures);
         details::writeOptional(js, "light", record.light);
         details::writeOptional(js, "physics", record.physics);
         details::writeOptional(js, "camera", record.camera);
@@ -174,6 +176,7 @@ namespace kailux
         details::readOptional(js, "transform", record.transform);
         details::readOptional(js, "mesh", record.mesh);
         details::readOptional(js, "material", record.material);
+        details::readOptional(js, "material_textures", record.materialTextures);
         details::readOptional(js, "light", record.light);
         details::readOptional(js, "physics", record.physics);
         details::readOptional(js, "camera", record.camera);
