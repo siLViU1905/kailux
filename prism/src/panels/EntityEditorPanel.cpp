@@ -77,10 +77,7 @@ namespace kailux
 
             ImGui::BeginDisabled(mLocked);
 
-            if (registry.all_of<MeshMaterialData>(mSelectedEntity))
-                RenderMaterialProperties(scene);
-
-            else if (registry.all_of<DirectionalLightData>(mSelectedEntity))
+            if (registry.all_of<DirectionalLightData>(mSelectedEntity))
                 RenderDirectionalLightProperties(registry);
 
             else if (registry.all_of<PointLightData>(mSelectedEntity))
@@ -333,36 +330,6 @@ namespace kailux
          widgets::end_properties();
     }
 
-    void EntityEditorPanel::RenderMaterialProperties(Scene &scene) const
-    {
-        if (!widgets::section("Material"))
-            return;
-
-        auto &material = scene.GetEntityRegistry().get<MeshMaterialData>(mSelectedEntity);
-        bool changed = false;
-
-        if (!widgets::begin_properties("##material"))
-            return;
-
-         widgets::property("Albedo");
-        changed |= ImGui::ColorEdit3("##albedo", glm::value_ptr(material.albedoAndRoughness),
-                                     ImGuiColorEditFlags_DisplayHex | ImGuiColorEditFlags_PickerHueWheel);
-
-         widgets::property("Roughness");
-        changed |= ImGui::SliderFloat("##roughness", &material.albedoAndRoughness.w, 0.f, 1.f, "%.2f");
-
-         widgets::property("Metallic");
-        changed |= ImGui::SliderFloat("##metallic", &material.pbrParams.x, 0.f, 1.f, "%.2f");
-
-         widgets::property("AO");
-        changed |= ImGui::SliderFloat("##ao", &material.pbrParams.y, 0.f, 1.f, "%.2f");
-
-         widgets::end_properties();
-
-        if (changed)
-            propagate_material_to_children(scene, mSelectedEntity, material);
-    }
-
     void EntityEditorPanel::RenderDirectionalLightProperties(entt::registry &registry) const
     {
         auto &data = registry.get<DirectionalLightData>(mSelectedEntity);
@@ -606,22 +573,5 @@ namespace kailux
         widgets::end_properties();
         if (remove)
             mOnRemoveParticleEmitter(mSelectedEntity);
-    }
-
-    void EntityEditorPanel::propagate_material_to_children(Scene &scene, entt::entity entity,
-                                                           const MeshMaterialData &material)
-    {
-        auto& registry = scene.GetEntityRegistry();
-        auto* hierarchy = registry.try_get<HierarchyComponent>(entity);
-        if (!hierarchy)
-            return;
-
-        for (auto child : hierarchy->children)
-        {
-            if (auto* childMaterial = registry.try_get<MeshMaterialData>(child))
-                *childMaterial = material;
-
-            propagate_material_to_children(scene, child, material);
-        }
     }
 }
