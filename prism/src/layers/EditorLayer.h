@@ -31,6 +31,7 @@ namespace kailux
     private:
         static constexpr std::string_view kHierarchyPanelName{"EntitiesHierarchy"};
         static constexpr std::string_view kEntityEditorName{"EntityEditor"};
+        static constexpr std::string_view kMaterialPanelName{"Material"};
         static constexpr std::string_view kProjectPanelName{"ProjectPanel"};
         static constexpr std::string_view kViewportPanelName{"SceneViewport"};
         static constexpr std::string_view kSimulationPanelName{"Simulation"};
