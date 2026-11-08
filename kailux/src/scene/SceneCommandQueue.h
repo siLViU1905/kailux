@@ -44,6 +44,7 @@ namespace kailux
             void operator()(scene_commands::RemoveParticleEmitter &command) const;
             void operator()(scene_commands::SetBodyType &command) const;
             void operator()(scene_commands::SetBodyMass &command) const;
+            void operator()(scene_commands::SetMaterialTexture &command) const;
             void operator()(scene_commands::LoadScene &command) const;
         };
     }
