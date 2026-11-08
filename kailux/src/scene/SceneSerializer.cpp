@@ -10,6 +10,7 @@
 #include "components/entt/BuiltinCamera.h"
 #include "components/entt/HierarchyComponent.h"
 #include "components/entt/LocalTransform.h"
+#include "components/entt/MaterialTexturesComponent.h"
 #include "components/entt/NativeScriptComponent.h"
 #include "components/entt/PhysicsComponent.h"
 #include "components/entt/TagComponent.h"
@@ -33,6 +34,10 @@ namespace kailux::scene_serializer
                     function(record.mesh->path);
                 if (record.audio && !record.audio->clip.empty())
                     function(record.audio->clip);
+                if (record.materialTextures)
+                    for (auto *path : record.materialTextures->Paths())
+                        if (!path->empty())
+                            function(*path);
             }
         }
     }
@@ -81,6 +86,9 @@ namespace kailux::scene_serializer
 
             if (const auto *material = registry.try_get<MeshMaterialData>(entity))
                 record.material = *material;
+
+            if (const auto *textures = registry.try_get<MaterialTexturesComponent>(entity); textures && !textures->Empty())
+                record.materialTextures = MaterialTexturesRecord::from(textures->paths);
 
             if (const auto *light = registry.try_get<PointLightData>(entity))
                 record.light = {

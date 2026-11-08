@@ -11,6 +11,7 @@
 #include "Core.h"
 #include "components/math/Transform.h"
 #include "physics/PhysicsRegistry.h"
+#include "texture/TextureRegistry.h"
 
 namespace kailux::scene_commands
 {
@@ -95,6 +96,13 @@ namespace kailux::scene_commands
         bool         commit{};
     };
 
+    struct SetMaterialTexture
+    {
+        entt::entity          entity{entt::null};
+        TextureType           type{TextureType::Albedo};
+        std::filesystem::path path;
+    };
+
     struct LoadScene
     {
         std::filesystem::path                 path;
@@ -121,6 +129,7 @@ namespace kailux
          scene_commands::RemoveParticleEmitter,
          scene_commands::SetBodyType,
          scene_commands::SetBodyMass,
+         scene_commands::SetMaterialTexture,
          scene_commands::LoadScene
      >;
 }

@@ -49,14 +49,11 @@ namespace kailux
         void RenderHeader(const entt::registry &registry) const;
         void RenderMeshProperties(const entt::registry &registry);
         void RenderBodyProperties(entt::registry &registry);
-        void RenderMaterialProperties(Scene &scene) const;
         void RenderDirectionalLightProperties(entt::registry &registry) const;
         void RenderPointLightProperties(entt::registry &registry) const;
         void RenderCameraProperties(Scene &scene) const;
         void RenderAudioSourceProperties(Scene &scene);
         void RenderParticleEmitterProperties(Scene &scene);
-
-        static void propagate_material_to_children(Scene &scene, entt::entity entity, const MeshMaterialData& material);
 
         entt::entity mSelectedEntity;
         glm::vec3    mRotationDegrees;

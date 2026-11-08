@@ -1,5 +1,7 @@
 #include "EditorLayer.h"
 
+#include "panels/MaterialPanel.h"
+
 namespace kailux
 {
     EditorLayer::EditorLayer(Application &application) : Layer("EditorLayer"),
@@ -89,19 +91,22 @@ namespace kailux
                                                                   kPanelsBackgroundColor)};
         auto &projectPanel{mPanels.EmplacePanel<ProjectPanel>(kProjectPanelName,
                                                         kPanelsBackgroundColor)};
+        auto &materialPanel{mPanels.EmplacePanel<MaterialPanel>(kMaterialPanelName,
+                                                        kPanelsBackgroundColor)};
         auto &simulationPanel{mPanels.EmplacePanel<SimulationPanel>(kSimulationPanelName)};
         simulationPanel.Close();
 
-        hierarchyPanel.SetOnEntitySelected([&entityEditorPanel](entt::entity entity, const Scene &scene)
+        hierarchyPanel.SetOnEntitySelected([&entityEditorPanel, &materialPanel](entt::entity entity, const Scene &scene)
         {
             entityEditorPanel.Open();
             entityEditorPanel.SetSelectedEntity(entity, scene);
+            materialPanel.SetSelectedEntity(entity);
         });
 
         projectPanel.GetAssetBrowser().SetDirectoryTextureId(mEngine.GetAssetBrowserDirectoryTextureId());
         projectPanel.GetAssetBrowser().SetFileTextureId(mEngine.GetAssetBrowserFileTextureId());
 
-        menuPanel.SetOnViewMenu([&viewportPanel, &hierarchyPanel, &entityEditorPanel, &projectPanel]()
+        menuPanel.SetOnViewMenu([&]()
         {
             if (ImGui::MenuItem("Scene Viewport", nullptr, viewportPanel.IsOpen()))
                 viewportPanel.Toggle();
@@ -109,6 +114,8 @@ namespace kailux
                 hierarchyPanel.Toggle();
             if (ImGui::MenuItem("Entity Editor", nullptr, entityEditorPanel.IsOpen()))
                 entityEditorPanel.Toggle();
+            if (ImGui::MenuItem("Material", nullptr, materialPanel.IsOpen()))
+                materialPanel.Toggle();
             if (ImGui::MenuItem("Project", nullptr, projectPanel.IsOpen()))
                 projectPanel.Toggle();
         });
@@ -240,6 +247,16 @@ namespace kailux
             mSceneCommands.Submit(scene_commands::RemoveParticleEmitter{entity});
         });
 
+        auto& materialPanel{GetPanel<MaterialPanel>()};
+        materialPanel.SetOnSetTexture([this](auto entity, auto type, const auto& path)
+        {
+            mSceneCommands.Submit(scene_commands::SetMaterialTexture{entity, type, path});
+        });
+        materialPanel.SetOnQueryPreview([this](auto entity, auto type)
+        {
+            return mEngine.GetMaterialTexturePreview(GetActiveScene(), entity, type);
+        });
+
         auto& viewportPanel{GetPanel<ViewportPanel>()};
         viewportPanel.SetSceneTexture(mEngine.GetSceneTextureId(), mEngine.GetSceneViewExtent());
         viewportPanel.SetOnClick([this, &hierarchyPanel, &entityEditor]()
@@ -297,6 +314,9 @@ namespace kailux
 
         auto& hierarchyPanel{GetPanel<HierarchyPanel>()};
         isSimulationRunning ? hierarchyPanel.Lock() : hierarchyPanel.Unlock();
+
+        auto& materialPanel{GetPanel<MaterialPanel>()};
+        isSimulationRunning ? materialPanel.Lock() : materialPanel.Unlock();
 
         if (!isSimulationRunning)
             simulation.Close();

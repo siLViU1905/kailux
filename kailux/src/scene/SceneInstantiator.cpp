@@ -3,6 +3,7 @@
 #include "Scene.h"
 #include "Log.h"
 #include "components/entt/AudioSourceComponent.h"
+#include "components/entt/MaterialTexturesComponent.h"
 #include "components/entt/NativeScriptComponent.h"
 
 namespace kailux::scene_instantiator
@@ -79,6 +80,15 @@ namespace kailux::scene_instantiator
                     record.material.value_or(MeshMaterialData{}),
                     record.physics
                 );
+
+            if (record.mesh && record.materialTextures)
+            {
+                auto &textures{registry.emplace_or_replace<MaterialTexturesComponent>(entity)};
+                textures.paths = record.materialTextures->ToPaths();
+                for (uint32_t i{}; i < MaterialTexturesComponent::kCount; ++i)
+                    if (!textures.paths[i].empty())
+                        textures.pendingMask |= 1u << i;
+            }
 
             if (record.camera)
             {

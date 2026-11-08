@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <filesystem>
 #include <optional>
@@ -22,7 +23,7 @@ namespace kailux
         uint8_t major{};
         uint8_t minor{};
     };
-    constexpr Version kSceneVersion{5, 0};
+    constexpr Version kSceneVersion{5, 1};
 
     constexpr uint32_t kNoEntity{~0u};
 
@@ -32,6 +33,31 @@ namespace kailux
     {
         std::string path;
         MeshType    type{MeshType::Unknown};
+    };
+
+    struct MaterialTexturesRecord
+    {
+        std::string albedo;
+        std::string normal;
+        std::string roughness;
+        std::string metallic;
+        std::string ao;
+
+        // same order as TextureRegistry::kTextureTypes
+        std::array<std::string *, 5> Paths()
+        {
+            return {&albedo, &normal, &roughness, &metallic, &ao};
+        }
+
+        std::array<std::string, 5> ToPaths() const
+        {
+            return {albedo, normal, roughness, metallic, ao};
+        }
+
+        static MaterialTexturesRecord from(const std::array<std::string, 5> &paths)
+        {
+            return {paths[0], paths[1], paths[2], paths[3], paths[4]};
+        }
     };
 
     struct PhysicsRecord
@@ -96,6 +122,7 @@ namespace kailux
         std::optional<Transform>               transform{};
         std::optional<MeshRecord>              mesh;
         std::optional<MeshMaterialData>        material;
+        std::optional<MaterialTexturesRecord>  materialTextures;
         std::optional<PointLightRecord>        light;
         std::optional<PhysicsRecord>           physics;
         std::optional<CameraComponent>         camera;

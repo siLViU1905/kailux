@@ -6,5 +6,6 @@ namespace kailux
     struct MaterialComponent
     {
         MaterialHandle handle;
+        bool           owned{};
     };
 }

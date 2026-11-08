@@ -180,6 +180,14 @@ namespace kailux
                 engine.UpdateBodyMass(physics->handle, command.mass);
         }
 
+        void SceneCommandExecutor::operator()(scene_commands::SetMaterialTexture &command) const
+        {
+            if (!Registry().valid(command.entity))
+                return;
+
+            engine.SetMaterialTexture(scene, command.entity, command.type, command.path);
+        }
+
         void SceneCommandExecutor::operator()(scene_commands::LoadScene &command) const
         {
             if (application.LoadScene(command.path) && command.onStaged)

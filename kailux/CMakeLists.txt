@@ -30,6 +30,7 @@ add_library(kailux STATIC
         src/texture/ImageLoader.cpp
         src/texture/TextureRegistry.cpp
         src/texture/TextureMemoryPool.cpp
+        src/texture/MaterialTextureSystem.cpp
         src/utilities/ThreadDispatcher.cpp
         src/utilities/LinearZone.cpp
         src/utilities/FreeListZone.cpp
