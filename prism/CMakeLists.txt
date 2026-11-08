@@ -9,6 +9,7 @@ add_executable(prism
         src/panels/project_panel/Console.cpp
         src/panels/ViewportPanel.cpp
         src/panels/SimulationPanel.cpp
+        src/panels/MaterialPanel.cpp
         src/UIWidgets.cpp
         src/panels/PanelStack.cpp
         main.cpp
