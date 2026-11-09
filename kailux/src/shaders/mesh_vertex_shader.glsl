@@ -20,6 +20,7 @@ layout (location = 10) out vec2 fragTexCoord;
 layout (location = 11) out vec4 fragTangent;
 layout (location = 12) out float fragViewDepth;
 layout (location = 13) out flat uint fragCameraIdx;
+layout (location = 14) out flat float fragGridCellSize;
 
 struct CameraData
 {
@@ -81,6 +82,7 @@ void main()
     fragRoughness = mData.material.albedoAndRoughness.w;
     fragMetallic  = mData.material.pbrParams.x;
     fragAO        = mData.material.pbrParams.y;
+    fragGridCellSize = mData.material.pbrParams.z;
 
     fragMaterialIdx = mData.material.materialIdx;
 
