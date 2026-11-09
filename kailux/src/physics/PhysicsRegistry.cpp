@@ -681,6 +681,15 @@ namespace kailux
         JPH::ShapeRefC shape;
         switch (type)
         {
+            case MeshType::Plane:
+            {
+                shape = new JPH::RotatedTranslatedShape(
+                    {0.f, -0.5f, 0.f},
+                    JPH::Quat::sIdentity(),
+                    new JPH::BoxShape(JPH::Vec3::sReplicate(0.5f))
+                    );
+                break;
+            }
             case MeshType::Cube:
             {
                 shape = new JPH::BoxShape(JPH::Vec3::sReplicate(0.5f));
