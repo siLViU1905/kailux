@@ -23,7 +23,8 @@ namespace kailux
         uint8_t major{};
         uint8_t minor{};
     };
-    constexpr Version kSceneVersion{5, 1};
+    constexpr Version kSceneVersion{5, 2};
+    constexpr Version kPlaneMeshVersion{5, 2};
 
     constexpr uint32_t kNoEntity{~0u};
 
