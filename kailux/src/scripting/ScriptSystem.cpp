@@ -126,6 +126,12 @@ namespace kailux
         sink.connect<&ScriptSystem::on_component_destroyed>();
     }
 
+    void ScriptSystem::notify_params_changed(NativeScriptComponent &script)
+    {
+        if (script.instance)
+            script.instance->OnParamsChanged();
+    }
+
     void ScriptSystem::OnSimulationStart(Scene& scene)
     {
         mContext->world.Bind(scene, mContext->services);

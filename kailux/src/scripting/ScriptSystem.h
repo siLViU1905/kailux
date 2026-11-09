@@ -24,6 +24,7 @@ namespace kailux
         void Update(Scene& scene, float deltaTime);
 
         static void connect(Scene& scene);
+        static void notify_params_changed(NativeScriptComponent& script);
 
     private:
         void OnSimulationStart(Scene& scene);

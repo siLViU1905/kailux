@@ -32,5 +32,7 @@ namespace kailux
         std::expected<std::vector<MeshRequest>, Error> apply(
             Scene &scene, const SceneDocument &document, const SceneLoadContext &context
         );
+
+        uint32_t apply_script_params(Scene& scene, const SceneDocument& document);
     }
 }

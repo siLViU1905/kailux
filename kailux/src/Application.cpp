@@ -34,6 +34,7 @@ namespace kailux
         {
             mClock.Tick();
             CommitPendingScene();
+            mSceneManager.ReloadChangedScriptParams();
             auto& scene{mSceneManager.GetActiveScene()};
 
             mWindow.PollEvents();

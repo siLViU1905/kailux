@@ -35,6 +35,7 @@ add_library(kailux STATIC
         src/utilities/LinearZone.cpp
         src/utilities/FreeListZone.cpp
         src/utilities/Bounds.cpp
+        src/utilities/FileWatcher.cpp
         src/passes/SkyboxPass.cpp
         src/passes/ComputePicker.cpp
         src/passes/OutlinePass.cpp

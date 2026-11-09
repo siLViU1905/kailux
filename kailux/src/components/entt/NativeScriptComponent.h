@@ -28,8 +28,11 @@ namespace kailux
             return true;
         }
 
+        static constexpr uint32_t kNoSourceId{~0u};
+
         std::string    name;
         ScriptParams   params;
+        uint32_t       sourceId{kNoSourceId};
         Scoped<Script> instance;
         ScriptFactory  Instantiate{};
     };

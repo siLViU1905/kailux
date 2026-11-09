@@ -10,6 +10,7 @@
 #include "Scene.h"
 #include "SceneInstantiator.h"
 #include "Core.h"
+#include "utilities/FileWatcher.h"
 
 namespace kailux
 {
@@ -37,6 +38,8 @@ namespace kailux
 
         Result SaveActive(const std::filesystem::path &path);
 
+        void ReloadChangedScriptParams();
+
         using OnLog = std::move_only_function<void(std::string_view)>;
         void SetOnInfoLog(OnLog &&callback);
         void SetOnErrorLog(OnLog &&callback);
@@ -45,10 +48,12 @@ namespace kailux
 
     private:
         Scoped<Scene> CreateScene(std::string_view name);
+        void          WatchActive();
 
         Scoped<Scene>            mActive;
         Scoped<Scene>            mPending;
         std::vector<MeshRequest> mPendingRequests;
+        FileWatcher              mActiveWatcher;
 
         SceneId mNextSceneId{kInvalidSceneId + 1};
 
