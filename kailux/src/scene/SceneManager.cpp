@@ -5,6 +5,7 @@
 #include "Clock.h"
 #include "Log.h"
 #include "components/entt/NativeScriptComponent.h"
+#include "profiling/Profiling.h"
 
 namespace kailux
 {
@@ -108,6 +109,7 @@ namespace kailux
 
     void SceneManager::ReloadChangedScriptParams()
     {
+        KAILUX_PROFILE_CPU(CpuSection::ScriptParamsReload);
         if (!mActiveWatcher.ConsumeChange())
             return;
 
