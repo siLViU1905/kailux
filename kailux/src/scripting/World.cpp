@@ -57,7 +57,19 @@ namespace kailux
         if (!pScene || !pServices)
             return {};
 
-        const auto type{shape == Primitive::Cube ? MeshType::Cube : MeshType::Sphere};
+        auto type{MeshType::Unknown};
+        switch (shape)
+        {
+            case Primitive::Plane:
+                type = MeshType::Plane;
+                break;
+            case Primitive::Cube:
+                type = MeshType::Cube;
+                break;
+            case Primitive::Sphere:
+                type = MeshType::Sphere;
+                break;
+        }
         const auto entity{pServices->SpawnPrimitive(*pScene, name, type, transform)};
         if (entity == entt::null)
             return {};

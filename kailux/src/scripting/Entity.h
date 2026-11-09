@@ -29,6 +29,7 @@ namespace kailux
 
     enum class Primitive : uint8_t
     {
+        Plane,
         Cube,
         Sphere
     };
