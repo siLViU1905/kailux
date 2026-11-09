@@ -117,8 +117,8 @@ namespace kailux
     bool TextureRegistry::IsDefaultTexture(TextureHandle handle) const
     {
         return handle.index == mDefaultAlbedoIdx ||
-+               handle.index == mDefaultNormalIdx ||
-+               handle.index == mDefaultWhiteIdx;
+               handle.index == mDefaultNormalIdx ||
+               handle.index == mDefaultWhiteIdx;
     }
 
     const Texture & TextureRegistry::GetTexture(TextureHandle handle) const
@@ -158,7 +158,7 @@ namespace kailux
 
         for (const auto textureIdx: {
                  slot.albedoIdx, slot.normalIdx, slot.roughnessIdx,
-                 +slot.metallicIdx, slot.aoIdx
+                 slot.metallicIdx, slot.aoIdx
              })
             AcquireTexture({textureIdx});
 
