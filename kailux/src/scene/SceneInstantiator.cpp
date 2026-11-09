@@ -5,6 +5,7 @@
 #include "components/entt/AudioSourceComponent.h"
 #include "components/entt/MaterialTexturesComponent.h"
 #include "components/entt/NativeScriptComponent.h"
+#include "scripting/ScriptSystem.h"
 
 namespace kailux::scene_instantiator
 {
@@ -106,7 +107,8 @@ namespace kailux::scene_instantiator
             if (record.script)
             {
                 auto& script{registry.emplace_or_replace<NativeScriptComponent>(entity)};
-                script.params = ScriptParams{record.script->params};
+                script.params   = ScriptParams{record.script->params};
+                script.sourceId = record.id;
                 if (!script.Bind(record.script->name))
                     log::console.Warning("Script '{}' on '{}' is not registered, it will not run",
                                          record.script->name, record.name);
@@ -178,5 +180,36 @@ namespace kailux::scene_instantiator
         scene.Update();
         scene.UpdateCameras();
         return requests;
+    }
+
+    uint32_t apply_script_params(Scene &scene, const SceneDocument &document)
+    {
+        auto& registry{scene.GetEntityRegistry()};
+
+        std::unordered_map<uint32_t, entt::entity> sources;
+        for (const auto entity : registry.view<NativeScriptComponent>())
+            if (const auto id{registry.get<NativeScriptComponent>(entity).sourceId};
+                id != NativeScriptComponent::kNoSourceId)
+                sources.emplace(id, entity);
+
+        uint32_t changed{};
+        for (const auto &record : document.entities)
+        {
+            if (!record.script)
+                continue;
+
+            const auto it{sources.find(record.id)};
+            if (it == sources.end())
+                continue;
+
+            auto& script{registry.get<NativeScriptComponent>(it->second)};
+            if (script.name != record.script->name || script.params.Raw() == record.script->params)
+                continue;
+
+            script.params = ScriptParams{record.script->params};
+            ScriptSystem::notify_params_changed(script);
+            ++changed;
+        }
+        return changed;
     }
 }

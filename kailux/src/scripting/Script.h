@@ -23,6 +23,7 @@ namespace kailux
         virtual void OnUpdate(float deltaTime);
         virtual void OnFixedUpdate(float fixedStep);
         virtual void OnDestroy();
+        virtual void OnParamsChanged();
 
         Entity              GetSelf() const;
         World&              GetWorld() const;

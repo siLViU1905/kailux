@@ -42,6 +42,10 @@ namespace kailux
     {
     }
 
+    void Script::OnParamsChanged()
+    {
+    }
+
     Entity Script::GetSelf() const
     {
         return mSelf;

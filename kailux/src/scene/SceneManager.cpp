@@ -4,6 +4,7 @@
 #include "SceneSerializer.h"
 #include "Clock.h"
 #include "Log.h"
+#include "components/entt/NativeScriptComponent.h"
 
 namespace kailux
 {
@@ -71,6 +72,7 @@ namespace kailux
             return std::nullopt;
 
         mActive = std::move(mPending);
+        WatchActive();
         return std::exchange(mPendingRequests, {});
     }
 
@@ -90,6 +92,11 @@ namespace kailux
         for (const auto &warning : report->warnings)
             mOnErrorLog(std::format("Scene '{}': {}", scene.GetName(), warning));
 
+        auto& registry{scene.GetEntityRegistry()};
+        for (const auto entity : registry.view<NativeScriptComponent>())
+            registry.get<NativeScriptComponent>(entity).sourceId = entt::to_integral(entity);
+        WatchActive();
+
         mOnInfoLog(std::format("Scene '{}' saved to '{}'", scene.GetName(), path.generic_string()));
 
         if (report->packedAssets > 0)
@@ -97,6 +104,25 @@ namespace kailux
                                    path.stem().string()));
 
         return {};
+    }
+
+    void SceneManager::ReloadChangedScriptParams()
+    {
+        if (!mActiveWatcher.ConsumeChange())
+            return;
+
+        const auto& path{mActiveWatcher.GetPath()};
+        const auto document{scene_serializer::read_file(path)};
+        if (!document)
+        {
+            mOnErrorLog(std::format("Script params not reloaded from '{}': {}", path.generic_string(),
+                                   document.error()));
+            return;
+        }
+
+        if (const auto changed{scene_instantiator::apply_script_params(GetActiveScene(), *document)}; changed > 0)
+            mOnInfoLog(std::format("Reloaded script params for {} entit{} from '{}'", changed,
+                                   changed == 1 ? "y" : "ies", path.generic_string()));
     }
 
     void SceneManager::SetOnInfoLog(OnLog &&callback)
@@ -114,5 +140,22 @@ namespace kailux
     Scoped<Scene> SceneManager::CreateScene(std::string_view name)
     {
         return create_scoped<Scene>(Scene::create(mNextSceneId++, name));
+    }
+
+    void SceneManager::WatchActive()
+    {
+        const auto& savePath{GetActiveScene().GetSavePath()};
+        if (savePath.empty())
+        {
+            mActiveWatcher.Stop();
+            return;
+        }
+
+        std::error_code error;
+        if (mActiveWatcher.IsWatching() && std::filesystem::absolute(savePath, error) == mActiveWatcher.GetPath())
+            return;
+
+        if (!mActiveWatcher.Watch(savePath))
+            mOnErrorLog(std::format("Could not watch '{}' for script param changes", savePath.generic_string()));
     }
 }
