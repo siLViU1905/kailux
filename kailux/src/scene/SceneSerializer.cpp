@@ -1,6 +1,7 @@
 #include "SceneSerializer.h"
 
 #include <fstream>
+#include <utility>
 
 #include "SceneDocument.h"
 #include "SceneDocumentJson.h"
@@ -39,6 +40,19 @@ namespace kailux::scene_serializer
                         if (!path->empty())
                             function(*path);
             }
+        }
+
+        static bool is_older_than(Version version, Version reference)
+        {
+            return version.major < reference.major ||
+                   (version.major == reference.major && version.minor < reference.minor);
+        }
+
+        static void migrate_mesh_types(SceneDocument &document)
+        {
+            for (auto &record: document.entities)
+                if (record.mesh)
+                    record.mesh->type = static_cast<MeshType>(std::to_underlying(record.mesh->type) + 1u);
         }
     }
 
@@ -174,7 +188,10 @@ namespace kailux::scene_serializer
 
         try
         {
-            return js.get<SceneDocument>();
+            auto document{js.get<SceneDocument>()};
+            if (details::is_older_than(version, kPlaneMeshVersion))
+                details::migrate_mesh_types(document);
+            return document;
         }
         catch (const nlohmann::json::exception &e)
         {

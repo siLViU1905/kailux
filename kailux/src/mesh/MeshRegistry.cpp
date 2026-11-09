@@ -56,6 +56,7 @@ namespace kailux
             out = registry.UploadInternal(data.vertices, data.indices, context, cmd, stagingBuffers, true, {});
         };
 
+        uploadShape([]() { return mesh_geometry::generate_plane(); }, registry.mBuiltins.plane);
         uploadShape([]() { return mesh_geometry::generate_cube(); }, registry.mBuiltins.cube);
         uploadShape([]() { return mesh_geometry::generate_sphere(); }, registry.mBuiltins.sphere);
 

@@ -1151,26 +1151,35 @@ namespace kailux
 
     entt::entity Engine::SpawnPrimitive(Scene &scene, std::string_view name, MeshType type, const Transform &transform)
     {
+        static const auto kPlaneBounds{Geometry::compute_bounding_sphere(mesh_geometry::generate_plane().vertices)};
         static const auto kCubeBounds{Geometry::compute_bounding_sphere(mesh_geometry::generate_cube().vertices)};
         static const auto kSphereBounds{Geometry::compute_bounding_sphere(mesh_geometry::generate_sphere().vertices)};
 
-        if (type != MeshType::Cube && type != MeshType::Sphere)
-        {
-            mOnWarningLog("SpawnPrimitive only supports cubes and spheres");
-            return entt::null;
-        }
-
         const auto& builtins{mMeshRegistry.GetBuiltins()};
-        const MeshComponent component{
-            type == MeshType::Cube ? builtins.cube : builtins.sphere,
-            type == MeshType::Cube ? kCubeBounds : kSphereBounds
-        };
+        MeshComponent component;
+        MeshMaterialData material;
+        switch (type)
+        {
+            case MeshType::Plane:
+                component = {builtins.plane, kPlaneBounds};
+                material  = make_grid_material();
+                break;
+            case MeshType::Cube:
+                component = {builtins.cube, kCubeBounds};
+                break;
+            case MeshType::Sphere:
+                component = {builtins.sphere, kSphereBounds};
+                break;
+            default:
+                mOnWarningLog("SpawnPrimitive only supports planes, cubes and spheres");
+                return entt::null;
+        }
         const auto created{scene.CreateMeshEntity(
             name.empty() ? scene.GetMeshEntityName() : std::string{name},
             component,
             mTextureRegistry.GetDefaultMaterialHandle(),
             transform,
-            MeshMaterialData{}
+            material
         )};
         if (!created)
         {

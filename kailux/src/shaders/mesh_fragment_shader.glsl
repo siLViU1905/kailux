@@ -27,6 +27,7 @@ layout (location = 10) in vec2 fragTexCoord;
 layout (location = 11) in vec4 fragTangent;
 layout (location = 12) in float fragViewDepth;
 layout (location = 13) in flat uint fragCameraIdx;
+layout (location = 14) in flat float fragGridCellSize;
 
 layout (location = 0) out vec4 outColor;
 #ifdef WRITE_IDS
@@ -34,6 +35,9 @@ layout (location = 1) out uint outEntityId;
 #endif
 
 vec3 toneMapACES(vec3 color);
+
+vec3 applyGrid(vec3 albedo, vec2 coord, vec2 deriv);
+float gridLine(vec2 coord, vec2 deriv, float widthPx);
 
 uint selectCascade(float viewDepth);
 float sampleDirectionalShadow(uint cascade, vec3 worldPos, vec3 N, vec3 L);
@@ -120,6 +124,9 @@ layout (set = 0, binding = 10) uniform sampler2D textures[];
 
 void main()
 {
+    vec2 gridCoord = fragPos.xz / max(fragGridCellSize, 1e-4);
+    vec2 gridDeriv = fwidth(gridCoord);
+
     Material material = materialData.materials[fragMaterialIdx];
     vec3  texAlbedo    = texture(textures[nonuniformEXT(material.albedoIdx)],    fragTexCoord).rgb;
     vec3  texNormal    = texture(textures[nonuniformEXT(material.normalIdx)],    fragTexCoord).rgb;
@@ -131,6 +138,9 @@ void main()
     float roughness = max(texRoughness * fragRoughness, 0.05);
     float metallic  = texMetallic * fragMetallic;
     float ao        = texAO * fragAO;
+
+    if (fragGridCellSize > 0.0)
+        albedo = applyGrid(albedo, gridCoord, gridDeriv);
 
     vec3 Ng = normalize(fragNormal);
     vec3 N = Ng;
@@ -315,6 +325,36 @@ vec3 toneMapACES(vec3 color)
     const float d = 0.59;
     const float e = 0.14;
     return clamp((color * (a * color + b)) / (color * (c * color + d) + e), 0.0, 1.0);
+}
+
+vec3 applyGrid(vec3 albedo, vec2 coord, vec2 deriv)
+{
+    const float kMajorEvery = 10.0;
+    const vec3  kAxisXColor = vec3(0.80, 0.15, 0.15);
+    const vec3  kAxisZColor = vec3(0.15, 0.30, 0.85);
+
+    float minor = gridLine(coord, deriv, 1.0);
+    float major = gridLine(coord / kMajorEvery, deriv / kMajorEvery, 1.5);
+
+    vec3 color = mix(albedo, albedo * 0.45, minor);
+    color = mix(color, albedo * 0.15, major);
+
+    vec2 safeDeriv = max(deriv, vec2(1e-6));
+    float axisX = 1.0 - clamp(abs(coord.y) / safeDeriv.y / 2.0, 0.0, 1.0); // the X axis is the line z = 0
+    float axisZ = 1.0 - clamp(abs(coord.x) / safeDeriv.x / 2.0, 0.0, 1.0); // the Z axis is the line x = 0
+    color = mix(color, kAxisXColor, axisX);
+    color = mix(color, kAxisZColor, axisZ);
+    return color;
+}
+
+float gridLine(vec2 coord, vec2 deriv, float widthPx)
+{
+    vec2 safeDeriv = max(deriv, vec2(1e-6));
+    vec2 dist = abs(fract(coord - 0.5) - 0.5) / safeDeriv;
+    float line = 1.0 - clamp(min(dist.x, dist.y) / widthPx, 0.0, 1.0);
+
+    float fade = 1.0 - smoothstep(0.15, 0.5, max(safeDeriv.x, safeDeriv.y));
+    return line * fade;
 }
 
 vec3 calcPointLight(PointLight light, vec3 N, vec3 V, vec3 fragPos, vec3 albedo, float roughness, float metallic, vec3 F0)

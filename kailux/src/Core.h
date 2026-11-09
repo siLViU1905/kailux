@@ -14,6 +14,7 @@ namespace kailux
 {
     enum class MeshType : uint8_t
     {
+        Plane,
         Cube,
         Sphere,
         Loaded,

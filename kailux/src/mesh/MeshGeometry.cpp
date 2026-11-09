@@ -5,6 +5,32 @@
 
 namespace kailux::mesh_geometry
 {
+    MeshData generate_plane()
+    {
+        constexpr std::array positions = {
+            glm::vec3{-0.5f, 0.f, 0.5f},
+            glm::vec3{0.5f, 0.f, 0.5f},
+            glm::vec3{0.5f, 0.f, -0.5f},
+            glm::vec3{-0.5f, 0.f, -0.5f}
+        };
+        constexpr std::array uvs = {
+            glm::vec2{0, 1},
+            glm::vec2{1, 1},
+            glm::vec2{1, 0},
+            glm::vec2{0, 0}
+        };
+        MeshData data;
+        for (size_t i = 0; i < positions.size(); ++i)
+            data.vertices.emplace_back(
+                positions[i],
+                glm::vec3{0.f, 1.f, 0.f},
+                uvs[i],
+                glm::vec4(1.f, 0.f, 0.f, 1.f)
+            );
+        data.indices = {0, 1, 2, 0, 2, 3};
+        return data;
+    }
+
     MeshData generate_cube()
     {
         constexpr std::array<std::array<glm::vec3, 4>, 6> positions = {

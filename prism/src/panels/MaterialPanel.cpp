@@ -6,6 +6,7 @@
 #include "components/entt/HierarchyComponent.h"
 #include "components/entt/MaterialTexturesComponent.h"
 #include "components/entt/TagComponent.h"
+#include "components/gpu/MeshMaterialData.h"
 #include "project_panel/AssetBrowser.h"
 #include "texture/MaterialTextureSystem.h"
 
@@ -105,6 +106,21 @@ namespace kailux
 
         widgets::property("AO");
         changed |= ImGui::SliderFloat("##ao", &material.pbrParams.y, 0.f, 1.f, "%.2f");
+
+        widgets::property("Grid");
+        bool grid{material.pbrParams.z > 0.f};
+        if (ImGui::Checkbox("##grid", &grid))
+        {
+            material.pbrParams.z = grid ? kDefaultGridCellSize : 0.f;
+            changed = true;
+        }
+
+        if (grid)
+        {
+            widgets::property("Grid cell");
+            changed |= ImGui::DragFloat("##grid_cell", &material.pbrParams.z, 0.05f, 0.05f, 100.f, "%.2f m",
+                                        ImGuiSliderFlags_AlwaysClamp);
+        }
 
         widgets::end_properties();
 

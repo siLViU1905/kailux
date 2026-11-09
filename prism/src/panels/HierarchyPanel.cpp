@@ -72,6 +72,8 @@ namespace kailux
                 {
                     if (ImGui::BeginMenu("Mesh"))
                     {
+                        if (ImGui::MenuItem("Plane"))
+                            mOnNewMesh(MeshType::Plane);
                         if (ImGui::MenuItem("Cube"))
                             mOnNewMesh(MeshType::Cube);
                         if (ImGui::MenuItem("Sphere"))

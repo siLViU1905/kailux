@@ -40,6 +40,7 @@ namespace kailux
 
     struct BuiltinMeshes
     {
+        MeshHandle plane;
         MeshHandle cube;
         MeshHandle sphere;
     };

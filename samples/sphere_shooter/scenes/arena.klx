@@ -88,7 +88,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Zig_L1",
          "physics": {
@@ -134,7 +134,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Zig_L2",
          "physics": {
@@ -180,7 +180,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Zig_L3",
          "physics": {
@@ -226,7 +226,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Tower_A",
          "physics": {
@@ -272,7 +272,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Tower_B",
          "physics": {
@@ -318,7 +318,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Skybridge",
          "physics": {
@@ -364,7 +364,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Ramp_E_Tower",
          "physics": {
@@ -410,7 +410,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Plateau_East",
          "physics": {
@@ -456,7 +456,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Ramp_D_Long",
          "physics": {
@@ -502,7 +502,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Barrier_1",
          "physics": {
@@ -548,7 +548,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Barrier_2",
          "physics": {
@@ -594,7 +594,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Barrier_3",
          "physics": {
@@ -640,7 +640,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Barrier_4",
          "physics": {
@@ -686,7 +686,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Barrier_5",
          "physics": {
@@ -732,7 +732,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Barrier_6",
          "physics": {
@@ -778,7 +778,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Pillar_5",
          "physics": {
@@ -824,7 +824,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Pillar_6",
          "physics": {
@@ -870,7 +870,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Pillar_7",
          "physics": {
@@ -916,7 +916,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Pillar_8",
          "physics": {
@@ -962,7 +962,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Divider_West",
          "physics": {
@@ -1008,7 +1008,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Divider_East",
          "physics": {
@@ -1054,7 +1054,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Crate_W1",
          "physics": {
@@ -1100,7 +1100,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Crate_W2",
          "physics": {
@@ -1146,7 +1146,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Crate_W3",
          "physics": {
@@ -1192,7 +1192,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Fulcrum",
          "physics": {
@@ -1238,7 +1238,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Domino_1",
          "physics": {
@@ -1284,7 +1284,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Domino_2",
          "physics": {
@@ -1330,7 +1330,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Domino_3",
          "physics": {
@@ -1376,7 +1376,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Domino_4",
          "physics": {
@@ -1422,7 +1422,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Domino_5",
          "physics": {
@@ -1468,7 +1468,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Domino_6",
          "physics": {
@@ -1514,7 +1514,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Domino_7",
          "physics": {
@@ -1560,7 +1560,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Domino_8",
          "physics": {
@@ -1606,7 +1606,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Domino_9",
          "physics": {
@@ -1652,7 +1652,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Domino_10",
          "physics": {
@@ -1698,7 +1698,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Domino_11",
          "physics": {
@@ -1744,7 +1744,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Domino_12",
          "physics": {
@@ -1790,7 +1790,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Domino_13",
          "physics": {
@@ -1836,7 +1836,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Domino_14",
          "physics": {
@@ -1882,7 +1882,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Seesaw_Plank",
          "physics": {
@@ -1928,7 +1928,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Seesaw_Cube",
          "physics": {
@@ -1974,7 +1974,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Seesaw_Sphere",
          "physics": {
@@ -2020,7 +2020,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_PyrB_R1_1",
          "physics": {
@@ -2066,7 +2066,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_PyrB_R1_2",
          "physics": {
@@ -2112,7 +2112,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_PyrB_R1_3",
          "physics": {
@@ -2158,7 +2158,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_PyrB_R1_4",
          "physics": {
@@ -2204,7 +2204,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_PyrB_R1_5",
          "physics": {
@@ -2250,7 +2250,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_PyrB_R2_1",
          "physics": {
@@ -2296,7 +2296,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_PyrB_R2_2",
          "physics": {
@@ -2342,7 +2342,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_PyrB_R2_3",
          "physics": {
@@ -2388,7 +2388,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_PyrB_R2_4",
          "physics": {
@@ -2434,7 +2434,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_PyrB_R3_1",
          "physics": {
@@ -2480,7 +2480,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_PyrB_R3_2",
          "physics": {
@@ -2526,7 +2526,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_PyrB_R3_3",
          "physics": {
@@ -2572,7 +2572,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_PyrB_R4_1",
          "physics": {
@@ -2618,7 +2618,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_PyrB_R4_2",
          "physics": {
@@ -2664,7 +2664,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_PyrB_R5_1",
          "physics": {
@@ -2710,7 +2710,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Plateau_R1_1",
          "physics": {
@@ -2756,7 +2756,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Plateau_R1_2",
          "physics": {
@@ -2802,7 +2802,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Plateau_R1_3",
          "physics": {
@@ -2848,7 +2848,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Plateau_R2_1",
          "physics": {
@@ -2894,7 +2894,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Plateau_R2_2",
          "physics": {
@@ -2940,7 +2940,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Plateau_R3_1",
          "physics": {
@@ -2986,7 +2986,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_ZigTower_1",
          "physics": {
@@ -3032,7 +3032,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_ZigTower_2",
          "physics": {
@@ -3078,7 +3078,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_ZigTower_3",
          "physics": {
@@ -3124,7 +3124,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_ZigTower_4",
          "physics": {
@@ -3170,7 +3170,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Brick_R1_1",
          "physics": {
@@ -3216,7 +3216,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Brick_R1_2",
          "physics": {
@@ -3262,7 +3262,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Brick_R1_3",
          "physics": {
@@ -3308,7 +3308,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Brick_R1_4",
          "physics": {
@@ -3354,7 +3354,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Brick_R1_5",
          "physics": {
@@ -3400,7 +3400,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Brick_R2_1",
          "physics": {
@@ -3446,7 +3446,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Brick_R2_2",
          "physics": {
@@ -3492,7 +3492,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Brick_R2_3",
          "physics": {
@@ -3538,7 +3538,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Brick_R2_4",
          "physics": {
@@ -3584,7 +3584,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Brick_R3_1",
          "physics": {
@@ -3630,7 +3630,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Brick_R3_2",
          "physics": {
@@ -3676,7 +3676,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Brick_R3_3",
          "physics": {
@@ -3722,7 +3722,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Brick_R3_4",
          "physics": {
@@ -3768,7 +3768,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Brick_R3_5",
          "physics": {
@@ -3814,7 +3814,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Brick_R4_1",
          "physics": {
@@ -3860,7 +3860,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Brick_R4_2",
          "physics": {
@@ -3906,7 +3906,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Brick_R4_3",
          "physics": {
@@ -3952,7 +3952,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Brick_R4_4",
          "physics": {
@@ -3998,7 +3998,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_TowerA",
          "physics": {
@@ -4044,7 +4044,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_TowerB",
          "physics": {
@@ -4090,7 +4090,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Bridge",
          "physics": {
@@ -4136,7 +4136,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Plateau_1",
          "physics": {
@@ -4182,7 +4182,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Plateau_2",
          "physics": {
@@ -4228,7 +4228,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Plateau_3",
          "physics": {
@@ -4274,7 +4274,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Zig_1",
          "physics": {
@@ -4320,7 +4320,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Zig_2",
          "physics": {
@@ -4366,7 +4366,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Zig_3",
          "physics": {
@@ -4412,7 +4412,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Zig_4",
          "physics": {
@@ -4458,7 +4458,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Drop_6",
          "physics": {
@@ -4504,7 +4504,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Drop_7",
          "physics": {
@@ -4550,7 +4550,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Drop_8",
          "physics": {
@@ -4596,7 +4596,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Drop_9",
          "physics": {
@@ -4642,7 +4642,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Drop_10",
          "physics": {
@@ -4688,7 +4688,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Drop_11",
          "physics": {
@@ -4734,7 +4734,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Drop_12",
          "physics": {
@@ -4780,7 +4780,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Drop_13",
          "physics": {
@@ -4826,7 +4826,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Drop_14",
          "physics": {
@@ -4872,7 +4872,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyramid_R1_1",
          "physics": {
@@ -4918,7 +4918,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyramid_R1_2",
          "physics": {
@@ -4964,7 +4964,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyramid_R1_3",
          "physics": {
@@ -5010,7 +5010,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyramid_R1_4",
          "physics": {
@@ -5056,7 +5056,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyramid_R2_1",
          "physics": {
@@ -5102,7 +5102,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyramid_R2_2",
          "physics": {
@@ -5148,7 +5148,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyramid_R2_3",
          "physics": {
@@ -5194,7 +5194,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyramid_R3_1",
          "physics": {
@@ -5240,7 +5240,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyramid_R3_2",
          "physics": {
@@ -5286,7 +5286,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyramid_R4_1",
          "physics": {
@@ -5332,7 +5332,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Tower_1",
          "physics": {
@@ -5378,7 +5378,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Tower_2",
          "physics": {
@@ -5424,7 +5424,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Tower_3",
          "physics": {
@@ -5470,7 +5470,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Tower_4",
          "physics": {
@@ -5516,7 +5516,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Tower_5",
          "physics": {
@@ -5562,7 +5562,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Wall_R1_1",
          "physics": {
@@ -5608,7 +5608,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Wall_R1_2",
          "physics": {
@@ -5654,7 +5654,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Wall_R1_3",
          "physics": {
@@ -5700,7 +5700,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Wall_R1_4",
          "physics": {
@@ -5746,7 +5746,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Wall_R1_5",
          "physics": {
@@ -5792,7 +5792,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Wall_R1_6",
          "physics": {
@@ -5838,7 +5838,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Wall_R2_1",
          "physics": {
@@ -5884,7 +5884,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Wall_R2_2",
          "physics": {
@@ -5930,7 +5930,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Wall_R2_3",
          "physics": {
@@ -5976,7 +5976,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Wall_R2_4",
          "physics": {
@@ -6022,7 +6022,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Wall_R2_5",
          "physics": {
@@ -6068,7 +6068,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Wall_R3_1",
          "physics": {
@@ -6114,7 +6114,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Wall_R3_2",
          "physics": {
@@ -6160,7 +6160,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Wall_R3_3",
          "physics": {
@@ -6206,7 +6206,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Wall_R3_4",
          "physics": {
@@ -6252,7 +6252,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Wall_R3_5",
          "physics": {
@@ -6298,7 +6298,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Wall_R3_6",
          "physics": {
@@ -6344,7 +6344,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Wall_R4_1",
          "physics": {
@@ -6390,7 +6390,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Wall_R4_2",
          "physics": {
@@ -6436,7 +6436,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Wall_R4_3",
          "physics": {
@@ -6482,7 +6482,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Wall_R4_4",
          "physics": {
@@ -6528,7 +6528,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Wall_R4_5",
          "physics": {
@@ -6574,7 +6574,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyr3D_L1_1",
          "physics": {
@@ -6620,7 +6620,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyr3D_L1_2",
          "physics": {
@@ -6666,7 +6666,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyr3D_L1_3",
          "physics": {
@@ -6712,7 +6712,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyr3D_L1_4",
          "physics": {
@@ -6758,7 +6758,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyr3D_L1_5",
          "physics": {
@@ -6804,7 +6804,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyr3D_L1_6",
          "physics": {
@@ -6850,7 +6850,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyr3D_L1_7",
          "physics": {
@@ -6896,7 +6896,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyr3D_L1_8",
          "physics": {
@@ -6942,7 +6942,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyr3D_L1_9",
          "physics": {
@@ -6988,7 +6988,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyr3D_L2_1",
          "physics": {
@@ -7034,7 +7034,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyr3D_L2_2",
          "physics": {
@@ -7080,7 +7080,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyr3D_L2_3",
          "physics": {
@@ -7126,7 +7126,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyr3D_L2_4",
          "physics": {
@@ -7172,7 +7172,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Cube_Pyr3D_L3_1",
          "physics": {
@@ -7218,7 +7218,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Drop_1",
          "physics": {
@@ -7264,7 +7264,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Drop_2",
          "physics": {
@@ -7310,7 +7310,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Drop_3",
          "physics": {
@@ -7356,7 +7356,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Drop_4",
          "physics": {
@@ -7402,7 +7402,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Drop_5",
          "physics": {
@@ -7448,7 +7448,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Platform_1",
          "physics": {
@@ -7494,7 +7494,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Platform_2",
          "physics": {
@@ -7540,7 +7540,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Floor_1",
          "physics": {
@@ -7586,7 +7586,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Floor_2",
          "physics": {
@@ -7632,7 +7632,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Floor_3",
          "physics": {
@@ -7678,7 +7678,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Sphere_Large",
          "physics": {
@@ -7724,7 +7724,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 1
+            "type": 2
          },
          "name": "Ball",
          "physics": {
@@ -7862,7 +7862,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Step_Wide",
          "physics": {
@@ -7908,7 +7908,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Bridge_Beam",
          "physics": {
@@ -7954,7 +7954,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Bench_Low",
          "physics": {
@@ -8000,7 +8000,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Crate_Small",
          "physics": {
@@ -8046,7 +8046,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Crate_Medium",
          "physics": {
@@ -8092,7 +8092,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Crate_Large",
          "physics": {
@@ -8138,7 +8138,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Pillar_4",
          "physics": {
@@ -8184,7 +8184,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Pillar_3",
          "physics": {
@@ -8230,7 +8230,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Pillar_2",
          "physics": {
@@ -8276,7 +8276,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Pillar_1",
          "physics": {
@@ -8322,7 +8322,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Stair_4",
          "physics": {
@@ -8368,7 +8368,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Stair_3",
          "physics": {
@@ -8414,7 +8414,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Stair_2",
          "physics": {
@@ -8460,7 +8460,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Stair_1",
          "physics": {
@@ -8506,7 +8506,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Platform_High",
          "physics": {
@@ -8552,7 +8552,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Ramp_C_Side",
          "physics": {
@@ -8598,7 +8598,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Ramp_B_Steep",
          "physics": {
@@ -8644,7 +8644,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Ramp_A_Gentle",
          "physics": {
@@ -8690,7 +8690,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Wall_West",
          "physics": {
@@ -8736,7 +8736,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Wall_East",
          "physics": {
@@ -8782,7 +8782,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Wall_South",
          "physics": {
@@ -8828,7 +8828,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Wall_North",
          "physics": {
@@ -8874,7 +8874,7 @@
          },
          "mesh": {
             "path": "",
-            "type": 0
+            "type": 1
          },
          "name": "Floor",
          "physics": {
@@ -8939,6 +8939,6 @@
          100000.0
       ]
    },
-   "version_major": 3,
-   "version_minor": 0
+   "version_major": 5,
+   "version_minor": 2
 }

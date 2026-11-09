@@ -18,6 +18,9 @@ namespace kailux::mesh_geometry
         std::vector<LodLevel> lods;
     };
 
+    // 1 x 1 quad on XZ
+    MeshData generate_plane();
+
     MeshData generate_cube();
 
     MeshData generate_sphere(uint32_t sectors = 32, uint32_t stacks = 32);
