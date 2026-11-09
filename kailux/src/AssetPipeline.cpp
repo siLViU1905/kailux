@@ -202,6 +202,10 @@ namespace kailux
         auto &textureRegistry = mTextureRegistry.get();
         auto &meshRegistry = mMeshRegistry.get();
 
+
+        static const auto kPlaneBounds{
+            Geometry::compute_bounding_sphere(mesh_geometry::generate_plane().vertices)
+        };
         static const auto kCubeBounds{
             Geometry::compute_bounding_sphere(mesh_geometry::generate_cube().vertices)
         };
@@ -252,6 +256,12 @@ namespace kailux
         };
         switch (data.type)
         {
+            case MeshType::Plane:
+                createMeshEntity(
+                    meshRegistry.GetBuiltins().plane,
+                    kPlaneBounds
+                );
+                break;
             case MeshType::Cube:
                 createMeshEntity(
                     meshRegistry.GetBuiltins().cube,
