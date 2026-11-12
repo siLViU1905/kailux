@@ -312,10 +312,10 @@ namespace kailux
         if (std::filesystem::is_directory(path))
         {
             if (const auto supported{get_supported_mesh_type(path)})
-                pathStr = supported->string();
+                pathStr = supported->generic_string();
         }
         else if (is_mesh_type_supported(path))
-            pathStr = path.string();
+            pathStr = path.generic_string();
 
         if (!pathStr)
         {
@@ -1205,7 +1205,7 @@ namespace kailux
         AssetPipeline::PendingMeshData pending;
         pending.target    = entity;
         pending.name      = std::string{name};
-        pending.path      = path.string();
+        pending.path      = path.generic_string();
         pending.type      = MeshType::Loaded;
         pending.transform = transform;
         pending.scene     = scene.GetId();

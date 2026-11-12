@@ -78,7 +78,7 @@ namespace kailux
 
     bool AssetPipeline::IsCached(const std::filesystem::path &path) const
     {
-        return mMeshCache.contains(path.string());
+        return mMeshCache.contains(path.generic_string());
     }
 
     DescriptorSetUpdateInfo AssetPipeline::make_texture_write(TextureHandle handle, const Texture &texture)
