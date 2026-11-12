@@ -73,7 +73,7 @@ namespace kailux
 
                 if (ImGui::BeginDragDropSource(s_DragDropSourceFlags))
                 {
-                    std::string itemPath = entry.string();
+                    std::string itemPath = entry.generic_string();
                     ImGui::SetDragDropPayload(s_DragDropPayloadType.data(), itemPath.c_str(), itemPath.size() + 1);
                     ImGui::Text("%s", name.c_str());
                     ImGui::EndDragDropSource();
