@@ -104,6 +104,7 @@ set(KAILUX_LICENSES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/licenses")
 
 get_filename_component(KAILUX_CONAN_GENERATORS_DIR "${CMAKE_TOOLCHAIN_FILE}" DIRECTORY)
 set(KAILUX_RUNTIME_LIBS_DIR "${KAILUX_CONAN_GENERATORS_DIR}/runtime")
+set(KAILUX_DEPENDENCY_LICENSES_DIR "${KAILUX_CONAN_GENERATORS_DIR}/licenses")
 
 function(kailux_copy_resources target)
     add_custom_target(${target}_resources
@@ -115,6 +116,10 @@ function(kailux_copy_resources target)
             "$<TARGET_FILE_DIR:${target}>/assets"
             COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
             "${KAILUX_LICENSES_DIR}"
+            "$<TARGET_FILE_DIR:${target}>/licenses"
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${KAILUX_DEPENDENCY_LICENSES_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+            "${KAILUX_DEPENDENCY_LICENSES_DIR}"
             "$<TARGET_FILE_DIR:${target}>/licenses"
             COMMAND ${CMAKE_COMMAND} -E make_directory "${KAILUX_RUNTIME_LIBS_DIR}"
             COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different

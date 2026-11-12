@@ -57,3 +57,11 @@ class kailux(ConanFile):
             copy(self, "*.dll", bin_dir, openal_runtime_dir, keep_path=False)
         for lib_dir in openal.libdirs:
             copy(self, "*.so*", lib_dir, openal_runtime_dir, keep_path=False)
+
+        licenses_dir = os.path.join(self.generators_folder, "licenses")
+        for dependency in self.dependencies.host.values():
+            if not dependency.package_folder:
+                continue
+            dependency_licenses = os.path.join(dependency.package_folder, "licenses")
+            if os.path.isdir(dependency_licenses):
+                copy(self, "*", dependency_licenses, os.path.join(licenses_dir, dependency.ref.name))
