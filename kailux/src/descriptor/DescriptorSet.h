@@ -4,6 +4,7 @@
 #include "DescriptorLayout.h"
 #include "DescriptorPool.h"
 #include "../pipeline/Pipeline.h"
+#include <variant>
 
 namespace kailux
 {
