@@ -1,3 +1,5 @@
+Kailux logo
+
 # Kailux
 
 A lightweight, modern C++ rendering engine built on Vulkan.
