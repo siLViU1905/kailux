@@ -1,4 +1,8 @@
-# Kailux
+<p align="center">
+  <img src="docs/logo.png" width="160" alt="Kailux logo">
+</p>
+<h1 align="center">Kailux</h1>
+
 
 A lightweight, modern C++ rendering engine built on Vulkan.
 
