@@ -700,12 +700,43 @@ namespace kailux
                 shape = new JPH::SphereShape(0.5f);
                 break;
             }
+            case MeshType::Cone:
+            {
+                return create_cone_hull();
+            }
             case MeshType::Loaded:
                 break;
             case MeshType::Unknown:
                 break;
         }
         return shape;
+    }
+
+    PhysicsRegistry::CreateResult PhysicsRegistry::create_cone_hull()
+    {
+        constexpr uint32_t kSegments{32};
+        constexpr float kRadius{0.5f};
+        constexpr float kHalfHeight{0.5f};
+
+        JPH::Array<JPH::Vec3> points;
+        points.reserve(kSegments + 1);
+        points.emplace_back(0.f, kHalfHeight, 0.f);
+
+        constexpr auto step{2.f * std::numbers::pi_v<float> / static_cast<float>(kSegments)};
+        for (uint32_t i{}; i < kSegments; ++i)
+        {
+            const auto angle{static_cast<float>(i) * step};
+            points.emplace_back(kRadius * std::cos(angle), -kHalfHeight, kRadius * std::sin(angle));
+        }
+
+        JPH::ConvexHullShapeSettings settings{points};
+        settings.SetEmbedded();
+
+        const auto result{settings.Create()};
+        if (result.HasError())
+            return std::unexpected{std::format("physics registry: cone hull Jolt error: {}",
+                                          result.GetError().c_str())};
+        return result.Get();
     }
 
     PhysicsRegistry::CreateResult PhysicsRegistry::create_loaded_mesh_body(const PhysicsBodyInfo &info)
