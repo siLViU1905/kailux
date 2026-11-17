@@ -78,6 +78,12 @@ namespace kailux
                             mOnNewMesh(MeshType::Cube);
                         if (ImGui::MenuItem("Sphere"))
                             mOnNewMesh(MeshType::Sphere);
+                        if (ImGui::MenuItem("Cone"))
+                            mOnNewMesh(MeshType::Cone);
+                        if (ImGui::MenuItem("Cylinder"))
+                            mOnNewMesh(MeshType::Cylinder);
+                        if (ImGui::MenuItem("Torus"))
+                            mOnNewMesh(MeshType::Torus);
 
                         ImGui::EndMenu();
                     }

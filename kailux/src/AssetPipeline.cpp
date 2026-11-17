@@ -282,16 +282,19 @@ namespace kailux
                     meshRegistry.GetBuiltins().sphere,
                     kSphereBounds
                 );
+                break;
             case MeshType::Cone:
                 createMeshEntity(
                     meshRegistry.GetBuiltins().cone,
                     kConeBounds
                     );
+                break;
             case MeshType::Cylinder:
                 createMeshEntity(
                     meshRegistry.GetBuiltins().cylinder,
                     kCylinderBounds
                     );
+                break;
             case MeshType::Torus:
                 createMeshEntity(
                     meshRegistry.GetBuiltins().torus,
