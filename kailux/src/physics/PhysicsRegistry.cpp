@@ -5,6 +5,8 @@
 #include "Log.h"
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Collision/Shape/CylinderShape.h>
+#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
 #include <Jolt/Physics/Collision/Shape/StaticCompoundShape.h>
 #include <Jolt/Physics/Collision/Shape/MeshShape.h>
 #include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
@@ -15,7 +17,9 @@
 #include <Jolt/Physics/Collision/NarrowPhaseQuery.h>
 #include <Jolt/Physics/Body/BodyFilter.h>
 #include <Jolt/Physics/Body/BodyLock.h>
+
 #include <execution>
+#include <numbers>
 
 namespace kailux
 {
@@ -703,6 +707,11 @@ namespace kailux
             case MeshType::Cone:
             {
                 return create_cone_hull();
+            }
+            case MeshType::Cylinder:
+            {
+                shape = new JPH::CylinderShape(0.5f, 0.5f);
+                break;
             }
             case MeshType::Loaded:
                 break;
