@@ -1,7 +1,5 @@
 #include "Bullet.h"
 
-#include <random>
-
 namespace sphere_shooter
 {
     kailux::Primitive Bullet::get_random_bullet_primitive()
