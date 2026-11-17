@@ -25,7 +25,23 @@ namespace kailux::mesh_geometry
 
     MeshData generate_sphere(uint32_t sectors = 32, uint32_t stacks = 32);
 
+    MeshData generate_cone(uint32_t segments = 32);
+
+    MeshData generate_cylinder(uint32_t segments = 32);
+
+    MeshData generate_torus(float ringRadius = 0.35f,
+                            float tubeRadius = 0.15f,
+                            uint32_t ringSegments = 48,
+                            uint32_t tubeSegments = 24
+    );
+
     void optimize_mesh(MeshData &meshData);
 
     void generate_lods(MeshData &meshData);
+
+    namespace details
+    {
+        void append_cap(MeshData &data, uint32_t segments, float radius, float y, bool up);
+        void append_grid_indices(MeshData &data, uint32_t base, uint32_t rows, uint32_t columns);
+    }
 }

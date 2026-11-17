@@ -69,6 +69,15 @@ namespace kailux
             case Primitive::Sphere:
                 type = MeshType::Sphere;
                 break;
+            case Primitive::Cone:
+                type = MeshType::Cone;
+                break;
+            case Primitive::Cylinder:
+                type = MeshType::Cylinder;
+                break;
+            case Primitive::Torus:
+                type = MeshType::Torus;
+                break;
         }
         const auto entity{pServices->SpawnPrimitive(*pScene, name, type, transform)};
         if (entity == entt::null)

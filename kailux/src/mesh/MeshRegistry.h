@@ -43,6 +43,9 @@ namespace kailux
         MeshHandle plane;
         MeshHandle cube;
         MeshHandle sphere;
+        MeshHandle cone;
+        MeshHandle cylinder;
+        MeshHandle torus;
     };
 
     class MeshRegistry

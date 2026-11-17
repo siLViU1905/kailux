@@ -59,6 +59,9 @@ namespace kailux
         uploadShape([]() { return mesh_geometry::generate_plane(); }, registry.mBuiltins.plane);
         uploadShape([]() { return mesh_geometry::generate_cube(); }, registry.mBuiltins.cube);
         uploadShape([]() { return mesh_geometry::generate_sphere(); }, registry.mBuiltins.sphere);
+        uploadShape([]() { return mesh_geometry::generate_cone(); }, registry.mBuiltins.cone);
+        uploadShape([]() { return mesh_geometry::generate_cylinder(); }, registry.mBuiltins.cylinder);
+        uploadShape([]() { return mesh_geometry::generate_torus(); }, registry.mBuiltins.torus);
 
         return registry;
     }

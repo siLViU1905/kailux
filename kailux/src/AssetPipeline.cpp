@@ -212,6 +212,15 @@ namespace kailux
         static const auto kSphereBounds{
             Geometry::compute_bounding_sphere(mesh_geometry::generate_sphere().vertices)
         };
+        static const auto kConeBounds{
+            Geometry::compute_bounding_sphere(mesh_geometry::generate_cone().vertices)
+        };
+        static const auto kCylinderBounds{
+            Geometry::compute_bounding_sphere(mesh_geometry::generate_cylinder().vertices)
+        };
+        static const auto kTorusBounds{
+            Geometry::compute_bounding_sphere(mesh_geometry::generate_torus().vertices)
+        };
 
         auto now = Clock::now();
         std::string meshName;
@@ -273,6 +282,24 @@ namespace kailux
                     meshRegistry.GetBuiltins().sphere,
                     kSphereBounds
                 );
+                break;
+            case MeshType::Cone:
+                createMeshEntity(
+                    meshRegistry.GetBuiltins().cone,
+                    kConeBounds
+                    );
+                break;
+            case MeshType::Cylinder:
+                createMeshEntity(
+                    meshRegistry.GetBuiltins().cylinder,
+                    kCylinderBounds
+                    );
+                break;
+            case MeshType::Torus:
+                createMeshEntity(
+                    meshRegistry.GetBuiltins().torus,
+                    kTorusBounds
+                    );
                 break;
             default:
                 break;

@@ -78,7 +78,7 @@ namespace sphere_shooter
         auto bullet{
             GetWorld().SpawnPrimitive(
                 "Bullet",
-                kailux::Primitive::Sphere,
+                Bullet::get_random_bullet_primitive(),
                 transform,
                 kailux::BodySettings{
                     kailux::BodyType::Dynamic,

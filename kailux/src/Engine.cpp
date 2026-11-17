@@ -1154,6 +1154,9 @@ namespace kailux
         static const auto kPlaneBounds{Geometry::compute_bounding_sphere(mesh_geometry::generate_plane().vertices)};
         static const auto kCubeBounds{Geometry::compute_bounding_sphere(mesh_geometry::generate_cube().vertices)};
         static const auto kSphereBounds{Geometry::compute_bounding_sphere(mesh_geometry::generate_sphere().vertices)};
+        static const auto kConeBounds{Geometry::compute_bounding_sphere(mesh_geometry::generate_cone().vertices)};
+        static const auto kCylinderBounds{Geometry::compute_bounding_sphere(mesh_geometry::generate_cylinder().vertices)};
+        static const auto kTorusBounds{Geometry::compute_bounding_sphere(mesh_geometry::generate_torus().vertices)};
 
         const auto& builtins{mMeshRegistry.GetBuiltins()};
         MeshComponent component;
@@ -1170,8 +1173,17 @@ namespace kailux
             case MeshType::Sphere:
                 component = {builtins.sphere, kSphereBounds};
                 break;
+            case MeshType::Cone:
+                component = {builtins.cone, kConeBounds};
+                break;
+            case MeshType::Cylinder:
+                component = {builtins.cylinder, kCylinderBounds};
+                break;
+            case MeshType::Torus:
+                component = {builtins.torus, kTorusBounds};
+                break;
             default:
-                mOnWarningLog("SpawnPrimitive only supports planes, cubes and spheres");
+                mOnWarningLog("SpawnPrimitive only supports built-in primitive meshes");
                 return entt::null;
         }
         const auto created{scene.CreateMeshEntity(

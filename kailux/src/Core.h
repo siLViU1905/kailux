@@ -17,6 +17,9 @@ namespace kailux
         Plane,
         Cube,
         Sphere,
+        Cone,
+        Cylinder,
+        Torus,
         Loaded,
         Unknown
     };
