@@ -1,7 +1,19 @@
 #include "Bullet.h"
 
+#include <random>
+
 namespace sphere_shooter
 {
+    kailux::Primitive Bullet::get_random_bullet_primitive()
+    {
+        std::uniform_int_distribution dist{
+            static_cast<uint8_t>(kailux::Primitive::Cube),
+            static_cast<uint8_t>(kailux::Primitive::Torus)
+        };
+
+        return static_cast<kailux::Primitive>(dist(rng()));
+    }
+
     void Bullet::OnCollisionEnter(kailux::Entity other)
     {
         const auto now{GetTime().Elapsed()};
@@ -24,5 +36,11 @@ namespace sphere_shooter
         sparks.speed = kSparkSpeed * strength + 1.f;
         sparks.color = kSparkColor;
         GetWorld().EmitParticles(position, sparks);
+    }
+
+    std::mt19937 & Bullet::rng()
+    {
+        static std::mt19937 rng{std::random_device{}()};
+        return rng;
     }
 }
