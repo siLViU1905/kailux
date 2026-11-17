@@ -202,6 +202,82 @@ namespace kailux::mesh_geometry
         return data;
     }
 
+    MeshData generate_cylinder(uint32_t segments)
+    {
+        MeshData data;
+        data.vertices.reserve(2 * (segments + 1) + 2 * (segments + 2));
+        data.indices.reserve(segments * 12);
+
+        constexpr float radius{0.5f};
+        constexpr float halfHeight{0.5f};
+
+        const auto step{2.f * std::numbers::pi_v<float> / static_cast<float>(segments)};
+
+        for (uint32_t i{}; i <= 1; ++i)
+        {
+            const auto y{i == 0 ? halfHeight : -halfHeight};
+
+            for (uint32_t j{}; j <= segments; ++j)
+            {
+                const auto angle{static_cast<float>(j) * step};
+                const auto c{std::cos(angle)};
+                const auto s{std::sin(angle)};
+
+                data.vertices.emplace_back(
+                    glm::vec3{radius * c, y, radius * s},
+                    glm::vec3{c, 0.f, s},
+                    glm::vec2{static_cast<float>(j) / static_cast<float>(segments), static_cast<float>(i)},
+                    glm::vec4{-s, 0.f, c, 1.f}
+                );
+            }
+        }
+        details::append_grid_indices(data, 0, 1, segments);
+
+        details::append_cap(data, segments, radius, halfHeight, true);
+        details::append_cap(data, segments, radius, -halfHeight, false);
+
+        return data;
+    }
+
+    MeshData generate_torus(float ringRadius, float tubeRadius, uint32_t ringSegments, uint32_t tubeSegments)
+    {
+        MeshData data;
+        data.vertices.reserve((ringSegments + 1) * (tubeSegments + 1));
+        data.indices.reserve(ringSegments * tubeSegments * 6);
+
+        const auto ringStep{2.f * std::numbers::pi_v<float> / static_cast<float>(ringSegments)};
+        const auto tubeStep{2.f * std::numbers::pi_v<float> / static_cast<float>(tubeSegments)};
+
+        for (uint32_t i{}; i <= tubeSegments; ++i)
+        {
+            const auto tubeAngle{std::numbers::pi_v<float> / 2.f - static_cast<float>(i) * tubeStep};
+            const auto tc{std::cos(tubeAngle)};
+            const auto ts{std::sin(tubeAngle)};
+
+            for (uint32_t j{}; j <= ringSegments; ++j)
+            {
+                const auto ringAngle{static_cast<float>(j) * ringStep};
+                const auto rc{std::cos(ringAngle)};
+                const auto rs{std::sin(ringAngle)};
+
+                const auto distance{ringRadius + tubeRadius * tc};
+
+                data.vertices.emplace_back(
+                    glm::vec3{distance * rc, tubeRadius * ts, distance * rs},
+                    glm::vec3{tc * rc, ts, tc * rs},
+                    glm::vec2{
+                        static_cast<float>(j) / static_cast<float>(ringSegments),
+                        static_cast<float>(i) / static_cast<float>(tubeSegments)
+                    },
+                    glm::vec4{-rs, 0.f, rc, 1.f}
+                );
+            }
+        }
+        details::append_grid_indices(data, 0, tubeSegments, ringSegments);
+
+        return data;
+    }
+
     void optimize_mesh(MeshData &meshData)
     {
         auto& vertices{meshData.vertices};
@@ -275,7 +351,7 @@ namespace kailux::mesh_geometry
         meshData.lods.clear();
 
         const auto &vertices{meshData.vertices};
-        if (vertices.empty() || meshData.indices.size() < details::kMinLodIndices)
+        if (vertices.empty() || meshData.indices.size() < kailux::details::kMinLodIndices)
             return;
 
         const float meshScale{
@@ -286,8 +362,8 @@ namespace kailux::mesh_geometry
             )
         };
 
-        constexpr std::array<float, details::kMaxGeometryLods - 1> kTargets{0.25f, 0.0625f, 0.015f, 0.004f};
-        constexpr uint32_t kMinIndices{details::kMinLodIndices / 2};
+        constexpr std::array<float, kailux::details::kMaxGeometryLods - 1> kTargets{0.25f, 0.0625f, 0.015f, 0.004f};
+        constexpr uint32_t kMinIndices{kailux::details::kMinLodIndices / 2};
 
         std::vector src{meshData.indices};
         const auto originalSize{static_cast<uint32_t>(meshData.indices.size())};
@@ -342,37 +418,55 @@ namespace kailux::mesh_geometry
         }
     }
 
-    void details::append_cap(MeshData &data, uint32_t segments, float radius, float y, bool up)
+    namespace details
     {
-        const auto step{2.f * std::numbers::pi_v<float> / static_cast<float>(segments)};
-        const glm::vec3 normal{0.f, up ? 1.f : -1.f, 0.f};
-        constexpr glm::vec4 tangent{1.f, 0.f, 0.f, 1.f};
-
-        const auto center{static_cast<uint32_t>(data.vertices.size())};
-        data.vertices.emplace_back(glm::vec3{0.f, y, 0.f}, normal, glm::vec2{0.5f, 0.5f}, tangent);
-
-        for (uint32_t j{}; j <= segments; ++j)
+        void append_cap(MeshData &data, uint32_t segments, float radius, float y, bool up)
         {
-            const auto angle{static_cast<float>(j) * step};
-            const auto c{std::cos(angle)};
-            const auto s{std::sin(angle)};
+            const auto step{2.f * std::numbers::pi_v<float> / static_cast<float>(segments)};
+            const glm::vec3 normal{0.f, up ? 1.f : -1.f, 0.f};
+            constexpr glm::vec4 tangent{1.f, 0.f, 0.f, 1.f};
 
-            data.vertices.emplace_back(
-                glm::vec3{radius * c, y, radius * s},
-                normal,
-                glm::vec2{0.5f + 0.5f * c, 0.5f + (up ? -0.5f : 0.5f) * s},
-                tangent
-            );
+            const auto center{static_cast<uint32_t>(data.vertices.size())};
+            data.vertices.emplace_back(glm::vec3{0.f, y, 0.f}, normal, glm::vec2{0.5f, 0.5f}, tangent);
+
+            for (uint32_t j{}; j <= segments; ++j)
+            {
+                const auto angle{static_cast<float>(j) * step};
+                const auto c{std::cos(angle)};
+                const auto s{std::sin(angle)};
+
+                data.vertices.emplace_back(
+                    glm::vec3{radius * c, y, radius * s},
+                    normal,
+                    glm::vec2{0.5f + 0.5f * c, 0.5f + (up ? -0.5f : 0.5f) * s},
+                    tangent
+                );
+            }
+
+            for (uint32_t j{}; j < segments; ++j)
+            {
+                const auto a{center + 1 + j};
+                const auto b{a + 1};
+                if (up)
+                    data.indices.insert(data.indices.end(), {center, b, a});
+                else
+                    data.indices.insert(data.indices.end(), {center, a, b});
+            }
         }
 
-        for (uint32_t j{}; j < segments; ++j)
+        void append_grid_indices(MeshData &data, uint32_t base, uint32_t rows, uint32_t columns)
         {
-            const auto a{center + 1 + j};
-            const auto b{a + 1};
-            if (up)
-                data.indices.insert(data.indices.end(), {center, b, a});
-            else
-                data.indices.insert(data.indices.end(), {center, a, b});
+            for (uint32_t i{}; i < rows; ++i)
+                for (uint32_t j{}; j < columns; ++j)
+                {
+                    const auto k1{base + i * (columns + 1) + j};
+                    const auto k2{k1 + columns + 1};
+
+                    data.indices.insert(data.indices.end(), {
+                                            k1, k1 + 1, k2,
+                                            k1 + 1, k2 + 1, k2
+                                        });
+                }
         }
     }
 }
