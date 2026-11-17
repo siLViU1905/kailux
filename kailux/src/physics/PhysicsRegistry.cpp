@@ -713,6 +713,10 @@ namespace kailux
                 shape = new JPH::CylinderShape(0.5f, 0.5f);
                 break;
             }
+            case MeshType::Torus:
+            {
+                return create_torus_compound();
+            }
             case MeshType::Loaded:
                 break;
             case MeshType::Unknown:
@@ -744,6 +748,40 @@ namespace kailux
         const auto result{settings.Create()};
         if (result.HasError())
             return std::unexpected{std::format("physics registry: cone hull Jolt error: {}",
+                                          result.GetError().c_str())};
+        return result.Get();
+    }
+
+    PhysicsRegistry::CreateResult PhysicsRegistry::create_torus_compound()
+    {
+        constexpr uint32_t kSegments{16};
+        constexpr float kRingRadius{0.35f};
+        constexpr float kTubeRadius{0.15f};
+
+        constexpr auto step{2.f * std::numbers::pi_v<float> / static_cast<float>(kSegments)};
+        const auto halfChord{kRingRadius * std::sin(step * 0.5f)};
+        const auto chordDistance{kRingRadius * std::cos(step * 0.5f)};
+
+        JPH::StaticCompoundShapeSettings settings;
+        settings.SetEmbedded();
+
+        for (uint32_t i{}; i < kSegments; ++i)
+        {
+            const auto angle{(static_cast<float>(i) + 0.5f) * step};
+            const auto c{std::cos(angle)};
+            const auto s{std::sin(angle)};
+
+            const JPH::Vec3 tangent{-s, 0.f, c};
+            settings.AddShape(
+                JPH::Vec3{chordDistance * c, 0.f, chordDistance * s},
+                JPH::Quat::sFromTo(JPH::Vec3::sAxisY(), tangent),
+                new JPH::CapsuleShape(halfChord, kTubeRadius)
+            );
+        }
+
+        const auto result{settings.Create()};
+        if (result.HasError())
+            return std::unexpected{std::format("physics registry: torus compound Jolt error: {}",
                                           result.GetError().c_str())};
         return result.Get();
     }

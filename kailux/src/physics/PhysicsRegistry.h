@@ -108,6 +108,7 @@ namespace kailux
 
         static CreateResult create_builtin_mesh_body(MeshType type);
         static CreateResult create_cone_hull();
+        static CreateResult create_torus_compound();
         static CreateResult create_loaded_mesh_body(const PhysicsBodyInfo &info);
         static CreateResult create_single_hull(const PhysicsMeshData& mesh);
 
