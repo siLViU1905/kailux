@@ -31,7 +31,10 @@ namespace kailux
     {
         Plane,
         Cube,
-        Sphere
+        Sphere,
+        Cone,
+        Cylinder,
+        Torus
     };
 
     class TransformRef
