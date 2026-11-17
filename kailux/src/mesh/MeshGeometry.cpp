@@ -142,6 +142,66 @@ namespace kailux::mesh_geometry
         return data;
     }
 
+    MeshData generate_cone(uint32_t segments)
+    {
+        MeshData data;
+        data.vertices.reserve(2 * (segments + 1) + segments + 2);
+        data.indices.reserve(segments * 6);
+
+        constexpr float radius{0.5f};
+        constexpr float height{1.f};
+        constexpr float halfHeight{height * 0.5f};
+
+        const auto step{2.f * std::numbers::pi_v<float> / static_cast<float>(segments)};
+
+        const auto slope{glm::normalize(glm::vec2{height, radius})};
+
+        const auto sideNormal{
+            [&](float angle)
+            {
+                return glm::vec3{slope.x * std::cos(angle), slope.y, slope.x * std::sin(angle)};
+            }
+        };
+
+        for (uint32_t j{}; j <= segments; ++j)
+        {
+            const auto angle{(static_cast<float>(j) + 0.5f) * step};
+
+            data.vertices.emplace_back(
+                glm::vec3{0.f, halfHeight, 0.f},
+                sideNormal(angle),
+                glm::vec2{(static_cast<float>(j) + 0.5f) / static_cast<float>(segments), 0.f},
+                glm::vec4{-std::sin(angle), 0.f, std::cos(angle), 1.f}
+            );
+        }
+
+        for (uint32_t j{}; j <= segments; ++j)
+        {
+            const auto angle{static_cast<float>(j) * step};
+            const auto c{std::cos(angle)};
+            const auto s{std::sin(angle)};
+
+            data.vertices.emplace_back(
+                glm::vec3{radius * c, -halfHeight, radius * s},
+                sideNormal(angle),
+                glm::vec2{static_cast<float>(j) / static_cast<float>(segments), 1.f},
+                glm::vec4{-s, 0.f, c, 1.f}
+            );
+        }
+
+        for (uint32_t j{}; j < segments; ++j)
+        {
+            const auto apex{j};
+            const auto k2{segments + 1 + j};
+
+            data.indices.insert(data.indices.end(), {apex, k2 + 1, k2});
+        }
+
+        details::append_cap(data, segments, radius, -halfHeight, false);
+
+        return data;
+    }
+
     void optimize_mesh(MeshData &meshData)
     {
         auto& vertices{meshData.vertices};
@@ -279,6 +339,40 @@ namespace kailux::mesh_geometry
                 meshData.lods.emplace_back(std::move(lodIndices), carriedError * meshScale);
                 ++level;
             }
+        }
+    }
+
+    void details::append_cap(MeshData &data, uint32_t segments, float radius, float y, bool up)
+    {
+        const auto step{2.f * std::numbers::pi_v<float> / static_cast<float>(segments)};
+        const glm::vec3 normal{0.f, up ? 1.f : -1.f, 0.f};
+        constexpr glm::vec4 tangent{1.f, 0.f, 0.f, 1.f};
+
+        const auto center{static_cast<uint32_t>(data.vertices.size())};
+        data.vertices.emplace_back(glm::vec3{0.f, y, 0.f}, normal, glm::vec2{0.5f, 0.5f}, tangent);
+
+        for (uint32_t j{}; j <= segments; ++j)
+        {
+            const auto angle{static_cast<float>(j) * step};
+            const auto c{std::cos(angle)};
+            const auto s{std::sin(angle)};
+
+            data.vertices.emplace_back(
+                glm::vec3{radius * c, y, radius * s},
+                normal,
+                glm::vec2{0.5f + 0.5f * c, 0.5f + (up ? -0.5f : 0.5f) * s},
+                tangent
+            );
+        }
+
+        for (uint32_t j{}; j < segments; ++j)
+        {
+            const auto a{center + 1 + j};
+            const auto b{a + 1};
+            if (up)
+                data.indices.insert(data.indices.end(), {center, b, a});
+            else
+                data.indices.insert(data.indices.end(), {center, a, b});
         }
     }
 }

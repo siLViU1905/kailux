@@ -25,7 +25,14 @@ namespace kailux::mesh_geometry
 
     MeshData generate_sphere(uint32_t sectors = 32, uint32_t stacks = 32);
 
+    MeshData generate_cone(uint32_t segments = 32);
+
     void optimize_mesh(MeshData &meshData);
 
     void generate_lods(MeshData &meshData);
+
+    namespace details
+    {
+        static void append_cap(MeshData &data, uint32_t segments, float radius, float y, bool up);
+    }
 }
