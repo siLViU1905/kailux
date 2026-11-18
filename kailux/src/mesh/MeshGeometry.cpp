@@ -278,6 +278,33 @@ namespace kailux::mesh_geometry
         return data;
     }
 
+    glm::vec4 compute_bounding_sphere(std::span<const Vertex> vertices)
+    {
+        if (vertices.empty())
+            return {0.f, 0.f, 0.f, 0.f};
+
+        glm::vec3 min{vertices[0].position};
+        glm::vec3 max{vertices[0].position};
+
+        for (const auto& vertex : vertices)
+        {
+            min = glm::min(min, vertex.position);
+            max = glm::max(max, vertex.position);
+        }
+
+        const auto center{(min + max) * 0.5f};
+
+        float maxRadiusSq{};
+        for (const auto& vertex : vertices)
+        {
+            const auto offset{vertex.position - center};
+            maxRadiusSq = std::max(maxRadiusSq, glm::dot(offset, offset));
+        }
+
+        const float radius{std::sqrt(maxRadiusSq)};
+        return {center, radius};
+    }
+
     void optimize_mesh(MeshData &meshData)
     {
         auto& vertices{meshData.vertices};
@@ -420,6 +447,42 @@ namespace kailux::mesh_geometry
 
     namespace details
     {
+        const glm::vec4& plane_bounds()
+        {
+            static const auto bounds{compute_bounding_sphere(generate_plane().vertices)};
+            return bounds;
+        }
+
+        const glm::vec4& cube_bounds()
+        {
+            static const auto bounds{compute_bounding_sphere(generate_cube().vertices)};
+            return bounds;
+        }
+
+        const glm::vec4& sphere_bounds()
+        {
+            static const auto bounds{compute_bounding_sphere(generate_sphere().vertices)};
+            return bounds;
+        }
+
+        const glm::vec4& cone_bounds()
+        {
+            static const auto bounds{compute_bounding_sphere(generate_cone().vertices)};
+            return bounds;
+        }
+
+        const glm::vec4& cylinder_bounds()
+        {
+            static const auto bounds{compute_bounding_sphere(generate_cylinder().vertices)};
+            return bounds;
+        }
+
+        const glm::vec4& torus_bounds()
+        {
+            static const auto bounds{compute_bounding_sphere(generate_torus().vertices)};
+            return bounds;
+        }
+
         void append_cap(MeshData &data, uint32_t segments, float radius, float y, bool up)
         {
             const auto step{2.f * std::numbers::pi_v<float> / static_cast<float>(segments)};
