@@ -8,7 +8,7 @@
 #include "Clock.h"
 #include "EngineSpecification.h"
 #include "FileDialog.h"
-#include "Geometry.h"
+#include "mesh/MeshGeometry.h"
 #include "command/CommandRecorder.h"
 #include "Log.h"
 #include "command/OneTimeCommand.h"
@@ -1151,36 +1151,29 @@ namespace kailux
 
     entt::entity Engine::SpawnPrimitive(Scene &scene, std::string_view name, MeshType type, const Transform &transform)
     {
-        static const auto kPlaneBounds{Geometry::compute_bounding_sphere(mesh_geometry::generate_plane().vertices)};
-        static const auto kCubeBounds{Geometry::compute_bounding_sphere(mesh_geometry::generate_cube().vertices)};
-        static const auto kSphereBounds{Geometry::compute_bounding_sphere(mesh_geometry::generate_sphere().vertices)};
-        static const auto kConeBounds{Geometry::compute_bounding_sphere(mesh_geometry::generate_cone().vertices)};
-        static const auto kCylinderBounds{Geometry::compute_bounding_sphere(mesh_geometry::generate_cylinder().vertices)};
-        static const auto kTorusBounds{Geometry::compute_bounding_sphere(mesh_geometry::generate_torus().vertices)};
-
         const auto& builtins{mMeshRegistry.GetBuiltins()};
         MeshComponent component;
         MeshMaterialData material;
         switch (type)
         {
             case MeshType::Plane:
-                component = {builtins.plane, kPlaneBounds};
+                component = {builtins.plane, mesh_geometry::details::plane_bounds()};
                 material  = make_grid_material();
                 break;
             case MeshType::Cube:
-                component = {builtins.cube, kCubeBounds};
+                component = {builtins.cube, mesh_geometry::details::cube_bounds()};
                 break;
             case MeshType::Sphere:
-                component = {builtins.sphere, kSphereBounds};
+                component = {builtins.sphere, mesh_geometry::details::sphere_bounds()};
                 break;
             case MeshType::Cone:
-                component = {builtins.cone, kConeBounds};
+                component = {builtins.cone, mesh_geometry::details::cone_bounds()};
                 break;
             case MeshType::Cylinder:
-                component = {builtins.cylinder, kCylinderBounds};
+                component = {builtins.cylinder, mesh_geometry::details::cylinder_bounds()};
                 break;
             case MeshType::Torus:
-                component = {builtins.torus, kTorusBounds};
+                component = {builtins.torus, mesh_geometry::details::torus_bounds()};
                 break;
             default:
                 mOnWarningLog("SpawnPrimitive only supports built-in primitive meshes");
