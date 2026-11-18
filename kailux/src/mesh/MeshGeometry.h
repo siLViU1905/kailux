@@ -35,12 +35,21 @@ namespace kailux::mesh_geometry
                             uint32_t tubeSegments = 24
     );
 
+    glm::vec4 compute_bounding_sphere(std::span<const Vertex> vertices);
+
     void optimize_mesh(MeshData &meshData);
 
     void generate_lods(MeshData &meshData);
 
     namespace details
     {
+        const glm::vec4& plane_bounds();
+        const glm::vec4& cube_bounds();
+        const glm::vec4& sphere_bounds();
+        const glm::vec4& cone_bounds();
+        const glm::vec4& cylinder_bounds();
+        const glm::vec4& torus_bounds();
+
         void append_cap(MeshData &data, uint32_t segments, float radius, float y, bool up);
         void append_grid_indices(MeshData &data, uint32_t base, uint32_t rows, uint32_t columns);
     }

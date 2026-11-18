@@ -4,7 +4,7 @@
 
 #include "scene/Scene.h"
 #include "Clock.h"
-#include "Geometry.h"
+#include "mesh/MeshGeometry.h"
 #include "components/entt/CachedPhysicsData.h"
 #include "components/entt/PendingUploadComponent.h"
 #include "components/entt/TagComponent.h"
@@ -202,26 +202,6 @@ namespace kailux
         auto &textureRegistry = mTextureRegistry.get();
         auto &meshRegistry = mMeshRegistry.get();
 
-
-        static const auto kPlaneBounds{
-            Geometry::compute_bounding_sphere(mesh_geometry::generate_plane().vertices)
-        };
-        static const auto kCubeBounds{
-            Geometry::compute_bounding_sphere(mesh_geometry::generate_cube().vertices)
-        };
-        static const auto kSphereBounds{
-            Geometry::compute_bounding_sphere(mesh_geometry::generate_sphere().vertices)
-        };
-        static const auto kConeBounds{
-            Geometry::compute_bounding_sphere(mesh_geometry::generate_cone().vertices)
-        };
-        static const auto kCylinderBounds{
-            Geometry::compute_bounding_sphere(mesh_geometry::generate_cylinder().vertices)
-        };
-        static const auto kTorusBounds{
-            Geometry::compute_bounding_sphere(mesh_geometry::generate_torus().vertices)
-        };
-
         auto now = Clock::now();
         std::string meshName;
         auto createMeshEntity = [&](auto meshHandle, const auto &boundingSphere)
@@ -268,37 +248,37 @@ namespace kailux
             case MeshType::Plane:
                 createMeshEntity(
                     meshRegistry.GetBuiltins().plane,
-                    kPlaneBounds
+                    mesh_geometry::details::plane_bounds()
                 );
                 break;
             case MeshType::Cube:
                 createMeshEntity(
                     meshRegistry.GetBuiltins().cube,
-                    kCubeBounds
+                    mesh_geometry::details::cube_bounds()
                 );
                 break;
             case MeshType::Sphere:
                 createMeshEntity(
                     meshRegistry.GetBuiltins().sphere,
-                    kSphereBounds
+                    mesh_geometry::details::sphere_bounds()
                 );
                 break;
             case MeshType::Cone:
                 createMeshEntity(
                     meshRegistry.GetBuiltins().cone,
-                    kConeBounds
+                    mesh_geometry::details::cone_bounds()
                     );
                 break;
             case MeshType::Cylinder:
                 createMeshEntity(
                     meshRegistry.GetBuiltins().cylinder,
-                    kCylinderBounds
+                    mesh_geometry::details::cylinder_bounds()
                     );
                 break;
             case MeshType::Torus:
                 createMeshEntity(
                     meshRegistry.GetBuiltins().torus,
-                    kTorusBounds
+                    mesh_geometry::details::torus_bounds()
                     );
                 break;
             default:

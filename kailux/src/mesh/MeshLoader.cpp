@@ -7,7 +7,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <execution>
 
-#include "Geometry.h"
+#include "MeshGeometry.h"
 #include "Log.h"
 
 namespace kailux::mesh_loader
@@ -84,7 +84,7 @@ namespace kailux::mesh_loader
 
                 process_mesh(mesh, submesh.meshData);
 
-                submesh.boundingSphere = Geometry::compute_bounding_sphere(submesh.meshData.vertices);
+                submesh.boundingSphere = mesh_geometry::compute_bounding_sphere(submesh.meshData.vertices);
 
                 outLoadData.submeshes.push_back(std::move(submesh));
             }
