@@ -98,7 +98,6 @@ namespace kailux
 
         hierarchyPanel.SetOnEntitySelected([&entityEditorPanel, &materialPanel](entt::entity entity, const Scene &scene)
         {
-            entityEditorPanel.Open();
             entityEditorPanel.SetSelectedEntity(entity, scene);
             materialPanel.SetSelectedEntity(entity);
         });
