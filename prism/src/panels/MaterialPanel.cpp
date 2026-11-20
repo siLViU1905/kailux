@@ -115,7 +115,6 @@ namespace kailux
         changed |= ImGui::DragFloat("##emissive_intensity", &material.emissive.w, 0.05f, 0.f, 100.f, "%.2f",
                                     ImGuiSliderFlags_AlwaysClamp);
 
-
         widgets::property("Grid");
         bool grid{material.pbrParams.z > 0.f};
         if (ImGui::Checkbox("##grid", &grid))
