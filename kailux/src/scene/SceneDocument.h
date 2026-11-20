@@ -23,7 +23,7 @@ namespace kailux
         uint8_t major{};
         uint8_t minor{};
     };
-    constexpr Version kSceneVersion{5, 2};
+    constexpr Version kSceneVersion{5, 3};
     constexpr Version kPlaneMeshVersion{5, 2};
 
     constexpr uint32_t kNoEntity{~0u};
@@ -43,21 +43,22 @@ namespace kailux
         std::string roughness;
         std::string metallic;
         std::string ao;
+        std::string emissive;
 
         // same order as TextureRegistry::kTextureTypes
-        std::array<std::string *, 5> Paths()
+        std::array<std::string *, 6> Paths()
         {
-            return {&albedo, &normal, &roughness, &metallic, &ao};
+            return {&albedo, &normal, &roughness, &metallic, &ao, &emissive};
         }
 
-        std::array<std::string, 5> ToPaths() const
+        std::array<std::string, 6> ToPaths() const
         {
-            return {albedo, normal, roughness, metallic, ao};
+            return {albedo, normal, roughness, metallic, ao, emissive};
         }
 
-        static MaterialTexturesRecord from(const std::array<std::string, 5> &paths)
+        static MaterialTexturesRecord from(const std::array<std::string, 6> &paths)
         {
-            return {paths[0], paths[1], paths[2], paths[3], paths[4]};
+            return {paths[0], paths[1], paths[2], paths[3], paths[4], paths[5]};
         }
     };
 

@@ -77,6 +77,10 @@ namespace kailux
         void      SetMetallic(float metallic);
         float     AO() const;
         void      SetAO(float ao);
+        glm::vec3 Emissive() const;
+        void      SetEmissive(const glm::vec3& emissive);
+        float     EmissiveIntensity() const;
+        void      SetEmissiveIntensity(float intensity);
 
     private:
         explicit MaterialRef(Scene& scene, entt::entity handle);

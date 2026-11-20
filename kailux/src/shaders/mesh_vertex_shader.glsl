@@ -14,13 +14,14 @@ layout (location = 4) out flat vec3  fragAlbedo;
 layout (location = 5) out flat float fragRoughness;
 layout (location = 6) out flat float fragMetallic;
 layout (location = 7) out flat float fragAO;
-layout (location = 8) out flat uint fragMaterialIdx;
-layout (location = 9) out flat uint fragIdx;
-layout (location = 10) out vec2 fragTexCoord;
-layout (location = 11) out vec4 fragTangent;
-layout (location = 12) out float fragViewDepth;
-layout (location = 13) out flat uint fragCameraIdx;
-layout (location = 14) out flat float fragGridCellSize;
+layout (location = 8) out flat vec4 fragEmissive;
+layout (location = 9) out flat uint fragMaterialIdx;
+layout (location = 10) out flat uint fragIdx;
+layout (location = 11) out vec2 fragTexCoord;
+layout (location = 12) out vec4 fragTangent;
+layout (location = 13) out float fragViewDepth;
+layout (location = 14) out flat uint fragCameraIdx;
+layout (location = 15) out flat float fragGridCellSize;
 
 struct CameraData
 {
@@ -44,6 +45,7 @@ struct MeshMaterialData
 {
     vec4 albedoAndRoughness;
     vec4 pbrParams;
+    vec4 emissive;
     uint materialIdx;
     uint _padding[3];
 };
@@ -82,6 +84,7 @@ void main()
     fragRoughness = mData.material.albedoAndRoughness.w;
     fragMetallic  = mData.material.pbrParams.x;
     fragAO        = mData.material.pbrParams.y;
+    fragEmissive  = mData.material.emissive;
     fragGridCellSize = mData.material.pbrParams.z;
 
     fragMaterialIdx = mData.material.materialIdx;

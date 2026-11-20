@@ -184,6 +184,32 @@ namespace kailux
          Set(material);
     }
 
+    glm::vec3 MaterialRef::Emissive() const
+    {
+        return {Get().emissive};
+    }
+
+    void MaterialRef::SetEmissive(const glm::vec3 &emissive)
+    {
+        auto material{Get()};
+        material.emissive.x = emissive.x;
+        material.emissive.y = emissive.y;
+        material.emissive.z = emissive.z;
+        Set(material);
+    }
+
+    float MaterialRef::EmissiveIntensity() const
+    {
+        return Get().emissive.w;
+    }
+
+    void MaterialRef::SetEmissiveIntensity(float intensity)
+    {
+        auto material{Get()};
+        material.emissive.w = intensity;
+        Set(material);
+    }
+
     MaterialRef::MaterialRef(Scene &scene, entt::entity handle) : pScene(&scene), mHandle(handle)
     {
     }

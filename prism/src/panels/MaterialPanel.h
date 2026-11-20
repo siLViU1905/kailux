@@ -26,10 +26,12 @@ namespace kailux
 
         void RenderHeader(const entt::registry &registry, entt::entity root) const;
         void RenderSurfaceProperties(Scene &scene) const;
-        void RenderTextureSlots(const entt::registry &registry, entt::entity root);
-        void RenderTextureSlot(const entt::registry &registry, entt::entity root, TextureType type);
+        void RenderTextureSlots(entt::registry &registry, entt::entity root);
+        void RenderTextureSlot(entt::registry &registry, entt::entity root, TextureType type);
 
         static void propagate_material_to_children(Scene &scene, entt::entity entity, const MeshMaterialData &material);
+
+        static void enable_emissive_color(entt::registry &registry, entt::entity entity);
 
         entt::entity   mSelectedEntity{entt::null};
 

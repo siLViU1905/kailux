@@ -10,8 +10,8 @@ namespace kailux
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(MeshRecord, path, type)
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(PhysicsRecord, type, canBecomeDynamic, mass, isSensor)
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Transform, position, rotation, scale)
-    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(MeshMaterialData, albedoAndRoughness, pbrParams)
-    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(MaterialTexturesRecord, albedo, normal, roughness, metallic, ao)
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(MeshMaterialData, albedoAndRoughness, pbrParams, emissive)
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(MaterialTexturesRecord, albedo, normal, roughness, metallic, ao, emissive)
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(PointLightRecord, intensity, range, colorAndEnabled)
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(SunData, directionAndIntensity, colorAndEnabled)
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(AudioSourceRecord, clip, gain, pitch, loop, playOnStart, spatial,

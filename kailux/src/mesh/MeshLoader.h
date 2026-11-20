@@ -44,6 +44,7 @@ namespace kailux::mesh_loader
             std::string roughnessPath;
             std::string metallicPath;
             std::string aoPath;
+            std::string emissivePath;
         };
 
         void process_materials(

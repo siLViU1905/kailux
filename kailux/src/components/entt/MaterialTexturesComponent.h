@@ -10,7 +10,7 @@ namespace kailux
     struct MaterialTexturesComponent
     {
         static constexpr auto kCount{static_cast<uint32_t>(TextureRegistry::kTextureTypes.size())};
-        static_assert(kCount == 5, "MaterialTexturesRecord stores exactly one path per texture type");
+        static_assert(kCount == 6, "MaterialTexturesRecord stores exactly one path per texture type");
 
         std::array<std::string, kCount> paths{};
         std::array<uint32_t, kCount>    revisions{};

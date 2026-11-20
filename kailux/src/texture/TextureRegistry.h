@@ -21,7 +21,8 @@ namespace kailux
         Normal = aiTextureType_NORMALS,
         Roughness = aiTextureType_DIFFUSE_ROUGHNESS,
         Metallic = aiTextureType_METALNESS,
-        AO = aiTextureType_AMBIENT_OCCLUSION
+        AO = aiTextureType_AMBIENT_OCCLUSION,
+        Emissive = aiTextureType_EMISSIVE
     };
 
     struct AsyncTextureUpload
@@ -53,7 +54,8 @@ namespace kailux
             TextureType::Normal,
             TextureType::Roughness,
             TextureType::Metallic,
-            TextureType::AO
+            TextureType::AO,
+            TextureType::Emissive
         };
 
         static constexpr uint32_t texture_type_index(TextureType type)
@@ -73,13 +75,16 @@ namespace kailux
                 case TextureType::Roughness: return "Roughness";
                 case TextureType::Metallic:  return "Metallic";
                 case TextureType::AO:        return "AO";
+                case TextureType::Emissive:  return "Emissive";
             }
             return "";
         }
 
         static constexpr image_loader::ColorSpace texture_color_space(TextureType type)
         {
-            return type == TextureType::Albedo ? image_loader::ColorSpace::Srgb : image_loader::ColorSpace::Linear;
+            return type == TextureType::Albedo || type == TextureType::Emissive
+                       ? image_loader::ColorSpace::Srgb
+                       : image_loader::ColorSpace::Linear;
         }
 
         KAILUX_DECLARE_NON_COPYABLE_MOVABLE(TextureRegistry)
@@ -120,6 +125,7 @@ namespace kailux
             image_loader::ImageData roughnessData;
             image_loader::ImageData metallicData;
             image_loader::ImageData aoData;
+            image_loader::ImageData emissiveData;
         };
 
         AsyncMaterialResult CreateMaterialFromData(const Context &context, const MaterialData& data);

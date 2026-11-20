@@ -7,6 +7,7 @@ struct MeshMaterialData
 {
     vec4 albedoAndRoughness;
     vec4 pbrParams;
+    vec4 emissive;
     uint materialIdx;
     uint _padding[3];
 };

@@ -21,13 +21,14 @@ layout (location = 4) in flat vec3 fragAlbedo;
 layout (location = 5) in flat float fragRoughness;
 layout (location = 6) in flat float fragMetallic;
 layout (location = 7) in flat float fragAO;
-layout (location = 8) in flat uint fragMaterialIdx;
-layout (location = 9) in flat uint fragIdx;
-layout (location = 10) in vec2 fragTexCoord;
-layout (location = 11) in vec4 fragTangent;
-layout (location = 12) in float fragViewDepth;
-layout (location = 13) in flat uint fragCameraIdx;
-layout (location = 14) in flat float fragGridCellSize;
+layout (location = 8) in flat vec4 fragEmissive;
+layout (location = 9) in flat uint fragMaterialIdx;
+layout (location = 10) in flat uint fragIdx;
+layout (location = 11) in vec2 fragTexCoord;
+layout (location = 12) in vec4 fragTangent;
+layout (location = 13) in float fragViewDepth;
+layout (location = 14) in flat uint fragCameraIdx;
+layout (location = 15) in flat float fragGridCellSize;
 
 layout (location = 0) out vec4 outColor;
 #ifdef WRITE_IDS
@@ -49,7 +50,8 @@ struct Material
     uint roughnessIdx;
     uint metallicIdx;
     uint aoIdx;
-    uint _padding[3];
+    uint emissiveIdx;
+    uint _padding[2];
 };
 
 layout (std430, set = 0, binding = 2) readonly buffer MaterialsBuffer {
@@ -133,11 +135,13 @@ void main()
     float texRoughness = texture(textures[nonuniformEXT(material.roughnessIdx)], fragTexCoord).r;
     float texMetallic  = texture(textures[nonuniformEXT(material.metallicIdx)],  fragTexCoord).r;
     float texAO        = texture(textures[nonuniformEXT(material.aoIdx)],        fragTexCoord).r;
+    vec3  texEmissive  = texture(textures[nonuniformEXT(material.emissiveIdx)],  fragTexCoord).rgb;
 
     vec3  albedo    = texAlbedo * fragAlbedo;
     float roughness = max(texRoughness * fragRoughness, 0.05);
     float metallic  = texMetallic * fragMetallic;
     float ao        = texAO * fragAO;
+    vec3  emissive  = texEmissive * fragEmissive.rgb * fragEmissive.a;
 
     if (fragGridCellSize > 0.0)
         albedo = applyGrid(albedo, gridCoord, gridDeriv);
@@ -236,7 +240,7 @@ void main()
         Lo += contribution;
     }
 
-    vec3 color = (Lo + ambient) * fragExposure;
+    vec3 color = (Lo + ambient) * fragExposure + emissive;
 
     color = toneMapACES(color);
     color = pow(color, vec3(1.0 / 2.2));

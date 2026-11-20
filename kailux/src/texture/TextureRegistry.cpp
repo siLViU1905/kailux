@@ -62,6 +62,7 @@ namespace kailux
                 registry.mDefaultNormalIdx,
                 registry.mDefaultWhiteIdx,
                 registry.mDefaultWhiteIdx,
+                registry.mDefaultWhiteIdx,
                 registry.mDefaultWhiteIdx
             });
         registry.CreateAssetBrowserTextures(context, directoryIconPath, fileIconPath);
@@ -158,7 +159,7 @@ namespace kailux
 
         for (const auto textureIdx: {
                  slot.albedoIdx, slot.normalIdx, slot.roughnessIdx,
-                 slot.metallicIdx, slot.aoIdx
+                 slot.metallicIdx, slot.aoIdx, slot.emissiveIdx
              })
             AcquireTexture({textureIdx});
 
@@ -193,7 +194,7 @@ namespace kailux
         std::vector<uint32_t> freedTextureSlots;
         const auto& slot = mMaterials[handle.index];
         for (auto textureIdx : {slot.albedoIdx, slot.normalIdx, slot.roughnessIdx,
-                             slot.metallicIdx, slot.aoIdx})
+                             slot.metallicIdx, slot.aoIdx, slot.emissiveIdx})
             if (ReleaseTexture({textureIdx}))
                 freedTextureSlots.push_back(textureIdx);
 
@@ -267,6 +268,7 @@ namespace kailux
         result.slot.roughnessIdx = mDefaultWhiteIdx;
         result.slot.metallicIdx  = mDefaultWhiteIdx;
         result.slot.aoIdx        = mDefaultWhiteIdx;
+        result.slot.emissiveIdx  = mDefaultWhiteIdx;
 
         auto process = [&](const auto &imgData, auto &slotIndexOut)
         {
@@ -286,6 +288,7 @@ namespace kailux
         process(data.roughnessData, result.slot.roughnessIdx);
         process(data.metallicData,  result.slot.metallicIdx);
         process(data.aoData,        result.slot.aoIdx);
+        process(data.emissiveData,  result.slot.emissiveIdx);
 
         return result;
     }
@@ -379,6 +382,7 @@ namespace kailux
             case TextureType::Roughness: return slot.roughnessIdx;
             case TextureType::Metallic: return slot.metallicIdx;
             case TextureType::AO: return slot.aoIdx;
+            case TextureType::Emissive: return slot.emissiveIdx;
         }
         return slot.albedoIdx;
     }

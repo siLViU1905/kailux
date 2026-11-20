@@ -27,7 +27,7 @@ namespace kailux
         mFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
         if (visible)
         {
-            const auto &registry{scene.GetEntityRegistry()};
+            auto &registry{scene.GetEntityRegistry()};
             const bool  hasSelection{mSelectedEntity != entt::null && registry.valid(mSelectedEntity)};
             const auto  root{
                 hasSelection
@@ -107,6 +107,14 @@ namespace kailux
         widgets::property("AO");
         changed |= ImGui::SliderFloat("##ao", &material.pbrParams.y, 0.f, 1.f, "%.2f");
 
+        widgets::property("Emissive");
+        changed |= ImGui::ColorEdit3("##emissive", glm::value_ptr(material.emissive),
+                                     ImGuiColorEditFlags_DisplayHex | ImGuiColorEditFlags_PickerHueWheel);
+
+        widgets::property("Emissive intensity");
+        changed |= ImGui::DragFloat("##emissive_intensity", &material.emissive.w, 0.05f, 0.f, 100.f, "%.2f",
+                                    ImGuiSliderFlags_AlwaysClamp);
+
         widgets::property("Grid");
         bool grid{material.pbrParams.z > 0.f};
         if (ImGui::Checkbox("##grid", &grid))
@@ -128,7 +136,7 @@ namespace kailux
             propagate_material_to_children(scene, mSelectedEntity, material);
     }
 
-    void MaterialPanel::RenderTextureSlots(const entt::registry &registry, entt::entity root)
+    void MaterialPanel::RenderTextureSlots(entt::registry &registry, entt::entity root)
     {
         if (!widgets::section("Textures"))
             return;
@@ -140,7 +148,7 @@ namespace kailux
             RenderTextureSlot(registry, root, type);
     }
 
-    void MaterialPanel::RenderTextureSlot(const entt::registry &registry, entt::entity root, TextureType type)
+    void MaterialPanel::RenderTextureSlot(entt::registry &registry, entt::entity root, TextureType type)
     {
         const auto  index{TextureRegistry::texture_type_index(type)};
         const auto *textures{registry.try_get<MaterialTexturesComponent>(root)};
@@ -187,6 +195,9 @@ namespace kailux
                 const std::filesystem::path dropped{static_cast<const char *>(payload->Data)};
                 if (mOnSetTexture)
                     mOnSetTexture(root, type, dropped);
+
+                if (type == TextureType::Emissive)
+                    enable_emissive_color(registry, root);
             }
             ImGui::EndDragDropTarget();
         }
@@ -210,5 +221,20 @@ namespace kailux
 
             propagate_material_to_children(scene, child, material);
         }
+    }
+
+    void MaterialPanel::enable_emissive_color(entt::registry &registry, entt::entity entity)
+    {
+        if (auto *material{registry.try_get<MeshMaterialData>(entity)})
+            if (glm::vec3{material->emissive} == glm::vec3{0.f})
+            {
+                material->emissive.x = 1.f;
+                material->emissive.y = 1.f;
+                material->emissive.z = 1.f;
+            }
+
+        if (const auto *hierarchy{registry.try_get<HierarchyComponent>(entity)})
+            for (const auto child : hierarchy->children)
+                enable_emissive_color(registry, child);
     }
 }
