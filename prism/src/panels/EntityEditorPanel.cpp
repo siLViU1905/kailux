@@ -30,7 +30,6 @@ namespace kailux
                                              mGizmoWasDragging(false),
                                              mSimulationRunning(false)
     {
-        mOpen = false;
     }
 
     EntityEditorPanel::EntityEditorPanel(std::string_view name, ImVec4 backgroundColor)
@@ -44,23 +43,26 @@ namespace kailux
           mGizmoWasDragging(false),
           mSimulationRunning(false)
     {
-        mOpen = false;
     }
 
     void EntityEditorPanel::Render(Scene &scene)
     {
-        if (!mOpen || mSelectedEntity == entt::null)
+        if (!mOpen)
             return;
         auto &registry = scene.GetEntityRegistry();
-        if (!registry.valid(mSelectedEntity))
-            return;
+        const bool hasSelection{
+          mSelectedEntity != entt::null
+            && registry.valid(mSelectedEntity)
+        };
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, mBackgroundColor);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16.f, 14.f));
         const bool visible{ImGui::Begin(mName.c_str(), &mOpen)};
         ImGui::PopStyleVar();
         mFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
-        if (visible)
+        if (visible && !hasSelection)
+            ImGui::TextDisabled("Select an entity to edit its properties");
+        else if (visible)
         {
             RenderHeader(registry);
 
@@ -108,8 +110,6 @@ namespace kailux
     void EntityEditorPanel::SetSelectedEntity(entt::entity entity, const Scene &scene)
     {
         mSelectedEntity = entity;
-        if (entity == entt::null)
-            mOpen = false;
 
         if (const auto *local = scene.GetEntityRegistry().try_get<LocalTransform>(mSelectedEntity))
             mRotationDegrees = glm::degrees(glm::eulerAngles(local->rotation));
