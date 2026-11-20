@@ -7,6 +7,7 @@ namespace kailux
     {
         glm::vec4 albedoAndRoughness{0.75f, 0.75f, 0.75f, 1.f};
         glm::vec4 pbrParams{0.f, 1.f, 0.f,0.f}; // x - metallic y - ao z - grid cell(0 = no grid)
+        glm::vec4 emissive{0.f, 0.f, 0.f,1.f}; // rgb - emissive color, a - intensity
         uint32_t  materialIdx{};
         std::array<uint32_t, 3> _padding{};
     };
