@@ -14,6 +14,29 @@ namespace kailux
         SaveFile
     };
 
+    namespace details
+    {
+        // pfd 0.1.0 (select_folder / save_file) crashes when closed or canceled
+        template<typename Dialog>
+        class SafeStringDialog : public Dialog
+        {
+        public:
+            using Dialog::Dialog;
+
+            std::string result()
+            {
+#if defined(_WIN32)
+                return Dialog::result();
+#else
+                auto path = this->m_async->result();
+                while (!path.empty() && path.back() == '\n')
+                    path.pop_back();
+                return path;
+#endif
+            }
+        };
+    }
+
     template<DialogMode Mode>
     class FileDialog
     {
@@ -81,9 +104,10 @@ namespace kailux
 
         using HandleType = std::conditional_t<
             Mode == DialogMode::Folder,
-            pfd::select_folder,
+            details::SafeStringDialog<pfd::select_folder>,
             std::conditional_t<
-                Mode == DialogMode::SaveFile, pfd::save_file,
+                Mode == DialogMode::SaveFile,
+                details::SafeStringDialog<pfd::save_file>,
                 pfd::open_file>
         >;
 
