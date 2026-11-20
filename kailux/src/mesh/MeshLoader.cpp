@@ -137,6 +137,7 @@ namespace kailux::mesh_loader
                     case TextureType::Roughness: return &paths.roughnessPath;
                     case TextureType::Metallic:  return &paths.metallicPath;
                     case TextureType::AO:        return &paths.aoPath;
+                    case TextureType::Emissive:  return &paths.emissivePath;
                     default:                     return nullptr;
                 }
             };
@@ -144,6 +145,9 @@ namespace kailux::mesh_loader
             std::ranges::for_each(TextureRegistry::kTextureTypes, [&](auto type)
             {
                 auto aiType = static_cast<aiTextureType>(type);
+                if (type == TextureType::AO && !material->GetTextureCount(aiType))
+                    aiType = aiTextureType_LIGHTMAP;
+
                 auto* targetPath{getMaterialMemberPtr(type, outPaths)};
                 if (!targetPath)
                 {
@@ -180,6 +184,9 @@ namespace kailux::mesh_loader
             imgData = image_loader::load_image(paths.aoPath, image_loader::ColorSpace::Linear);
             if (imgData)
                 data.aoData = std::move(*imgData);
+            imgData = image_loader::load_image(paths.emissivePath, image_loader::ColorSpace::Srgb);
+            if (imgData)
+                data.emissiveData = std::move(*imgData);
             return data;
         }
     }
