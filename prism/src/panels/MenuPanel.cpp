@@ -81,7 +81,7 @@ namespace kailux
             {
                 if (ImGui::BeginMenu("Render Scale"))
                 {
-                    if (ImGui::Combo("Scale", &mRenderScaleIndex, kScaleLabels.data(), kScaleLabels.size()))
+                    if (ImGui::Combo("Scale", &mRenderScaleIndex, kScaleLabels.data(), static_cast<int>(kScaleLabels.size())))
                         mOnRenderScaleChange(kScaleValues[mRenderScaleIndex]);
                     ImGui::EndMenu();
                 }
