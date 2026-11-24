@@ -1,5 +1,5 @@
 from conan import ConanFile
-from conan.tools.cmake import cmake_layout
+from conan.tools.cmake import cmake_layout, CMakeToolchain
 from conan.tools.files import copy
 import os
 
@@ -9,7 +9,10 @@ class kailux(ConanFile):
     package_type = "application"
     settings = "os", "compiler", "build_type", "arch"
 
-    generators = "CMakeDeps", "CMakeToolchain"
+    generators = "CMakeDeps"
+
+    options = {"samples": [True, False], "profiling": [True, False]}
+    default_options = {"samples": True, "profiling": True}
 
     def requirements(self):
         self.requires("glfw/3.4")
@@ -40,6 +43,11 @@ class kailux(ConanFile):
         cmake_layout(self)
 
     def generate(self):
+        tc = CMakeToolchain(self)
+        tc.cache_variables["KAILUX_BUILD_SAMPLES"] = bool(self.options.samples)
+        tc.cache_variables["KAILUX_ENABLE_PROFILING"] = bool(self.options.profiling)
+        tc.generate()
+
         backends = self.dependencies["imgui_backends"].package_folder
 
         bindings_dir = os.path.join(backends, "res", "bindings")
