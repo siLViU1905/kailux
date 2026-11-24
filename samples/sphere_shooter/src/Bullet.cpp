@@ -5,8 +5,8 @@ namespace sphere_shooter
     kailux::Primitive Bullet::get_random_bullet_primitive()
     {
         std::uniform_int_distribution dist{
-            static_cast<uint8_t>(kailux::Primitive::Cube),
-            static_cast<uint8_t>(kailux::Primitive::Torus)
+            static_cast<int>(kailux::Primitive::Cube),
+            static_cast<int>(kailux::Primitive::Torus)
         };
 
         return static_cast<kailux::Primitive>(dist(rng()));
